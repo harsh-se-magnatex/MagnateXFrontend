@@ -1,0 +1,9 @@
+# frontend
+node_modules
+.next
+.env*
+
+
+.agents
+skills-lock.json
+.claude
