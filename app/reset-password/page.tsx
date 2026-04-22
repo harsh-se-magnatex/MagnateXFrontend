@@ -123,7 +123,6 @@ function ResetPasswordPageContent() {
       const res = await forgotPassword(trimmed,'http://localhost:3000/sign-in');
       if (!res.success) {
         setTone('error');
-        console.log(res.message);
         if(res.message.startsWith("Firebase: Error (auth/user-not-found).")){
           toast.error('User with this email not found. Please sign up first.');
           return;
@@ -136,7 +135,6 @@ function ResetPasswordPageContent() {
         "Reset link sent. Please check your inbox (and spam folder)."
       );
     } catch (err: any) {
-      console.log(err.code);
       setTone('error');
       if(err.code ==="auth/user-not-found"){
         toast.error('User not found. Please sign up first.');

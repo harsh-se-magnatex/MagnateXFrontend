@@ -6,6 +6,8 @@ import {
   fetchSignInMethodsForEmail,
   EmailAuthProvider,
   linkWithCredential,
+  User,
+  UserCredential,
 } from 'firebase/auth';
 import {
   GoogleAuthProvider,
@@ -14,10 +16,10 @@ import {
   signInWithEmailAndPassword,
   signOut,
   sendEmailVerification,
-  type Auth,
 } from 'firebase/auth';
 import {
   checkEmailExistsinDeletedUsers,
+  checkPhoneExistsInDeletedUsers,
   linkProvider,
   loginUser,
 } from './api/userService';
@@ -25,9 +27,49 @@ import { ApiEnvelope } from '@/lib/api-types';
 import { toast } from 'sonner';
 const provider = new GoogleAuthProvider();
 
-export const signInWithGoogle = async (intent: 'signin' | 'signup') => {
+/**
+ * When phone auth fails with a “credential / account already exists” style error,
+ * match the email signup flow in `createUserEmailPassword`: if the number exists
+ * in `deleted-users`, surface the same guidance as email.
+ */
+export async function resolvePhoneAuthErrorForDeletedAccount(
+  error: unknown,
+  phoneE164: string
+): Promise<string> {
+  const code =
+    error && typeof error === 'object' && 'code' in error
+      ? String((error as { code: unknown }).code)
+      : '';
+  if (
+    code === 'auth/credential-already-in-use' ||
+    code === 'auth/account-exists-with-different-credential'
+  ) {
+    try {
+      const res = await checkPhoneExistsInDeletedUsers(phoneE164);
+      if (res.data?.exists) {
+        return 'Phone number linked to a deleted account. Sign in to restore or permanently delete it.';
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  if (error instanceof Error) return error.message;
+  return 'Something went wrong.';
+}
+
+export const signInWithGoogle = async (
+  intent: 'signin' | 'signup',
+  options?: { loginHint?: string }
+) => {
   try {
-    const result = await signInWithPopup(auth, provider);
+    const googleProvider = options?.loginHint
+      ? (() => {
+          const p = new GoogleAuthProvider();
+          p.setCustomParameters({ login_hint: options.loginHint });
+          return p;
+        })()
+      : provider;
+    const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
     if (intent === 'signup') {
       const res = await checkEmailExistsinDeletedUsers(user.email as string);
@@ -39,7 +81,11 @@ export const signInWithGoogle = async (intent: 'signin' | 'signup') => {
     }
     const idToken = await result.user.getIdToken(true);
 
-    const response = (await loginUser(idToken, intent, 'google')) as ApiEnvelope<{
+    const response = (await loginUser(
+      idToken,
+      intent,
+      'google'
+    )) as ApiEnvelope<{
       showRecoveryPopup: boolean;
       deletedDocId: string;
     }>;
@@ -66,9 +112,15 @@ export const createUserEmailPassword = async (
       return await handleProviderMerge(email, password, methods);
     }
 
+    const res = await checkEmailExistsinDeletedUsers(email);
+    if (res.data.exists) {
+      throw new Error(
+        'Email linked to a deleted account. Sign in to restore or permanently delete it.'
+      );
+    }
     const result = await createUserWithEmailAndPassword(auth, email, password);
     if (!result.user.emailVerified) {
-      await sendEmailVerification(result.user,{
+      await sendEmailVerification(result.user, {
         url: 'http://localhost:3000/sign-in',
         handleCodeInApp: true,
       });
@@ -77,51 +129,54 @@ export const createUserEmailPassword = async (
       );
     }
     const idToken = await result.user.getIdToken(true);
-    await loginUser(idToken, 'signup','password');
+    await loginUser(idToken, 'signup', 'password');
     return result;
   } catch (error: any) {
-    if (error.code === 'auth/email-already-in-use') {
-      const res = await checkEmailExistsinDeletedUsers(email);
-      if (res.data.exists) {
-        throw new Error(
-          'Email linked to a deleted account. Sign in to restore or permanently delete it.'
-        );
-      }
-    }
     throw error;
   }
 };
 
 export const signInEmailPassword = async (email: string, password: string) => {
-  try {
-    const methods = await fetchSignInMethodsForEmail(auth, email);
+  let result: UserCredential | null = null;
+  const methods = await fetchSignInMethodsForEmail(auth, email);
 
-    if (methods.length > 0 && !methods.includes('password')) {
-      return await handleProviderMerge(email, password, methods);
-    }
-
-    const result = await signInWithEmailAndPassword(auth, email, password);
-    if (!result.user.emailVerified) {
-      toast.info(
-        'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
-      );
-      return result;
-    }
-    const idToken = await result.user.getIdToken(true);
-    const response = (await loginUser(idToken, 'signin', 'password')) as ApiEnvelope<{
-      showRecoveryPopup: boolean;
-      deletedDocId: string;
-    }>;
-    return {
-      user: result.user,
-      result: result,
-      showRecoveryPopup: response.data.showRecoveryPopup,
-      deletedDocId: response.data.deletedDocId,
-    };
-  } catch (error: any) {
-    await auth.signOut();
-    throw error;
+  if (methods.length > 0 && !methods.includes('password')) {
+     await handleProviderMerge(email, password, methods);
   }
+  try {
+    result = await signInWithEmailAndPassword(auth, email, password);
+  } catch (error: any) {
+    if(error.code === 'auth/user-not-found'){
+      const res = await checkEmailExistsinDeletedUsers(email)
+      return {
+        user: null,
+        result: null,
+        showRecoveryPopup: res.data.exists,
+        deletedDocId: res.data.deletedDocId,
+      };
+    }
+  }
+  if (result && !result?.user.emailVerified) {
+    toast.info(
+      'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
+    );
+    return result;
+  }
+  const idToken = await result?.user.getIdToken(true);
+  const response = (await loginUser(
+    idToken!,
+    'signin',
+    'password'
+  )) as ApiEnvelope<{
+    showRecoveryPopup: boolean;
+    deletedDocId: string;
+  }>;
+  return {
+    user: result?.user,
+    result: result,
+    showRecoveryPopup: response.data.showRecoveryPopup,
+    deletedDocId: response.data.deletedDocId,
+  };
 };
 
 const handleProviderMerge = async (
@@ -142,7 +197,7 @@ const handleProviderMerge = async (
     await linkWithCredential(googleResult.user, emailCredential);
 
     const idToken = await googleResult.user.getIdToken(true);
-    await loginUser(idToken, 'signin','');
+    await loginUser(idToken, 'signin', '');
     await linkProvider(idToken, 'password');
 
     toast.success('Email & Google accounts merged!');
@@ -150,15 +205,6 @@ const handleProviderMerge = async (
   }
 
   throw new Error(`Please sign in with: ${methods.join(', ')}`);
-};
-
-export const signInWithPhoneNumber = async (
-  auth: Auth,
-  phoneNumber: number,
-  appVerifier: any
-) => {
-  try {
-  } catch (error) {}
 };
 
 export const signOutUser = async () => {

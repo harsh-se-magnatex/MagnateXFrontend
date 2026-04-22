@@ -141,9 +141,7 @@ export default function ProductAdvertPage() {
         campaignContext,
         useIndustryResearch,
       });
-      console.log("result",result);
       const payload = result?.data as any;
-      console.log("payload",payload);
       const rawPlatformResults = Array.isArray(payload?.platformResults)
         ? payload.platformResults
         : [payload];

@@ -247,7 +247,6 @@ export default function BillingsPage() {
     try {
       setPlansLoading(true);
       const response = await getAvailablePlansAndCreditPacks();
-      console.log(response.data);
       setCreditPacks(response.data.creditPacks);
       setPlans(response.data.plans);
     } catch {

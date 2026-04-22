@@ -13,12 +13,16 @@ export type SupportMessage = {
 export const loginUser = async (
   idToken: string,
   intent: 'signin' | 'signup',
-  method: string
+  method: string,
+  options?: { name?: string }
 ) => {
-  return apiPost<ApiEnvelope>('/api/v1/user/login', {
+  return apiPost<
+    ApiEnvelope<{ showRecoveryPopup?: boolean; deletedDocId?: string }>
+  >('/api/v1/user/login', {
     idToken,
     intent,
     method,
+    ...(options?.name ? { name: options.name } : {}),
   });
 };
 
@@ -33,9 +37,17 @@ export const linkProvider = async (
 };
 
 export const checkEmailExistsinDeletedUsers = async (email: string) => {
-  return apiPost<ApiEnvelope<{ exists: boolean }>>(
+  return apiPost<ApiEnvelope<{ exists: boolean; deletedDocId?: string }>>(
     '/api/v1/user/check-email-exists-in-deleted-users',
     { email }
+  );
+};
+
+/** Same endpoint as email check; body uses `phoneNumber` (E.164, e.g. +919876543210). */
+export const checkPhoneExistsInDeletedUsers = async (phoneNumber: string) => {
+  return apiPost<ApiEnvelope<{ exists: boolean; deletedDocId?: string }>>(
+    '/api/v1/user/check-email-exists-in-deleted-users',
+    { phoneNumber }
   );
 };
 

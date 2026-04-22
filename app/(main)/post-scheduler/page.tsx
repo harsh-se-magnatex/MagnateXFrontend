@@ -266,7 +266,6 @@ export default function PostSchedulePage() {
 
   if (loading) return null;
   if (!user) return null;
-
   const handleSchedulePost = async () => {
     if (!canSchedule) return;
     try {

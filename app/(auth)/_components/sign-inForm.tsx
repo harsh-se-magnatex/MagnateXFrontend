@@ -26,8 +26,6 @@ import { getAdditionalUserInfo, User, UserCredential } from 'firebase/auth';
 import { Mail, Smartphone } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import { toast } from 'sonner';
-import { verifyToken } from '@/src/service/api/verifyToken';
-
 export function SigninForm({
   className,
   ...props
@@ -113,10 +111,10 @@ export function SigninForm({
       const userCredential = (await signInEmailPassword(email, password)) as {
         user: User;
         result: UserCredential;
-        showRecoveryPopup: boolean;
-        deletedDocId: string;
+        showRecoveryPopup?: boolean;
+        deletedDocId?: string;
       };
-      if (userCredential?.deletedDocId) {
+      if (userCredential?.showRecoveryPopup && userCredential?.deletedDocId) {
         setRecoveryToken(await userCredential.user.getIdToken());
         setRecoveryDialogOpen(true);
         setDeletedDocId(userCredential.deletedDocId);
@@ -125,8 +123,6 @@ export function SigninForm({
       if (!userCredential.user.emailVerified) {
         return;
       }
-      const token = await userCredential.user.getIdToken();
-      await verifyToken(token);
       const isNewUser = localStorage.getItem('isNewUser');
       if (isNewUser === 'true') {
         router.push('/onBoarding');
@@ -137,6 +133,16 @@ export function SigninForm({
 
       localStorage.removeItem('isNewUser');
     } catch (err: any) {
+      if (
+        err?.code === 'auth/deleted-account-recovery' &&
+        typeof err?.deletedDocId === 'string'
+      ) {
+        setRecoveryDialogOpen(true);
+        setDeletedDocId(err.deletedDocId);
+        setRecoveryToken('');
+        toast.info(err.message);
+        return;
+      }
       const message = err instanceof Error ? err.message : 'Sign in failed';
       if (err.code) {
         const formattedMessage = formatFirebaseErrorMessage(err.code);
@@ -155,10 +161,18 @@ export function SigninForm({
 
   const handleContinueOld = async () => {
     try {
-      await recoverDeletedUserAccount(deletedDocId, recoveryToken);
+      let token = recoveryToken;
+      let docId = deletedDocId;
+      await recoverDeletedUserAccount(docId, token);
       toast.success('Old Account Recovered Successfully.');
       router.push('/home');
     } catch (err: unknown) {
+      if (
+        err instanceof Error &&
+        err.message === 'recovery-verify-failed'
+      ) {
+        return;
+      }
       const message =
         err instanceof Error
           ? err.message
@@ -169,7 +183,9 @@ export function SigninForm({
 
   const handleCreateNew = async () => {
     try {
-      await createNewAccount(recoveryToken, deletedDocId);
+      let token = recoveryToken;
+      let docId = deletedDocId;
+      await createNewAccount(token, docId);
       await auth.signOut();
       setRecoveryDialogOpen(false);
       toast.success(
@@ -177,6 +193,12 @@ export function SigninForm({
       );
       router.push('/sign-up');
     } catch (err: unknown) {
+      if (
+        err instanceof Error &&
+        err.message === 'recovery-verify-failed'
+      ) {
+        return;
+      }
       const message =
         err instanceof Error ? err.message : 'Failed to create new account';
       toast.error(message);
@@ -287,7 +309,15 @@ export function SigninForm({
               Sign in with your phone number.
             </p>
           </header>
-          <PhoneNumberLogin />
+          <PhoneNumberLogin
+            intent="signin"
+            onRecoveryNeeded={async ({ deletedDocId }) => {
+              const u = auth.currentUser;
+              if (u) setRecoveryToken(await u.getIdToken());
+              setDeletedDocId(deletedDocId);
+              setRecoveryDialogOpen(true);
+            }}
+          />
         </div>
       )}
       <FieldSeparator className="**:data-[slot=field-separator-content]:bg-background **:data-[slot=field-separator-content]:text-muted-foreground">

@@ -29,6 +29,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { LinkCredentialsSection } from './link-credentials';
 
 const inputBase =
   'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all';
@@ -76,7 +77,6 @@ export default function AccountSettingsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [resetEmail, setResetEmail] = useState('');
   const [saving, setSaving] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState('');
@@ -89,10 +89,10 @@ export default function AccountSettingsPage() {
     if (!loading && !user) router.replace('/sign-in');
   }, [loading, user, router]);
 
+
   useEffect(() => {
     if (user) {
       setName(user.displayName || '');
-      setEmail(user.email || '');
       setResetEmail(user.email || '');
     }
   }, [user]);
@@ -135,6 +135,7 @@ export default function AccountSettingsPage() {
       );
     } finally {
       setSaving(false);
+      setResetEmail('');
     }
   };
 
@@ -212,25 +213,10 @@ export default function AccountSettingsPage() {
                 placeholder="Your name"
               />
             </div>
-            <div className="space-y-2">
-              <label
-                htmlFor="account-email"
-                className="text-sm font-semibold text-slate-700"
-              >
-                Email Address
-              </label>
-              <input
-                id="account-email"
-                type="email"
-                value={email}
-                disabled
-                onChange={(e) => setEmail(e.target.value)}
-                className={inputBase}
-                placeholder="your@email.com"
-              />
-            </div>
           </div>
         </section>
+
+        <LinkCredentialsSection user={user} />
 
         {user?.providerData.some(
           (provider) => provider.providerId === 'password'
@@ -262,7 +248,6 @@ export default function AccountSettingsPage() {
                 </label>
                 <input
                   id="reset-email"
-                  disabled
                   type="email"
                   value={resetEmail}
                   onChange={(e) => setResetEmail(e.target.value)}

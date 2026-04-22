@@ -192,7 +192,6 @@ export default function ApprovalPage() {
       await performActionByUserOnScheduledPost(postId, action, platform);
       fetchPending();
     } catch (error) {
-      console.log(error);
       alert('Failed to perform action on scheduled post');
     }
   };

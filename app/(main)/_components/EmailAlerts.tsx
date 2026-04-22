@@ -41,7 +41,6 @@ export function EmailAlerts() {
   useEffect(() => {
     getData();
   }, []);
-  console.log(notifications);
   return (
     <section aria-label="Account and policy messages" className="space-y-4">
       <div className="flex items-center justify-between gap-2">

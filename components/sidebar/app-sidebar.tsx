@@ -130,21 +130,21 @@ const workspaceNav = [
     match: (pathname: string | null) =>
       !!pathname && pathname.startsWith('/media-library'),
   },
-  // {
-  //   name: 'Linked Profiles',
-  //   href: '/social-media-integration',
-  //   icon: Share2,
-  //   match: (pathname: string | null) =>
-  //     !!pathname && pathname.startsWith('/social-media-integration'),
-  // },
-  // {
-  //   name: 'Analytics',
-  //   href: '/analytics',
-  //   icon: BarChart3,
-  //   match: (pathname: string | null) =>
-  //     !!pathname &&
-  //     (pathname === '/analytics' || pathname.startsWith('/analytics/')),
-  // },
+  {
+    name: 'Linked Profiles',
+    href: '/social-media-integration',
+    icon: Share2,
+    match: (pathname: string | null) =>
+      !!pathname && pathname.startsWith('/social-media-integration'),
+  },
+  {
+    name: 'Analytics',
+    href: '/analytics',
+    icon: BarChart3,
+    match: (pathname: string | null) =>
+      !!pathname &&
+      (pathname === '/analytics' || pathname.startsWith('/analytics/')),
+  },
 ] as const;
 
 const settingsNav = {

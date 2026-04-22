@@ -17,14 +17,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { AuthPasswordField } from './auth-password-field';
 import { PhoneNumberLogin } from './phone-number-login';
-import { RecentlyDeletedAccountDialog } from './recently-deleted-account-dialog';
 import { Mail, Smartphone } from 'lucide-react';
-import {
-  recoverDeletedUserAccount,
-  createNewAccount,
-} from '@/src/service/api/userService';
 import { toast } from 'sonner';
-import { auth } from '@/lib/firebase';
+import { signOutUser } from '@/src/service/auth';
 
 export function SignupForm({
   className,
@@ -38,9 +33,6 @@ export function SignupForm({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [usePhone, setUsePhone] = useState(false);
-  const [recoveryDialogOpen, setRecoveryDialogOpen] = useState(false);
-  const [deletedDocId, setDeletedDocId] = useState('');
-  const [recoveryToken, setRecoveryToken] = useState('');
 
   const busy = loading || oauthLoading;
 
@@ -80,9 +72,11 @@ export function SignupForm({
         localStorage.setItem('isNewUser', 'false');
       }
       if (result.showRecoveryPopup) {
-        setRecoveryToken(await result.user.getIdToken());
-        setRecoveryDialogOpen(true);
-        setDeletedDocId(result.deletedDocId);
+        await signOutUser();
+        toast.info(
+          'A recently deleted account is linked to this Google account. Sign in to recover it or start fresh.'
+        );
+        router.replace('/sign-in');
         return;
       }
       router.replace('/home');
@@ -100,35 +94,6 @@ export function SignupForm({
       }
     } finally {
       setOauthLoading(false);
-    }
-  };
-
-  const handleContinueOld = async () => {
-    try {
-      await recoverDeletedUserAccount(deletedDocId, recoveryToken);
-      toast.success(
-        'Old account recovered successfully. Please sign in to continue.'
-      );
-      router.replace('/sign-in');
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to recover deleted user account';
-      toast.error(message);
-    }
-  };
-
-  const handleCreateNew = async () => {
-    try {
-      await createNewAccount(recoveryToken, deletedDocId);
-      toast.success(
-        'Old account deleted successfully. Please sign up again to continue.'
-      );
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to create new account';
-      toast.error(message);
     }
   };
 
@@ -177,12 +142,6 @@ export function SignupForm({
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <RecentlyDeletedAccountDialog
-        open={recoveryDialogOpen}
-        onOpenChange={setRecoveryDialogOpen}
-        onCreateNew={handleCreateNew}
-        onContinueOld={handleContinueOld}
-      />
       {!usePhone ? (
         <form onSubmit={handleSignUp}>
           <FieldGroup className="gap-5">
@@ -298,7 +257,7 @@ export function SignupForm({
               No credit card required to start · Cancel anytime
             </p>
           </header>
-          <PhoneNumberLogin />
+          <PhoneNumberLogin intent="signup" />
         </div>
       )}
       <FieldSeparator className="**:data-[slot=field-separator-content]:bg-background **:data-[slot=field-separator-content]:text-muted-foreground">

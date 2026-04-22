@@ -185,7 +185,6 @@ export default function MonitoringPage() {
       fetchingRef.current = false;
       fetchPending();
     } catch (error) {
-      console.log(error);
       alert('Failed to perform action on scheduled post');
     }
   };

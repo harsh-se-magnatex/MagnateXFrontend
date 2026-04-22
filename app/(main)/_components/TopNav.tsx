@@ -18,13 +18,19 @@ const topNav = [
 
 export function TopNav() {
   const pathname = usePathname();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, accountName } = useAuth();
 
   const displayName = useMemo(() => {
     const raw =
-      user?.displayName?.trim() || user?.email?.split('@')[0] || 'there';
+      accountName?.trim() ||
+      user?.displayName?.trim() ||
+      user?.email?.split('@')[0] ||
+      (user?.phoneNumber
+        ? `…${user.phoneNumber.replace(/\D/g, '').slice(-4)}`
+        : '') ||
+      'there';
     return raw;
-  }, [user]);
+  }, [user, accountName]);
 
 
   return (

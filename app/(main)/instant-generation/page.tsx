@@ -312,7 +312,6 @@ export default function AIContentPage() {
         );
       }
     } catch (e: any) {
-      console.log(e.response);
       toast.error(
         e?.response?.data?.message || e.message || 'Failed to generate content.'
       );

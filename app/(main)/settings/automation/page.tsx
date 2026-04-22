@@ -104,7 +104,6 @@ export default function AutomationPreferencePage() {
       try {
         setPreferencesLoading(true);
         const response = await getUserPreferences();
-        console.log(response);
 
         if (response.success) {
           setEmojiUsage(response.data.preferences.emojiUsage ?? true);
@@ -129,7 +128,6 @@ export default function AutomationPreferencePage() {
     getPreferences();
     if (!loading && !user) router.replace('/sign-in');
   }, [loading, user, router]);
-  console.log(needApproval);
 
   useEffect(() => {
     try {

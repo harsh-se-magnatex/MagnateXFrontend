@@ -123,7 +123,6 @@ export default function OnboardingMenu() {
       const response = await onBoardUser(dataToSave);
       if (response.success) router.push('/brand-memory');
     } catch (error) {
-      console.log(error);
       toast.error(error instanceof Error ? error.message : 'Failed to onboard user');
     } finally {
       setLoading(false);
@@ -147,7 +146,6 @@ export default function OnboardingMenu() {
         const flat: Record<string, unknown> = { ...dnaFields };
         setFormData((prev: any) => ({ ...prev, ...flat }));
       } catch (error) {
-        console.log(error);
         toast.error(error instanceof Error ? error.message : 'Failed to extract business data');
       } finally {
         setFetchingBusinessData(false);
