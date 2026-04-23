@@ -18,6 +18,8 @@ import {
   generateMemoryLayerQuestions,
   getMemoryLayer,
   putMemoryLayer,
+  BRAND_PHOTO_DESCRIPTION_MAX,
+  putMemoryLayerBrandPhotoDescription,
   uploadMemoryLayerBrandPhotos,
   type MemoryLayerAnswerPayload,
 } from '@/src/service/api/userService';
@@ -40,7 +42,12 @@ type Question = {
   multiselectRole?: 'products';
 };
 
-type BrandPhoto = { url: string; path: string; createdAt?: string | null };
+type BrandPhoto = {
+  url: string;
+  path: string;
+  createdAt?: string | null;
+  description?: string;
+};
 
 type MemoryPayload = {
   status?: string;
@@ -60,6 +67,7 @@ type PendingImage = {
   id: string;
   file: File;
   previewUrl: string;
+  description: string;
 };
 
 function isOk(res: { success?: boolean } | undefined): boolean {
@@ -92,11 +100,17 @@ export default function TemplateDnaMemoryLayerPage() {
   const [loading, setLoading] = useState(true);
   const [savingAnswers, setSavingAnswers] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [savingDescriptionPath, setSavingDescriptionPath] = useState<
+    string | null
+  >(null);
   const [generating, setGenerating] = useState(false);
   const [memory, setMemory] = useState<MemoryPayload | null>(null);
   const [draft, setDraft] = useState<Record<string, DraftRow>>({});
   const [customTags, setCustomTags] = useState<Record<string, string>>({});
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
+  const [photoDescriptionDrafts, setPhotoDescriptionDrafts] = useState<
+    Record<string, string>
+  >({});
   const memoryRef = useRef(memory);
   memoryRef.current = memory;
   const [activeTab, setActiveTab] = useState<'questionnaire' | 'images'>(
@@ -129,6 +143,17 @@ export default function TemplateDnaMemoryLayerPage() {
   useEffect(() => {
     if (user) void load();
   }, [user, load]);
+
+  useEffect(() => {
+    const photos = memory?.brandPhotos;
+    if (!photos?.length) {
+      setPhotoDescriptionDrafts({});
+      return;
+    }
+    setPhotoDescriptionDrafts(
+      Object.fromEntries(photos.map((p) => [p.path, p.description ?? '']))
+    );
+  }, [memory?.brandPhotos]);
 
   /** Hydrate draft from server answers when memory or questions change */
   useEffect(() => {
@@ -259,15 +284,39 @@ export default function TemplateDnaMemoryLayerPage() {
     }
   };
 
+  const flushPhotoDescription = async (path: string) => {
+    const draft = (photoDescriptionDrafts[path] ?? '').trim();
+    const server =
+      memory?.brandPhotos?.find((p) => p.path === path)?.description?.trim() ??
+      '';
+    if (draft === server) return;
+    try {
+      setSavingDescriptionPath(path);
+      const res = await putMemoryLayerBrandPhotoDescription(path, draft);
+      if (!isOk(res as { success?: boolean })) {
+        throw new Error('Failed to save note');
+      }
+      const raw = (res as { data?: { memoryLayer?: unknown } }).data
+        ?.memoryLayer;
+      if (raw) setMemory(parseMemory(raw));
+      toast.success('Image description saved');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setSavingDescriptionPath(null);
+    }
+  };
+
   const handleUploadPhotos = async () => {
     if (pendingImages.length === 0) {
       toast.message('Choose images first');
       return;
     }
     const files = pendingImages.map((p) => p.file);
+    const descriptions = pendingImages.map((p) => p.description);
     try {
       setUploadingPhotos(true);
-      const up = await uploadMemoryLayerBrandPhotos(files);
+      const up = await uploadMemoryLayerBrandPhotos(files, descriptions);
       if (!isOk(up as { success?: boolean })) {
         throw new Error('Photo upload failed');
       }
@@ -332,6 +381,7 @@ export default function TemplateDnaMemoryLayerPage() {
           id: makePendingId(f),
           file: f,
           previewUrl: URL.createObjectURL(f),
+          description: '',
         });
       }
       return next;
@@ -672,26 +722,60 @@ export default function TemplateDnaMemoryLayerPage() {
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
                       Saved on server
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {brandPhotos.map((p) => (
                         <div
                           key={p.path}
-                          className="relative group rounded-xl border border-slate-200 overflow-hidden aspect-square bg-slate-100"
+                          className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50/80 p-2 space-y-2"
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={p.url}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => void handleRemovePhoto(p.path)}
-                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                            aria-label="Remove photo"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="relative group rounded-lg overflow-hidden aspect-square bg-slate-100 max-h-[220px] sm:max-h-none">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={p.url}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => void handleRemovePhoto(p.path)}
+                              className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                              aria-label="Remove photo"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-slate-600">
+                              Image description (optional, max{' '}
+                              {BRAND_PHOTO_DESCRIPTION_MAX} characters)
+                            </label>
+                            <textarea
+                              value={photoDescriptionDrafts[p.path] ?? ''}
+                              disabled={savingDescriptionPath === p.path}
+                              onChange={(e) =>
+                                setPhotoDescriptionDrafts((prev) => ({
+                                  ...prev,
+                                  [p.path]: e.target.value.slice(
+                                    0,
+                                    BRAND_PHOTO_DESCRIPTION_MAX
+                                  ),
+                                }))
+                              }
+                              onBlur={() => void flushPhotoDescription(p.path)}
+                              maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
+                              rows={3}
+                              placeholder="Describe this product image (you type this; max 500 characters)"
+                              className={cn(
+                                inputBase,
+                                'text-sm py-2 resize-y min-h-[72px]',
+                                savingDescriptionPath === p.path && 'opacity-60'
+                              )}
+                            />
+                            <p className="text-[10px] text-slate-400 text-right">
+                              {(photoDescriptionDrafts[p.path] ?? '').length}/
+                              {BRAND_PHOTO_DESCRIPTION_MAX}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -736,29 +820,65 @@ export default function TemplateDnaMemoryLayerPage() {
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
                       Ready to upload ({pendingImages.length})
                     </h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {pendingImages.map((p) => (
                         <div
                           key={p.id}
-                          className="relative rounded-xl border border-emerald-200 overflow-hidden aspect-square bg-slate-100 ring-2 ring-emerald-100"
+                          className="rounded-xl border border-emerald-200 overflow-hidden bg-emerald-50/40 p-2 space-y-2 ring-1 ring-emerald-100"
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={p.previewUrl}
-                            alt={p.file.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removePending(p.id)}
-                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red-600"
-                            aria-label="Remove from queue"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                          <p className="absolute bottom-0 left-0 right-0 truncate bg-black/50 text-[10px] text-white px-2 py-1">
-                            {p.file.name}
-                          </p>
+                          <div className="relative aspect-square max-h-[220px] sm:max-h-none rounded-lg overflow-hidden bg-slate-100">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={p.previewUrl}
+                              alt={p.file.name}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removePending(p.id)}
+                              className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red-600"
+                              aria-label="Remove from queue"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                            <p className="absolute bottom-0 left-0 right-0 truncate bg-black/50 text-[10px] text-white px-2 py-1">
+                              {p.file.name}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-slate-600">
+                              Image description (optional, max{' '}
+                              {BRAND_PHOTO_DESCRIPTION_MAX} characters)
+                            </label>
+                            <textarea
+                              value={p.description}
+                              onChange={(e) =>
+                                setPendingImages((prev) =>
+                                  prev.map((row) =>
+                                    row.id === p.id
+                                      ? {
+                                          ...row,
+                                          description: e.target.value.slice(
+                                            0,
+                                            BRAND_PHOTO_DESCRIPTION_MAX
+                                          ),
+                                        }
+                                      : row
+                                  )
+                                )
+                              }
+                              maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
+                              rows={3}
+                              placeholder="Describe this image before upload"
+                              className={cn(
+                                inputBase,
+                                'text-sm py-2 resize-y min-h-[72px]'
+                              )}
+                            />
+                            <p className="text-[10px] text-slate-400 text-right">
+                              {p.description.length}/{BRAND_PHOTO_DESCRIPTION_MAX}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>

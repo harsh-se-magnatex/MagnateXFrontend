@@ -31,9 +31,18 @@ import {
   selectSocialPlatformApi,
 } from '@/features/user/api';
 import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { selectFacebookPageApi } from '@/src/service/api/social.servce';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const SUBSCRIPTION_ACK_KEY = 'magnatex-ai-engine-subscription-ack';
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? '';
 
 const PLAN_MAX_SOCIAL: Record<string, number> = {
   prime: 1,
@@ -68,22 +77,48 @@ type StepId =
   | 'plan'
   | 'business'
   | 'selectSocial'
+  | 'facebook'
+  | 'instagram'
+  | 'linkedin'
   | 'ready';
 
 type StepMeta = { id: StepId; label: string; icon: React.ElementType };
 
 const BASE_STEP_IDS = new Set<StepId>(['plan', 'business', 'selectSocial']);
+/** Connect steps; user may go Next / jump ahead without finishing each link. */
+const CONNECT_STEP_IDS = new Set<StepId>(['facebook', 'instagram', 'linkedin']);
 
-const STEP_META: StepMeta[] = [
-  { id: 'plan', label: 'Plan', icon: DollarSign },
-  { id: 'business', label: 'Business', icon: BriefcaseBusiness },
-  { id: 'selectSocial', label: 'Select Accounts', icon: Share2 },
-  { id: 'ready', label: 'Ready', icon: CheckCircle },
-];
+function hasCommittedSocialSelection(selected: SelectedPlatforms): boolean {
+  return [selected.facebook, selected.instagram, selected.linkedin].some(
+    Boolean
+  );
+}
 
 function readSubscriptionAck(): boolean {
   if (typeof window === 'undefined') return false;
   return localStorage.getItem(SUBSCRIPTION_ACK_KEY) === 'true';
+}
+
+function buildStepMeta(selected: SelectedPlatforms): StepMeta[] {
+  const committed = hasCommittedSocialSelection(selected);
+  const steps: StepMeta[] = [
+    { id: 'plan', label: 'Plan', icon: DollarSign },
+    { id: 'business', label: 'Business', icon: BriefcaseBusiness },
+  ];
+
+  if (!committed) {
+    steps.push({ id: 'selectSocial', label: 'Select Accounts', icon: Share2 });
+  }
+
+  if (selected.facebook)
+    steps.push({ id: 'facebook', label: 'Facebook', icon: FacebookIcon });
+  if (selected.instagram)
+    steps.push({ id: 'instagram', label: 'Instagram', icon: Instagram });
+  if (selected.linkedin)
+    steps.push({ id: 'linkedin', label: 'LinkedIn', icon: Linkedin });
+
+  steps.push({ id: 'ready', label: 'Ready', icon: CheckCircle });
+  return steps;
 }
 
 function isStepComplete(
@@ -106,11 +141,104 @@ function isStepComplete(
       ].filter(Boolean).length;
       return count > 0;
     }
+    case 'facebook':
+      return (
+        (data.facebookConnected ?? data.availableFBPages.length > 0) &&
+        data.selectedPageId != null
+      );
+    case 'instagram':
+      return data.instagramConnected === true;
+    case 'linkedin':
+      return data.linkedinConnected === true;
     case 'ready':
       return false;
     default:
       return false;
   }
+}
+
+function SelectFacebookPageModal({
+  open,
+  onOpenChange,
+  data,
+  onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  data: UserData['availableFBPages'];
+  onSuccess: () => void;
+}) {
+  const [selectedFacebookPage, setSelectedFacebookPage] = React.useState<
+    string | null
+  >(null);
+
+  React.useEffect(() => {
+    if (!open) setSelectedFacebookPage(null);
+  }, [open]);
+
+  const selectedPage =
+    selectedFacebookPage == null
+      ? null
+      : (data.find((p) => p.pageId === selectedFacebookPage) ?? null);
+
+  const handleSelectFacebookPage = async () => {
+    if (!selectedPage) return;
+    try {
+      const res = await selectFacebookPageApi(selectedPage.pageId);
+      if (res.success) {
+        onOpenChange(false);
+        onSuccess();
+      }
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : 'Failed to select Facebook page';
+      alert(msg);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Select Facebook Page</DialogTitle>
+          <DialogDescription>
+            Select the Facebook page you want to use for your posts.
+          </DialogDescription>
+        </DialogHeader>
+        <Select
+          value={selectedFacebookPage ?? ''}
+          onValueChange={(value) => setSelectedFacebookPage(value || null)}
+        >
+          <SelectTrigger className="w-full active:ring-0 active:ring-offset-0 active:border-0">
+            <SelectValue placeholder="Select a Facebook page" />
+          </SelectTrigger>
+          <SelectContent>
+            {data.map((page) => (
+              <SelectItem key={page.pageId} value={page.pageId}>
+                {page.pageName}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={selectedFacebookPage == null}
+            onClick={() => {
+              if (!selectedPage) return;
+              void handleSelectFacebookPage();
+            }}
+          >
+            Confirm{selectedPage ? `: ${selectedPage.pageName}` : ''}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 const PLATFORM_OPTIONS: {
@@ -156,6 +284,8 @@ export default function AIEnginePage() {
   const [dataLoading, setDataLoading] = React.useState(true);
   const [subscriptionAck, setSubscriptionAck] = React.useState(false);
   const [currentStep, setCurrentStep] = React.useState(0);
+  const [selectFacebookPageModalOpen, setSelectFacebookPageModalOpen] =
+    React.useState(false);
   const [direction, setDirection] = React.useState(0);
   const [skipped, setSkipped] = React.useState<Set<StepId>>(new Set());
   const [localSelected, setLocalSelected] = React.useState<SelectedPlatforms>({
@@ -211,7 +341,10 @@ export default function AIEnginePage() {
     void getDetails();
   }, [loading, user, router, getDetails]);
 
-  const stepMeta = STEP_META;
+  const stepMeta = useMemo(
+    () => buildStepMeta(data.selected),
+    [data.selected]
+  );
 
   const stepCompletions = useMemo(() => {
     return stepMeta.map((s) =>
@@ -222,6 +355,15 @@ export default function AIEnginePage() {
   const firstStrictIncompleteIdx = useMemo(() => {
     for (let i = 0; i < stepMeta.length - 1; i++) {
       if (!stepCompletions[i]) return i;
+    }
+    return stepMeta.length - 1;
+  }, [stepMeta, stepCompletions]);
+
+  const firstBlockingIncompleteIdx = useMemo(() => {
+    for (let i = 0; i < stepMeta.length - 1; i++) {
+      if (stepCompletions[i]) continue;
+      if (CONNECT_STEP_IDS.has(stepMeta[i].id)) continue;
+      return i;
     }
     return stepMeta.length - 1;
   }, [stepMeta, stepCompletions]);
@@ -246,9 +388,11 @@ export default function AIEnginePage() {
       return;
     }
     setCurrentStep((prev) => {
-      return prev > firstStrictIncompleteIdx ? firstStrictIncompleteIdx : prev;
+      return prev > firstBlockingIncompleteIdx
+        ? firstBlockingIncompleteIdx
+        : prev;
     });
-  }, [dataLoading, firstStrictIncompleteIdx, stepPositionInitialized]);
+  }, [dataLoading, firstStrictIncompleteIdx, firstBlockingIncompleteIdx, stepPositionInitialized]);
 
   useEffect(() => {
     setCurrentStep((prev) => {
@@ -266,8 +410,12 @@ export default function AIEnginePage() {
     return () => window.removeEventListener('focus', onFocus);
   }, [user, getDetails]);
 
+  const currentNavStepId = stepMeta[currentStep]?.id;
   const canGoNext =
-    currentStep < stepMeta.length - 1 && stepCompletions[currentStep];
+    currentStep < stepMeta.length - 1 &&
+    (stepCompletions[currentStep] ||
+      (currentNavStepId != null &&
+        CONNECT_STEP_IDS.has(currentNavStepId)));
   const isLastStep = currentStep === stepMeta.length - 1;
   const goNext = () => {
     if (!canGoNext) return;
@@ -283,7 +431,7 @@ export default function AIEnginePage() {
 
   const goToStep = (index: number) => {
     if (index < 0 || index >= stepMeta.length) return;
-    if (index > firstStrictIncompleteIdx) return;
+    if (index > firstBlockingIncompleteIdx) return;
     setDirection(index > currentStep ? 1 : -1);
     setCurrentStep(index);
   };
@@ -331,6 +479,10 @@ export default function AIEnginePage() {
       setSavingSelection(false);
     }
   };
+
+  const facebookHref = `${BACKEND_URL}/auth/facebook`;
+  const instagramHref = `${BACKEND_URL}/auth/instagram`;
+  const linkedinHref = `${BACKEND_URL}/auth/linkedin/posting`;
 
   const currentStepMeta = stepMeta[currentStep];
   const currentStepId = currentStepMeta?.id;
@@ -386,7 +538,7 @@ export default function AIEnginePage() {
             .filter(({ s }) => BASE_STEP_IDS.has(s.id))
             .map(({ s, i }) => {
               const done = stepCompletions[i];
-              const locked = i > firstStrictIncompleteIdx;
+              const locked = i > firstBlockingIncompleteIdx;
               return (
                 <button
                   key={s.id}
@@ -417,7 +569,7 @@ export default function AIEnginePage() {
             .filter(({ s }) => s.id === 'ready')
             .map(({ s, i }) => {
               const done = stepCompletions[i];
-              const locked = i > firstStrictIncompleteIdx;
+              const locked = i > firstBlockingIncompleteIdx;
               return (
                 <button
                   key={s.id}
@@ -444,6 +596,46 @@ export default function AIEnginePage() {
               );
             })}
         </div>
+        {stepMeta.some((s) => CONNECT_STEP_IDS.has(s.id)) && (
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide shrink-0">
+              Selected accounts
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {stepMeta
+                .map((s, i) => ({ s, i }))
+                .filter(({ s }) => CONNECT_STEP_IDS.has(s.id))
+                .map(({ s, i }) => {
+                  const done = stepCompletions[i];
+                  const locked = i > firstBlockingIncompleteIdx;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      disabled={locked}
+                      onClick={() => goToStep(i)}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border',
+                        i === currentStep &&
+                          'bg-primary text-primary-foreground border-primary shadow-sm',
+                        i !== currentStep &&
+                          done &&
+                          'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
+                        i !== currentStep &&
+                          !done &&
+                          !locked &&
+                          'bg-muted/50 text-muted-foreground border-border hover:bg-muted',
+                        locked && 'opacity-40 cursor-not-allowed'
+                      )}
+                    >
+                      <s.icon className="h-3.5 w-3.5" />
+                      {s.label}
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="relative min-h-[320px]">
@@ -557,7 +749,7 @@ export default function AIEnginePage() {
                   Select Social Accounts
                 </h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Choose which social platforms to use with the AI engine. Your{' '}
+                  Choose which social platforms to connect. Your{' '}
                   <span className="font-semibold text-foreground capitalize">
                     {data.plan}
                   </span>{' '}
@@ -646,6 +838,140 @@ export default function AIEnginePage() {
               </div>
             )}
 
+            {/* Step: Facebook */}
+            {currentStepId === 'facebook' && (
+              <div className="space-y-5">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-cyan-400 text-white shadow-sm">
+                  <FacebookIcon className="h-6 w-6" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">Facebook</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Connect Facebook and choose which Page the AI engine should
+                  post to.
+                </p>
+                {!(
+                  data.facebookConnected ?? data.availableFBPages.length > 0
+                ) ? (
+                  <Button className="w-full" asChild>
+                    <a href={facebookHref}>Connect Facebook</a>
+                  </Button>
+                ) : data.selectedPageId == null ? (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Facebook is linked. Select the page to use for publishing.
+                    </p>
+                    <Button
+                      className="w-full"
+                      onClick={() => setSelectFacebookPageModalOpen(true)}
+                    >
+                      Select Facebook page
+                    </Button>
+                  </>
+                ) : (
+                  <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 shrink-0" />
+                    Page:{' '}
+                    <span className="text-foreground">
+                      {data.availableFBPages.find(
+                        (p) => p.pageId === data.selectedPageId
+                      )?.pageName ?? data.selectedPageId}
+                    </span>
+                  </p>
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => router.push('/social-media-integration')}
+                >
+                  Open social connections
+                </Button>
+              </div>
+            )}
+
+            {/* Step: Instagram */}
+            {currentStepId === 'instagram' && (
+              <div className="space-y-5">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white shadow-sm">
+                  <Instagram className="h-6 w-6" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">Instagram</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Connect Instagram. When an account is linked, select it below
+                  to confirm the profile used for this setup.
+                </p>
+                {!data.instagramConnected ? (
+                  <Button className="w-full" asChild>
+                    <a href={instagramHref}>Connect Instagram</a>
+                  </Button>
+                ) : (
+                  <>
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Connected account
+                      </p>
+                      <Select
+                        value={data.instagramUserId ?? '__ig__'}
+                        onValueChange={() => {}}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select account" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={data.instagramUserId ?? '__ig__'}>
+                            {data.instagramUserId
+                              ? `Instagram user ${data.instagramUserId}`
+                              : 'Instagram connected'}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 shrink-0" />
+                      Instagram is connected.
+                    </p>
+                  </>
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => router.push('/social-media-integration')}
+                >
+                  Open social connections
+                </Button>
+              </div>
+            )}
+
+            {/* Step: LinkedIn */}
+            {currentStepId === 'linkedin' && (
+              <div className="space-y-5">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-[#0A66C2] to-[#004182] text-white shadow-sm">
+                  <Linkedin className="h-6 w-6" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground">LinkedIn</h2>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Connect LinkedIn for professional publishing from the AI
+                  engine.
+                </p>
+                {data.linkedinConnected ? (
+                  <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 shrink-0" />
+                    LinkedIn is connected.
+                  </p>
+                ) : (
+                  <Button className="w-full" asChild>
+                    <a href={linkedinHref}>Connect LinkedIn</a>
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => router.push('/social-media-integration')}
+                >
+                  Open social connections
+                </Button>
+              </div>
+            )}
+
             {/* Step: Ready */}
             {currentStepId === 'ready' && (
               <div className="space-y-5 text-center sm:text-left">
@@ -700,7 +1026,7 @@ export default function AIEnginePage() {
             <DialogDescription asChild>
               <div className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  You are about to save these platforms for the AI Engine:
+                  You are about to connect these platforms for the AI Engine:
                 </p>
                 <ul className="list-disc pl-5 font-medium text-foreground">
                   {PLATFORM_OPTIONS.filter((o) => localSelected[o.key]).map(
@@ -733,6 +1059,13 @@ export default function AIEnginePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <SelectFacebookPageModal
+        open={selectFacebookPageModalOpen}
+        onOpenChange={setSelectFacebookPageModalOpen}
+        data={data.availableFBPages}
+        onSuccess={() => void getDetails({ silent: true })}
+      />
     </div>
   );
 }

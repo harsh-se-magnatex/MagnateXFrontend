@@ -1,13 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
+  BRAND_PHOTO_DESCRIPTION_MAX,
   generateMemoryLayerQuestions,
   getMemoryLayer,
   putMemoryLayer,
+  putMemoryLayerBrandPhotoDescription,
   uploadMemoryLayerBrandPhotos,
   type MemoryLayerAnswerPayload,
 } from '@/src/service/api/userService';
@@ -24,7 +26,7 @@ type MemoryPayload = {
   status?: string;
   questions?: Question[];
   answers?: MemoryLayerAnswerPayload[];
-  brandPhotos?: { url: string }[];
+  brandPhotos?: { url: string; path?: string; description?: string }[];
 };
 
 type DraftRow =
@@ -50,10 +52,29 @@ export default function BrandMemoryPage() {
   const [draft, setDraft] = useState<Record<string, DraftRow>>({});
   const [customTag, setCustomTag] = useState('');
   const [brandPhotosMeta, setBrandPhotosMeta] = useState<
-    { url: string }[]
+    { url: string; path?: string; description?: string }[]
   >([]);
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [serverDescDrafts, setServerDescDrafts] = useState<Record<string, string>>(
+    {}
+  );
+  const [pendingStaged, setPendingStaged] = useState<
+    { id: string; file: File; previewUrl: string; description: string }[]
+  >([]);
   const [submitting, setSubmitting] = useState(false);
+  const pendingRef = useRef(pendingStaged);
+  pendingRef.current = pendingStaged;
+
+  useEffect(() => {
+    return () => {
+      for (const p of pendingRef.current) {
+        try {
+          URL.revokeObjectURL(p.previewUrl);
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -102,13 +123,21 @@ export default function BrandMemoryPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    const m: Record<string, string> = {};
+    for (const p of brandPhotosMeta) {
+      if (p.path) m[p.path] = p.description ?? '';
+    }
+    setServerDescDrafts(m);
+  }, [brandPhotosMeta]);
+
   const current = questions[qIndex];
 
   useEffect(() => {
     setCustomTag('');
   }, [qIndex, current?.id]);
 
-  const slotsAfterPending = 30 - brandPhotosMeta.length - pendingFiles.length;
+  const slotsAfterPending = 30 - brandPhotosMeta.length - pendingStaged.length;
   const remainingPhotoSlots = Math.max(0, slotsAfterPending);
 
   const rowFor = useCallback(
@@ -211,7 +240,7 @@ export default function BrandMemoryPage() {
     (list: FileList | null) => {
       if (!list?.length) return;
       const maxPending = 30 - brandPhotosMeta.length;
-      setPendingFiles((prev) => {
+      setPendingStaged((prev) => {
         const next = [...prev];
         for (let i = 0; i < list.length; i++) {
           if (next.length >= maxPending) {
@@ -226,12 +255,53 @@ export default function BrandMemoryPage() {
             toast.error(`${f.name} is not an image`);
             continue;
           }
-          next.push(f);
+          next.push({
+            id: `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2)}`,
+            file: f,
+            previewUrl: URL.createObjectURL(f),
+            description: '',
+          });
         }
         return next;
       });
     },
     [brandPhotosMeta.length]
+  );
+
+  const removePending = useCallback((id: string) => {
+    setPendingStaged((prev) => {
+      const hit = prev.find((p) => p.id === id);
+      if (hit) {
+        try {
+          URL.revokeObjectURL(hit.previewUrl);
+        } catch {
+          /* ignore */
+        }
+      }
+      return prev.filter((p) => p.id !== id);
+    });
+  }, []);
+
+  const flushServerImageDescription = useCallback(
+    async (path: string) => {
+      const draft = (serverDescDrafts[path] ?? '').trim();
+      const server = brandPhotosMeta.find((p) => p.path === path)?.description?.trim() ?? '';
+      if (draft === server) return;
+      try {
+        const res = await putMemoryLayerBrandPhotoDescription(path, draft);
+        if (!isEnvelopeOk(res as { success?: boolean })) {
+          throw new Error('Failed to save');
+        }
+        const raw = (res as { data?: { memoryLayer?: unknown } }).data
+          ?.memoryLayer;
+        const ml = parseMemory(raw);
+        if (ml?.brandPhotos) setBrandPhotosMeta(ml.brandPhotos);
+        toast.success('Image description saved');
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : 'Save failed');
+      }
+    },
+    [brandPhotosMeta, serverDescDrafts]
   );
 
   const finish = useCallback(async () => {
@@ -245,11 +315,22 @@ export default function BrandMemoryPage() {
       const selectedProducts =
         pr && !pr.skipped && 'multi' in pr ? pr.multi : undefined;
 
-      if (pendingFiles.length > 0) {
-        const up = await uploadMemoryLayerBrandPhotos(pendingFiles);
+      if (pendingStaged.length > 0) {
+        const up = await uploadMemoryLayerBrandPhotos(
+          pendingStaged.map((p) => p.file),
+          pendingStaged.map((p) => p.description)
+        );
         if (!isEnvelopeOk(up as { success?: boolean })) {
           throw new Error('Photo upload failed');
         }
+        for (const p of pendingStaged) {
+          try {
+            URL.revokeObjectURL(p.previewUrl);
+          } catch {
+            /* ignore */
+          }
+        }
+        setPendingStaged([]);
       }
 
       const res = await putMemoryLayer({
@@ -267,7 +348,7 @@ export default function BrandMemoryPage() {
     } finally {
       setSubmitting(false);
     }
-  }, [buildAnswers, pendingFiles, questions, router, rowFor]);
+  }, [buildAnswers, pendingStaged, questions, router, rowFor]);
 
   const skipPhotos = useCallback(async () => {
     try {
@@ -296,7 +377,11 @@ export default function BrandMemoryPage() {
   }, [buildAnswers, questions, router, rowFor]);
 
   const panelClass =
-    'max-w-lg w-full bg-white/5 border border-white/10 rounded-2xl p-8 text-white shadow-[0_0_40px_rgba(0,209,255,0.15)]';
+    'max-w-lg w-full max-h-[calc(100dvh-2rem)] flex min-h-0 flex-col overflow-hidden bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 text-white shadow-[0_0_40px_rgba(0,209,255,0.15)]';
+  const photosScrollClass =
+    'min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 -mr-0.5 [scrollbar-gutter:stable]';
+  const actionBarClass =
+    'mt-4 flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4';
 
   const questionBody = useMemo(() => {
     if (!current) return null;
@@ -406,9 +491,9 @@ export default function BrandMemoryPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto overscroll-contain backdrop-blur-sm p-4 sm:p-4">
       <div className={panelClass}>
-        <div className="flex justify-between items-start gap-4 mb-4">
+        <div className="flex shrink-0 justify-between items-start gap-4">
           <h1 className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-r from-[#6C5CE7] to-[#00D1FF]">
             {phase === 'qa' ? 'Tell us about your brand' : 'Brand photos'}
           </h1>
@@ -424,12 +509,14 @@ export default function BrandMemoryPage() {
 
         {phase === 'qa' && current && (
           <>
-            <p className="text-sm text-gray-400 mb-2">
-              Question {qIndex + 1} of {questions.length}
-            </p>
-            <p className="text-gray-900 mb-4 font-medium">{current.prompt}</p>
-            {questionBody}
-            <div className="mt-8 flex justify-between gap-4 flex-wrap">
+            <div className={cn(photosScrollClass, 'mt-4 space-y-4')}>
+              <p className="text-sm text-gray-400">
+                Question {qIndex + 1} of {questions.length}
+              </p>
+              <p className="text-gray-900 font-medium">{current.prompt}</p>
+              {questionBody}
+            </div>
+            <div className={actionBarClass}>
               <button
                 type="button"
                 onClick={goBack}
@@ -463,18 +550,68 @@ export default function BrandMemoryPage() {
 
         {phase === 'photos' && (
           <>
-            <p className="text-sm text-gray-600 mb-4">
+            <div className={cn(photosScrollClass, 'mt-4 space-y-4')}>
+            <p className="text-sm text-gray-600">
               Optional: you can add {remainingPhotoSlots} more image
               {remainingPhotoSlots === 1 ? '' : 's'} in this step (30 max in storage
               {brandPhotosMeta.length > 0
                 ? `, ${brandPhotosMeta.length} already saved`
                 : ''}
-              {pendingFiles.length > 0
-                ? `, ${pendingFiles.length} staged`
+              {pendingStaged.length > 0
+                ? `, ${pendingStaged.length} staged`
                 : ''}
-              ).
+              ). Add an image description under each preview (max{' '}
+              {BRAND_PHOTO_DESCRIPTION_MAX} characters).
             </p>
-            <label className="block border-2 border-dashed border-white/20 rounded-xl p-8 text-center cursor-pointer hover:bg-white/5">
+            {brandPhotosMeta.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase">
+                  Already saved
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {brandPhotosMeta.map((p) =>
+                    p.path ? (
+                      <div
+                        key={p.path}
+                        className="border border-white/10 rounded-lg p-2 bg-white/5 space-y-2"
+                      >
+                        <div className="aspect-square rounded-md overflow-hidden bg-white/10 max-h-40">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={p.url}
+                            alt=""
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <label className="text-xs text-gray-600">Image description</label>
+                        <textarea
+                          value={serverDescDrafts[p.path] ?? ''}
+                          onChange={(e) =>
+                            setServerDescDrafts((prev) => ({
+                              ...prev,
+                              [p.path!]: e.target.value.slice(
+                                0,
+                                BRAND_PHOTO_DESCRIPTION_MAX
+                              ),
+                            }))
+                          }
+                          onBlur={() => void flushServerImageDescription(p.path!)}
+                          maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
+                          rows={3}
+                          placeholder="What should we know about this product image?"
+                          className="w-full text-sm bg-white/10 border border-black/20 rounded-md px-2 py-1.5 text-gray-900 placeholder:text-gray-500 resize-y min-h-[72px]"
+                        />
+                        <p className="text-[10px] text-gray-500 text-right">
+                          {(serverDescDrafts[p.path] ?? '').length}/
+                          {BRAND_PHOTO_DESCRIPTION_MAX}
+                        </p>
+                      </div>
+                    ) : null
+                  )}
+                </div>
+              </div>
+            )}
+            <label className="block border-2 border-dashed border-white/20 rounded-xl p-6 sm:p-8 text-center cursor-pointer hover:bg-white/5 shrink-0">
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
@@ -484,14 +621,68 @@ export default function BrandMemoryPage() {
               />
               <span className="text-gray-700">Drop or click to add images</span>
             </label>
-            {pendingFiles.length > 0 && (
-              <ul className="mt-3 text-sm text-gray-600 space-y-1">
-                {pendingFiles.map((f) => (
-                  <li key={f.name + f.size}>{f.name}</li>
-                ))}
-              </ul>
+            {pendingStaged.length > 0 && (
+              <div>
+                <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase">
+                  Ready to upload
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {pendingStaged.map((row) => (
+                    <div
+                      key={row.id}
+                      className="list-none border border-white/10 rounded-lg p-2 bg-white/5 space-y-2"
+                    >
+                      <div className="relative aspect-square rounded-md overflow-hidden bg-white/10 max-h-48">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={row.previewUrl}
+                          alt={row.file.name}
+                          className="w-full h-full object-contain"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removePending(row.id)}
+                          className="absolute top-2 right-2 text-xs rounded bg-black/50 text-white px-2 py-1 hover:bg-red-600"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate" title={row.file.name}>
+                        {row.file.name}
+                      </p>
+                      <label className="text-xs text-gray-600">Image description</label>
+                      <textarea
+                        value={row.description}
+                        onChange={(e) =>
+                          setPendingStaged((prev) =>
+                            prev.map((p) =>
+                              p.id === row.id
+                                ? {
+                                    ...p,
+                                    description: e.target.value.slice(
+                                      0,
+                                      BRAND_PHOTO_DESCRIPTION_MAX
+                                    ),
+                                  }
+                                : p
+                            )
+                          )
+                        }
+                        maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
+                        rows={3}
+                        placeholder="Optional — helps generation match this product image"
+                        className="w-full text-sm bg-white/10 border border-black/20 rounded-md px-2 py-1.5 text-gray-900 placeholder:text-gray-500 resize-y min-h-[72px]"
+                      />
+                      <p className="text-[10px] text-gray-500 text-right">
+                        {row.description.length}/{BRAND_PHOTO_DESCRIPTION_MAX}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
-            <div className="mt-8 flex justify-between gap-4 flex-wrap">
+            </div>
+            <div className={actionBarClass}>
               <button
                 type="button"
                 onClick={goBack}

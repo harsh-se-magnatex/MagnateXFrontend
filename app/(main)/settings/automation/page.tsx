@@ -215,8 +215,8 @@ export default function AutomationPreferencePage() {
                   role="switch"
                   aria-checked={emojiUsage}
                   onClick={() => {
-                    const newValue = !socialSalesEmailUsage;
-                    setSocialSalesEmailUsage(newValue);
+                    const newValue = !emojiUsage;
+                    setEmojiUsage(newValue);
                     handleSubmit(
                       logoPreference,
                       newValue,
