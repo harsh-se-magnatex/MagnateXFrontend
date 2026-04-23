@@ -121,7 +121,7 @@ export const createUserEmailPassword = async (
     const result = await createUserWithEmailAndPassword(auth, email, password);
     if (!result.user.emailVerified) {
       await sendEmailVerification(result.user, {
-        url: 'http://localhost:3000/sign-in',
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
         handleCodeInApp: true,
       });
       toast.info(
@@ -218,7 +218,7 @@ export const signOutUser = async () => {
 export const forgotPassword = async (email: string, url?: string) => {
   try {
     await sendPasswordResetEmail(auth, email, {
-      url: url ? url : 'http://localhost:3000/reset-password',
+      url: url ? url : `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
       handleCodeInApp: true,
     });
     return { success: true };

@@ -117,7 +117,7 @@ export default function AccountSettingsPage() {
     try {
       const res = await forgotPassword(
         resetEmail.trim(),
-        'http://localhost:3000/sign-in'
+        `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`
       );
       if (!res.success) {
         setPasswordMessageTone('error');

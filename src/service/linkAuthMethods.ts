@@ -48,7 +48,7 @@ function signInVerificationActionUrl(): string {
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/sign-in`;
   }
-  return 'http://localhost:3000/sign-in';
+  return `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`;
 }
 
 /**
