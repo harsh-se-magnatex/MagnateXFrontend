@@ -13,9 +13,10 @@ import { Input } from '@/components/ui/input';
 import { AuthPasswordField } from './auth-password-field';
 import { PhoneNumberLogin } from './phone-number-login';
 import { RecentlyDeletedAccountDialog } from './recently-deleted-account-dialog';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { getSafeAppReturnTo } from '@/lib/safeAppReturnTo';
 import { signInEmailPassword, signInWithGoogle } from '@/src/service/auth';
 import {
   getUserAIenginePageContext,
@@ -39,6 +40,23 @@ export function SigninForm({
   const [recoveryDialogOpen, setRecoveryDialogOpen] = useState(false);
   const [deletedDocId, setDeletedDocId] = useState('');
   const [recoveryToken, setRecoveryToken] = useState('');
+  const [returnTo, setReturnTo] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReturnTo(
+      getSafeAppReturnTo(
+        new URLSearchParams(window.location.search).get('returnTo')
+      )
+    );
+  }, []);
+
+  const goAfterSignIn = (fallback: string) => {
+    if (returnTo && !returnTo.startsWith('/sign-in')) {
+      router.replace(returnTo);
+      return;
+    }
+    router.replace(fallback);
+  };
 
   const busy = oauthLoading || signInLoading;
 
@@ -84,7 +102,7 @@ export function SigninForm({
         router.replace('/onBoarding');
         return;
       }
-      router.replace('/home');
+      goAfterSignIn('/home');
     } catch (err: any) {
       const message =
         err instanceof Error ? err.message : 'Google login failed';
@@ -129,7 +147,7 @@ export function SigninForm({
         localStorage.removeItem('isNewUser');
         return;
       }
-      router.push('/home');
+      goAfterSignIn('/home');
 
       localStorage.removeItem('isNewUser');
     } catch (err: any) {
@@ -311,6 +329,7 @@ export function SigninForm({
           </header>
           <PhoneNumberLogin
             intent="signin"
+            returnToPath={returnTo}
             onRecoveryNeeded={async ({ deletedDocId }) => {
               const u = auth.currentUser;
               if (u) setRecoveryToken(await u.getIdToken());

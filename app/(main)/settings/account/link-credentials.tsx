@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import {
   confirmPhoneLink,
   formatAuthLinkError,
-  linkEmailPasswordToAccount,
+  requestEmailLinkToAddEmail,
   startPhoneLink,
   syncPasswordProviderAfterEmailVerified,
 } from '@/src/service/linkAuthMethods';
@@ -64,6 +64,7 @@ export function LinkCredentialsSection({ user }: Props) {
   const [linkPassword, setLinkPassword] = useState('');
   const [linkPassword2, setLinkPassword2] = useState('');
   const [emailBusy, setEmailBusy] = useState(false);
+  const [emailLinkSent, setEmailLinkSent] = useState(false);
 
   const hasPasswordProvider = user.providerData.some(
     (p) => p.providerId === 'password'
@@ -162,7 +163,7 @@ export function LinkCredentialsSection({ user }: Props) {
     }
   };
 
-  const handleLinkEmail = async (e: React.FormEvent) => {
+  const handleRequestEmailLink = async (e: React.FormEvent) => {
     e.preventDefault();
     const email = linkEmail.trim();
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
@@ -179,21 +180,14 @@ export function LinkCredentialsSection({ user }: Props) {
     }
     setEmailBusy(true);
     try {
-      const { emailVerificationSent } = await linkEmailPasswordToAccount(
-        user,
-        email,
-        linkPassword
-      );
+      await requestEmailLinkToAddEmail(email, linkPassword);
+      setEmailLinkSent(true);
       setLinkEmail('');
       setLinkPassword('');
       setLinkPassword2('');
-      if (emailVerificationSent) {
-        toast.info(
-          'We sent a verification link to your email (same as sign-up). Open it to verify; then password sign-in is fully enabled.'
-        );
-      } else {
-        toast.success('Email linked and verified.');
-      }
+      toast.info(
+        'We sent a sign-in link to that address. Open it in this browser while you are signed in here — your email is linked only after you confirm the link.'
+      );
     } catch (err: unknown) {
       toast.error(formatAuthLinkError(firebaseErrorCode(err)));
     } finally {
@@ -235,6 +229,20 @@ export function LinkCredentialsSection({ user }: Props) {
           </p>
         </div>
       </div>
+
+      {emailLinkSent && !hasEmail && hasPhone && (
+        <div
+          className="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-950"
+          role="status"
+        >
+          <p className="font-medium">Check your email</p>
+          <p className="mt-1 text-indigo-900/90">
+            Open the link we sent (on this device, while signed in) to verify and
+            add this email. If the link opened elsewhere, sign in on that device
+            or request a new link.
+          </p>
+        </div>
+      )}
 
       {needsEmailVerification && (
         <div
@@ -401,10 +409,15 @@ export function LinkCredentialsSection({ user }: Props) {
                 autoComplete="email"
               />
               {!hasEmail && hasPhone && (
-                <form onSubmit={handleLinkEmail} className="mt-4 space-y-4">
+                <form onSubmit={handleRequestEmailLink} className="mt-4 space-y-4">
+                  <p className="text-sm text-slate-600">
+                    We’ll email you a sign-in link. Your email and password are
+                    added <span className="font-medium">only after you open
+                    that link</span> (same browser, while signed in).
+                  </p>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-slate-700">
-                      New password
+                      Password to use after verification
                     </label>
                     <input
                       type="password"
@@ -433,7 +446,7 @@ export function LinkCredentialsSection({ user }: Props) {
                     disabled={emailBusy}
                     className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700"
                   >
-                    {emailBusy ? 'Linking…' : 'Link email'}
+                    {emailBusy ? 'Sending…' : 'Send verification link'}
                   </Button>
                 </form>
               )}

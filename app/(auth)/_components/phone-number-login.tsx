@@ -29,12 +29,15 @@ function digitsOnly(value: string): string {
 
 export type PhoneNumberLoginProps = {
   intent: 'signin' | 'signup';
+  /** After sign-in, navigate here if set (safe in-app path only). */
+  returnToPath?: string | null;
   onRecoveryNeeded?: (payload: { deletedDocId: string }) => void | Promise<void>;
   className?: string;
 };
 
 export function PhoneNumberLogin({
   intent,
+  returnToPath,
   onRecoveryNeeded,
   className,
 }: PhoneNumberLoginProps) {
@@ -176,6 +179,14 @@ export function PhoneNumberLogin({
       if (isNewFlag === 'true') {
         router.replace('/onBoarding');
         localStorage.removeItem('isNewUser');
+        return;
+      }
+      if (
+        intent === 'signin' &&
+        returnToPath &&
+        !returnToPath.startsWith('/sign-in')
+      ) {
+        router.replace(returnToPath);
         return;
       }
       router.replace('/home');
