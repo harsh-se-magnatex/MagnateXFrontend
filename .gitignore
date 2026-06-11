@@ -1,0 +1,12 @@
+# frontend
+node_modules
+.next
+.env*
+
+
+.agents
+skills-lock.json
+.claude
+
+# license audit scratch files (regenerate via npm run notices)
+license-report.json

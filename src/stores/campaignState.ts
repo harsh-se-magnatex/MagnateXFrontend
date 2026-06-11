@@ -1,0 +1,257 @@
+import { create } from 'zustand';
+import '@/src/stores/clearLegacyPersistedState';
+import type {
+  CampaignDayPlan,
+  CampaignSuggestion,
+} from '@/src/service/api/campaign.service';
+
+export type CampaignPlatform = 'instagram' | 'facebook' | 'linkedin';
+
+/**
+ * Per-day, locally-edited state for the campaign builder. `plan` is the
+ * AI-authored brief the user can tweak; `date` is the calendar slot the
+ * user picked (kept inline so reordering plan vs date is trivial).
+ *
+ * Dates do NOT have to line up with `dayNumber` — the user can map Day 1
+ * to Friday, Day 2 to Monday, Day 3 to next Wednesday, etc. The backend
+ * sorts the events chronologically before fanning them out.
+ */
+export type CampaignDayDraft = {
+  dayNumber: number;
+  title: string;
+  reference: string;
+  caption?: string;
+  /** ISO YYYY-MM-DD. `null` until the user picks a date for this slot. */
+  date: string | null;
+};
+
+type CampaignState = {
+  /** Free-form steering note the user can add before asking the AI for a
+   *  new set (e.g. "winter sale", "product launch"). Persists across
+   *  regenerations of individual cards. */
+  goal: string;
+  setGoal: (goal: string) => void;
+
+  /** The full set of (currently 3-5) AI suggestions the user can pick
+   *  from. Mirrors the saved Firestore set under
+   *  `users/{uid}/campaignState/active`. */
+  suggestions: CampaignSuggestion[];
+  /** Server-enforced max-days for THIS user (capped by plan window).
+   *  null when no set is loaded yet. */
+  maxDays: number | null;
+  /** ID of the suggestion the user has tapped to start drafting from.
+   *  Null while they are still browsing the gallery. */
+  selectedSuggestionId: string | null;
+
+  /** Editable per-day drafts derived from the selected suggestion. Empty
+   *  when no suggestion is selected. */
+  days: CampaignDayDraft[];
+  /** Editable theme — separated from the selected suggestion so user
+   *  edits aren't lost when they pop back to browse the gallery. */
+  theme: string;
+  description: string;
+
+  /** Selected post platforms; defaults to whatever's connected. */
+  genPlatforms: CampaignPlatform[];
+  setGenPlatforms: (platforms: CampaignPlatform[]) => void;
+  toggleGenPlatform: (platform: CampaignPlatform) => void;
+
+  /** Set-level loading flag — true while `/suggest-set` or
+   *  `/suggestions` is in flight. */
+  isLoadingSuggestions: boolean;
+  setIsLoadingSuggestions: (value: boolean) => void;
+  /** Card-level loading flag — holds the id of the card that is currently
+   *  being regenerated, so we can show a spinner on JUST that card. */
+  regeneratingSuggestionId: string | null;
+  setRegeneratingSuggestionId: (id: string | null) => void;
+  isSubmitting: boolean;
+  setIsSubmitting: (value: boolean) => void;
+
+  /** Replace the entire saved suggestion set (e.g. on initial fetch or
+   *  after `/suggest-set`). Clears the active selection if the previously
+   *  selected id is no longer present. */
+  loadSuggestionSet: (
+    suggestions: CampaignSuggestion[],
+    maxDays: number | null
+  ) => void;
+  /** Patch a single suggestion in the set without disturbing the others
+   *  (e.g. after `/regenerate`). When the regenerated card was the
+   *  currently-selected one, the editable day drafts are refreshed too. */
+  replaceSuggestion: (suggestion: CampaignSuggestion) => void;
+
+  /** Promote a card from the gallery into the editor: copies the
+   *  suggestion into the editable `theme` / `description` / `days` state
+   *  and remembers `selectedSuggestionId`. */
+  selectSuggestion: (suggestionId: string) => void;
+  /** Drop the active selection (return to the gallery view). Preserves
+   *  the suggestion set so the user can pick a different card. */
+  clearSelection: () => void;
+
+  updateDay: (dayNumber: number, patch: Partial<CampaignDayDraft>) => void;
+  /** Assign a date to a day slot. Pass `null` to clear. */
+  setDayDate: (dayNumber: number, date: string | null) => void;
+  /** Clear every day's date. */
+  clearAllDates: () => void;
+  /** Drop a day slot entirely. Re-numbers the remaining days so the UI
+   *  stays in 1..N order. Refuses to drop the last remaining day — the
+   *  campaign must contain at least one day. */
+  removeDay: (dayNumber: number) => void;
+
+  reset: () => void;
+};
+
+function planToDraft(
+  plan: CampaignDayPlan,
+  index: number,
+  carriedDate?: string | null
+): CampaignDayDraft {
+  return {
+    dayNumber: index + 1,
+    title: plan.title,
+    reference: plan.reference,
+    caption: plan.caption,
+    date: carriedDate ?? null,
+  };
+}
+
+function daysFromSuggestion(
+  suggestion: CampaignSuggestion,
+  carriedDays?: CampaignDayDraft[]
+): CampaignDayDraft[] {
+  // Carry over dates the user already picked when the new plan has the
+  // same length — keeps the calendar selections sticky across regenerate
+  // / re-select for the SAME card.
+  const carried = carriedDays && carriedDays.length === suggestion.days.length
+    ? carriedDays.map((d) => d.date)
+    : [];
+  return suggestion.days.map((plan, idx) =>
+    planToDraft(plan, idx, carried[idx] ?? null)
+  );
+}
+
+export const useCampaignState = create<CampaignState>()((set) => ({
+  goal: '',
+  setGoal: (goal) => set({ goal }),
+
+  suggestions: [],
+  maxDays: null,
+  selectedSuggestionId: null,
+  days: [],
+  theme: '',
+  description: '',
+
+  genPlatforms: [],
+  setGenPlatforms: (platforms) => set({ genPlatforms: platforms }),
+  toggleGenPlatform: (platform) =>
+    set((state) => ({
+      genPlatforms: state.genPlatforms.includes(platform)
+        ? state.genPlatforms.filter((p) => p !== platform)
+        : [...state.genPlatforms, platform],
+    })),
+
+  isLoadingSuggestions: false,
+  setIsLoadingSuggestions: (value) => set({ isLoadingSuggestions: value }),
+  regeneratingSuggestionId: null,
+  setRegeneratingSuggestionId: (id) => set({ regeneratingSuggestionId: id }),
+  isSubmitting: false,
+  setIsSubmitting: (value) => set({ isSubmitting: value }),
+
+  loadSuggestionSet: (suggestions, maxDays) =>
+    set((state) => {
+      const stillSelected = suggestions.some(
+        (s) => s.id === state.selectedSuggestionId
+      );
+      return {
+        suggestions,
+        maxDays,
+        // If the selected card is gone (fresh set replaced it), drop the
+        // editor so the user re-picks from the new gallery.
+        selectedSuggestionId: stillSelected ? state.selectedSuggestionId : null,
+        days: stillSelected ? state.days : [],
+        theme: stillSelected ? state.theme : '',
+        description: stillSelected ? state.description : '',
+      };
+    }),
+
+  replaceSuggestion: (suggestion) =>
+    set((state) => {
+      const next = state.suggestions.map((s) =>
+        s.id === suggestion.id ? suggestion : s
+      );
+      const isActive = state.selectedSuggestionId === suggestion.id;
+      return {
+        suggestions: next,
+        // When the user regenerates the card they are actively editing,
+        // refresh the editor with the new plan (carry over dates when the
+        // day count matches).
+        days: isActive ? daysFromSuggestion(suggestion, state.days) : state.days,
+        theme: isActive ? suggestion.theme : state.theme,
+        description: isActive ? suggestion.description : state.description,
+      };
+    }),
+
+  selectSuggestion: (suggestionId) =>
+    set((state) => {
+      const picked = state.suggestions.find((s) => s.id === suggestionId);
+      if (!picked) return state;
+      // If they re-pick the same card, keep their edits & date choices.
+      if (state.selectedSuggestionId === suggestionId) return state;
+      return {
+        selectedSuggestionId: suggestionId,
+        theme: picked.theme,
+        description: picked.description,
+        days: daysFromSuggestion(picked),
+      };
+    }),
+
+  clearSelection: () =>
+    set({
+      selectedSuggestionId: null,
+      days: [],
+      theme: '',
+      description: '',
+    }),
+
+  updateDay: (dayNumber, patch) =>
+    set((state) => ({
+      days: state.days.map((day) =>
+        day.dayNumber === dayNumber ? { ...day, ...patch } : day
+      ),
+    })),
+
+  setDayDate: (dayNumber, date) =>
+    set((state) => ({
+      days: state.days.map((day) =>
+        day.dayNumber === dayNumber ? { ...day, date } : day
+      ),
+    })),
+
+  clearAllDates: () =>
+    set((state) => ({
+      days: state.days.map((day) => ({ ...day, date: null })),
+    })),
+
+  removeDay: (dayNumber) =>
+    set((state) => {
+      if (state.days.length <= 1) return state;
+      const remaining = state.days
+        .filter((day) => day.dayNumber !== dayNumber)
+        .map((day, idx) => ({ ...day, dayNumber: idx + 1 }));
+      return { days: remaining };
+    }),
+
+  reset: () =>
+    set({
+      goal: '',
+      suggestions: [],
+      maxDays: null,
+      selectedSuggestionId: null,
+      days: [],
+      theme: '',
+      description: '',
+      genPlatforms: [],
+      isLoadingSuggestions: false,
+      regeneratingSuggestionId: null,
+      isSubmitting: false,
+    }),
+}));

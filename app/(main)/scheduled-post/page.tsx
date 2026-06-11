@@ -1,0 +1,1657 @@
+'use client';
+
+import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { useAuth } from '@/src/hooks/useAuth';
+import {
+  getScheduledPosts,
+  getScheduledPostsInRange,
+  type ScheduledPostsTab,
+} from '@/src/service/api/social.servce';
+import {
+  WORKSPACE_NAV_HREFS,
+  workspacePageTitle,
+} from '@/lib/workspace-nav';
+import { useRouter } from 'next/navigation';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
+import {
+  performActionByUserOnScheduledPost,
+  removeScheduledPost,
+} from '@/src/service/api/userService';
+import {
+  Calendar,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  LayoutGrid,
+  Sparkles,
+} from 'lucide-react';
+import {
+  addDays,
+  addMonths,
+  endOfMonth,
+  endOfWeek,
+  format as formatDate,
+  isSameDay,
+  isSameMonth,
+  parseISO,
+  startOfMonth,
+  startOfToday,
+  startOfWeek,
+  subMonths,
+} from 'date-fns';
+import {
+  generatedByLabel,
+  getDisplayStatus,
+  statusBadgeClasses,
+  StatusBadgeIcon,
+} from '@/lib/scheduled-post-status';
+import { cn } from '@/lib/utils';
+import { showErrorToast } from '@/lib/show-error-toast';
+import { DownloadPngButton } from '@/components/download-png-button';
+import {
+  ImagePreviewButton,
+  ImagePreviewOverlay,
+  useImagePreview,
+} from '@/components/image-preview';
+import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import {
+  useTimestampFormatter,
+  useUserTimezone,
+  type TimestampInput,
+} from '@/lib/user-timezone';
+
+type FirestoreTimestamp = {
+  _seconds: number;
+  _nanoseconds: number;
+};
+
+export type ScheduledPost = {
+  postId?: string;
+  message: string;
+  /** Regenerations so far; also stored as `regenratedCount` in some API payloads. */
+  regeneratedCount?: number;
+  regenratedCount?: number;
+  /** When true, user may regenerate via AI engine (matches stored post). */
+  generatedByAiEngine?: boolean;
+  generationProof?: unknown;
+  UserApprovalStatus: string;
+  imageUrl: string | null;
+  scheduleAt: FirestoreTimestamp;
+  platform: string;
+  removedByUser: boolean;
+  /**
+   * Backend can also persist `'approved'` once admin approval lands; keep the
+   * union loose so the UI doesn't crash on unknown future values.
+   */
+  postStatus: 'pending' | 'processing' | 'posted' | 'failed' | 'approved' | (string & {});
+  failedAt: FirestoreTimestamp | null;
+  /**
+   * Failure reason. Two shapes coexist on the backend depending on which
+   * pipeline marked the post failed:
+   *   • `error: string` — written by AI-engine generation failures
+   *     (`backend/apps/worker/src/pipelines/ai-engine/api.ts`).
+   *   • `errors: string[]` — written by the publish handler on each platform
+   *     attempt (`backend/apps/worker/src/handlers/process-publish-post.ts`).
+   * Read both and surface whatever is non-empty.
+   */
+  error: string | null;
+  errors?: string[] | null;
+  createdAt: FirestoreTimestamp;
+  updatedAt: FirestoreTimestamp;
+  postedAt: FirestoreTimestamp | null;
+  /**
+   * Pipeline that produced this scheduled post — newly added on the backend
+   * (`'ai-engine' | 'batch-generation' | 'events-post' | 'product-advert' | 'scheduler' | 'instant-generation'`).
+   * Optional because older docs predate this field.
+   */
+  GeneratedBy?: string;
+};
+
+function dedupeScheduledPosts(posts: ScheduledPost[]): ScheduledPost[] {
+  const byId = new Map<string, ScheduledPost>();
+  for (const post of posts) {
+    const id = post.postId;
+    if (!id) continue;
+    const prev = byId.get(id);
+    if (!prev) {
+      byId.set(id, post);
+      continue;
+    }
+    if (post.removedByUser === true || prev.removedByUser === true) {
+      byId.set(id, { ...prev, ...post, removedByUser: true });
+    } else {
+      byId.set(id, post);
+    }
+  }
+  return Array.from(byId.values());
+}
+
+function ScheduledPostActionButtons({
+  size,
+  showRegenerate,
+  regeneratedCount,
+  onRegenerate,
+  onRemove,
+  stopPropagation,
+  disabled,
+}: {
+  size: 'card' | 'modal';
+  showRegenerate: boolean;
+  regeneratedCount?: number;
+  onRegenerate?: () => void;
+  onRemove?: () => void;
+  stopPropagation?: boolean;
+  disabled?: boolean;
+}) {
+  const handle = (fn: (() => void) | undefined, e: MouseEvent) => {
+    if (stopPropagation) e.stopPropagation();
+    fn?.();
+  };
+  const isCard = size === 'card';
+  /** After 2 free regenerations, the 3rd+ costs credits — warn when count >= 2. */
+  const showCreditsWarning =
+    typeof regeneratedCount === 'number' && regeneratedCount >= 2;
+  const btn = isCard
+    ? 'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none'
+    : 'rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
+  return (
+    <div className={`flex items-center gap-3 ${!isCard ? 'flex-wrap' : ''}`}>
+      {showRegenerate ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={(e) => handle(onRegenerate, e)}
+          title={
+            showCreditsWarning
+              ? 'Next regeneration will deduct 2 credits'
+              : undefined
+          }
+          className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500 inline-flex flex-col items-center justify-center gap-0.5 text-center`}
+        >
+          <span>Regenerate</span>
+          {showCreditsWarning ? (
+            <span
+              className={
+                isCard
+                  ? 'max-w-44 text-[9px] font-normal leading-snug text-amber-900/90'
+                  : 'max-w-56 text-[11px] font-normal leading-snug text-amber-900/90'
+              }
+            >
+              2 credits will be deducted on next regeneration
+            </span>
+          ) : null}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={(e) => handle(onRemove, e)}
+        className={`${btn} bg-red-100 text-red-800 hover:bg-red-200 focus:ring-red-500`}
+      >
+        Remove
+      </button>
+    </div>
+  );
+}
+
+function getRegeneratedCount(post: ScheduledPost): number {
+  const n = post.regeneratedCount ?? post.regenratedCount;
+  return typeof n === 'number' && Number.isFinite(n) ? n : 0;
+}
+
+function DetailModal({
+  post,
+  onClose,
+  formatTimestamp,
+  onRegenerate,
+  onRemove,
+  actionDisabled,
+  onPreviewImage,
+}: {
+  post: ScheduledPost;
+  onClose: () => void;
+  formatTimestamp: (ts: TimestampInput) => string;
+  onRegenerate: () => void;
+  onRemove: () => void;
+  actionDisabled: boolean;
+  onPreviewImage: (url: string, alt?: string) => void;
+}) {
+  const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
+  const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
+  const showRegenerate = post.generatedByAiEngine === true;
+  const regeneratedCount = getRegeneratedCount(post);
+  const showPostActions =
+    post.postStatus !== 'posted' &&
+    post.removedByUser !== true &&
+    (post.UserApprovalStatus ?? '').toLowerCase() !== 'rejected';
+  const status = getDisplayStatus(post);
+  const generatedBy = generatedByLabel(post.GeneratedBy);
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="detail-modal-title"
+    >
+      <div
+        className="rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+          <h2 id="detail-modal-title" className="text-lg font-semibold">
+            Scheduled post details
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/40"
+            aria-label="Close"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="p-4 space-y-4">
+          {post.imageUrl && (
+            <div>
+              <p className="text-xs font-medium text-slate-500 mb-1">Image</p>
+              <button
+                type="button"
+                onClick={() =>
+                  onPreviewImage(post.imageUrl as string, 'Scheduled post image')
+                }
+                className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]"
+                aria-label="Open image preview"
+              >
+                <img
+                  src={post.imageUrl}
+                  alt="Post"
+                  className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
+                />
+              </button>
+              <div className="flex flex-col sm:flex-row gap-4 mt-4">
+                <ImagePreviewButton
+                  onClick={() =>
+                    onPreviewImage(post.imageUrl as string, 'Scheduled post image')
+                  }
+                  className="w-full sm:w-auto rounded-full px-6 bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100"
+                />
+                <DownloadPngButton
+                  url={post.imageUrl}
+                  getFilename={() =>
+                    `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
+                  }
+                />
+              </div>
+              <div className="flex w-full justify-end">
+                <a
+                  href={post.imageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-[#4A8FF6]/20"
+                >
+                  Open in new tab
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+          )}
+          <DetailRow label="Caption / Message" value={post.message || '—'} long />
+          <DetailRow label="Schedule at" value={scheduleAt} />
+          <DetailRow label="Created at" value={createdAt} />
+          <div>
+            <p className="text-xs font-medium text-slate-500 mb-1">Status</p>
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold',
+                statusBadgeClasses(status.variant)
+              )}
+            >
+              <StatusBadgeIcon variant={status.variant} className="h-3.5 w-3.5" />
+              {status.label}
+            </span>
+            {status.variant === 'failed' ? (
+              <p className="mt-2 whitespace-pre-wrap break-words rounded-lg border border-red-100 bg-red-50/60 p-2 text-xs text-red-700">
+                <span className="font-semibold">Reason: </span>
+                {status.reason ?? 'No failure reason recorded.'}
+              </p>
+            ) : null}
+          </div>
+          <DetailRow label="Platform" value={post.platform ?? '—'} />
+          {generatedBy ? (
+            <DetailRow label="Generated by" value={generatedBy} />
+          ) : null}
+          {showPostActions ? (
+            <div className="pt-4 border-t border-slate-200">
+              <p className="text-xs font-medium text-slate-500 mb-3">Actions</p>
+              <ScheduledPostActionButtons
+                size="modal"
+                showRegenerate={showRegenerate}
+                regeneratedCount={regeneratedCount}
+                onRegenerate={onRegenerate}
+                onRemove={onRemove}
+                disabled={actionDisabled}
+              />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  long,
+}: {
+  label: string;
+  value: string;
+  long?: boolean;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-medium text-slate-500 mb-0.5">{label}</p>
+      <p
+        className={`text-sm text-slate-800${long ? ' whitespace-pre-wrap wrap-break-word' : ''}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function ScheduledPostCard({
+  post,
+  scheduleAt,
+  onSelect,
+  cardRef,
+  onRegenerate,
+  onRemove,
+  actionDisabled,
+  onPreviewImage,
+}: {
+  post: ScheduledPost;
+  scheduleAt: string;
+  onSelect: () => void;
+  cardRef?: (node: HTMLDivElement | null) => void;
+  onRegenerate: () => void;
+  onRemove: () => void;
+  actionDisabled: boolean;
+  onPreviewImage: (url: string, alt?: string) => void;
+}) {
+  const showRegenerate = post.generatedByAiEngine === true;
+  const regeneratedCount = getRegeneratedCount(post);
+  const showPostActions =
+    post.postStatus !== 'posted' &&
+    post.removedByUser !== true &&
+    (post.UserApprovalStatus ?? '').toLowerCase() !== 'rejected';
+  const status = getDisplayStatus(post);
+  const generatedBy = generatedByLabel(post.GeneratedBy);
+  return (
+    <div
+      ref={cardRef}
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
+      className={cn(
+        'group relative flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm',
+        'transition-all duration-300',
+        'hover:border-[#4A8FF6]/35 hover:bg-slate-50/80',
+        'hover:shadow-md hover:shadow-slate-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]/30'
+      )}
+    >
+      <div className="relative mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 aspect-4/3">
+        {post.imageUrl ? (
+          <img
+            src={post.imageUrl}
+            alt=""
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          />
+        ) : (
+          <div className="flex h-full min-h-[140px] items-center justify-center text-sm text-slate-500">
+            No image
+          </div>
+        )}
+        {post.imageUrl ? (
+          <div className="absolute bottom-2 right-2">
+            <ImagePreviewButton
+              variant="overlay-icon"
+              stopPropagation
+              onClick={() =>
+                onPreviewImage(post.imageUrl as string, 'Scheduled post image')
+              }
+            />
+          </div>
+        ) : null}
+        <div className="absolute left-2 top-2 max-w-[calc(100%-1rem)]">
+          <span
+            className={cn(
+              'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
+              statusBadgeClasses(status.variant)
+            )}
+            title={status.reason ? `Failed: ${status.reason}` : status.label}
+          >
+            <StatusBadgeIcon variant={status.variant} />
+            <span className="truncate">{status.label}</span>
+          </span>
+        </div>
+        {generatedBy ? (
+          <div className="absolute right-2 top-2 max-w-[60%]">
+            <span
+              className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 shadow-sm backdrop-blur"
+              title={`Generated by: ${generatedBy}`}
+            >
+              <Sparkles className="h-3 w-3 text-[#4A8FF6]" />
+              <span className="truncate">{generatedBy}</span>
+            </span>
+          </div>
+        ) : null}
+      </div>
+
+      <p className="line-clamp-3 text-sm font-medium leading-snug text-slate-900">
+        {post.message || (
+          <span className="text-slate-400 italic">No caption</span>
+        )}
+      </p>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+        <span className="inline-flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5 text-[#4A8FF6]" />
+          <span className="truncate">{scheduleAt}</span>
+        </span>
+        {post.platform ? (
+          <>
+            <span className="text-slate-400">·</span>
+            <span className="text-slate-500">{post.platform}</span>
+          </>
+        ) : null}
+      </div>
+
+      {status.reason ? (
+        <p
+          className="mt-2 line-clamp-2 rounded-md border border-red-100 bg-red-50/60 px-2 py-1 text-[11px] leading-snug text-red-700"
+          title={status.reason}
+        >
+          <span className="font-semibold">Reason: </span>
+          {status.reason}
+        </p>
+      ) : null}
+
+      <div className="mt-2 space-y-2">
+        {showPostActions ? (
+          <ScheduledPostActionButtons
+            size="card"
+            showRegenerate={showRegenerate}
+            regeneratedCount={regeneratedCount}
+            stopPropagation
+            onRegenerate={onRegenerate}
+            onRemove={onRemove}
+            disabled={actionDisabled}
+          />
+        ) : null}
+        <p className="text-[11px] text-slate-400 group-hover:text-slate-500">
+          Click for full details
+        </p>
+      </div>
+    </div>
+  );
+}
+
+type CalendarMode = 'month' | 'week';
+
+type CalendarFmt = (
+  input: TimestampInput,
+  options?: { format?: string }
+) => string;
+
+/**
+ * Compute the visible [from, to] window for the calendar in milliseconds.
+ * Month mode covers the full 6-week grid (Sun of week containing day 1 → Sat
+ * of week containing the last day). Week mode covers Sun → Sat of the cursor
+ * week. The range is the unit of caching and fetching so we never read posts
+ * the user can't see.
+ */
+function calendarVisibleRange(
+  mode: CalendarMode,
+  cursor: Date
+): { fromMs: number; toMs: number } {
+  const opts = { weekStartsOn: 0 as const };
+  if (mode === 'month') {
+    const from = startOfWeek(startOfMonth(cursor), opts);
+    const to = endOfWeek(endOfMonth(cursor), opts);
+    return { fromMs: from.getTime(), toMs: to.getTime() };
+  }
+  const from = startOfWeek(cursor, opts);
+  const to = endOfWeek(cursor, opts);
+  return { fromMs: from.getTime(), toMs: to.getTime() };
+}
+
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+/**
+ * Group posts by their scheduled date (in the user's preferred timezone) and
+ * sort each bucket chronologically. Used by both month and week bodies so
+ * event chips render in the same order Google Calendar stacks them.
+ */
+function usePostsByDate(posts: ScheduledPost[], fmtTimestamp: CalendarFmt) {
+  return useMemo(() => {
+    const map = new Map<string, ScheduledPost[]>();
+    for (const post of posts) {
+      const key = fmtTimestamp(post.scheduleAt, { format: 'yyyy-MM-dd' });
+      if (!key || key === '—') continue;
+      const arr = map.get(key) ?? [];
+      arr.push(post);
+      map.set(key, arr);
+    }
+    map.forEach((bucket) => {
+      bucket.sort((a, b) => {
+        const ka = fmtTimestamp(a.scheduleAt, { format: 'HHmm' });
+        const kb = fmtTimestamp(b.scheduleAt, { format: 'HHmm' });
+        return ka.localeCompare(kb);
+      });
+    });
+    return map;
+  }, [posts, fmtTimestamp]);
+}
+
+function CalendarEventChip({
+  post,
+  time,
+  onSelect,
+  size = 'sm',
+}: {
+  post: ScheduledPost;
+  time: string;
+  onSelect: () => void;
+  size?: 'sm' | 'md';
+}) {
+  const status = getDisplayStatus(post);
+  const caption = (post.message || 'No caption').trim();
+  const isMd = size === 'md';
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      title={`${time} · ${caption}`}
+      className={cn(
+        'group flex w-full items-center gap-1.5 rounded-md border text-left transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/30 hover:bg-white/60',
+        isMd ? 'px-1.5 py-1.5 text-xs' : 'px-1 py-1 text-[11px]',
+        statusBadgeClasses(status.variant)
+      )}
+    >
+      {post.imageUrl ? (
+        <img
+          src={post.imageUrl}
+          alt=""
+          loading="lazy"
+          className={cn(
+            'shrink-0 rounded object-cover ring-1 ring-white/60',
+            isMd ? 'h-10 w-10' : 'h-7 w-7'
+          )}
+        />
+      ) : (
+        <span
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded bg-white/70 font-semibold text-slate-500 ring-1 ring-white/60',
+            isMd ? 'h-10 w-10 text-[11px]' : 'h-7 w-7 text-[10px]'
+          )}
+        >
+          {(post.platform ?? '?').slice(0, 2).toUpperCase()}
+        </span>
+      )}
+      <span className="flex min-w-0 flex-1 flex-col leading-tight">
+        <span className="truncate font-semibold">{time}</span>
+        <span
+          className={cn('truncate opacity-90', isMd && 'line-clamp-2 whitespace-normal')}
+        >
+          {caption}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function CalendarMonthBody({
+  cursor,
+  postsByDate,
+  today,
+  onSelectPost,
+  fmtTimestamp,
+  selectedDateKey,
+  onJumpToWeek,
+}: {
+  cursor: Date;
+  postsByDate: Map<string, ScheduledPost[]>;
+  today: Date;
+  onSelectPost: (post: ScheduledPost) => void;
+  fmtTimestamp: CalendarFmt;
+  selectedDateKey: string;
+  onJumpToWeek: (day: Date) => void;
+}) {
+  const cells = useMemo(() => {
+    const start = startOfWeek(startOfMonth(cursor), { weekStartsOn: 0 });
+    const end = endOfWeek(endOfMonth(cursor), { weekStartsOn: 0 });
+    const out: Date[] = [];
+    let cur = start;
+    while (cur <= end) {
+      out.push(cur);
+      cur = addDays(cur, 1);
+    }
+    return out;
+  }, [cursor]);
+
+  return (
+    <>
+      <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+        {WEEKDAY_LABELS.map((label) => (
+          <div key={label} className="px-2 py-2 text-center">
+            {label}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7">
+        {cells.map((day, idx) => {
+          const dayKey = formatDate(day, 'yyyy-MM-dd');
+          const inMonth = isSameMonth(day, cursor);
+          const isToday = isSameDay(day, today);
+          const isSelectedDay =
+            !!selectedDateKey && selectedDateKey === dayKey;
+          const dayPosts = postsByDate.get(dayKey) ?? [];
+          const visiblePosts = dayPosts.slice(0, 3);
+          const moreCount = dayPosts.length - visiblePosts.length;
+          const isLastColumn = (idx + 1) % 7 === 0;
+          const isLastRow = idx >= cells.length - 7;
+          return (
+            <div
+              key={dayKey}
+              className={cn(
+                'flex min-h-[112px] flex-col gap-1 border-slate-200 p-1.5 transition-colors',
+                !isLastColumn && 'border-r',
+                !isLastRow && 'border-b',
+                inMonth ? 'bg-white' : 'bg-slate-50/60',
+                isSelectedDay && 'bg-[#4A8FF6]/5'
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  className={cn(
+                    'inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold',
+                    isToday
+                      ? 'bg-[#4A8FF6] text-white'
+                      : inMonth
+                        ? 'text-slate-700'
+                        : 'text-slate-400'
+                  )}
+                >
+                  {formatDate(day, 'd')}
+                </span>
+                {dayPosts.length > 0 ? (
+                  <span className="text-[10px] font-medium text-slate-400">
+                    {dayPosts.length}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="flex flex-1 flex-col gap-1">
+                {visiblePosts.map((post, postIdx) => {
+                  const time = fmtTimestamp(post.scheduleAt, {
+                    format: 'HH:mm',
+                  });
+                  return (
+                    <CalendarEventChip
+                      key={post.postId ?? `${dayKey}-${postIdx}`}
+                      post={post}
+                      time={time}
+                      onSelect={() => onSelectPost(post)}
+                    />
+                  );
+                })}
+                {moreCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => onJumpToWeek(day)}
+                    className="self-start rounded px-1 text-[10px] font-semibold text-[#4A8FF6] hover:underline"
+                  >
+                    +{moreCount} more
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function CalendarWeekBody({
+  cursor,
+  postsByDate,
+  today,
+  onSelectPost,
+  fmtTimestamp,
+  selectedDateKey,
+}: {
+  cursor: Date;
+  postsByDate: Map<string, ScheduledPost[]>;
+  today: Date;
+  onSelectPost: (post: ScheduledPost) => void;
+  fmtTimestamp: CalendarFmt;
+  selectedDateKey: string;
+}) {
+  const days = useMemo(() => {
+    const start = startOfWeek(cursor, { weekStartsOn: 0 });
+    return Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  }, [cursor]);
+
+  return (
+    <div className="grid grid-cols-7">
+      {days.map((day, idx) => {
+        const dayKey = formatDate(day, 'yyyy-MM-dd');
+        const isToday = isSameDay(day, today);
+        const isSelectedDay =
+          !!selectedDateKey && selectedDateKey === dayKey;
+        const dayPosts = postsByDate.get(dayKey) ?? [];
+        const isLastColumn = idx === 6;
+        return (
+          <div
+            key={dayKey}
+            className={cn(
+              'flex min-h-[440px] flex-col border-slate-200 bg-white transition-colors',
+              !isLastColumn && 'border-r',
+              isSelectedDay && 'bg-[#4A8FF6]/5'
+            )}
+          >
+            <div className="border-b border-slate-200 px-2 py-2 text-center">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                {formatDate(day, 'EEE')}
+              </div>
+              <div className="mt-1 flex items-center justify-center gap-1.5">
+                <span
+                  className={cn(
+                    'inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-sm font-semibold',
+                    isToday ? 'bg-[#4A8FF6] text-white' : 'text-slate-700'
+                  )}
+                >
+                  {formatDate(day, 'd')}
+                </span>
+                {dayPosts.length > 0 ? (
+                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
+                    {dayPosts.length}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto p-2">
+              {dayPosts.length === 0 ? (
+                <p className="mt-6 text-center text-[11px] text-slate-400">
+                  No posts
+                </p>
+              ) : (
+                dayPosts.map((post, postIdx) => {
+                  const time = fmtTimestamp(post.scheduleAt, {
+                    format: 'HH:mm',
+                  });
+                  return (
+                    <CalendarEventChip
+                      key={post.postId ?? `${dayKey}-${postIdx}`}
+                      post={post}
+                      time={time}
+                      onSelect={() => onSelectPost(post)}
+                      size="md"
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+type CalendarRangeStatus = {
+  isLoading: boolean;
+  loadedCount: number;
+};
+
+function CalendarView({
+  mode,
+  cursor,
+  posts,
+  onSelectMode,
+  onSelectCursor,
+  onSelectPost,
+  fmtTimestamp,
+  selectedDateKey,
+  rangeStatus,
+}: {
+  mode: CalendarMode;
+  cursor: Date;
+  posts: ScheduledPost[];
+  onSelectMode: (mode: CalendarMode) => void;
+  onSelectCursor: (cursor: Date) => void;
+  onSelectPost: (post: ScheduledPost) => void;
+  fmtTimestamp: CalendarFmt;
+  selectedDateKey: string;
+  rangeStatus: CalendarRangeStatus;
+}) {
+  const today = startOfToday();
+  const postsByDate = usePostsByDate(posts, fmtTimestamp);
+
+  const navigate = (direction: 1 | -1) => {
+    if (mode === 'month') {
+      onSelectCursor(
+        direction === 1 ? addMonths(cursor, 1) : subMonths(cursor, 1)
+      );
+    } else {
+      onSelectCursor(addDays(cursor, direction * 7));
+    }
+  };
+
+  const rangeLabel = useMemo(() => {
+    if (mode === 'month') return formatDate(cursor, 'MMMM yyyy');
+    const start = startOfWeek(cursor, { weekStartsOn: 0 });
+    const end = endOfWeek(cursor, { weekStartsOn: 0 });
+    if (isSameMonth(start, end)) {
+      return `${formatDate(start, 'MMM d')} – ${formatDate(end, 'd, yyyy')}`;
+    }
+    return `${formatDate(start, 'MMM d')} – ${formatDate(end, 'MMM d, yyyy')}`;
+  }, [mode, cursor]);
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white">
+      <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/30"
+            aria-label={mode === 'month' ? 'Previous month' : 'Previous week'}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(1)}
+            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/30"
+            aria-label={mode === 'month' ? 'Next month' : 'Next week'}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+          <h2 className="ml-1 text-base font-semibold text-slate-900 sm:text-lg">
+            {rangeLabel}
+          </h2>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          {rangeStatus.isLoading ? (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50/80 px-2.5 py-1 text-[11px] font-semibold text-indigo-700"
+              aria-live="polite"
+              aria-busy="true"
+            >
+              <span
+                className="size-3 shrink-0 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600"
+                aria-hidden
+              />
+              Loading {mode === 'month' ? 'this month' : 'this week'}…
+            </span>
+          ) : (
+            <span
+              className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-500"
+              title={
+                mode === 'month'
+                  ? 'Only posts inside this month are fetched.'
+                  : 'Only posts inside this week are fetched.'
+              }
+            >
+              {rangeStatus.loadedCount} post
+              {rangeStatus.loadedCount === 1 ? '' : 's'} in view
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => onSelectCursor(today)}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:border-[#4A8FF6]/40 hover:text-slate-900"
+          >
+            Today
+          </button>
+          <div
+            role="group"
+            aria-label="Calendar range"
+            className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5"
+          >
+            {(['week', 'month'] as const).map((option) => {
+              const active = mode === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => onSelectMode(option)}
+                  aria-pressed={active}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
+                    active
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  )}
+                >
+                  {option === 'week' ? 'Week' : 'Month'}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {mode === 'month' ? (
+        <CalendarMonthBody
+          cursor={cursor}
+          postsByDate={postsByDate}
+          today={today}
+          onSelectPost={onSelectPost}
+          fmtTimestamp={fmtTimestamp}
+          selectedDateKey={selectedDateKey}
+          onJumpToWeek={(day) => {
+            onSelectMode('week');
+            onSelectCursor(day);
+          }}
+        />
+      ) : (
+        <CalendarWeekBody
+          cursor={cursor}
+          postsByDate={postsByDate}
+          today={today}
+          onSelectPost={onSelectPost}
+          fmtTimestamp={fmtTimestamp}
+          selectedDateKey={selectedDateKey}
+        />
+      )}
+    </div>
+  );
+}
+
+export default function SchedulePostPage() {
+  const { user, loading } = useAuth();
+  const { billing } = useUserPlanCredits();
+  const fmtTimestamp = useTimestampFormatter();
+  const userTz = useUserTimezone();
+  const router = useRouter();
+  const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
+  const [scheduledPostsLoading, setScheduledPostsLoading] = useState(true);
+  const [morePostsLoading, setMorePostsLoading] = useState(false);
+  // Single source of truth for the active filter tab. Replaces six parallel
+  // booleans whose only valid combinations were "exactly one true" — the
+  // booleans made it easy to drift into impossible states (none / multiple).
+  const [activeTab, setActiveTab] = useState<ScheduledPostsTab>('all');
+  const activeTabRef = useRef<ScheduledPostsTab>('all');
+  const [selectedScheduleDate, setSelectedScheduleDate] = useState('');
+  const [selectedPost, setSelectedPost] = useState<ScheduledPost | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('calendar');
+  const [calendarMode, setCalendarMode] = useState<CalendarMode>('month');
+  const [calendarCursor, setCalendarCursor] = useState<Date>(() =>
+    startOfToday()
+  );
+  // Per-range cache for the calendar so navigating back to a previously-viewed
+  // month is instant and we never refetch the same window. Keyed by
+  // `${fromMs}_${toMs}` so month-grid and week-grid ranges don't collide.
+  const [calendarRangeCache, setCalendarRangeCache] = useState<
+    Map<string, ScheduledPost[]>
+  >(() => new Map());
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [actingPostId, setActingPostId] = useState<string | null>(null);
+  const imagePreview = useImagePreview();
+  const [cursor, setCursor] = useState<FirestoreTimestamp | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const obserVerRef = useRef<IntersectionObserver | null>(null);
+  const fetchingRef = useRef(false);
+  const cursorRef = useRef<FirestoreTimestamp | null>(null);
+  const fetchScheduledPostsRef = useRef<() => Promise<void>>(async () => { });
+
+  useEffect(() => {
+    cursorRef.current = cursor;
+  }, [cursor]);
+
+  // Read the active tab through a ref inside fetchers so we don't have to
+  // rebuild the memoized callbacks every time the user clicks a different tab.
+  // The ref is kept in sync with the state below.
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
+  const fetchScheduledPosts = useCallback(async () => {
+    if (!hasMore || fetchingRef.current) return;
+    fetchingRef.current = true;
+    const isFirstPage = cursorRef.current == null;
+    if (isFirstPage) {
+      setScheduledPostsLoading(true);
+    } else {
+      setMorePostsLoading(true);
+    }
+    try {
+      const response = await getScheduledPosts({
+        cursor: cursorRef.current ?? undefined,
+        tab: activeTabRef.current,
+      });
+      const data = response.data;
+      setScheduledPosts((prev) =>
+        dedupeScheduledPosts([...prev, ...(data.posts ?? [])])
+      );
+      const next = data.nextCursor ?? null;
+      cursorRef.current = next;
+      setCursor(next);
+      if (!next) {
+        setHasMore(false);
+      }
+    } catch {
+      setScheduledPosts([]);
+    } finally {
+      fetchingRef.current = false;
+      setScheduledPostsLoading(false);
+      setMorePostsLoading(false);
+    }
+  }, [hasMore]);
+
+  fetchScheduledPostsRef.current = fetchScheduledPosts;
+
+  // Initial load + tab-change reload. When the user switches tabs we reset the
+  // paginated cache (since the server-side filter has changed) and refetch the
+  // first page for the new tab. The cursor is intentionally NOT in deps — the
+  // fetch reads it through a ref so this effect doesn't re-run on every page.
+  useEffect(() => {
+    cursorRef.current = null;
+    setCursor(null);
+    setHasMore(true);
+    setScheduledPosts([]);
+    void fetchScheduledPostsRef.current();
+  }, [activeTab]);
+
+  /**
+   * Re-fetches the first page WITHOUT toggling the skeleton. Used after an
+   * action to pick up backend mutations (regen content, retry counters, etc.)
+   * without flashing a loading state at the user. The active selection (if any)
+   * is rebound to the freshly fetched copy so the modal reflects new data.
+   */
+  const silentRefreshScheduledPosts = useCallback(
+    async (options?: { keepSelectionForPostId?: string }) => {
+      try {
+        const response = await getScheduledPosts({
+          tab: activeTabRef.current,
+        });
+        const data = response.data;
+        const posts = dedupeScheduledPosts(data.posts ?? []);
+        setScheduledPosts(posts);
+        const next = data.nextCursor ?? null;
+        cursorRef.current = next;
+        setCursor(next);
+        setHasMore(next != null);
+        const keepId = options?.keepSelectionForPostId;
+        if (keepId) {
+          const nextSel = posts.find((p: ScheduledPost) => p.postId === keepId);
+          if (nextSel) setSelectedPost(nextSel);
+        }
+      } catch {
+        // Silent; UI keeps last known state. Action-level error toast is shown
+        // separately by the caller if the action itself failed.
+      }
+    },
+    []
+  );
+
+  const handlePostAction = useCallback(
+    async (post: ScheduledPost, action: 'regenerate' | 'remove') => {
+      const postId = post.postId;
+      const platform = post.platform ?? '';
+      if (!postId) {
+        showErrorToast('Missing post id');
+        return;
+      }
+      if (action === 'regenerate' && post.generatedByAiEngine !== true) {
+        return;
+      }
+      if (action === 'regenerate' && !platform) {
+        showErrorToast('Missing platform for this post');
+        return;
+      }
+
+      // Snapshot for rollback if the API call fails after the optimistic
+      // mutation. Removing the post is the only optimistic mutation we apply
+      // here — regenerate keeps the post in place because its content will be
+      // swapped in by the background refresh once the worker finishes.
+      const previousPosts = scheduledPosts;
+      const previousSelected = selectedPost;
+      const previousCalendarCache = calendarRangeCache;
+
+      if (action === 'remove') {
+        setScheduledPosts((prev) =>
+          prev.map((p) =>
+            p.postId === postId ? { ...p, removedByUser: true } : p
+          )
+        );
+        // Mirror the optimistic flag into every cached calendar range so the
+        // change is visible immediately in any month/week the user navigates
+        // to before the background refresh lands.
+        setCalendarRangeCache((prev) => {
+          let touched = false;
+          const next = new Map<string, ScheduledPost[]>();
+          prev.forEach((posts, key) => {
+            const updated = posts.map((p) => {
+              if (p.postId === postId && p.removedByUser !== true) {
+                touched = true;
+                return { ...p, removedByUser: true };
+              }
+              return p;
+            });
+            next.set(key, updated);
+          });
+          return touched ? next : prev;
+        });
+        if (selectedPost?.postId === postId) {
+          setSelectedPost(null);
+        }
+      }
+
+      setActingPostId(postId);
+      try {
+        if (action === 'remove') {
+          await removeScheduledPost(postId);
+        } else {
+          await performActionByUserOnScheduledPost(
+            postId,
+            'regenerate',
+            platform
+          );
+        }
+        // Silent background refresh — no skeleton, no scroll jump. Keeps the
+        // selected post bound to its fresh copy so the modal reflects new data.
+        const keepId =
+          action === 'regenerate' && selectedPost?.postId === postId
+            ? postId
+            : undefined;
+        void silentRefreshScheduledPosts(
+          keepId ? { keepSelectionForPostId: keepId } : undefined
+        );
+        // Drop the current calendar range so the next render refetches it
+        // and picks up the authoritative server state (e.g. regenerated
+        // image/caption). Other cached months stay warm.
+        const { fromMs, toMs } = calendarVisibleRange(
+          calendarMode,
+          calendarCursor
+        );
+        const currentKey = `${fromMs}_${toMs}`;
+        setCalendarRangeCache((prev) => {
+          if (!prev.has(currentKey)) return prev;
+          const next = new Map(prev);
+          next.delete(currentKey);
+          return next;
+        });
+      } catch {
+        showErrorToast('Failed to perform action on scheduled post');
+        // Roll the optimistic change back.
+        setScheduledPosts(previousPosts);
+        setCalendarRangeCache(previousCalendarCache);
+        if (action === 'remove' && previousSelected?.postId === postId) {
+          setSelectedPost(previousSelected);
+        }
+      } finally {
+        setActingPostId(null);
+      }
+    },
+    [
+      scheduledPosts,
+      selectedPost,
+      silentRefreshScheduledPosts,
+      calendarRangeCache,
+      calendarMode,
+      calendarCursor,
+    ]
+  );
+
+  const lastPostRef = useCallback((node: HTMLDivElement | null) => {
+    if (scheduledPostsLoading) return;
+
+    if (obserVerRef.current) obserVerRef.current.disconnect();
+
+    obserVerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) {
+        void fetchScheduledPostsRef.current();
+      }
+    });
+
+    if (node) obserVerRef.current.observe(node);
+  }, [scheduledPostsLoading]);
+
+  // Visible window for the calendar. Drives both the range-fetch effect below
+  // and the per-range cache lookup that feeds `filteredAndSortedPosts` when in
+  // calendar mode.
+  const calendarRange = useMemo(
+    () => calendarVisibleRange(calendarMode, calendarCursor),
+    [calendarMode, calendarCursor]
+  );
+  const calendarRangeKey = `${calendarRange.fromMs}_${calendarRange.toMs}`;
+  const calendarPosts = useMemo(
+    () => calendarRangeCache.get(calendarRangeKey) ?? [],
+    [calendarRangeCache, calendarRangeKey]
+  );
+
+  const filteredAndSortedPosts = useMemo(() => {
+    const isRemoved = (p: ScheduledPost) => p.removedByUser === true;
+    const isRejected = (p: ScheduledPost) =>
+      (p.UserApprovalStatus ?? '').toLowerCase() === 'rejected';
+    const isFailed = (p: ScheduledPost) => p.postStatus === 'failed';
+    const isPosted = (p: ScheduledPost) => p.postStatus === 'posted';
+
+    // List view: server has already filtered by `activeTab`, so the cached
+    // page contents are authoritative — skip the client-side tab filter.
+    //
+    // Calendar view: the range fetch is tab-agnostic (it returns every post
+    // inside the visible month/week so a single network call can serve any
+    // tab the user picks). We replay the same tab logic on top of that
+    // bounded source so switching tabs feels instant.
+    const source = viewMode === 'calendar' ? calendarPosts : scheduledPosts;
+    let posts = source;
+
+    if (viewMode === 'calendar') {
+      if (activeTab === 'removed') {
+        posts = source.filter(isRemoved);
+      } else if (activeTab === 'rejected') {
+        posts = source.filter(isRejected);
+      } else if (activeTab === 'upcoming') {
+        posts = source.filter(
+          (p) => !isPosted(p) && !isRemoved(p) && !isRejected(p) && !isFailed(p)
+        );
+      } else if (activeTab === 'posted') {
+        posts = source.filter(
+          (p) => isPosted(p) && !isRemoved(p) && !isRejected(p) && !isFailed(p)
+        );
+      } else if (activeTab === 'failed') {
+        posts = source.filter(isFailed);
+      }
+    }
+
+    if (selectedScheduleDate) {
+      posts = posts.filter(
+        (p) =>
+          fmtTimestamp(p.scheduleAt, { format: 'yyyy-MM-dd' }) ===
+          selectedScheduleDate
+      );
+    }
+
+    return posts;
+  }, [
+    viewMode,
+    calendarPosts,
+    scheduledPosts,
+    activeTab,
+    selectedScheduleDate,
+    fmtTimestamp,
+  ]);
+
+  useEffect(() => {
+    if (!loading && !user) router.replace('/sign-in');
+  }, [loading, user, router]);
+
+  // Keep the calendar viewport in sync with the date filter so a date picked
+  // from the input always lands on a visible cell — works for both month and
+  // week modes.
+  useEffect(() => {
+    if (!selectedScheduleDate) return;
+    const parsed = parseISO(selectedScheduleDate);
+    if (Number.isNaN(parsed.getTime())) return;
+    setCalendarCursor((prev) => {
+      if (calendarMode === 'month') {
+        return isSameMonth(prev, parsed) ? prev : startOfMonth(parsed);
+      }
+      const prevWeekStart = startOfWeek(prev, { weekStartsOn: 0 });
+      const newWeekStart = startOfWeek(parsed, { weekStartsOn: 0 });
+      return isSameDay(prevWeekStart, newWeekStart) ? prev : parsed;
+    });
+  }, [selectedScheduleDate, calendarMode]);
+
+  // Range-based fetch for the calendar — replaces the previous "auto-paginate
+  // through all history" cascade. One request per (mode, cursor) window;
+  // results are cached so navigating back to a previously-viewed month is
+  // free. We never read posts outside the visible range, which keeps both
+  // Firestore reads and user bandwidth bounded to "what's on screen".
+  useEffect(() => {
+    if (viewMode !== 'calendar') return;
+    if (calendarRangeCache.has(calendarRangeKey)) return;
+
+    let cancelled = false;
+    setCalendarLoading(true);
+    (async () => {
+      try {
+        const response = await getScheduledPostsInRange({
+          fromMs: calendarRange.fromMs,
+          toMs: calendarRange.toMs,
+        });
+        if (cancelled) return;
+        const posts = dedupeScheduledPosts(response.data?.posts ?? []);
+        setCalendarRangeCache((prev) => {
+          if (prev.has(calendarRangeKey)) return prev;
+          const next = new Map(prev);
+          next.set(calendarRangeKey, posts);
+          return next;
+        });
+      } catch {
+        if (!cancelled) {
+          setCalendarRangeCache((prev) => {
+            if (prev.has(calendarRangeKey)) return prev;
+            const next = new Map(prev);
+            next.set(calendarRangeKey, []);
+            return next;
+          });
+        }
+      } finally {
+        if (!cancelled) setCalendarLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    viewMode,
+    calendarRangeKey,
+    calendarRange.fromMs,
+    calendarRange.toMs,
+    calendarRangeCache,
+  ]);
+
+
+  if (loading) return <PageLoadingState />;
+  if (!user) return null;
+  return (
+    <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
+      <div
+        id="tour-pq-list"
+        className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
+      >
+        <div className="px-6 pb-8 pt-8 sm:px-10 sm:pt-10">
+          <header className="mb-8 max-w-2xl">
+            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+              <span className="text-black">
+                {workspacePageTitle(WORKSPACE_NAV_HREFS.postQueue)}
+              </span>
+            </h1>
+            <p className="mt-3 text-base text-slate-500">
+              Plan and track what goes out — upcoming and published in one place.
+            </p>
+          </header>
+
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div
+              className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1"
+              role="tablist"
+              aria-label="Filter scheduled posts"
+            >
+              {(
+                [
+                  { id: 'all', label: 'All' },
+                  { id: 'upcoming', label: 'Upcoming' },
+                  { id: 'posted', label: 'Posted' },
+                  { id: 'removed', label: 'Removed' },
+                  { id: 'failed', label: 'Failed' },
+                  { id: 'rejected', label: 'Rejected' },
+                ] as const
+              ).map((tab) => {
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      'rounded-lg px-4 py-2 text-xs font-semibold transition-all',
+                      active
+                        ? 'bg-white text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-col gap-2 sm:items-end">
+              <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setViewMode((prev) =>
+                      prev === 'list' ? 'calendar' : 'list'
+                    )
+                  }
+                  aria-label={
+                    viewMode === 'list'
+                      ? 'Switch to calendar view'
+                      : 'Switch to list view'
+                  }
+                  title={
+                    viewMode === 'list'
+                      ? 'Switch to calendar view'
+                      : 'Switch to list view'
+                  }
+                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 transition-colors hover:border-[#4A8FF6]/40 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/30"
+                >
+                  {viewMode === 'list' ? (
+                    <>
+                      <CalendarDays className="h-4 w-4 text-[#4A8FF6]" />
+                      Calendar view
+                    </>
+                  ) : (
+                    <>
+                      <LayoutGrid className="h-4 w-4 text-[#4A8FF6]" />
+                      List view
+                    </>
+                  )}
+                </button>
+                <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <span className="whitespace-nowrap font-medium">Schedule date</span>
+                  <input
+                    type="date"
+                    value={selectedScheduleDate}
+                    onChange={(e) => setSelectedScheduleDate(e.target.value)}
+                    className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-colors focus:border-[#4A8FF6] focus:ring-2 focus:ring-[#4A8FF6]/20"
+                  />
+                  {selectedScheduleDate ? (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedScheduleDate('')}
+                      className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                </label>
+              </div>
+              <p className="text-sm text-slate-500">
+                {filteredAndSortedPosts.length} in view
+              </p>
+            </div>
+          </div>
+
+          {scheduledPostsLoading ? (
+            viewMode === 'calendar' ? (
+              <div
+                className="h-[520px] animate-pulse rounded-2xl border border-slate-200 bg-slate-100"
+                aria-busy="true"
+              />
+            ) : (
+              <div
+                className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                aria-busy="true"
+              >
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div
+                    key={i}
+                    className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                  >
+                    <div className="mb-3 aspect-4/3 animate-pulse rounded-xl bg-slate-200" />
+                    <div className="h-3 w-4/5 animate-pulse rounded bg-slate-200" />
+                    <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-slate-100" />
+                  </div>
+                ))}
+              </div>
+            )
+          ) : viewMode === 'calendar' ? (
+            <CalendarView
+              mode={calendarMode}
+              cursor={calendarCursor}
+              posts={filteredAndSortedPosts}
+              onSelectMode={setCalendarMode}
+              onSelectCursor={setCalendarCursor}
+              onSelectPost={setSelectedPost}
+              fmtTimestamp={fmtTimestamp}
+              selectedDateKey={selectedScheduleDate}
+              rangeStatus={{
+                isLoading: calendarLoading,
+                loadedCount: filteredAndSortedPosts.length,
+              }}
+            />
+          ) : filteredAndSortedPosts.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 py-16 text-center">
+              <Calendar className="mx-auto mb-3 h-10 w-10 text-[#4A8FF6]/60" />
+              <p className="text-sm font-medium text-slate-700">
+                {activeTab === 'removed'
+                  ? 'No posts removed by you yet'
+                  : activeTab === 'rejected'
+                    ? 'No rejected posts yet'
+                    : activeTab === 'failed'
+                      ? 'No failed posts'
+                      : activeTab === 'posted'
+                        ? 'No posted posts yet'
+                        : activeTab === 'upcoming'
+                          ? 'No upcoming posts'
+                          : selectedScheduleDate
+                            ? 'No posts scheduled for this date'
+                            : 'No posts in this queue yet'}
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                {activeTab === 'removed'
+                  ? 'When you remove a scheduled post, it will appear here.'
+                  : activeTab === 'rejected'
+                    ? 'Posts you reject from approval will appear here.'
+                    : activeTab === 'failed'
+                      ? 'Posts that failed to publish will appear here.'
+                      : activeTab === 'posted'
+                        ? 'Posts already published will appear here.'
+                        : activeTab === 'upcoming'
+                          ? 'Pending or processing posts will appear here.'
+                          : selectedScheduleDate
+                            ? `Pick another date or clear the date filter. Showing dates in ${userTz}.`
+                            : 'When you schedule content, it will show up here as cards.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredAndSortedPosts.map((post, index) => {
+                const scheduleAt = fmtTimestamp(post.scheduleAt);
+
+                const isLast = index === filteredAndSortedPosts.length - 1;
+
+                return (
+                  <ScheduledPostCard
+                    key={post.postId ?? `post-${index}`}
+                    post={post}
+                    scheduleAt={scheduleAt}
+                    onSelect={() => setSelectedPost(post)}
+                    cardRef={isLast ? lastPostRef : undefined}
+                    onRegenerate={() => handlePostAction(post, 'regenerate')}
+                    onRemove={() => handlePostAction(post, 'remove')}
+                    actionDisabled={!post.postId || actingPostId !== null}
+                    onPreviewImage={imagePreview.open}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          {viewMode === 'list' &&
+            !scheduledPostsLoading &&
+            (hasMore || morePostsLoading) && (
+              <div
+                className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600"
+                aria-live="polite"
+              >
+                {morePostsLoading ? (
+                  <div
+                    className="flex items-center gap-2"
+                    aria-busy="true"
+                    aria-label="Loading more posts"
+                  >
+                    <span
+                      className="size-4 shrink-0 animate-spin rounded-full border-2 border-slate-200 border-t-[#4A8FF6]"
+                      aria-hidden
+                    />
+                    Loading more posts…
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-slate-500">
+                      {scheduledPosts.length} post
+                      {scheduledPosts.length === 1 ? '' : 's'} loaded
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => void fetchScheduledPosts()}
+                      className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition-colors hover:border-[#4A8FF6]/40 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/30"
+                    >
+                      Load more posts
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+        </div>
+      </div>
+
+      {selectedPost && (
+        <DetailModal
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+          formatTimestamp={fmtTimestamp}
+          onRegenerate={() => handlePostAction(selectedPost, 'regenerate')}
+          onRemove={() => handlePostAction(selectedPost, 'remove')}
+          actionDisabled={!selectedPost.postId || actingPostId !== null}
+          onPreviewImage={imagePreview.open}
+        />
+      )}
+      <ImagePreviewOverlay
+        src={imagePreview.previewUrl}
+        alt={imagePreview.previewAlt}
+        onClose={imagePreview.close}
+      />
+    </div>
+  );
+}

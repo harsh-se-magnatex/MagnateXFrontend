@@ -1,0 +1,1006 @@
+'use client';
+
+import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { useAuth } from '@/src/hooks/useAuth';
+import Link from 'next/link';
+import { DownloadPngButton } from '@/components/download-png-button';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CalendarCheck2, Expand, Loader2, Sparkles } from 'lucide-react';
+import {
+  ImagePreviewButton,
+  ImagePreviewOverlay,
+  useImagePreview,
+} from '@/components/image-preview';
+import { addDays, format, startOfToday } from 'date-fns';
+import {
+  generateInstantPostsBatchApi,
+  getAiEngineDateStatusApi,
+  type AiEngineDateStatusRow,
+  type InstantGenerationPlatform,
+} from '@/src/service/api/instant-generation.service';
+import type { BatchDayResult } from '@/src/stores/batchGenerationState';
+import { useFeatureJob } from '@/src/hooks/useFeatureJob';
+import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import { useTimestampFormatter } from '@/lib/user-timezone';
+import { useBatchGenerationState } from '@/src/stores/batchGenerationState';
+import {
+  WORKSPACE_NAV_HREFS,
+  workspacePageTitle,
+} from '@/lib/workspace-nav';
+import { Progress } from '@/components/ui/progress';
+import {
+  useJobMetadataCache,
+  type JobMetadata,
+} from '@/src/stores/jobMetadataCache';
+import { getJobMetadata } from '@/src/service/api/job-metadata.service';
+import { useTourDemo } from '@/src/stores/tourState';
+
+const MAX_DATES = 5;
+const DATE_WINDOW_DAYS = 45;
+
+const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
+
+const PLATFORMS: {
+  id: InstantGenerationPlatform;
+  label: string;
+  hint: string;
+}[] = [
+    {
+      id: 'instagram',
+      label: 'Instagram',
+      hint: 'Square-friendly visuals and punchy captions.',
+    },
+    {
+      id: 'facebook',
+      label: 'Facebook',
+      hint: 'Conversational tone with room for longer copy.',
+    },
+    {
+      id: 'linkedin',
+      label: 'LinkedIn',
+      hint: 'Professional, insight-led hooks.',
+    },
+  ];
+
+export default function BatchGenerationPage() {
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+
+  // Transient-only: errors (cleared on each run), API status (fetched on mount).
+  const [errorsByPlatform, setErrorsByPlatform] = useState<
+    Partial<Record<InstantGenerationPlatform, string>>
+  >({});
+  const [statusByPlatform, setStatusByPlatform] = useState<
+    Partial<Record<InstantGenerationPlatform, AiEngineDateStatusRow[]>>
+  >({});
+  const [statusLoadingByPlatform, setStatusLoadingByPlatform] = useState<
+    Partial<Record<InstantGenerationPlatform, boolean>>
+  >({});
+
+  const selectedByPlatform = useBatchGenerationState(
+    (s) => s.selectedByPlatform
+  );
+  const toggleDate = useBatchGenerationState((s) => s.toggleDate);
+  const setSelectedDates = useBatchGenerationState((s) => s.setSelectedDates);
+  const generatingByPlatform = useBatchGenerationState(
+    (s) => s.generatingByPlatform
+  );
+  const setGenerating = useBatchGenerationState((s) => s.setGenerating);
+  const batchResultsByPlatform = useBatchGenerationState(
+    (s) => s.batchResultsByPlatform
+  );
+  const setResults = useBatchGenerationState((s) => s.setResults);
+  const activePreviewDateByPlatform = useBatchGenerationState(
+    (s) => s.activePreviewDateByPlatform
+  );
+  const setActivePreviewDate = useBatchGenerationState(
+    (s) => s.setActivePreviewDate
+  );
+
+  const jobMetadataByParent = useJobMetadataCache((s) => s.byParentJobId);
+  const setJobMetadata = useJobMetadataCache((s) => s.setMetadata);
+
+  const { billing, loading: creditsLoading } = useUserPlanCredits();
+  const fmtTimestamp = useTimestampFormatter();
+  const isTourDemo = useTourDemo();
+  const selectedAccounts = billing?.selected;
+  const planExpiresAt = billing?.planExpiresAt;
+  const formattedPlanExpiresAt = planExpiresAt
+    ? fmtTimestamp(planExpiresAt)
+    : '—';
+
+  const hasSelectablePlatforms = useMemo(() => {
+    if (isTourDemo) return true;
+    return PLATFORM_ORDER.some((p) => !!selectedAccounts?.[p]);
+  }, [selectedAccounts, isTourDemo]);
+
+  const selectedPlatforms = useMemo(() => {
+    if (isTourDemo) return [...PLATFORM_ORDER];
+    return PLATFORM_ORDER.filter((p) => !!selectedAccounts?.[p]);
+  }, [selectedAccounts, isTourDemo]);
+
+  const platformsForDisplay = useMemo(() => {
+    if (isTourDemo) return PLATFORMS;
+    const connected = PLATFORMS.filter((m) => !!selectedAccounts?.[m.id]);
+    const unconnected = PLATFORMS.filter((m) => !selectedAccounts?.[m.id]);
+    return [...connected, ...unconnected];
+  }, [selectedAccounts, isTourDemo]);
+
+  const showSelectAccountsFirst =
+    !isTourDemo &&
+    !creditsLoading &&
+    billing != null &&
+    !hasSelectablePlatforms;
+
+  const todayStart = useMemo(() => startOfToday(), []);
+  const planExpiresAtDate = useMemo(() => {
+    if (!planExpiresAt) return undefined;
+    return new Date(
+      planExpiresAt.seconds * 1000 + planExpiresAt.nanoseconds / 1e6
+    );
+  }, [planExpiresAt]);
+
+  const dateKeys = useMemo(() => {
+    const out: string[] = [];
+    for (let i = 0; i < DATE_WINDOW_DAYS; i += 1) {
+      const d = addDays(todayStart, i + 1);
+      if (planExpiresAtDate && d > planExpiresAtDate) break;
+      out.push(format(d, 'yyyy-MM-dd'));
+    }
+    return out;
+  }, [todayStart, planExpiresAtDate]);
+
+  useEffect(() => {
+    const keySet = new Set(dateKeys);
+    const {
+      selectedByPlatform,
+      setSelectedDates,
+      activePreviewDateByPlatform,
+      setActivePreviewDate,
+    } = useBatchGenerationState.getState();
+    PLATFORM_ORDER.forEach((platform) => {
+      const sel = selectedByPlatform[platform] ?? [];
+      const pruned = sel.filter((d) => keySet.has(d));
+      if (pruned.length !== sel.length) setSelectedDates(platform, pruned);
+      const preview = activePreviewDateByPlatform[platform];
+      if (preview && !keySet.has(preview)) setActivePreviewDate(platform, null);
+    });
+  }, [dateKeys]);
+
+  const fetchStatusForPlatform = useCallback(
+    async (platform: InstantGenerationPlatform) => {
+      if (!user?.uid || dateKeys.length === 0) return;
+      try {
+        setStatusLoadingByPlatform((prev) => ({ ...prev, [platform]: true }));
+        const rows = await getAiEngineDateStatusApi({
+          userId: user.uid,
+          dates: dateKeys,
+          platform,
+          includePostPreview: true,
+        });
+        setStatusByPlatform((prev) => ({ ...prev, [platform]: rows }));
+      } finally {
+        setStatusLoadingByPlatform((prev) => ({ ...prev, [platform]: false }));
+      }
+    },
+    [user?.uid, dateKeys]
+  );
+
+  useEffect(() => {
+    if (!user?.uid || dateKeys.length === 0) return;
+    let cancelled = false;
+    const loadingMap: Partial<Record<InstantGenerationPlatform, boolean>> = {};
+    PLATFORM_ORDER.forEach((p) => {
+      loadingMap[p] = selectedPlatforms.includes(p);
+    });
+    setStatusLoadingByPlatform(loadingMap);
+
+    if (selectedPlatforms.length === 0) {
+      setStatusByPlatform({});
+      setStatusLoadingByPlatform({
+        instagram: false,
+        facebook: false,
+        linkedin: false,
+      });
+      return;
+    }
+
+    (async () => {
+      try {
+        const rows = await Promise.all(
+          selectedPlatforms.map((platform) =>
+            getAiEngineDateStatusApi({
+              userId: user.uid,
+              dates: dateKeys,
+              platform,
+              includePostPreview: true,
+            })
+          )
+        );
+        if (cancelled) return;
+        const next: Partial<
+          Record<InstantGenerationPlatform, AiEngineDateStatusRow[]>
+        > = {};
+        selectedPlatforms.forEach((p, i) => {
+          next[p] = rows[i];
+        });
+        setStatusByPlatform((prev) => {
+          const merged = { ...prev };
+          PLATFORM_ORDER.forEach((p) => {
+            if (!selectedPlatforms.includes(p)) delete merged[p];
+          });
+          return { ...merged, ...next };
+        });
+      } catch {
+        if (!cancelled) setStatusByPlatform({});
+      } finally {
+        if (!cancelled) {
+          setStatusLoadingByPlatform({
+            instagram: false,
+            facebook: false,
+            linkedin: false,
+          });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid, dateKeys, selectedPlatforms]);
+
+  const handleToggleDate = useCallback(
+    (platform: InstantGenerationPlatform, dateKey: string) => {
+      if (isTourDemo) return;
+      const platformRows = statusByPlatform[platform] || [];
+      const isBlocked = platformRows.some(
+        (r) => r.date === dateKey && r.exists
+      );
+      toggleDate(platform, dateKey, isBlocked);
+      if (!isBlocked) {
+        setErrorsByPlatform((prev) => ({ ...prev, [platform]: '' }));
+      }
+    },
+    [statusByPlatform, toggleDate, isTourDemo]
+  );
+
+  if (
+    !isTourDemo &&
+    new Date(formattedPlanExpiresAt).getTime() < new Date().getTime()
+  ) {
+    return (
+      <div className="animate-in fade-in duration-500 pb-20 flex flex-col items-center justify-center h-screen">
+        <h1 className="text-3xl font-bold tracking-tight  text-slate-900">
+          <p className="text-center">You are not eligible for this feature.</p>
+          <p className="text-center">
+            Please subscribe to a plan to use this feature.
+          </p>
+        </h1>
+        <p className="mt-2 text-base text-slate-500 max-w-2xl">
+          You can subscribe to a plan{' '}
+          <Link href="/settings/billings" className="underline text-indigo-600">
+            here
+          </Link>
+          .
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <BatchGenerationPageBody
+      authLoading={authLoading}
+      user={user}
+      router={router}
+      billing={billing}
+      creditsLoading={creditsLoading}
+      showSelectAccountsFirst={showSelectAccountsFirst}
+      platformsForDisplay={platformsForDisplay}
+      dateKeys={dateKeys}
+      selectedByPlatform={selectedByPlatform}
+      generatingByPlatform={generatingByPlatform}
+      batchResultsByPlatform={batchResultsByPlatform}
+      activePreviewDateByPlatform={activePreviewDateByPlatform}
+      statusByPlatform={statusByPlatform}
+      statusLoadingByPlatform={statusLoadingByPlatform}
+      errorsByPlatform={errorsByPlatform}
+      selectedAccounts={selectedAccounts}
+      jobMetadataByParent={jobMetadataByParent}
+      setJobMetadata={setJobMetadata}
+      handleToggleDate={handleToggleDate}
+      setActivePreviewDate={setActivePreviewDate}
+      setErrorsByPlatform={setErrorsByPlatform}
+      setSelectedDates={setSelectedDates}
+      setGenerating={setGenerating}
+      setResults={setResults}
+      fetchStatusForPlatform={fetchStatusForPlatform}
+    />
+  );
+}
+
+type BatchPlatformAccounts =
+  | {
+    facebook: boolean;
+    instagram: boolean;
+    linkedin: boolean;
+  }
+  | undefined;
+
+type BatchGenerationPageBodyProps = {
+  authLoading: boolean;
+  user: { uid: string } | null;
+  router: ReturnType<typeof useRouter>;
+  billing: ReturnType<typeof useUserPlanCredits>['billing'];
+  creditsLoading: boolean;
+  showSelectAccountsFirst: boolean;
+  platformsForDisplay: {
+    id: InstantGenerationPlatform;
+    label: string;
+    hint: string;
+  }[];
+  dateKeys: string[];
+  selectedByPlatform: Record<InstantGenerationPlatform, string[]>;
+  generatingByPlatform: Partial<Record<InstantGenerationPlatform, boolean>>;
+  batchResultsByPlatform: Partial<
+    Record<InstantGenerationPlatform, BatchDayResult[]>
+  >;
+  activePreviewDateByPlatform: Partial<
+    Record<InstantGenerationPlatform, string | null>
+  >;
+  statusByPlatform: Partial<
+    Record<InstantGenerationPlatform, AiEngineDateStatusRow[]>
+  >;
+  statusLoadingByPlatform: Partial<Record<InstantGenerationPlatform, boolean>>;
+  errorsByPlatform: Partial<Record<InstantGenerationPlatform, string>>;
+  selectedAccounts: BatchPlatformAccounts;
+  jobMetadataByParent: Record<string, JobMetadata>;
+  setJobMetadata: (parentJobId: string, meta: JobMetadata) => void;
+  handleToggleDate: (
+    platform: InstantGenerationPlatform,
+    dateKey: string
+  ) => void;
+  setActivePreviewDate: (
+    platform: InstantGenerationPlatform,
+    date: string | null
+  ) => void;
+  setErrorsByPlatform: React.Dispatch<
+    React.SetStateAction<Partial<Record<InstantGenerationPlatform, string>>>
+  >;
+  setSelectedDates: (
+    platform: InstantGenerationPlatform,
+    dates: string[]
+  ) => void;
+  setGenerating: (platform: InstantGenerationPlatform, value: boolean) => void;
+  setResults: (
+    platform: InstantGenerationPlatform,
+    results: BatchDayResult[]
+  ) => void;
+  fetchStatusForPlatform: (platform: InstantGenerationPlatform) => Promise<void>;
+};
+
+function BatchGenerationPageBody(props: BatchGenerationPageBodyProps) {
+  const {
+    authLoading,
+    user,
+    router,
+    billing,
+    showSelectAccountsFirst,
+    platformsForDisplay,
+    selectedAccounts,
+  } = props;
+  const isTourDemo = useTourDemo();
+
+  if (authLoading) {
+    return <PageLoadingState />;
+  }
+
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-lg animate-in fade-in duration-500 pb-20">
+        <div className="glass-card rounded-3xl p-8 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            {workspacePageTitle(WORKSPACE_NAV_HREFS.bulkCreate)}
+          </h1>
+          <p className="mt-3 text-slate-600 leading-relaxed">
+            Login to draft and schedule multiple days of content for your
+            connected accounts.
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push('/sign-in')}
+            className="mt-6 w-full rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 sm:w-auto"
+          >
+            Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center animate-in fade-in duration-500 pb-20 px-4 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          <span className="block">You are not eligible for this feature.</span>
+          <span className="block">
+            Please subscribe to a plan to use this feature.
+          </span>
+        </h1>
+        <p className="mt-3 max-w-xl text-base text-slate-600">
+          You can subscribe to a plan{' '}
+          <Link
+            href="/settings/billings"
+            className="font-semibold text-indigo-600 underline underline-offset-2 hover:text-indigo-700"
+          >
+            here
+          </Link>
+          .
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-7xl animate-in fade-in duration-500 pb-20 px-2">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          {workspacePageTitle(WORKSPACE_NAV_HREFS.bulkCreate)}
+        </h1>
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
+          Pick up to {MAX_DATES} days per platform. We use your{' '}
+          <Link
+            href="/template-dna"
+            className="font-semibold text-indigo-600 underline-offset-2 hover:underline"
+          >
+            brand profile
+          </Link>{' '}
+          and posting preferences to create each post and schedule it
+          automatically.
+        </p>
+      </header>
+
+      <p className="mt-2 text-xs text-slate-500">
+        Green dates already have an AI-generated post for that specific platform
+        and cannot be selected again.
+      </p>
+      <div className="mt-6 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {platformsForDisplay.map((meta, idx) => (
+          <BatchGenerationPlatformCard
+            key={meta.id}
+            meta={meta}
+            connected={isTourDemo || !!selectedAccounts?.[meta.id]}
+            uid={user.uid}
+            isFirstCard={idx === 0}
+            {...props}
+          />
+        ))}
+      </div>
+
+      {showSelectAccountsFirst && (
+        <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950">
+          Select your platform accounts first in{' '}
+          <Link
+            href="/social-media-integration"
+            className="font-semibold underline"
+          >
+            social setup
+          </Link>{' '}
+          to enable batch generation.
+        </div>
+      )}
+
+      <Link
+        href="/scheduled-post"
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700"
+      >
+        <CalendarCheck2 className="h-4 w-4" aria-hidden />
+        View scheduled posts
+      </Link>
+    </div>
+  );
+}
+
+type BatchGenerationPlatformCardProps = BatchGenerationPageBodyProps & {
+  meta: { id: InstantGenerationPlatform; label: string; hint: string };
+  connected: boolean;
+  uid: string;
+  isFirstCard?: boolean;
+};
+
+function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
+  const isTourDemo = useTourDemo();
+  const {
+    meta,
+    connected,
+    uid,
+    isFirstCard = false,
+    selectedByPlatform,
+    generatingByPlatform,
+    activePreviewDateByPlatform,
+    statusByPlatform,
+    statusLoadingByPlatform,
+    errorsByPlatform,
+    jobMetadataByParent,
+    setJobMetadata,
+    handleToggleDate,
+    setActivePreviewDate,
+    setErrorsByPlatform,
+    setSelectedDates,
+    setGenerating,
+    setResults,
+    fetchStatusForPlatform,
+    dateKeys,
+  } = props;
+  const platform = meta.id;
+
+  const featureJob = useFeatureJob('ai-engine', platform);
+  const {
+    parentJobId: activeParentJobId,
+    jobs: jobMap,
+    overallPct,
+    allDone,
+    isRunning,
+    onGenerated,
+    platformJobs: activePlatformJobs,
+  } = featureJob;
+  const lastMaterializedRef = useRef<string | null>(null);
+  const imagePreview = useImagePreview();
+
+  const selected = selectedByPlatform[platform] || [];
+  const rows = statusByPlatform[platform] || [];
+  const generatedRows = rows.filter((r) => r.exists);
+  const activePreviewDate = activePreviewDateByPlatform[platform] || null;
+  const activePreviewRow = generatedRows.find(
+    (r) => r.date === activePreviewDate
+  );
+  const selectedSet = new Set(selected);
+  const blockedSet = new Set(generatedRows.map((r) => r.date));
+  const openDatesCount = dateKeys.filter((d) => !blockedSet.has(d)).length;
+  const isGenerating = !!generatingByPlatform[platform] || isRunning;
+  const statusLoading = !!statusLoadingByPlatform[platform];
+  const platformError = errorsByPlatform[platform];
+  const slotSelectedDates = useMemo(() => {
+    if (!activePlatformJobs.length) return undefined;
+    const dedup = Array.from(
+      new Set(
+        activePlatformJobs
+          .map((j) => j.date)
+          .filter((d): d is string => typeof d === 'string')
+      )
+    );
+    return dedup.length > 0 ? dedup.sort() : undefined;
+  }, [activePlatformJobs]);
+
+  const cachedSelectedDates = useMemo(() => {
+    if (!activeParentJobId) return undefined;
+    return jobMetadataByParent[activeParentJobId]?.selectedDates;
+  }, [jobMetadataByParent, activeParentJobId]);
+
+  const inFlightSelectedDates = cachedSelectedDates ?? slotSelectedDates;
+
+  const generatingDateSet = useMemo(() => {
+    if (!isGenerating || !inFlightSelectedDates?.length) return new Set<string>();
+    return new Set(inFlightSelectedDates);
+  }, [isGenerating, inFlightSelectedDates]);
+
+  const fallbackFetchedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!activeParentJobId) return;
+    if (cachedSelectedDates || slotSelectedDates) return;
+    if (fallbackFetchedRef.current === activeParentJobId) return;
+    fallbackFetchedRef.current = activeParentJobId;
+    void (async () => {
+      const meta = await getJobMetadata(activeParentJobId);
+      if (meta.selectedDates && meta.selectedDates.length > 0) {
+        setJobMetadata(activeParentJobId, {
+          selectedDates: meta.selectedDates,
+          selectedPlatforms: meta.selectedPlatforms,
+        });
+      }
+    })();
+  }, [activeParentJobId, cachedSelectedDates, slotSelectedDates, setJobMetadata]);
+
+  const handleGenerate = useCallback(async () => {
+    if (isTourDemo) return;
+    setErrorsByPlatform((prev) => ({ ...prev, [platform]: '' }));
+    setResults(platform, []);
+    const selectedDates = selectedByPlatform[platform] || [];
+    if (!uid) {
+      setErrorsByPlatform((prev) => ({
+        ...prev,
+        [platform]: 'You must be signed in to generate posts.',
+      }));
+      return;
+    }
+    if (!selectedDates.length) {
+      setErrorsByPlatform((prev) => ({
+        ...prev,
+        [platform]: `Select at least one day (up to ${MAX_DATES}).`,
+      }));
+      return;
+    }
+    try {
+      setGenerating(platform, true);
+      lastMaterializedRef.current = null;
+      const response = await generateInstantPostsBatchApi({
+        userId: uid,
+        platform,
+        dates: selectedDates,
+      });
+      setJobMetadata(response.parentJobId, {
+        selectedDates,
+        selectedPlatforms: [platform],
+      });
+      onGenerated({
+        parentJobId: response.parentJobId,
+        jobs: response.jobs,
+      });
+      setSelectedDates(platform, []);
+    } catch (e: unknown) {
+      const message =
+        e instanceof Error ? e.message : 'Something went wrong.';
+      setErrorsByPlatform((prev) => ({
+        ...prev,
+        [platform]: message,
+      }));
+      setGenerating(platform, false);
+    }
+  }, [
+    platform,
+    selectedByPlatform,
+    uid,
+    onGenerated,
+    setGenerating,
+    setResults,
+    setSelectedDates,
+    setErrorsByPlatform,
+    setJobMetadata,
+    isTourDemo,
+  ]);
+
+  useEffect(() => {
+    if (!allDone || !activeParentJobId) return;
+    if (lastMaterializedRef.current === activeParentJobId) return;
+    lastMaterializedRef.current = activeParentJobId;
+
+    const jobList = Object.values(jobMap);
+    if (!jobList.length) return;
+
+    const finalResults: BatchDayResult[] = jobList
+      .map((j) => {
+        const r = (j.result ?? {}) as Record<string, unknown>;
+        const date = typeof r.date === 'string' ? r.date : null;
+        if (!date) return null;
+        return {
+          date,
+          success: j.status === 'done' && r.success !== false,
+          ...(j.error?.message ? { error: j.error.message } : {}),
+        } as BatchDayResult;
+      })
+      .filter((row): row is BatchDayResult => !!row)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    setResults(platform, finalResults);
+    setGenerating(platform, false);
+    void fetchStatusForPlatform(platform);
+  }, [
+    allDone,
+    activeParentJobId,
+    jobMap,
+    fetchStatusForPlatform,
+    setGenerating,
+    setResults,
+    platform,
+  ]);
+
+  useEffect(() => {
+    const flagged = !!generatingByPlatform[platform];
+    if (isRunning && !flagged) {
+      setGenerating(platform, true);
+    } else if (!isRunning && flagged) {
+      setGenerating(platform, false);
+    }
+  }, [isRunning, platform, generatingByPlatform, setGenerating]);
+
+  return (
+    <section className="glass-card rounded-3xl p-5 sm:p-6 flex flex-col gap-4">
+      <div>
+        <h2 className="text-xl font-semibold text-slate-900">{meta.label}</h2>
+        <p className="mt-1 text-xs text-slate-500">{meta.hint}</p>
+      </div>
+
+      {!connected ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 leading-relaxed">
+          Connect this platform in social settings to enable generation.{' '}
+          <Link
+            href="/settings/billings"
+            className="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-800"
+          >
+            Upgrade your plan
+          </Link>{' '}
+          to add this platform.
+        </div>
+      ) : (
+        <>
+          <div
+            id={isFirstCard ? 'tour-bulk-dates' : undefined}
+            className="rounded-2xl border border-slate-200 bg-white p-3"
+          >
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Dates ({selected.length}/{MAX_DATES} selected)
+              </p>
+              <span className="text-[11px] text-emerald-700 font-medium">
+                Green = already generated
+              </span>
+            </div>
+            {statusLoading ? (
+              <div className="space-y-3">
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-2 text-xs text-indigo-900 animate-pulse">
+                  Finding occupied dates for {meta.label}...
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {Array.from({ length: 9 }).map((_, idx) => (
+                    <div
+                      key={`${platform}-skeleton-${idx}`}
+                      className="h-14 rounded-lg border border-slate-200 bg-slate-100 animate-pulse"
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {dateKeys.map((dateKey) => {
+                  const blocked = blockedSet.has(dateKey);
+                  const selectedDate = selectedSet.has(dateKey);
+                  const generatingDate = generatingDateSet.has(dateKey);
+                  const showBlue = selectedDate || generatingDate;
+                  const previewing =
+                    blocked && activePreviewDate === dateKey;
+                  return (
+                    <button
+                      key={`${platform}-${dateKey}`}
+                      type="button"
+                      disabled={!connected || isGenerating}
+                      onClick={() => {
+                        if (blocked) {
+                          if (selected.length > 0) {
+                            setSelectedDates(platform, []);
+                            setErrorsByPlatform((prev) => ({
+                              ...prev,
+                              [platform]: '',
+                            }));
+                          }
+                          setActivePreviewDate(
+                            platform,
+                            activePreviewDate === dateKey ? null : dateKey
+                          );
+                          return;
+                        }
+                        if (activePreviewDate) {
+                          setActivePreviewDate(platform, null);
+                        }
+                        handleToggleDate(platform, dateKey);
+                      }}
+                      className={[
+                        'rounded-lg border px-2 py-2 text-center text-xs font-semibold transition',
+                        blocked
+                          ? previewing
+                            ? 'border-emerald-700 bg-emerald-200 text-emerald-950'
+                            : 'border-emerald-300 bg-emerald-100 text-emerald-800'
+                          : showBlue
+                            ? 'border-indigo-500 bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                            : 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100',
+                      ].join(' ')}
+                    >
+                      <span className="block">
+                        {format(new Date(`${dateKey}T12:00:00`), 'MMM d')}
+                      </span>
+                      <span className="block text-[10px] opacity-75">
+                        {format(new Date(`${dateKey}T12:00:00`), 'EEE')}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <button
+            id={isFirstCard ? 'tour-bulk-generate' : undefined}
+            type="button"
+            disabled={
+              !connected ||
+              isGenerating ||
+              (!isTourDemo &&
+                (selected.length === 0 || openDatesCount === 0))
+            }
+            onClick={() => void handleGenerate()}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" aria-hidden />
+                Generate {selected.length || 0} day
+                {selected.length === 1 ? '' : 's'}
+              </>
+            )}
+          </button>
+          {isGenerating && (
+            <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2 space-y-2">
+              <div className="flex items-center justify-between text-xs font-medium text-indigo-700">
+                <span>Generating...</span>
+                <span>{overallPct}%</span>
+              </div>
+              <Progress
+                value={overallPct}
+                className="h-1.5 bg-indigo-100 **:data-[slot=progress-indicator]:bg-indigo-500"
+              />
+              {Object.values(jobMap).length > 1 && (
+                <div className="space-y-1 pt-1">
+                  {Object.values(jobMap).map((job) => {
+                    const slot = activePlatformJobs.find(
+                      (j) => j.jobId === job.jobId
+                    );
+                    const resultDate =
+                      typeof (job.result as { date?: string } | null)?.date ===
+                        'string'
+                        ? (job.result as { date: string }).date
+                        : undefined;
+                    const dateKey = slot?.date ?? resultDate;
+                    const label = dateKey
+                      ? format(new Date(`${dateKey}T12:00:00`), 'MMM d')
+                      : meta.label;
+                    return (
+                      <div
+                        key={job.jobId}
+                        className="flex items-center justify-between text-[11px] text-indigo-700/80"
+                      >
+                        <span>{label}</span>
+                        <span>{job.pct ?? 0}%</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {inFlightSelectedDates && inFlightSelectedDates.length > 0 && (
+                <p className="text-[11px] text-indigo-700/80">
+                  Generating{' '}
+                  <span className="font-semibold">
+                    {inFlightSelectedDates.length} day
+                    {inFlightSelectedDates.length === 1 ? '' : 's'}
+                  </span>
+                  :{' '}
+                  {inFlightSelectedDates
+                    .map((d) =>
+                      format(new Date(`${d}T12:00:00`), 'MMM d')
+                    )
+                    .join(', ')}
+                </p>
+              )}
+            </div>
+          )}
+          {connected && !statusLoading && openDatesCount === 0 && (
+            <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+              All visible dates already have generated posts for this platform.
+            </p>
+          )}
+
+          {platformError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+              {platformError}
+            </div>
+          )}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-3">
+            <p className="text-xs font-semibold text-slate-700 mb-2">
+              Generated preview
+            </p>
+            {!activePreviewRow ? (
+              <p className="text-xs text-slate-500">
+                Click a green date to view the generated post for that day.
+              </p>
+            ) : (
+              <article
+                className={
+                  activePreviewRow.post?.removedByUser
+                    ? 'rounded-xl border border-amber-200 bg-amber-50/50 p-2.5'
+                    : 'rounded-xl border border-emerald-200 bg-emerald-50/40 p-2.5'
+                }
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <p
+                    className={`text-xs font-semibold ${activePreviewRow.post?.removedByUser
+                        ? 'text-amber-900'
+                        : 'text-emerald-900'
+                      }`}
+                  >
+                    {format(
+                      new Date(`${activePreviewRow.date}T12:00:00`),
+                      'EEEE, MMM d'
+                    )}
+                  </p>
+                  <span
+                    className={`text-[10px] font-mono ${activePreviewRow.post?.removedByUser
+                        ? 'text-amber-800'
+                        : 'text-emerald-800'
+                      }`}
+                  >
+                    {activePreviewRow.scheduledPostId?.slice(0, 8)}
+                  </span>
+                </div>
+                {activePreviewRow.post?.removedByUser ? (
+                  <p className="mt-2 text-xs text-amber-950">
+                    You removed this post. It no longer appears in your
+                    scheduled posts{' '}
+                  </p>
+                ) : (
+                  <>
+                    {activePreviewRow.post?.imageUrl ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          imagePreview.open(
+                            activePreviewRow.post!.imageUrl!,
+                            `${meta.label} generated post ${activePreviewRow.date}`
+                          )
+                        }
+                        className="group cursor-pointer relative mt-2 block w-full overflow-hidden rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                        aria-label="Open image preview"
+                      >
+                        <img
+                          src={activePreviewRow.post.imageUrl}
+                          alt={`${meta.label} generated post ${activePreviewRow.date}`}
+                          className="h-28 w-full rounded-lg object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                        />
+                        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
+                          <span className="flex items-center gap-1 rounded-full bg-white/0 px-2 py-1 text-[11px] font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:bg-black/60 group-hover:opacity-100">
+                            <Expand className="h-3 w-3" />
+                            Preview
+                          </span>
+                        </span>
+                      </button>
+                    ) : null}
+                    {activePreviewRow.post?.imageUrl ? (
+                      <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                        <ImagePreviewButton
+                          onClick={() =>
+                            imagePreview.open(
+                              activePreviewRow.post!.imageUrl!,
+                              `${meta.label} generated post ${activePreviewRow.date}`
+                            )
+                          }
+                          className="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 hover:opacity-100"
+                        />
+                        <DownloadPngButton
+                          url={activePreviewRow.post.imageUrl}
+                          getFilename={() =>
+                            `batch-${platform}-${activePreviewRow.date}-${Date.now()}.png`
+                          }
+                        />
+                      </div>
+                    ) : null}
+                    <p className="mt-2 text-xs text-slate-700 line-clamp-3">
+                      {activePreviewRow.post?.message?.trim() ||
+                        'Caption unavailable'}
+                    </p>
+                  </>
+                )}
+              </article>
+            )}
+          </div>
+          <ImagePreviewOverlay
+            src={imagePreview.previewUrl}
+            alt={imagePreview.previewAlt}
+            onClose={imagePreview.close}
+          />
+        </>
+      )}
+    </section>
+  );
+}

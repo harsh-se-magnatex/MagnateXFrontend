@@ -1,0 +1,912 @@
+'use client';
+
+import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
+import { createPortal } from 'react-dom';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  WORKSPACE_NAV_HREFS,
+  workspacePageTitle,
+} from '@/lib/workspace-nav';
+import {
+  useTimestampFormatter,
+  type TimestampInput,
+} from '@/lib/user-timezone';
+import {
+  Brain,
+  Calendar,
+  CalendarCheck2,
+  CalendarPlus,
+  CloudLightning,
+  ExternalLink,
+  ImageIcon,
+  ImageOff,
+  Inbox,
+  Loader2,
+  Package,
+  Sparkles,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  getGeneratedMediaLibraryApi,
+  type GeneratedMediaLibraryItem,
+  type GeneratedMediaSource,
+  type MediaSource,
+} from '@/src/service/api/generated-media-library.service';
+import { Button } from '@/components/ui/button';
+import { DownloadPngButton } from '@/components/download-png-button';
+import {
+  ImagePreviewButton,
+  ImagePreviewOverlay,
+  useImagePreview,
+} from '@/components/image-preview';
+import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import {
+  galleryItemCanSchedule,
+  galleryItemToPrefillPost,
+} from '@/lib/gallery-schedule';
+import {
+  setPostSchedulerPrefill,
+  type PostSchedulerPrefillPayload,
+} from '@/lib/post-scheduler-prefill-store';
+import { scheduleCampaignDraftApi } from '@/src/service/api/campaign.service';
+import { showErrorToast } from '@/lib/show-error-toast';
+import { toast } from 'sonner';
+
+const SOURCE_OPTIONS: {
+  value: 'all' | GeneratedMediaSource;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: 'all',
+    label: 'All',
+    description: 'Everything you have generated',
+  },
+  {
+    value: 'instant-generation',
+    label: 'Quick create',
+    description: 'Instant-generation studio',
+  },
+  {
+    value: 'batchGeneratedPosts',
+    label: 'Bulk create',
+    description: 'AI engine batch dates',
+  },
+  {
+    value: 'productadvert',
+    label: 'Product ads',
+    description: 'Product advert tool',
+  },
+  {
+    value: 'eventPosts',
+    label: 'Festive post',
+    description: 'Event post tool',
+  },
+  {
+    value: 'aiEnginePosts',
+    label: 'AI engine posts',
+    description: 'AI engine post tool',
+  },
+  {
+    value: 'campaignDrafts',
+    label: 'Campaign drafts',
+    description: 'Drafts generated from create-campaign',
+  },
+];
+
+function sourceBadge(collection: MediaSource) {
+  switch (collection) {
+    case 'instant-generation':
+      return {
+        label: 'Quick create',
+        Icon: Sparkles,
+        className: 'bg-violet-500/15 text-violet-700 dark:text-violet-200',
+      };
+    case 'batchGeneratedPosts':
+      return {
+        label: 'Bulk',
+        Icon: CloudLightning,
+        className: 'bg-sky-500/15 text-sky-800 dark:text-sky-200',
+      };
+    case 'productadvert':
+      return {
+        label: 'Product advert',
+        Icon: Package,
+        className: 'bg-amber-500/15 text-amber-900 dark:text-amber-100',
+      };
+    case 'eventPosts':
+      return {
+        label: 'Festive post',
+        Icon: CalendarCheck2,
+        className: 'bg-green-500/15 text-green-900 dark:text-green-100',
+      };
+    case 'aiEnginePosts':
+      return {
+        label: 'AI engine post',
+        Icon: Brain,
+        className: 'bg-purple-500/15 text-purple-900 dark:text-purple-100',
+      };
+    case 'campaignDrafts':
+      return {
+        label: 'Campaign draft',
+        Icon: Inbox,
+        className: 'bg-indigo-500/15 text-indigo-900 dark:text-indigo-100',
+      };
+    default:
+      return {
+        label: collection,
+        Icon: ImageIcon,
+        className: 'bg-muted text-muted-foreground',
+      };
+  }
+}
+
+function shortRef(id: string, head = 6, tail = 4) {
+  if (id.length <= head + tail + 1) return id;
+  return `${id.slice(0, head)}…${id.slice(-tail)}`;
+}
+
+/** Normalize caption for display; some stored docs use non-string captions. */
+function mediaCaptionLabel(caption: unknown): string {
+  if (caption == null) return '';
+  if (typeof caption === 'string') return caption.trim();
+  if (typeof caption === 'number' || typeof caption === 'boolean') {
+    return String(caption).trim();
+  }
+  if (typeof caption === 'object') {
+    const o = caption as Record<string, unknown>;
+    for (const key of ['text', 'caption', 'message', 'body'] as const) {
+      const v = o[key];
+      if (typeof v === 'string') return v.trim();
+    }
+    try {
+      return JSON.stringify(caption);
+    } catch {
+      return String(caption);
+    }
+  }
+  return String(caption).trim();
+}
+
+function DetailRow({
+  label,
+  value,
+  long,
+}: {
+  label: string;
+  value: string;
+  long?: boolean;
+}) {
+  return (
+    <div className={long ? 'min-w-0' : undefined}>
+      <p className="text-xs font-medium text-slate-500 mb-0.5">{label}</p>
+      <p
+        className={
+          long
+            ? 'text-sm text-slate-800 min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
+            : 'text-sm text-slate-800'
+        }
+      >
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function MediaDetailModal({
+  item,
+  onClose,
+  formatWhen,
+  onSchedule,
+  canSchedule,
+  onPreviewImage,
+}: {
+  item: GeneratedMediaLibraryItem;
+  onClose: () => void;
+  formatWhen: (ts: TimestampInput) => string;
+  onSchedule: () => void;
+  canSchedule: boolean;
+  onPreviewImage: (url: string, alt?: string) => void;
+}) {
+  const url = item.imageUrl;
+  const badge = sourceBadge(item.collection);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm"
+      style={{ minHeight: '100dvh', height: '100dvh' }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="media-detail-modal-title"
+    >
+      <div
+        className="rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="shrink-0 p-4 border-b border-slate-200 flex items-center justify-between gap-3">
+          <h2 id="media-detail-modal-title" className="text-lg font-semibold">
+            Media details
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/40"
+            aria-label="Close"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-10 space-y-4 overscroll-contain">
+          {url ? (
+            <div>
+              <p className="text-xs font-medium text-slate-500 mb-1">Image</p>
+              <button
+                type="button"
+                onClick={() => onPreviewImage(url, 'Gallery image')}
+                className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]"
+                aria-label="Open image preview"
+              >
+                <img
+                  src={url}
+                  alt=""
+                  className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
+                />
+              </button>
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
+                <ImagePreviewButton
+                  onClick={() => onPreviewImage(url, 'Gallery image')}
+                  className="rounded-lg bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100 px-4 py-2"
+                />
+                <DownloadPngButton
+                  url={url}
+                  getFilename={() =>
+                    `media-library-${item.collection}-${item.id}-${Date.now()}.png`
+                  }
+                />
+                {canSchedule ? (
+                  <Button
+                    type="button"
+                    className="rounded-lg bg-gradient-primary text-white shadow-lg shadow-[#4A8FF6]/20"
+                    onClick={onSchedule}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Schedule post
+                  </Button>
+                ) : null}
+              </div>
+              <div className="flex w-full justify-end">
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-[#4A8FF6]/20"
+                >
+                  Open in new tab
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
+              Preview unavailable. Refresh the library or regenerate if the file
+              was removed.
+            </div>
+          )}
+          <DetailRow
+            label="Caption / Message"
+            value={mediaCaptionLabel(item.caption) || '—'}
+            long
+          />
+          <DetailRow label="Source" value={badge.label} />
+          <DetailRow
+            label="Platform"
+            value={
+              item.platform
+                ? item.platform.replace(/_/g, ' ')
+                : '—'
+            }
+          />
+          <DetailRow label="Created" value={formatWhen(item.createdAt)} />
+          {item.targetCalendarDate ? (
+            <DetailRow
+              label="Scheduled date"
+              value={item.targetCalendarDate}
+            />
+          ) : null}
+          {item.scheduledPostId && !canSchedule ? (
+            <DetailRow label="Scheduled post" value={item.scheduledPostId} />
+          ) : null}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+/**
+ * Campaign drafts ride a separate Firestore collection and have their own
+ * scheduling endpoint (the date is locked to whatever the user picked when
+ * generating the campaign — only the time of day is editable here).
+ */
+function isSchedulableCampaignDraft(
+  item: GeneratedMediaLibraryItem
+): item is GeneratedMediaLibraryItem & {
+  campaignDraftId: string;
+  targetCalendarDate: string;
+} {
+  return (
+    item.collection === 'campaignDrafts' &&
+    !item.earlierScheduled &&
+    !item.scheduledPostId &&
+    !!item.campaignDraftId &&
+    !!item.targetCalendarDate
+  );
+}
+
+type CampaignDraftScheduleModalProps = {
+  draftId: string;
+  /** Locked YYYY-MM-DD — the user already committed to this date when
+   *  generating the campaign. Surfaced as a disabled input. */
+  targetDate: string;
+  onClose: () => void;
+  onScheduled: () => void;
+};
+
+function CampaignDraftScheduleModal({
+  draftId,
+  targetDate,
+  onClose,
+  onScheduled,
+}: CampaignDraftScheduleModalProps) {
+  const [time, setTime] = useState<string>('09:00');
+  const [scheduling, setScheduling] = useState(false);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [onClose]);
+
+  const handleSchedule = useCallback(async () => {
+    if (scheduling) return;
+    if (!time) {
+      showErrorToast('Pick a time first.');
+      return;
+    }
+    const iso = new Date(`${targetDate}T${time}`);
+    if (Number.isNaN(iso.getTime())) {
+      showErrorToast('Invalid time.');
+      return;
+    }
+    if (iso.getTime() < Date.now()) {
+      showErrorToast('Pick a time in the future.');
+      return;
+    }
+    try {
+      setScheduling(true);
+      await scheduleCampaignDraftApi({
+        draftId,
+        scheduleAt: iso.toISOString(),
+      });
+      toast.success('Draft scheduled.');
+      onScheduled();
+      onClose();
+    } catch (err) {
+      const typed = err as {
+        response?: { data?: { message?: string } };
+        message?: string;
+      };
+      showErrorToast(
+        typed?.response?.data?.message ||
+          typed?.message ||
+          'Could not schedule this draft.'
+      );
+    } finally {
+      setScheduling(false);
+    }
+  }, [draftId, onClose, onScheduled, scheduling, targetDate, time]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[250] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
+      style={{ minHeight: '100dvh' }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="campaign-draft-schedule-title"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3
+          id="campaign-draft-schedule-title"
+          className="text-base font-semibold text-slate-900"
+        >
+          Schedule campaign draft
+        </h3>
+        <p className="mt-1 text-xs text-slate-500">
+          The date was locked when you created the campaign. Pick a time of day
+          and we&apos;ll queue it for publishing.
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Date <span className="ml-1 normal-case text-slate-400">(locked)</span>
+            <input
+              type="date"
+              value={targetDate}
+              disabled
+              readOnly
+              aria-readonly="true"
+              className="mt-1 rounded-lg border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs font-medium text-slate-600 cursor-not-allowed"
+            />
+          </label>
+          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            Time
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            />
+          </label>
+        </div>
+
+        <div className="mt-5 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={scheduling}
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSchedule}
+            disabled={scheduling}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {scheduling ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CalendarPlus className="h-3.5 w-3.5" />
+            )}
+            Schedule
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+export default function MediaLibraryPage() {
+  const router = useRouter();
+  const { billing } = useUserPlanCredits();
+  const fmtTimestamp = useTimestampFormatter();
+  // 24-hour, in the user's preferred timezone (DST handled automatically).
+  // Format mirrors the previous "MMM d, yyyy · h:mm a" but in HH:mm.
+  const formatWhen = (ts: TimestampInput) =>
+    fmtTimestamp(ts, { format: 'MMM d, yyyy · HH:mm' });
+  const [source, setSource] = useState<'all' | GeneratedMediaSource>('all');
+  const [items, setItems] = useState<GeneratedMediaLibraryItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState('');
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [selectedItem, setSelectedItem] =
+    useState<GeneratedMediaLibraryItem | null>(null);
+  /** Campaign draft currently being scheduled via the inline modal. Lives
+   *  alongside `selectedItem` so the schedule modal can stack over the
+   *  detail modal without unmounting it. */
+  const [schedulingDraft, setSchedulingDraft] = useState<
+    | (GeneratedMediaLibraryItem & {
+        campaignDraftId: string;
+        targetCalendarDate: string;
+      })
+    | null
+  >(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const imagePreview = useImagePreview();
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    setItems([]);
+    setNextCursor(null);
+    setHasMore(false);
+    try {
+      const data = await getGeneratedMediaLibraryApi({ source });
+      setItems(data?.items ?? []);
+      setNextCursor(data?.nextCursor ?? null);
+      setHasMore(data?.hasMore ?? false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load your library.');
+    } finally {
+      setLoading(false);
+    }
+  }, [source]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || !nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const data = await getGeneratedMediaLibraryApi({
+        source,
+        cursor: nextCursor,
+      });
+      setItems((prev) => [...prev, ...(data?.items ?? [])]);
+      setNextCursor(data?.nextCursor ?? null);
+      setHasMore(data?.hasMore ?? false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load more items.');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [source, nextCursor, hasMore, loadingMore]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) void loadMore();
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
+
+  const handleScheduleFromGallery = useCallback(
+    (item: GeneratedMediaLibraryItem) => {
+      // Campaign drafts have their own scheduling endpoint and the date is
+      // fixed by the campaign generator. Open the inline modal instead of
+      // routing to the generic post scheduler.
+      if (isSchedulableCampaignDraft(item)) {
+        setSchedulingDraft(item);
+        return;
+      }
+      const post = galleryItemToPrefillPost(item);
+      if (!post) return;
+      const prefillPayload: PostSchedulerPrefillPayload = {
+        source: 'gallery',
+        createdAt: Date.now(),
+        lockedPlatform: post.platform,
+        posts: [post],
+      };
+      setPostSchedulerPrefill(prefillPayload);
+      setSelectedItem(null);
+      router.push(`${WORKSPACE_NAV_HREFS.schedulePost}?prefill=gallery`);
+    },
+    [router]
+  );
+
+  const handleDraftScheduled = useCallback(() => {
+    setSelectedItem(null);
+    void load();
+  }, [load]);
+
+  const emptyCopy = useMemo(() => {
+    if (source === 'all') {
+      return 'Generated images from quick create, batch workflow, and product ads will appear here.';
+    }
+    if (source === 'instant-generation') {
+      return 'New quick-create runs save images here automatically. Older runs may not have stored files.';
+    }
+    if (source === 'batchGeneratedPosts') {
+      return 'Batch-generated posts with images show up after the workflow creates scheduled posts.';
+    }
+    return 'Product advert generations with images are listed here.';
+  }, [source]);
+
+  return (
+    <div
+      id="tour-gl-grid"
+      className="mx-auto max-w-6xl space-y-8 pb-12"
+    >
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {workspacePageTitle(WORKSPACE_NAV_HREFS.gallery)}
+        </h1>
+        <p className="text-sm text-muted-foreground max-w-2xl">
+          A single place for images produced across quick create, batch
+          workflow, and product ads. Each quick-create or product-ad image can be
+          scheduled once from the gallery. Links expire after about an hour—refresh
+          if an image stops loading.
+        </p>
+      </header>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {SOURCE_OPTIONS.map((opt) => {
+            const active = source === opt.value;
+            return (
+              <Button
+                key={opt.value}
+                type="button"
+                variant={active ? 'default' : 'outline'}
+                size="sm"
+                className={cn('rounded-full', active && 'shadow-sm')}
+                onClick={() => setSource(opt.value)}
+              >
+                {opt.label}
+              </Button>
+            );
+          })}
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          disabled={loading}
+          onClick={() => void load()}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading
+            </>
+          ) : (
+            'Refresh'
+          )}
+        </Button>
+      </div>
+
+      {error ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+        >
+          {error}
+        </div>
+      ) : null}
+
+      {loading && items.length === 0 ? (
+        <PageLoadingState
+          className="min-h-[40vh]"
+          message="Loading your images…"
+        />
+      ) : null}
+
+      {!loading && items.length === 0 ? (
+        <div className="flex min-h-[36vh] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border/80 bg-muted/20 px-6 py-16 text-center">
+          <div className="rounded-full bg-muted p-4">
+            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <div className="space-y-2 max-w-md">
+            <p className="font-medium text-foreground">No images yet</p>
+            <p className="text-sm text-muted-foreground">{emptyCopy}</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+            <Button asChild variant="secondary" size="sm">
+              <Link href={WORKSPACE_NAV_HREFS.quickCreate}>
+                {workspacePageTitle(WORKSPACE_NAV_HREFS.quickCreate)}
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={WORKSPACE_NAV_HREFS.bulkCreate}>
+                {workspacePageTitle(WORKSPACE_NAV_HREFS.bulkCreate)}
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={WORKSPACE_NAV_HREFS.productAdvert}>
+                {workspacePageTitle(WORKSPACE_NAV_HREFS.productAdvert)}
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/festive-post">Festive post</Link>
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {items.length > 0 ? (
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => {
+            const badge = sourceBadge(item.collection);
+            const Icon = badge.Icon;
+            const url = item.imageUrl;
+            const captionLabel = mediaCaptionLabel(item.caption);
+            const canSchedule =
+              galleryItemCanSchedule(item) ||
+              isSchedulableCampaignDraft(item);
+            return (
+              <li
+                key={item.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedItem(item)}
+                onKeyDown={(e: KeyboardEvent<HTMLLIElement>) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedItem(item);
+                  }
+                }}
+                className={cn(
+                  'group flex flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition hover:border-primary/25 hover:shadow-md',
+                  'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
+                )}
+              >
+                {url ? (
+                  <div className="relative block aspect-4/5 overflow-hidden bg-muted">
+                    <img
+                      src={url}
+                      alt=""
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                      loading="lazy"
+                    />
+                    <span
+                      className={cn(
+                        'absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide shadow-sm backdrop-blur-sm',
+                        badge.className
+                      )}
+                    >
+                      <Icon className="h-3 w-3" />
+                      {badge.label}
+                    </span>
+                    <div className="absolute right-2 top-2">
+                      <ImagePreviewButton
+                        variant="overlay-icon"
+                        stopPropagation
+                        onClick={() => imagePreview.open(url, 'Gallery image')}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative flex aspect-4/5 flex-col items-center justify-center gap-2 overflow-hidden bg-muted/80 px-4 text-center">
+                    <ImageOff
+                      className="h-10 w-10 text-muted-foreground/80"
+                      aria-hidden
+                    />
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Preview unavailable
+                    </p>
+                    <p className="text-[11px] leading-snug text-muted-foreground/90">
+                      Refresh in a bit, or regenerate if the file was removed.
+                    </p>
+                    <span
+                      className={cn(
+                        'absolute left-2 top-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide shadow-sm backdrop-blur-sm',
+                        badge.className
+                      )}
+                    >
+                      <Icon className="h-3 w-3" />
+                      {badge.label}
+                    </span>
+                  </div>
+                )}
+                <div className="flex flex-1 flex-col gap-2 border-t border-border/40 p-3">
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                    {item.platform ? (
+                      <span className="rounded-md bg-muted px-1.5 py-0.5 font-medium capitalize text-foreground">
+                        {item.platform.replace(/_/g, ' ')}
+                      </span>
+                    ) : null}
+                    {item.targetCalendarDate ? (
+                      <span className="rounded-md border border-border/50 bg-background/60 px-1.5 py-0.5 text-[11px] text-foreground/90">
+                        Scheduled {item.targetCalendarDate}
+                      </span>
+                    ) : null}
+                    {item.creditsCharged != null && item.creditsCharged > 0 ? (
+                      <span
+                        className="rounded-md border border-amber-500/25 bg-amber-500/10 px-1.5 py-0.5 font-medium tabular-nums text-amber-950 dark:text-amber-100"
+                        title="Credits charged for this generation"
+                      >
+                        {item.creditsCharged}{' '}
+                        {item.creditsCharged === 1 ? 'credit' : 'credits'}
+                      </span>
+                    ) : null}
+                    {item.scheduledPostId && !canSchedule ? (
+                      <span
+                        className="max-w-full truncate font-mono text-[10px] text-muted-foreground"
+                        title={item.scheduledPostId}
+                      >
+                        Post {shortRef(item.scheduledPostId)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="line-clamp-3 text-sm font-medium leading-snug text-foreground">
+                    {captionLabel ? (
+                      captionLabel
+                    ) : (
+                      <span className="text-muted-foreground font-normal italic">
+                        No caption
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground tabular-nums">
+                    {formatWhen(item.createdAt)}
+                  </p>
+                  {canSchedule ? (
+                    <p className="text-[11px] font-medium text-[#4A8FF6]">
+                      Ready to schedule
+                    </p>
+                  ) : item.earlierScheduled ? (
+                    <p className="text-[11px] text-muted-foreground">
+                      Already scheduled
+                    </p>
+                  ) : null}
+                  <p className="text-[11px] text-muted-foreground group-hover:text-muted-foreground/90">
+                    Click for full details
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+      {selectedItem ? (
+        <MediaDetailModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          formatWhen={formatWhen}
+          canSchedule={
+            galleryItemCanSchedule(selectedItem) ||
+            isSchedulableCampaignDraft(selectedItem)
+          }
+          onSchedule={() => handleScheduleFromGallery(selectedItem)}
+          onPreviewImage={imagePreview.open}
+        />
+      ) : null}
+      {schedulingDraft ? (
+        <CampaignDraftScheduleModal
+          draftId={schedulingDraft.campaignDraftId}
+          targetDate={schedulingDraft.targetCalendarDate}
+          onClose={() => setSchedulingDraft(null)}
+          onScheduled={handleDraftScheduled}
+        />
+      ) : null}
+      <div ref={sentinelRef} style={{ height: 1 }} />
+      <ImagePreviewOverlay
+        src={imagePreview.previewUrl}
+        alt={imagePreview.previewAlt}
+        onClose={imagePreview.close}
+      />
+    </div>
+  );
+}
