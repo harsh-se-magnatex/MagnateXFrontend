@@ -28,6 +28,10 @@ export type GeneratedMediaLibraryItem = {
   imageFilePath?: string | null;
   platform: string;
   createdAt: FirestoreTimestamp;
+  /** Hydrated by the backend from the linked `scheduledPosts` doc. Present
+   *  whenever this item is bound to a scheduled post; absent for unscheduled
+   *  quick-create / product-ad outputs. */
+  scheduleAt?: FirestoreTimestamp;
   creditsCharged?: number;
   scheduledPostId?: string;
   targetCalendarDate?: string;

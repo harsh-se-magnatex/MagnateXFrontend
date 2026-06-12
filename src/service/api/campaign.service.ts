@@ -8,7 +8,7 @@ export const MAX_CAMPAIGN_DAYS = 7;
 export const DEFAULT_CAMPAIGN_SET_SIZE = 5;
 /** Credit cost per (day × platform) — mirrors backend
  *  `CAMPAIGN_CREDIT_PER_DAY`. Update both in lockstep. */
-export const CAMPAIGN_CREDIT_PER_DAY = 2;
+export const CAMPAIGN_CREDIT_PER_DAY = 3;
 /** Credit cost per regeneration AFTER the user's free first regen.
  *  Mirrors backend `CAMPAIGN_REGENERATE_CREDIT`. Update both in lockstep.
  *  `regenerationCount === 0` is always free; every regen after that is
