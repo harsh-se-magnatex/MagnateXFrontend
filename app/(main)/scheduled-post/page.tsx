@@ -1032,6 +1032,12 @@ export default function SchedulePostPage() {
   const imagePreview = useImagePreview();
   const [cursor, setCursor] = useState<FirestoreTimestamp | null>(null);
   const [hasMore, setHasMore] = useState(true);
+  // Mirrors `hasMore` for synchronous reads inside `fetchScheduledPosts` and
+  // for the tab-change effect to flip back to `true` without waiting on a
+  // re-render. Without this ref, switching away from a tab whose query just
+  // failed would never refetch — the stale `useCallback` closure would see
+  // `hasMore === false` and bail before the state update flushed.
+  const hasMoreRef = useRef(true);
   const obserVerRef = useRef<IntersectionObserver | null>(null);
   const fetchingRef = useRef(false);
   const cursorRef = useRef<FirestoreTimestamp | null>(null);
@@ -1041,6 +1047,10 @@ export default function SchedulePostPage() {
     cursorRef.current = cursor;
   }, [cursor]);
 
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+
   // Read the active tab through a ref inside fetchers so we don't have to
   // rebuild the memoized callbacks every time the user clicks a different tab.
   // The ref is kept in sync with the state below.
@@ -1049,7 +1059,10 @@ export default function SchedulePostPage() {
   }, [activeTab]);
 
   const fetchScheduledPosts = useCallback(async () => {
-    if (!hasMore || fetchingRef.current) return;
+    // Read `hasMore` through a ref so this guard can never get fooled by a
+    // stale closure — important on tab change, when we want the brand-new
+    // tab to fetch even though the previous tab just set `hasMore = false`.
+    if (!hasMoreRef.current || fetchingRef.current) return;
     fetchingRef.current = true;
     const isFirstPage = cursorRef.current == null;
     if (isFirstPage) {
@@ -1070,16 +1083,31 @@ export default function SchedulePostPage() {
       cursorRef.current = next;
       setCursor(next);
       if (!next) {
+        hasMoreRef.current = false;
         setHasMore(false);
       }
-    } catch {
-      setScheduledPosts([]);
+    } catch (error) {
+      // Don't wipe a successful prior page when a later page fails — that
+      // would erase content the user can already see. Only clear when the
+      // very first page errors out (so we don't leave a stale skeleton).
+      console.error('[fetchScheduledPosts] failed', error);
+      if (isFirstPage) setScheduledPosts([]);
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to load scheduled posts';
+      showErrorToast(message);
+      // Stop driving the intersection-observer pagination into the same
+      // failing query. The tab-change effect resets this back to `true`
+      // synchronously, so switching tabs still triggers a fresh fetch.
+      hasMoreRef.current = false;
+      setHasMore(false);
     } finally {
       fetchingRef.current = false;
       setScheduledPostsLoading(false);
       setMorePostsLoading(false);
     }
-  }, [hasMore]);
+  }, []);
 
   fetchScheduledPostsRef.current = fetchScheduledPosts;
 
@@ -1090,6 +1118,10 @@ export default function SchedulePostPage() {
   useEffect(() => {
     cursorRef.current = null;
     setCursor(null);
+    // Sync the ref BEFORE the fetch so the guard inside `fetchScheduledPosts`
+    // sees the reset immediately. `setHasMore(true)` alone wouldn't help —
+    // its closure value lags one render behind the call below.
+    hasMoreRef.current = true;
     setHasMore(true);
     setScheduledPosts([]);
     void fetchScheduledPostsRef.current();
@@ -1113,15 +1145,18 @@ export default function SchedulePostPage() {
         const next = data.nextCursor ?? null;
         cursorRef.current = next;
         setCursor(next);
+        hasMoreRef.current = next != null;
         setHasMore(next != null);
         const keepId = options?.keepSelectionForPostId;
         if (keepId) {
           const nextSel = posts.find((p: ScheduledPost) => p.postId === keepId);
           if (nextSel) setSelectedPost(nextSel);
         }
-      } catch {
-        // Silent; UI keeps last known state. Action-level error toast is shown
-        // separately by the caller if the action itself failed.
+      } catch (error) {
+        // Background refresh; we deliberately don't toast — the user just
+        // performed an explicit action and the action-level toast already
+        // covered that. Log so a broken refresh is still investigable.
+        console.error('[silentRefreshScheduledPosts] failed', error);
       }
     },
     []
@@ -1286,9 +1321,23 @@ export default function SchedulePostPage() {
       } else if (activeTab === 'rejected') {
         posts = source.filter(isRejected);
       } else if (activeTab === 'upcoming') {
-        posts = source.filter(
-          (p) => !isPosted(p) && !isRemoved(p) && !isRejected(p) && !isFailed(p)
-        );
+        // Spec: "pending for approval from admin/user, going to post from
+        // today's date or future". Past-due pending docs that haven't been
+        // swept by the backend yet shouldn't sneak into Upcoming — the
+        // date floor catches them client-side too.
+        const todayMs = startOfToday().getTime();
+        posts = source.filter((p) => {
+          if (
+            isPosted(p) ||
+            isRemoved(p) ||
+            isRejected(p) ||
+            isFailed(p)
+          ) {
+            return false;
+          }
+          const ms = (p.scheduleAt?._seconds ?? 0) * 1000;
+          return ms >= todayMs;
+        });
       } else if (activeTab === 'posted') {
         posts = source.filter(
           (p) => isPosted(p) && !isRemoved(p) && !isRejected(p) && !isFailed(p)
@@ -1362,8 +1411,17 @@ export default function SchedulePostPage() {
           next.set(calendarRangeKey, posts);
           return next;
         });
-      } catch {
+      } catch (error) {
         if (!cancelled) {
+          console.error('[calendar range fetch] failed', error);
+          const message =
+            error instanceof Error && error.message
+              ? error.message
+              : 'Failed to load calendar posts';
+          showErrorToast(message);
+          // Cache the empty result so we don't refire the same failing
+          // request on every re-render — the user can navigate to another
+          // month and come back to retry.
           setCalendarRangeCache((prev) => {
             if (prev.has(calendarRangeKey)) return prev;
             const next = new Map(prev);
@@ -1563,11 +1621,11 @@ export default function SchedulePostPage() {
                   : activeTab === 'rejected'
                     ? 'Posts you reject from approval will appear here.'
                     : activeTab === 'failed'
-                      ? 'Posts that failed to publish will appear here.'
+                      ? 'Posts that failed to publish — or were never approved in time — will appear here.'
                       : activeTab === 'posted'
                         ? 'Posts already published will appear here.'
                         : activeTab === 'upcoming'
-                          ? 'Pending or processing posts will appear here.'
+                          ? 'Posts awaiting approval, or scheduled for today and beyond, will appear here.'
                           : selectedScheduleDate
                             ? `Pick another date or clear the date filter. Showing dates in ${userTz}.`
                             : 'When you schedule content, it will show up here as cards.'}

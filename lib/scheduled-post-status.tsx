@@ -7,26 +7,42 @@
  * `pending` differently or applying different colours).
  *
  * Status resolution priority (high → low):
- *   1. `postStatus === 'failed'`        → Failed (with reason from `error` or
+ *   1. `removedByUser === true`         → Removed by you (terminal user action,
+ *                                          beats every backend status)
+ *   2. `postStatus === 'removed'` or
+ *      `UserApprovalStatus === 'removed'` → Removed by admin
+ *   3. `postStatus === 'failed'`        → Failed (with reason from `error` or
  *                                          `errors[]`)
- *   2. `postStatus === 'posted'`        → Posted
- *   3. `UserApprovalStatus === 'rejected'` → Rejected
- *   4. `UserApprovalStatus !== 'approved'` → Approval pending by you
+ *   4. `postStatus === 'posted'`        → Posted
+ *   5. `UserApprovalStatus === 'rejected'` → Rejected
+ *   6. `UserApprovalStatus !== 'approved'` → Approval pending by you
  *      (user-side approval check intentionally wins over
  *      `postStatus === 'approved'`, because the AI engine sometimes
  *      pre-stamps `postStatus: 'approved'` while still leaving
  *      `UserApprovalStatus: 'pending'`)
- *   5. `postStatus === 'approved'`      → Approved
- *   6. `postStatus === 'processing'`    → Processing
- *   7. otherwise                        → Approval pending by admin
+ *   7. `postStatus === 'approved'`      → Approved
+ *   8. `postStatus === 'processing'`    → Processing
+ *   9. otherwise                        → Approval pending by admin
  */
 
-import { AlertCircle, CheckCircle2, Clock, RotateCw } from 'lucide-react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  RotateCw,
+  Trash2,
+} from 'lucide-react';
 import { cn } from './utils';
 
 export type ScheduledPostStatusInput = {
   postStatus?: string | null;
   UserApprovalStatus?: string | null;
+  /**
+   * `true` when the *end user* (not an admin) deleted the post from the queue.
+   * Terminal state — beats every other status because it reflects the user's
+   * own explicit action, which is the most useful signal to surface back.
+   */
+  removedByUser?: boolean | null;
   error?: string | null;
   errors?: string[] | null;
 };
@@ -37,6 +53,8 @@ export type DisplayStatusVariant =
   | 'approved'
   | 'processing'
   | 'rejected'
+  | 'removedByYou'
+  | 'removedByAdmin'
   | 'pendingByYou'
   | 'pendingByAdmin';
 
@@ -65,6 +83,23 @@ export function extractFailureReason(
 export function getDisplayStatus(post: ScheduledPostStatusInput): DisplayStatus {
   const ps = String(post.postStatus ?? '').toLowerCase();
   const ua = String(post.UserApprovalStatus ?? '').toLowerCase();
+
+  // Removal beats every other status — it's a terminal user/admin action
+  // and the most relevant thing to surface back. The `removedByUser` flag
+  // is what the current Remove button writes; `postStatus === 'removed'` and
+  // `UserApprovalStatus === 'removed'` are kept here for forward
+  // compatibility with an admin-side remove action (no producer in-tree yet,
+  // but the badge is ready when it lands).
+  if (post.removedByUser === true) {
+    return { label: 'Removed by you', variant: 'removedByYou', reason: null };
+  }
+  if (ps === 'removed' || ua === 'removed') {
+    return {
+      label: 'Removed by admin',
+      variant: 'removedByAdmin',
+      reason: null,
+    };
+  }
 
   if (ps === 'failed') {
     return {
@@ -109,6 +144,10 @@ export function statusBadgeClasses(variant: DisplayStatusVariant): string {
       return 'bg-amber-50 text-amber-800 border-amber-200';
     case 'rejected':
       return 'bg-rose-50 text-rose-700 border-rose-200';
+    case 'removedByYou':
+      return 'bg-slate-100 text-slate-700 border-slate-300';
+    case 'removedByAdmin':
+      return 'bg-zinc-100 text-zinc-700 border-zinc-300';
     case 'pendingByYou':
       return 'bg-sky-50 text-sky-800 border-sky-200';
     case 'pendingByAdmin':
@@ -133,6 +172,9 @@ export function StatusBadgeIcon({
       return <AlertCircle className={cls} />;
     case 'processing':
       return <RotateCw className={cn(cls, 'animate-spin')} />;
+    case 'removedByYou':
+    case 'removedByAdmin':
+      return <Trash2 className={cls} />;
     case 'pendingByYou':
     case 'pendingByAdmin':
       return <Clock className={cls} />;
