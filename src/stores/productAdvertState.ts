@@ -70,6 +70,16 @@ type ProductAdvertState = {
   generatedAt: number | null;
 
   clearOutput: () => void;
+  /**
+   * Resets all run-specific form state (prompt, selected platforms, campaign
+   * context, backgrounds, generated output). Preserves stable preferences
+   * (`generationMode`, `useIndustryResearch`, `lastGenerationMode`).
+   *
+   * Call this after a successful downstream action consumes the generation
+   * (e.g. the post is scheduled from /post-scheduler) so that returning to
+   * /product-advert presents a fresh form instead of stale inputs.
+   */
+  resetForm: () => void;
 };
 
 export const useProductAdvertState = create<ProductAdvertState>()((set) => ({
@@ -118,4 +128,16 @@ export const useProductAdvertState = create<ProductAdvertState>()((set) => ({
 
   clearOutput: () =>
     set({ finalResult: null, loading: false, generatedAt: null }),
+
+  resetForm: () =>
+    set({
+      prompt: '',
+      genPlatforms: [],
+      campaignContext: '',
+      background: '',
+      customBackground: '',
+      finalResult: null,
+      loading: false,
+      generatedAt: null,
+    }),
 }));

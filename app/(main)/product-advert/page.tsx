@@ -130,7 +130,6 @@ export default function ProductAdvertPage() {
   const setLastGenerationMode = useProductAdvertState(
     (s) => s.setLastGenerationMode
   );
-  const clearOutput = useProductAdvertState((state) => state.clearOutput);
   // On mount: clear in-memory output older than 2 hours within the same tab session.
   useEffect(() => {
     const { generatedAt, clearOutput } = useProductAdvertState.getState();
@@ -443,7 +442,10 @@ export default function ProductAdvertPage() {
 
     setPostSchedulerPrefill(prefillPayload);
     router.push('/post-scheduler?prefill=product-advert');
-    clearOutput();
+    // Form state (prompt, platforms, generated result, etc.) is intentionally
+    // preserved here so the user can navigate back from /post-scheduler
+    // without losing their work. The state is reset by /post-scheduler after
+    // the post is successfully scheduled (see resetForm call there).
   }
 
   async function handleCopyCaption(resultItem: AdvertResult) {

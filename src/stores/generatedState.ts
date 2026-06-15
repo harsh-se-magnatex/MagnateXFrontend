@@ -158,6 +158,12 @@ export const useInstantGeneratedState = create<InstantGeneratedState>()(
         generatedAt: null,
       }),
 
+    // Wipes all session state tied to the current generate -> schedule
+     // cycle: the generated content + prompt, the platforms picked for
+     // generation, and the schedule inputs (date, time, per-platform
+     // schedule slots, selected schedule platform). Without this, the
+     // previous run's prompt, generation platforms, and date/time would
+     // carry over into the next attempt until a hard refresh.
     clearOutput: () =>
       set({
         createdContent: null,
@@ -165,6 +171,11 @@ export const useInstantGeneratedState = create<InstantGeneratedState>()(
         isGenerating: false,
         generatedAt: null,
         prompt: '',
+        genPlatforms: [],
+        scheduleDate: '',
+        scheduleTime: '',
+        platformSchedule: {},
+        schedulePlatform: '',
       }),
   })
 );

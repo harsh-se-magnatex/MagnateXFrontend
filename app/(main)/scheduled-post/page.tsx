@@ -207,6 +207,33 @@ function getRegeneratedCount(post: ScheduledPost): number {
   return typeof n === 'number' && Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * Mirrors the server-side definition of the "Upcoming" tab (see
+ * `applyScheduledPostsTabFilter` in `automated_post.controller.ts`) so the
+ * Regenerate / Remove buttons appear *only* on posts the user can still act
+ * on — i.e. ones that are pending / processing / approved AND scheduled for
+ * the future. The card/modal both consult this single helper so we can't
+ * drift between rendering an action button and the backend silently
+ * rejecting the action because the post is in a terminal state.
+ *
+ * Specifically excludes (no buttons):
+ *   - posted (already published)
+ *   - failed (terminal; regen wouldn't republish, remove is moot)
+ *   - removed by you / admin (already gone)
+ *   - rejected (user already said no)
+ *   - past-due of any flavour (publish window missed)
+ */
+function isUpcomingPost(post: ScheduledPost): boolean {
+  const ps = String(post.postStatus ?? '').toLowerCase();
+  const ua = String(post.UserApprovalStatus ?? '').toLowerCase();
+  if (post.removedByUser === true) return false;
+  if (ua === 'rejected' || ua === 'removed') return false;
+  if (ps === 'posted' || ps === 'failed' || ps === 'removed') return false;
+  if (!['pending', 'processing', 'approved'].includes(ps)) return false;
+  const scheduleMs = (post.scheduleAt?._seconds ?? 0) * 1000;
+  return scheduleMs >= Date.now();
+}
+
 function DetailModal({
   post,
   onClose,
@@ -228,10 +255,7 @@ function DetailModal({
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
   const showRegenerate = post.generatedByAiEngine === true;
   const regeneratedCount = getRegeneratedCount(post);
-  const showPostActions =
-    post.postStatus !== 'posted' &&
-    post.removedByUser !== true &&
-    (post.UserApprovalStatus ?? '').toLowerCase() !== 'rejected';
+  const showPostActions = isUpcomingPost(post);
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   return (
@@ -402,10 +426,7 @@ function ScheduledPostCard({
 }) {
   const showRegenerate = post.generatedByAiEngine === true;
   const regeneratedCount = getRegeneratedCount(post);
-  const showPostActions =
-    post.postStatus !== 'posted' &&
-    post.removedByUser !== true &&
-    (post.UserApprovalStatus ?? '').toLowerCase() !== 'rejected';
+  const showPostActions = isUpcomingPost(post);
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   return (

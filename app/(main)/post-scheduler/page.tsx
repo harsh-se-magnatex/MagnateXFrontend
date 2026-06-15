@@ -45,6 +45,7 @@ import {
   type PostSchedulerPrefillPayload,
   type PostSchedulerPrefillSource,
 } from '@/lib/post-scheduler-prefill-store';
+import { useProductAdvertState } from '@/src/stores/productAdvertState';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -312,6 +313,23 @@ export default function PostSchedulePage() {
     setImageError(null);
   };
 
+  // Wipes every input on the scheduler form. Called after a successful
+  // schedule so that staying on (or returning to) /post-scheduler shows a
+  // fresh composer instead of the just-submitted post's caption, image,
+  // schedule slots, and selected platforms.
+  const resetSchedulerForm = () => {
+    setSelectedImage(null);
+    setPrefilledImageUrl('');
+    setPrefilledImageFilePath('');
+    setPrefilledPosts([]);
+    setPrefilledSource(undefined);
+    setIsPrefilledFlow(false);
+    setMessage('');
+    setPlatformSchedules({});
+    setGenPlatforms([]);
+    setImageError(null);
+  };
+
   const previewUrl = useMemo(() => {
     if (selectedImage) return URL.createObjectURL(selectedImage);
     return prefilledImageUrl;
@@ -406,6 +424,12 @@ export default function PostSchedulePage() {
   const handleSchedulePost = async () => {
     if (isTourDemo) return;
     if (!canSchedule) return;
+    // Tracks whether this run consumed a Product Advert prefill so we can
+    // wipe the product-advert form state on success (prompt, platforms,
+    // generated result, etc.). Without this, navigating back to
+    // /product-advert after scheduling would still show the stale inputs
+    // and result until a hard refresh.
+    let didConsumeProductAdvert = false;
     try {
       setPostLoading(true);
       const buildFileFromImageUrl = async (imageUrl: string, index: number) => {
@@ -423,6 +447,9 @@ export default function PostSchedulePage() {
         if (postsToSchedule.length === 0) {
           throw new Error('No connected platforms available for scheduling.');
         }
+        didConsumeProductAdvert = postsToSchedule.some(
+          (post) => post.source === 'productadvert'
+        );
         await Promise.all(
           postsToSchedule.map(async (post) => {
             const scheduledAtIso = getScheduledAtIso(post.platform);
@@ -456,6 +483,10 @@ export default function PostSchedulePage() {
             ? 'Posts scheduled successfully'
             : 'Post scheduled successfully'
         );
+        if (didConsumeProductAdvert) {
+          useProductAdvertState.getState().resetForm();
+        }
+        resetSchedulerForm();
         return;
       }
 
@@ -468,6 +499,9 @@ export default function PostSchedulePage() {
       );
       if (platformsToSchedule.length === 0) {
         throw new Error('No connected platforms available for scheduling.');
+      }
+      if (prefilledSource === 'productadvert') {
+        didConsumeProductAdvert = true;
       }
 
       await Promise.all(
@@ -516,6 +550,10 @@ export default function PostSchedulePage() {
           ? 'Posts scheduled successfully'
           : 'Post scheduled successfully'
       );
+      if (didConsumeProductAdvert) {
+        useProductAdvertState.getState().resetForm();
+      }
+      resetSchedulerForm();
     } catch (error) {
       showErrorToast(error instanceof Error ? error.message : 'Failed to schedule post');
     } finally {
