@@ -164,7 +164,7 @@ export function AnalyticsStructuredInsightsPanel({
       <Section
         number={1}
         title="Automated insights"
-        description="Best-performing content, optimal posting patterns, audience engagement, and single-image post recommendations from your synced metrics."
+        description="Best-performing content, optimal posting patterns, audience engagement, and image/carousel recommendations from your synced metrics."
       >
         <SubBlock label="Best-performing">{a1.bestPerforming}</SubBlock>
         <SubBlock label="Optimal posting">{a1.optimalPosting}</SubBlock>

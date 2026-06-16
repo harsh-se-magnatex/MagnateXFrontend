@@ -87,98 +87,56 @@ import {
   needsEmailVerificationForPurchase,
 } from '@/lib/email-verification-for-purchase';
 
-/** Tier ladder shown left-to-right in the upgrade dialog. Auto/Manual mode
- *  is chosen via a separate toggle; this controls only the tier order. */
 const PLAN_COMPARISON_ORDER = ['prime', 'elite', 'legacy'] as const;
-type PlanTier = (typeof PLAN_COMPARISON_ORDER)[number];
-type PlanMode = 'auto' | 'manual';
 
 const TOP_UP_PACK_LABELS = ['Starter', 'Basic', 'Growth', 'Business'] as const;
 
-/**
- * Pricing display keyed by the full plan id (`{tier}-{mode}`). Auto ("AI")
- * plans are priced higher than Manual ("Studio") plans within the same
- * tier because of the daily-orchestrator value. Numbers mirror
- * `DISCOUNTED_PLAN_PRICING` in `transactions.controller.ts` and the
- * `PRICE_BY_TIER_MODE` table in `scripts/seed-plans.ts`.
- */
 const PLAN_PRICING_DISPLAY: Record<
   string,
   { discounted: number; original: number; discountLabel: string }
 > = {
-  'prime-manual': { discounted: 14.99, original: 14.99, discountLabel: '' },
-  'prime-auto': { discounted: 22.99, original: 22.99, discountLabel: '' },
-  'elite-manual': { discounted: 24.99, original: 24.99, discountLabel: '' },
-  'elite-auto': { discounted: 37.99, original: 37.99, discountLabel: '' },
-  'legacy-manual': { discounted: 34.99, original: 34.99, discountLabel: '' },
-  'legacy-auto': { discounted: 52.99, original: 52.99, discountLabel: '' },
+  prime: { discounted: 24.99, original: 24.99, discountLabel: '' },
+  elite: { discounted: 39.99, original: 39.99, discountLabel: '' },
+  legacy: { discounted: 59.99, original: 59.99, discountLabel: '' },
 };
 
 const PLAN_PLATFORM_LIMIT: Record<string, number> = {
-  'prime-auto': 1,
-  'prime-manual': 1,
-  'elite-auto': 2,
-  'elite-manual': 2,
-  'legacy-auto': 3,
-  'legacy-manual': 3,
+  prime: 1,
+  elite: 2,
+  legacy: 3,
 };
 
-/**
- * Fallback when API plan docs omit credits; aligns with upgrade copy
- * and `CREDITS_BY_TIER_MODE` in `scripts/seed-plans.ts`. Manual ("Studio")
- * plans get MORE credits than Auto ("AI") plans within a tier because
- * Studio users pay for every action; AI users get most of their content
- * generated free by the daily orchestrator.
- */
+/** Fallback when API plan docs omit credits; aligns with upgrade copy. */
 const PLAN_MONTHLY_CREDITS_FALLBACK: Record<string, number> = {
-  'prime-manual': 60,
-  'prime-auto': 50,
-  'elite-manual': 120,
-  'elite-auto': 80,
-  'legacy-manual': 180,
-  'legacy-auto': 110,
+  prime: 50,
+  elite: 120,
+  legacy: 260,
 };
 
-const PLAN_TIER_BLURB: Record<PlanTier, string> = {
-  prime: '1 platform \u2014 best for businesses starting out',
-  elite: 'Up to 2 platforms \u2014 best for teams scaling content',
-  legacy: 'Up to 3 platforms \u2014 best for established brands',
+/** When API omits tiers, still show Prime / Elite / Legacy rows in the modal. */
+const STATIC_PLAN_FALLBACK: Record<
+  (typeof PLAN_COMPARISON_ORDER)[number],
+  PlanSummary
+> = {
+  prime: {
+    id: 'prime',
+    name: 'prime',
+    description: '1 platform — monthly credits for on-demand actions',
+    price: PLAN_PRICING_DISPLAY.prime.discounted,
+  },
+  elite: {
+    id: 'elite',
+    name: 'elite',
+    description: 'Up to 2 platforms — higher monthly credits',
+    price: PLAN_PRICING_DISPLAY.elite.discounted,
+  },
+  legacy: {
+    id: 'legacy',
+    name: 'legacy',
+    description: 'Up to 3 platforms — highest monthly credits',
+    price: PLAN_PRICING_DISPLAY.legacy.discounted,
+  },
 };
-
-const PLAN_MODE_LABEL: Record<PlanMode, string> = {
-  auto: 'Auto',
-  manual: 'Manual',
-};
-
-function buildPlanId(tier: PlanTier, mode: PlanMode): string {
-  return `${tier}-${mode}`;
-}
-
-/** Title-case a plan id like `prime-auto` → `Prime Auto` for headings. */
-function formatPlanDisplayName(value: string | null | undefined): string {
-  if (!value) return '';
-  return value
-    .split('-')
-    .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
-    .join(' ');
-}
-
-/** When API omits tiers, still show Prime / Elite / Legacy rows in the modal,
- *  one entry per (tier, mode) combination. */
-const STATIC_PLAN_FALLBACK: Record<string, PlanSummary> = (
-  ['prime', 'elite', 'legacy'] as const
-).reduce<Record<string, PlanSummary>>((acc, tier) => {
-  for (const mode of ['auto', 'manual'] as const) {
-    const id = buildPlanId(tier, mode);
-    acc[id] = {
-      id,
-      name: id,
-      description: PLAN_TIER_BLURB[tier],
-      price: PLAN_PRICING_DISPLAY[id].discounted,
-    };
-  }
-  return acc;
-}, {});
 
 function formatUsd(amount: number | undefined): string {
   if (typeof amount !== 'number' || !Number.isFinite(amount)) return '—';
@@ -339,12 +297,6 @@ export default function BillingsPage() {
     useState<PaymentSummaryPayload | null>(null);
   const [paymentSummaryLoading, setPaymentSummaryLoading] = useState(true);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  /**
-   * Which half of the plan matrix (Auto vs Manual) the upgrade dialog is
-   * currently showing. Defaults to the user's existing mode; otherwise Auto
-   * (the recommended path).
-   */
-  const [upgradeMode, setUpgradeMode] = useState<PlanMode>('auto');
 
   // Deep-link entry: routes that send the user here to upgrade (e.g. the
   // product-tour CTA, the TopNav "Upgrade" pill, etc.) append `?upgrade=1`.
@@ -358,14 +310,6 @@ export default function BillingsPage() {
       window.history.replaceState(null, '', url.pathname + url.search);
     }
   }, [searchParams]);
-
-  // Seed the upgrade-dialog tab from the user's current mode whenever it
-  // changes (e.g. after a fulfillment write). New subscribers default to Auto.
-  useEffect(() => {
-    if (billing?.mode === 'auto' || billing?.mode === 'manual') {
-      setUpgradeMode(billing.mode);
-    }
-  }, [billing?.mode]);
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [billingHistory, setBillingHistory] = useState<UserTransaction[]>([]);
@@ -480,7 +424,7 @@ export default function BillingsPage() {
     if (subscriptionSummary?.planName) return subscriptionSummary.planName;
     if (!billing?.activePlan || billing.activePlan === 'non-subscribed')
       return 'No active plan';
-    return formatPlanDisplayName(billing.activePlan);
+    return billing.activePlan[0].toUpperCase() + billing.activePlan.slice(1);
   }, [subscriptionSummary?.planName, billing?.activePlan]);
 
   const platformCount = useMemo(() => {
@@ -512,21 +456,20 @@ export default function BillingsPage() {
 
   const planComparisonRows = useMemo(() => {
     return PLAN_COMPARISON_ORDER.map((tierKey) => {
-      const planId = buildPlanId(tierKey, upgradeMode);
-      const fromApi = plans.find((p) => p.name.toLowerCase() === planId);
-      const plan = fromApi ?? STATIC_PLAN_FALLBACK[planId];
-      return { tierKey, planId, plan };
+      const fromApi = plans.find((p) => p.name.toLowerCase() === tierKey);
+      const plan = fromApi ?? STATIC_PLAN_FALLBACK[tierKey];
+      return { tierKey, plan };
     });
-  }, [plans, upgradeMode]);
+  }, [plans]);
 
   const emailVerificationRequired = needsEmailVerificationForPurchase(user);
 
   const handleCreditPackPurchase = async (creditPackId: string) => {
     if (!user) return;
-    // if (emailVerificationRequired) {
-    //   showErrorToast(EMAIL_VERIFICATION_PURCHASE_MESSAGE);
-    //   return;
-    // }
+    if (emailVerificationRequired) {
+      showErrorToast(EMAIL_VERIFICATION_PURCHASE_MESSAGE);
+      return;
+    }
     if (clickedTopUp.current === creditPackId) return;
     try {
       setTopUpLoading(true);
@@ -1278,13 +1221,10 @@ export default function BillingsPage() {
             posts continue independently of your credit balance.
           </p>
           <ul className="text-sm text-slate-700 space-y-2 list-none pl-0">
-            <li>· Product Advert: 4 credits</li>
-            <li>· Campaign post: 3 credits per day</li>
-            <li>· Quick Create: 2 credits</li>
-            <li>· Bulk Create: 2 credits</li>
-            <li>· AI engine (manual trigger): 2 credits</li>
+            <li>· Product Advert post: 4 credits</li>
+            <li>· Quick creation post: 2 credits</li>
             <li>· Festive post: 2 credits</li>
-            <li>· Regeneration: 1 credit (first regen free)</li>
+            <li>· Regeneration post: 1 credit</li>
           </ul>
         </section>
 
@@ -1404,49 +1344,13 @@ export default function BillingsPage() {
             <p className="text-pretty leading-snug">{PLAN_TRIAL_BILLING_NOTICE}</p>
           </div>
 
-          {/* Mode toggle: Auto vs Manual. Same tier ladder underneath; the
-              mode only swaps which 3 plan ids the cards bind to. */}
-          <div
-            role="tablist"
-            aria-label="Plan mode"
-            className="flex rounded-xl bg-slate-100/80 p-1 border border-slate-200/60 self-center"
-          >
-            {(['auto', 'manual'] as const).map((mode) => {
-              const selected = upgradeMode === mode;
-              return (
-                <button
-                  key={mode}
-                  type="button"
-                  role="tab"
-                  aria-selected={selected}
-                  onClick={() => setUpgradeMode(mode)}
-                  className={cn(
-                    'min-w-[10rem] rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200',
-                    selected
-                      ? mode === 'auto'
-                        ? 'bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-600/20'
-                        : 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
-                  )}
-                >
-                  {PLAN_MODE_LABEL[mode]} mode
-                </button>
-              );
-            })}
-          </div>
-
           <div className="grid gap-4 md:grid-cols-3 md:items-stretch pt-2">
-            {planComparisonRows.map(({ tierKey, planId, plan }) => {
-              // PLAN_COMPARISON_BULLETS is now keyed by FULL plan id
-              // (e.g. `prime-manual`) so card titles + bullets switch
-              // with the mode toggle. Fall back to the tier-only key
-              // for any consumer of the older shape.
-              const meta =
-                PLAN_COMPARISON_BULLETS[planId] ??
-                PLAN_COMPARISON_BULLETS[tierKey];
-              const displayPricing = PLAN_PRICING_DISPLAY[planId];
+            {planComparisonRows.map(({ tierKey, plan }) => {
+              const key = tierKey;
+              const meta = PLAN_COMPARISON_BULLETS[key];
+              const displayPricing = PLAN_PRICING_DISPLAY[key];
               const activeKey = (billing?.activePlan ?? '').toLowerCase();
-              const isActive = activeKey === planId;
+              const isActive = activeKey === key;
               return (
                 <div
                   key={tierKey}
@@ -1464,9 +1368,6 @@ export default function BillingsPage() {
                   <h3 className="font-semibold text-slate-900 text-center mt-1">
                     {meta?.title ?? plan.name}
                   </h3>
-                  <p className="text-[11px] uppercase tracking-wide text-slate-500 text-center mt-0.5">
-                    {PLAN_MODE_LABEL[upgradeMode]} plan
-                  </p>
                   <div className="mt-1 mb-4 text-center">
                     {displayPricing ? (
                       <>
@@ -1557,10 +1458,9 @@ export default function BillingsPage() {
                             <span className="text-sm font-semibold leading-tight">
                               Start{' '}
                               {meta?.title ??
-                                planButtonDisplayName(plan.name)}{' '}
-                              {PLAN_MODE_LABEL[upgradeMode]}
+                                planButtonDisplayName(plan.name)}
                             </span>
-                            {tierKey === 'elite' ? (
+                            {key === 'elite' ? (
                               <span className="text-[11px] font-medium leading-tight text-slate-500">
                                 {PLAN_TRIAL_BUTTON_SUBLABEL}
                               </span>

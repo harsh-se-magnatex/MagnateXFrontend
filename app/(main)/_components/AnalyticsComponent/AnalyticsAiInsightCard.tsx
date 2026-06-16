@@ -254,44 +254,25 @@ export function AnalyticsAiInsightCard({
             </div>
           </div>
           <div className="mt-auto  flex justify-end border-t border-zinc-100/80 px-4 py-2">
-            {(() => {
-              // Plan IDs are `{tier}-{mode}` after the Phase 1 6-plan
-              // split; both legacy variants unlock the "View more"
-              // expansion. Non-legacy paid plans (Prime / Elite, Auto
-              // or Manual) keep seeing the "Upgrade" CTA instead.
-              const planId = String(billing?.activePlan ?? '').toLowerCase();
-              const isLegacyTier =
-                planId === 'legacy-auto' || planId === 'legacy-manual';
-              return (
-                <>
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className={cn(
-                      'h-auto px-2 text-xs font-medium',
-                      !isLegacyTier && 'hidden'
-                    )}
-                    onClick={() => setExpanded((v) => !v)}
-                    aria-expanded={expanded}
-                  >
-                    {expanded ? 'View less' : 'View more'}
-                  </Button>
-                  {!isLegacyTier && (
-                    <Button
-                      type="button"
-                      variant="link"
-                      size="sm"
-                      className="h-auto px-2 text-xs font-medium"
-                      onClick={() => router.push('/settings/billings')}
-                      aria-expanded={expanded}
-                    >
-                      Upgrade to get more insights
-                    </Button>
-                  )}
-                </>
-              );
-            })()}
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className={cn("h-auto px-2 text-xs font-medium", billing?.activePlan!=="legacy" && "hidden")}
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+            >
+              {expanded ? 'View less' : 'View more'}
+            </Button>
+            {billing?.activePlan!=="legacy" && <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="h-auto px-2 text-xs font-medium"
+              onClick={() => router.push('/settings/billings')}
+              aria-expanded={expanded}
+            >
+              Upgrade to get more insights</Button>}
           </div>
         </>
       ) : null}

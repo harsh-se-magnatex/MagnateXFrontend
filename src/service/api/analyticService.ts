@@ -37,37 +37,6 @@ export type AnalyticsRecommendationPayload = {
   source: 'openai' | 'fallback';
 };
 
-/**
- * Mini-report style "verdict" rendered above the metric tiles. Replaces the
- * old AI Recommendations card with a graded performance table, ordered
- * priorities, and a short "what's working" list — all driven by the last
- * 3 weeks of analytics.
- */
-export type WeeklyVerdictBreakdownItem = {
-  area: string;
-  grade: 'A' | 'B' | 'C' | 'D' | 'F';
-  score: number;
-  reading: string;
-};
-
-export type WeeklyVerdictPriorityItem = {
-  headline: string;
-  detail: string;
-};
-
-export type WeeklyVerdictPayload = {
-  verdict: string;
-  breakdown: WeeklyVerdictBreakdownItem[];
-  pullingDown: WeeklyVerdictPriorityItem[];
-  working: string[];
-};
-
-export type WeeklyVerdictResponse = {
-  layout: 'verdict';
-  verdict: WeeklyVerdictPayload;
-  source: 'openai' | 'fallback';
-};
-
 export const syncInsights = async () => {
   return apiPost<ApiEnvelope<{ synced: true }>>(
     '/api/v1/insights/sync',
@@ -84,16 +53,6 @@ export const postAnalyticsRecommendations = async (body: {
   return apiPost<ApiEnvelope<AnalyticsRecommendationPayload>>(
     '/api/v1/insights/analytics-recommendations',
     body
-  );
-};
-
-export const postAnalyticsWeeklyVerdict = async (body: {
-  platform: 'facebook' | 'instagram' | 'linkedin';
-  context: Record<string, unknown>;
-}) => {
-  return apiPost<ApiEnvelope<WeeklyVerdictResponse>>(
-    '/api/v1/insights/analytics-recommendations',
-    { ...body, scope: 'page' as const, layout: 'verdict' as const }
   );
 };
 

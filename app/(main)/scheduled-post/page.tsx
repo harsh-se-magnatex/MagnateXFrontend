@@ -156,9 +156,9 @@ function ScheduledPostActionButtons({
     fn?.();
   };
   const isCard = size === 'card';
-  /** First regen is free; every regen after that costs 1 credit. Warn when count >= 1. */
+  /** After 2 free regenerations, the 3rd+ costs credits — warn when count >= 2. */
   const showCreditsWarning =
-    typeof regeneratedCount === 'number' && regeneratedCount >= 1;
+    typeof regeneratedCount === 'number' && regeneratedCount >= 2;
   const btn = isCard
     ? 'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none'
     : 'rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
@@ -171,7 +171,7 @@ function ScheduledPostActionButtons({
           onClick={(e) => handle(onRegenerate, e)}
           title={
             showCreditsWarning
-              ? 'Next regeneration will deduct 1 credit'
+              ? 'Next regeneration will deduct 2 credits'
               : undefined
           }
           className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500 inline-flex flex-col items-center justify-center gap-0.5 text-center`}
@@ -185,7 +185,7 @@ function ScheduledPostActionButtons({
                   : 'max-w-56 text-[11px] font-normal leading-snug text-amber-900/90'
               }
             >
-              1 credit will be deducted on next regeneration
+              2 credits will be deducted on next regeneration
             </span>
           ) : null}
         </button>

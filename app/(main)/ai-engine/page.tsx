@@ -51,12 +51,9 @@ const SUBSCRIPTION_ACK_KEY = 'magnatex-ai-engine-subscription-ack';
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? '';
 
 const PLAN_MAX_SOCIAL: Record<string, number> = {
-  'prime-auto': 1,
-  'prime-manual': 1,
-  'elite-auto': 2,
-  'elite-manual': 2,
-  'legacy-auto': 3,
-  'legacy-manual': 3,
+  prime: 1,
+  elite: 2,
+  legacy: 3,
 };
 
 type SelectedPlatforms = {

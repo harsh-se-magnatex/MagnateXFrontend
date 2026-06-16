@@ -1,24 +1,15 @@
 import { useMemo } from "react";
-import { AnalyticsWeeklyVerdict } from "./AnalyticsWeeklyVerdict";
+import { AnalyticsAiInsightCard } from "./AnalyticsAiInsightCard";
 import { SyncErrorBanner } from "./SyncErrorBanner";
 import {
   buildReplyQueueGroupsInstagram,
   GrowthStudioBlock,
+  mostRecentInstagramPost,
   replyQueueLoadStatsInstagram,
 } from "./growth-studio";
 import { InstagramAnalytics, InstagramPost } from "../types";
-import {
-  audienceCounts,
-  formatLastUpdated,
-  igTrendSeries,
-  classifyPostsAsNudgeOrDud,
-  postFrequencyEntries,
-  rankedRecordEntries,
-  weeklyDeltaFromPostFrequency,
-  weeklyDeltaFromTrend,
-} from "./utils/utils_functions";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Crown, Eye, Film, Heart, ImageIcon, Instagram, Layers, MapPin, PlayCircle, Sparkles, TrendingUp, Trophy, Users } from "lucide-react";
+import { audienceCounts, formatLastUpdated, igTrendSeries, postFrequencyEntries, rankedRecordEntries } from "./utils/utils_functions";
+import { Eye, Film, Heart, ImageIcon, Instagram, Layers, MapPin, PlayCircle, Sparkles, TrendingUp, Trophy, Users } from "lucide-react";
 import { formatChartTooltipDate, formatCompact, GrowthAreaChart } from "./utils/facebook_components/util_component";
 import { IgMetricTile, InstagramMediaCard, InstagramMediaDialog } from "./utils/instagram_components/utils_components";
 import { ChartConfig } from "@/components/ui/chart";
@@ -48,6 +39,7 @@ export function InstagramAnalyticsView({
     onExpandedPostChange,
     pageAiContext,
     repliedCommentIds,
+    firstCommentSentPostIds,
   }: {
     ig: InstagramAnalytics | null;
     posts: InstagramPost[];
@@ -56,6 +48,7 @@ export function InstagramAnalyticsView({
     onExpandedPostChange: (p: InstagramPost | null) => void;
     pageAiContext: Record<string, unknown>;
     repliedCommentIds?: string[];
+    firstCommentSentPostIds?: string[];
   }) {
     const topMedia = useMemo(
       () =>
@@ -102,49 +95,49 @@ export function InstagramAnalyticsView({
       () => replyQueueLoadStatsInstagram(posts),
       [posts]
     );
-
-    /** Slice for the new "Top 3 ranked posts" highlight section. */
-    const topThreeMedia = useMemo(() => topMedia.slice(0, 3), [topMedia]);
-
-    /**
-     * Splits the full top-media list into Nudges vs Duds using the 1.5×
-     * average-engagement threshold so we can render filter tabs below.
-     */
-    const nudgeDud = useMemo(
-      () =>
-        classifyPostsAsNudgeOrDud(
-          topMedia,
-          (p) => p.postId,
-          (p) => p.engagementScore ?? 0
-        ),
-      [topMedia]
+    const recentPost = useMemo(
+      () => mostRecentInstagramPost(posts),
+      [posts]
     );
 
-    /** Weekly deltas for the overview tiles. */
-    const reachDelta = useMemo(
-      () => weeklyDeltaFromTrend(igTrendSeries(ig, 'reachTrend')),
-      [ig]
-    );
-    const viewsDelta = useMemo(
-      () => weeklyDeltaFromTrend(igTrendSeries(ig, 'viewsTrend')),
-      [ig]
-    );
-    const interactionsDelta = useMemo(
-      () => weeklyDeltaFromTrend(igTrendSeries(ig, 'interactionsTrend')),
-      [ig]
-    );
-    const engagedDelta = useMemo(
-      () => weeklyDeltaFromTrend(igTrendSeries(ig, 'engagedTrend')),
-      [ig]
-    );
-    const followersDelta = useMemo(
-      () => weeklyDeltaFromTrend(igTrendSeries(ig, 'followsTrend')),
-      [ig]
-    );
-    const postsDelta = useMemo(
-      () => weeklyDeltaFromPostFrequency(ig?.postFrequency),
-      [ig?.postFrequency]
-    );
+    const igPostAiContext = useMemo(() => {
+      if (!expandedPost) return null;
+      const scores = topMedia.map((p) => p.engagementScore ?? 0);
+      const avg = scores.length
+        ? scores.reduce((a, b) => a + b, 0) / scores.length
+        : 0;
+      const sorted = [...scores].sort((a, b) => a - b);
+      const median = sorted.length
+        ? sorted[Math.floor(sorted.length / 2)]
+        : 0;
+      const rank =
+        [...topMedia]
+          .sort(
+            (a, b) => (b.engagementScore ?? 0) - (a.engagementScore ?? 0)
+          )
+          .findIndex((p) => p.postId === expandedPost.postId) + 1;
+      return {
+        post: {
+          captionPreview: expandedPost.caption?.slice(0, 600),
+          mediaUrl: expandedPost.mediaUrl?.trim() || undefined,
+          mediaType: expandedPost.mediaType,
+          likes: expandedPost.likes,
+          comments: expandedPost.comments,
+          saves: expandedPost.saved,
+          shares: expandedPost.shares,
+          engagementScore: expandedPost.engagementScore,
+          engagementRate: expandedPost.engagementRate,
+          reach: expandedPost.reach,
+          views: expandedPost.views,
+        },
+        peers: {
+          count: topMedia.length,
+          avgEngagement: avg,
+          medianEngagement: median,
+          rankByEngagement: rank || undefined,
+        },
+      };
+    }, [expandedPost, topMedia]);
 
     if (!ig && posts.length === 0) {
       const oauthHref = instagramOAuthAnalyticsHref();
@@ -202,20 +195,20 @@ export function InstagramAnalyticsView({
           ) : null}
         </header>
   
-        <AnalyticsWeeklyVerdict
-          platform="instagram"
-          context={pageAiContext}
-        />
-
         {ig ? (
           <section aria-label="Instagram overview">
             <h2 className="sr-only">Overview metrics</h2>
+            <AnalyticsAiInsightCard
+              platform="instagram"
+              scope="page"
+              context={pageAiContext}
+              className="mb-4"
+            />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <IgMetricTile
                 label="Followers"
                 value={formatCompact(ig.followers)}
                 icon={Users}
-                delta={followersDelta?.pct ?? null}
               />
               <IgMetricTile
                 label="Following"
@@ -226,31 +219,21 @@ export function InstagramAnalyticsView({
                 label="Reach"
                 value={formatCompact(ig.reach)}
                 icon={Eye}
-                delta={reachDelta?.pct ?? null}
               />
               <IgMetricTile
                 label="Views"
                 value={formatCompact(ig.views)}
                 icon={PlayCircle}
-                delta={viewsDelta?.pct ?? null}
               />
               <IgMetricTile
                 label="Interactions"
                 value={formatCompact(ig.interactions)}
                 icon={Heart}
-                delta={interactionsDelta?.pct ?? null}
               />
               <IgMetricTile
                 label="Accounts engaged"
                 value={formatCompact(ig.accountsEngaged)}
                 icon={Sparkles}
-                delta={engagedDelta?.pct ?? null}
-              />
-              <IgMetricTile
-                label="Posts"
-                value={formatCompact(posts.length)}
-                icon={ImageIcon}
-                delta={postsDelta?.pct ?? null}
               />
               <IgMetricTile
                 label="Media count"
@@ -261,40 +244,13 @@ export function InstagramAnalyticsView({
           </section>
         ) : null}
 
-        {topThreeMedia.length > 0 ? (
-          <section
-            className="space-y-4 scroll-mt-6"
-            aria-labelledby="ig-top-three-heading"
-          >
-            <h2
-              id="ig-top-three-heading"
-              className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
-            >
-              <Crown className="h-5 w-5 text-amber-500" aria-hidden />
-              Top 3 ranked posts
-              <span className="text-xs font-normal text-zinc-500">
-                best performers in the last 3 weeks
-              </span>
-            </h2>
-            <div className="space-y-4">
-              {topThreeMedia.map((post, i) => (
-                <InstagramMediaCard
-                  key={`top3-${post.postId}`}
-                  post={post}
-                  rank={i + 1}
-                  onExpand={onExpandedPostChange}
-                  classification={nudgeDud.classifications.get(post.postId)}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
         <GrowthStudioBlock
           platform="instagram"
+          recentPost={recentPost}
           replyGroups={replyGroups}
           replyLoadStats={replyLoadStats}
           pageName={ig?.username}
+          firstCommentSentPostIds={firstCommentSentPostIds}
         />
 
         {cb ? (
@@ -384,70 +340,22 @@ export function InstagramAnalyticsView({
           >
             <Trophy className="h-5 w-5 text-amber-600" aria-hidden />
             Top media
-            <span className="text-xs font-normal text-zinc-500">
-              classified vs. the cohort average (1.5× cutoff)
-            </span>
           </h2>
           {topMedia.length === 0 ? (
             <p className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600">
               No media loaded yet. Sync Instagram insights to populate this list.
             </p>
           ) : (
-            <Tabs defaultValue="nudge" className="space-y-4">
-              <TabsList className="grid h-auto w-full max-w-sm grid-cols-2 gap-1">
-                <TabsTrigger value="nudge" className="gap-2">
-                  Nudges
-                  <span className="rounded-full bg-emerald-100 px-1.5 text-[10px] font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200">
-                    {nudgeDud.nudges.length}
-                  </span>
-                </TabsTrigger>
-                <TabsTrigger value="dud" className="gap-2">
-                  Duds
-                  <span className="rounded-full bg-zinc-200 px-1.5 text-[10px] font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300">
-                    {nudgeDud.duds.length}
-                  </span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="nudge" className="space-y-4 outline-none">
-                {nudgeDud.nudges.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
-                    No nudges yet — nothing in this window scored 1.5× above
-                    your average. Recreate the framing of past winners to
-                    push one over the bar.
-                  </p>
-                ) : (
-                  nudgeDud.nudges.map((post, i) => (
-                    <InstagramMediaCard
-                      key={post.postId}
-                      post={post}
-                      rank={i + 1}
-                      onExpand={onExpandedPostChange}
-                      classification="nudge"
-                    />
-                  ))
-                )}
-              </TabsContent>
-
-              <TabsContent value="dud" className="space-y-4 outline-none">
-                {nudgeDud.duds.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
-                    No duds — every recent post is performing at or above
-                    the nudge bar. Keep the streak going.
-                  </p>
-                ) : (
-                  nudgeDud.duds.map((post, i) => (
-                    <InstagramMediaCard
-                      key={post.postId}
-                      post={post}
-                      rank={i + 1}
-                      onExpand={onExpandedPostChange}
-                      classification="dud"
-                    />
-                  ))
-                )}
-              </TabsContent>
-            </Tabs>
+            <div className="space-y-4">
+              {topMedia.map((post, i) => (
+                <InstagramMediaCard
+                  key={post.postId}
+                  post={post}
+                  rank={i + 1}
+                  onExpand={onExpandedPostChange}
+                />
+              ))}
+            </div>
           )}
         </section>
   
@@ -559,6 +467,17 @@ export function InstagramAnalyticsView({
           onOpenChange={(next) => {
             if (!next) onExpandedPostChange(null);
           }}
+          aiFooter={
+            expandedPost && igPostAiContext ? (
+              <AnalyticsAiInsightCard
+                platform="instagram"
+                scope="post"
+                context={igPostAiContext}
+                compact
+                embed
+              />
+            ) : null
+          }
         />
       </div>
     );

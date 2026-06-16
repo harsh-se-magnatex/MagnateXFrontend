@@ -74,25 +74,6 @@ function BriefCard({
         {brief.hint}
       </div>
 
-      {/*
-        Surface the actual prompt that will be sent to /instant-generation
-        so the user can read it before tapping Generate. Clamped to 4 lines
-        with title on hover for the full text.
-      */}
-      {brief.prompt ? (
-        <div
-          className="rounded-md border border-emerald-100 bg-emerald-50/70 px-2.5 py-2 text-[11px] leading-relaxed text-emerald-900"
-          title={brief.prompt}
-        >
-          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-            Prompt preview
-          </p>
-          <p className="line-clamp-4 whitespace-pre-wrap text-zinc-700">
-            {brief.prompt}
-          </p>
-        </div>
-      ) : null}
-
       <Button
         type="button"
         size="sm"

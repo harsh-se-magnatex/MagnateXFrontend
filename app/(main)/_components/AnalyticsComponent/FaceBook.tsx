@@ -1,5 +1,4 @@
 import {
-  Crown,
   Eye,
   Facebook,
   FileText,
@@ -18,18 +17,16 @@ import {
   TopPostImageDialog,
 } from './utils/facebook_components/util_component';
 import { useMemo, useRef, useState } from 'react';
+import { AnalyticsAiInsightCard } from './AnalyticsAiInsightCard';
 import { SyncErrorBanner } from './SyncErrorBanner';
-import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
-import { buildReplyQueueGroupsFacebook, GrowthStudioBlock } from './growth-studio';
+import {
+  buildReplyQueueGroupsFacebook,
+  GrowthStudioBlock,
+  mostRecentFacebookPost,
+} from './growth-studio';
 import { audienceRanked, InsightMetric, Merged, Metrics, PageAnalytics, Post } from '../types';
 import { ChartConfig } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
-import {
-  classifyPostsAsNudgeOrDud,
-  weeklyDeltaFromPostFrequency,
-  weeklyDeltaFromTrend,
-} from './utils/utils_functions';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '') ?? '';
 
@@ -60,6 +57,7 @@ export default function FaceBookAnalytics({
   audienceRanked,
   pageAiContext,
   repliedCommentIds,
+  firstCommentSentPostIds,
 }: {
   metrics: Metrics;
   pageAnalytics: PageAnalytics | null;
@@ -73,6 +71,7 @@ export default function FaceBookAnalytics({
   audienceRanked: audienceRanked;
   pageAiContext: Record<string, unknown>;
   repliedCommentIds?: string[];
+  firstCommentSentPostIds?: string[];
 }) {
   const [focusedMetric, setFocusedMetric] = useState<InsightMetric | null>(
     null
@@ -84,41 +83,49 @@ export default function FaceBookAnalytics({
     () => buildReplyQueueGroupsFacebook(topPosts, repliedCommentIds),
     [topPosts, repliedCommentIds]
   );
-
-  /** Slice for the new "Top 3 ranked posts" highlight section. */
-  const topThreePosts = useMemo(() => topPosts.slice(0, 3), [topPosts]);
-
-  /**
-   * Splits the full top-posts list into Nudges vs Duds using the 1.5×
-   * average-engagement threshold so we can render two filter tabs below.
-   */
-  const nudgeDud = useMemo(
-    () =>
-      classifyPostsAsNudgeOrDud(
-        topPosts,
-        (p) => p.postId,
-        (p) => p.engagementScore ?? 0
-      ),
+  const recentPost = useMemo(
+    () => mostRecentFacebookPost(topPosts),
     [topPosts]
   );
 
-  /** Weekly +/- deltas surfaced on the four overview StatCards. */
-  const followersDelta = useMemo(
-    () => weeklyDeltaFromTrend(merged.followersTrend),
-    [merged.followersTrend]
-  );
-  const reachDelta = useMemo(
-    () => weeklyDeltaFromTrend(merged.reachTrend),
-    [merged.reachTrend]
-  );
-  const engagementDelta = useMemo(
-    () => weeklyDeltaFromTrend(merged.engagementsTrend),
-    [merged.engagementsTrend]
-  );
-  const postsDelta = useMemo(
-    () => weeklyDeltaFromPostFrequency(pageAnalytics?.postFrequency),
-    [pageAnalytics?.postFrequency]
-  );
+  const fbPostAiContext = useMemo(() => {
+    if (!expandedPost) return null;
+    const scores = topPosts.map((p) => p.engagementScore ?? 0);
+    const avg = scores.length
+      ? scores.reduce((a, b) => a + b, 0) / scores.length
+      : 0;
+    const sorted = [...scores].sort((a, b) => a - b);
+    const median = sorted.length
+      ? sorted[Math.floor(sorted.length / 2)]
+      : 0;
+    const rank =
+      [...topPosts]
+        .sort(
+          (a, b) => (b.engagementScore ?? 0) - (a.engagementScore ?? 0)
+        )
+        .findIndex((p) => p.postId === expandedPost.postId) + 1;
+    return {
+      post: {
+        messagePreview: expandedPost.message?.slice(0, 600),
+        mediaUrl: expandedPost.mediaUrl?.trim() || undefined,
+        type: expandedPost.type,
+        reactions: expandedPost.reactions,
+        comments: expandedPost.comments,
+        shares: expandedPost.shares,
+        engagementScore: expandedPost.engagementScore,
+        impressions: expandedPost.impressions,
+        uniqueImpressions: expandedPost.uniqueImpressions,
+        clicks: expandedPost.clicks,
+        engagementRate: expandedPost.engagementRate,
+      },
+      peers: {
+        count: topPosts.length,
+        avgEngagement: avg,
+        medianEngagement: median,
+        rankByEngagement: rank || undefined,
+      },
+    };
+  }, [expandedPost, topPosts]);
 
   const handleMetricToggle = (id: InsightMetric) => {
     setFocusedMetric((prev) => (prev === id ? null : id));
@@ -184,12 +191,16 @@ export default function FaceBookAnalytics({
         ) : null}
       </header>
 
-      <AnalyticsWeeklyVerdict platform="facebook" context={pageAiContext} />
-
       <section aria-labelledby="analytics-cards-heading">
         <h2 id="analytics-cards-heading" className="sr-only">
           Overview metrics
         </h2>
+        <AnalyticsAiInsightCard
+          platform="facebook"
+          scope="page"
+          context={pageAiContext}
+          className="mb-4"
+        />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Followers"
@@ -198,7 +209,6 @@ export default function FaceBookAnalytics({
             icon={Users}
             selected={focusedMetric === 'followers'}
             onClick={() => handleMetricToggle('followers')}
-            delta={followersDelta?.pct ?? null}
           />
           <StatCard
             label="Reach"
@@ -211,7 +221,6 @@ export default function FaceBookAnalytics({
             icon={Eye}
             selected={focusedMetric === 'reach'}
             onClick={() => handleMetricToggle('reach')}
-            delta={reachDelta?.pct ?? null}
           />
           <StatCard
             label="Posts"
@@ -220,7 +229,6 @@ export default function FaceBookAnalytics({
             icon={FileText}
             selected={focusedMetric === 'posts'}
             onClick={() => handleMetricToggle('posts')}
-            delta={postsDelta?.pct ?? null}
           />
           <StatCard
             label="Engagement"
@@ -233,7 +241,6 @@ export default function FaceBookAnalytics({
             icon={Heart}
             selected={focusedMetric === 'engagement'}
             onClick={() => handleMetricToggle('engagement')}
-            delta={engagementDelta?.pct ?? null}
           />
         </div>
         {focusedMetric ? (
@@ -245,39 +252,12 @@ export default function FaceBookAnalytics({
         ) : null}
       </section>
 
-      {topThreePosts.length > 0 ? (
-        <section
-          className="space-y-4 scroll-mt-6"
-          aria-labelledby="top-three-posts-heading"
-        >
-          <h2
-            id="top-three-posts-heading"
-            className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
-          >
-            <Crown className="h-5 w-5 text-amber-500" aria-hidden />
-            Top 3 ranked posts
-            <span className="text-xs font-normal text-zinc-500">
-              best performers in the last 3 weeks
-            </span>
-          </h2>
-          <div className="space-y-4">
-            {topThreePosts.map((post, i) => (
-              <TopPostCard
-                key={`top3-${post.postId}`}
-                post={post}
-                rank={i + 1}
-                onExpandImage={setExpandedPost}
-                classification={nudgeDud.classifications.get(post.postId)}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
       <GrowthStudioBlock
         platform="facebook"
+        recentPost={recentPost}
         replyGroups={replyGroups}
         pageName={pageAnalytics?.pageName}
+        firstCommentSentPostIds={firstCommentSentPostIds}
       />
 
       <section
@@ -319,9 +299,6 @@ export default function FaceBookAnalytics({
         >
           <Trophy className="h-5 w-5 text-amber-600" aria-hidden />
           Top posts
-          <span className="text-xs font-normal text-zinc-500">
-            classified vs. the cohort average (1.5× cutoff)
-          </span>
         </h2>
         {topPosts.length === 0 ? (
           <p className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600">
@@ -329,61 +306,16 @@ export default function FaceBookAnalytics({
             section.
           </p>
         ) : (
-          <Tabs defaultValue="nudge" className="space-y-4">
-            <TabsList className="grid h-auto w-full max-w-sm grid-cols-2 gap-1">
-              <TabsTrigger value="nudge" className="gap-2">
-                Nudges
-                <span className="rounded-full bg-emerald-100 px-1.5 text-[10px] font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200">
-                  {nudgeDud.nudges.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="dud" className="gap-2">
-                Duds
-                <span className="rounded-full bg-zinc-200 px-1.5 text-[10px] font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300">
-                  {nudgeDud.duds.length}
-                </span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="nudge" className="space-y-4 outline-none">
-              {nudgeDud.nudges.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
-                  No nudges yet — nothing in this window scored 1.5× above
-                  your average. Recreate the framing of past winners to push
-                  one over the bar.
-                </p>
-              ) : (
-                nudgeDud.nudges.map((post, i) => (
-                  <TopPostCard
-                    key={post.postId}
-                    post={post}
-                    rank={i + 1}
-                    onExpandImage={setExpandedPost}
-                    classification="nudge"
-                  />
-                ))
-              )}
-            </TabsContent>
-
-            <TabsContent value="dud" className="space-y-4 outline-none">
-              {nudgeDud.duds.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
-                  No duds — every recent post is performing at or above the
-                  nudge bar. Keep the streak going.
-                </p>
-              ) : (
-                nudgeDud.duds.map((post, i) => (
-                  <TopPostCard
-                    key={post.postId}
-                    post={post}
-                    rank={i + 1}
-                    onExpandImage={setExpandedPost}
-                    classification="dud"
-                  />
-                ))
-              )}
-            </TabsContent>
-          </Tabs>
+          <div className="space-y-4">
+            {topPosts.map((post, i) => (
+              <TopPostCard
+                key={post.postId}
+                post={post}
+                rank={i + 1}
+                onExpandImage={setExpandedPost}
+              />
+            ))}
+          </div>
         )}
       </section>
 
@@ -453,6 +385,17 @@ export default function FaceBookAnalytics({
         onOpenChange={(next) => {
           if (!next) setExpandedPost(null);
         }}
+        aiFooter={
+          expandedPost && fbPostAiContext ? (
+            <AnalyticsAiInsightCard
+              platform="facebook"
+              scope="post"
+              context={fbPostAiContext}
+              compact
+              embed
+            />
+          ) : null
+        }
       />
     </div>
   );

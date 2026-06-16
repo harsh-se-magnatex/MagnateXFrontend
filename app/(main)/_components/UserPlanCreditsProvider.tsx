@@ -20,12 +20,6 @@ export type UserPlanCredits = {
   credits: number;
   topupCreditsExpiresAt: FirestoreTimestamp | null;
   activePlan: string;
-  /**
-   * Auto vs Manual half of the plan matrix (3 tiers x 2 modes). Mirrored from
-   * `plans/{id}.mode` to `users/{uid}.mode` at payment fulfillment time;
-   * `null` while the user is `non-subscribed`. Feature gates branch on this.
-   */
-  mode: 'auto' | 'manual' | null;
   isAccountFrozen: boolean;
   planExpiresAt: FirestoreTimestamp | null;
   planStartedAt: FirestoreTimestamp | null;
@@ -115,8 +109,6 @@ function parseBilling(
       (data.topupCreditsExpiresAt as FirestoreTimestamp | null | undefined) ?? null,
     activePlan:
       typeof data.activePlan === 'string' ? data.activePlan : 'non-subscribed',
-    mode:
-      data.mode === 'auto' || data.mode === 'manual' ? data.mode : null,
     isAccountFrozen: data.isAccountFrozen === true,
     planExpiresAt: (data.planExpiresAt as FirestoreTimestamp | null | undefined) ?? null,
     planStartedAt: (data.planStartedAt as FirestoreTimestamp | null | undefined) ?? null,

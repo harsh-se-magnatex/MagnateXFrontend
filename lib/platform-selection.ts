@@ -1,18 +1,10 @@
 export const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 export type SocialPlatform = (typeof PLATFORM_ORDER)[number];
 
-/**
- * Per-plan platform cap. Auto and Manual modes within the same tier share the
- * same cap (prime=1, elite=2, legacy=3) — the mode suffix only changes
- * automation behavior, not the platform allowance.
- */
 export const PLAN_MAX_SOCIAL: Record<string, number> = {
-  'prime-auto': 1,
-  'prime-manual': 1,
-  'elite-auto': 2,
-  'elite-manual': 2,
-  'legacy-auto': 3,
-  'legacy-manual': 3,
+  prime: 1,
+  elite: 2,
+  legacy: 3,
 };
 
 export function listEnabledPlatforms(
