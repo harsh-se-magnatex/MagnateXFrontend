@@ -40,6 +40,8 @@ import {
   useTimestampFormatter,
   type TimestampInput,
 } from '@/lib/user-timezone';
+import { UpgradeGate } from '@/components/shared/UpgradeGate';
+import { useUserPlanCredits } from '../../_components/UserPlanCreditsProvider';
 
 const inputBase =
   'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all';
@@ -214,6 +216,20 @@ export default function AutomationPreferencePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const fmtTimestamp = useTimestampFormatter();
+  const { billing } = useUserPlanCredits();
+  /**
+   * Mode-mode plans force Auto Approve (Need_Approval=false). The Manual
+   * Review tab is locked behind an `<UpgradeGate>` and any stale `true`
+   * value gets normalised here so the segmented control never highlights
+   * the disabled side mid-render.
+   *
+   * Manual-mode plans are the mirror image: Auto Approve is locked behind
+   * an `<UpgradeGate>`, and `Need_Approval` is force-normalised to `true`
+   * so a user who downgraded from auto with the flag still `false` lands
+   * back on the correct side of the toggle immediately on mount.
+   */
+  const isAutoMode = billing?.mode === 'auto';
+  const isManualMode = billing?.mode === 'manual';
   const [captionObject, setCaptionObject] = useState({
     instagram: '',
     facebook: '',
@@ -288,6 +304,25 @@ export default function AutomationPreferencePage() {
     getPreferences();
     if (!loading && !user) router.replace('/sign-in');
   }, [loading, user, router]);
+
+  // Auto-mode plans cannot use Manual Review. If the local state still says
+  // `true` (e.g. user previously toggled it before upgrading), flip it back
+  // visually so the segmented control doesn't render the disabled side as
+  // active. The server-side flag is also force-reset at fulfillment time.
+  useEffect(() => {
+    if (isAutoMode && needApproval) {
+      setNeedApproval(false);
+    }
+  }, [isAutoMode, needApproval]);
+
+  // Manual-mode plans cannot use Auto Approve. Mirror of the auto-mode
+  // normaliser above: flip `needApproval` back to `true` if a stale `false`
+  // value carried over from a previous auto subscription.
+  useEffect(() => {
+    if (isManualMode && !needApproval) {
+      setNeedApproval(true);
+    }
+  }, [isManualMode, needApproval]);
 
   // Live updates: a fresh OAuth callback or backend-side recompute updates
   // these fields on `users/{uid}` directly. Subscribing here means the
@@ -797,54 +832,72 @@ export default function AutomationPreferencePage() {
                 be published.
               </p>
               <div className="flex rounded-xl bg-slate-100/80 p-1 border border-slate-200/60">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newValue = !needApproval;
-                    setNeedApproval(newValue);
-                    handleSubmit(
-                      logoPreference,
-                      emojiUsage,
-                      socialSalesEmailUsage,
-                      newValue,
-                      timeZone,
-                      captionObject,
-                      preferredTime
-                    );
-                  }}
-                  className={cn(
-                    'flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200',
-                    needApproval === true
-                      ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
-                  )}
+                <UpgradeGate
+                  gated={isAutoMode}
+                  tooltip="Upgrade to manual mode"
+                  className="flex-1"
                 >
-                  Manual Review
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newValue = !needApproval;
-                    setNeedApproval(newValue);
-                    handleSubmit(
-                      logoPreference,
-                      emojiUsage,
-                      socialSalesEmailUsage,
-                      newValue,
-                      timeZone,
-                      captionObject,
-                      preferredTime
-                    );
-                  }}
-                  className={cn(
-                    'flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200',
-                    needApproval === false
-                      ? 'bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-600/20'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
-                  )}
+                  <button
+                    type="button"
+                    disabled={isAutoMode}
+                    onClick={() => {
+                      if (isAutoMode) return;
+                      const newValue = !needApproval;
+                      setNeedApproval(newValue);
+                      handleSubmit(
+                        logoPreference,
+                        emojiUsage,
+                        socialSalesEmailUsage,
+                        newValue,
+                        timeZone,
+                        captionObject,
+                        preferredTime
+                      );
+                    }}
+                    className={cn(
+                      'w-full rounded-lg py-2.5 text-sm font-semibold transition-all duration-200',
+                      needApproval === true
+                        ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50',
+                      isAutoMode && 'opacity-50'
+                    )}
+                  >
+                    Manual Review
+                  </button>
+                </UpgradeGate>
+                <UpgradeGate
+                  gated={isManualMode}
+                  tooltip="Upgrade to automatic mode"
+                  className="flex-1"
                 >
-                  Auto Approve
-                </button>
+                  <button
+                    type="button"
+                    disabled={isManualMode}
+                    onClick={() => {
+                      if (isAutoMode || isManualMode) return;
+                      const newValue = !needApproval;
+                      setNeedApproval(newValue);
+                      handleSubmit(
+                        logoPreference,
+                        emojiUsage,
+                        socialSalesEmailUsage,
+                        newValue,
+                        timeZone,
+                        captionObject,
+                        preferredTime
+                      );
+                    }}
+                    className={cn(
+                      'w-full rounded-lg py-2.5 text-sm font-semibold transition-all duration-200',
+                      needApproval === false
+                        ? 'bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-600/20'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50',
+                      (isAutoMode || isManualMode) && 'opacity-50'
+                    )}
+                  >
+                    Auto Approve
+                  </button>
+                </UpgradeGate>
               </div>
             </div>
 

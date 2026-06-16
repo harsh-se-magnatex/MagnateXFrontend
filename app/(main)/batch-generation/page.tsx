@@ -461,7 +461,8 @@ function BatchGenerationPageBody(props: BatchGenerationPageBodyProps) {
 
       <p className="mt-2 text-xs text-slate-500">
         Green dates already have an AI-generated post for that specific platform
-        and cannot be selected again.
+        and cannot be selected again. Darker green marks dates whose content is
+        coming from one of your campaigns.
       </p>
       <div className="mt-6 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
         {platformsForDisplay.map((meta, idx) => (
@@ -514,6 +515,7 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
     connected,
     uid,
     isFirstCard = false,
+    billing,
     selectedByPlatform,
     generatingByPlatform,
     activePreviewDateByPlatform,
@@ -532,6 +534,13 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
     dateKeys,
   } = props;
   const platform = meta.id;
+  // Credit cost mirrors the backend `bulkCreateChargePerPost` helper in
+  // `ai-engine.controller.ts`: manual-mode users pay 2 credits per post,
+  // auto-mode users pay nothing on bulk-create (the daily orchestrator
+  // covers their generation budget). Surfacing the cost up-front matches
+  // the campaign / product-advert flows so users aren't surprised.
+  const isManualMode = billing?.mode === 'manual';
+  const bulkCreditPerPost = isManualMode ? 2 : 0;
 
   const featureJob = useFeatureJob('ai-engine', platform);
   const {
@@ -548,13 +557,31 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
 
   const selected = selectedByPlatform[platform] || [];
   const rows = statusByPlatform[platform] || [];
-  const generatedRows = rows.filter((r) => r.exists);
+  // Generated cells \u2014 a date is "generated" when EITHER the daily AI
+  // engine (source='ai-engine') OR an auto-mode / manual campaign
+  // (source='campaign') has already placed content for that (date,
+  // platform). We render both with the SAME emerald styling so the grid
+  // doesn't look like a jumble of two different green shades. Click on
+  // any generated cell opens the preview pane below: for ai-engine cells
+  // we show the post itself; for campaign cells we show a short message
+  // (no image preview \u2014 the post lives under the campaign workflow).
+  const aiEngineRows = rows.filter(
+    (r) => r.exists && (r.source ?? 'ai-engine') === 'ai-engine'
+  );
+  const campaignRows = rows.filter((r) => r.exists && r.source === 'campaign');
+  const campaignSet = new Set(campaignRows.map((r) => r.date));
   const activePreviewDate = activePreviewDateByPlatform[platform] || null;
-  const activePreviewRow = generatedRows.find(
+  const activePreviewRow = aiEngineRows.find(
     (r) => r.date === activePreviewDate
   );
+  const activePreviewCampaign = activePreviewDate
+    ? campaignRows.find((r) => r.date === activePreviewDate) ?? null
+    : null;
   const selectedSet = new Set(selected);
-  const blockedSet = new Set(generatedRows.map((r) => r.date));
+  const blockedSet = new Set([
+    ...aiEngineRows.map((r) => r.date),
+    ...campaignSet,
+  ]);
   const openDatesCount = dateKeys.filter((d) => !blockedSet.has(d)).length;
   const isGenerating = !!generatingByPlatform[platform] || isRunning;
   const statusLoading = !!statusLoadingByPlatform[platform];
@@ -722,17 +749,45 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
         </div>
       ) : (
         <>
+          {bulkCreditPerPost > 0 ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-900 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <span>
+                <span className="font-semibold">{bulkCreditPerPost} credits</span>
+                {' per post'}
+                {selected.length > 0 && (
+                  <>
+                    {' \u00b7 '}
+                    <span className="font-semibold">
+                      {bulkCreditPerPost * selected.length} credits
+                    </span>
+                    {' total for the '}
+                    {selected.length} selected day
+                    {selected.length === 1 ? '' : 's'}
+                  </>
+                )}
+              </span>
+            </div>
+          ) : billing?.mode === 'auto' ? (
+            <>
+            </>
+          ) : null}
           <div
             id={isFirstCard ? 'tour-bulk-dates' : undefined}
             className="rounded-2xl border border-slate-200 bg-white p-3"
           >
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Dates ({selected.length}/{MAX_DATES} selected)
               </p>
-              <span className="text-[11px] text-emerald-700 font-medium">
-                Green = already generated
-              </span>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-medium">
+                <span className="inline-flex items-center gap-1 text-emerald-700">
+                  <span
+                    aria-hidden
+                    className="h-2 w-2 rounded-sm bg-emerald-200 ring-1 ring-emerald-300"
+                  />
+                  Generated
+                </span>
+              </div>
             </div>
             {statusLoading ? (
               <div className="space-y-3">
@@ -751,17 +806,38 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
             ) : (
               <div className="grid grid-cols-3 gap-2">
                 {dateKeys.map((dateKey) => {
+                  const isCampaign = campaignSet.has(dateKey);
                   const blocked = blockedSet.has(dateKey);
                   const selectedDate = selectedSet.has(dateKey);
                   const generatingDate = generatingDateSet.has(dateKey);
                   const showBlue = selectedDate || generatingDate;
+                  // Both campaign-occupied and ai-engine-occupied cells
+                  // are now "generated" cells. Clicking either opens the
+                  // preview pane below; campaign cells show a static
+                  // "generated by a campaign" message, ai-engine cells
+                  // show the actual post.
                   const previewing =
                     blocked && activePreviewDate === dateKey;
+                  const className = [
+                    'rounded-lg border px-2 py-2 text-center text-xs font-semibold transition',
+                    blocked
+                      ? previewing
+                        ? 'border-emerald-700 bg-emerald-200 text-emerald-950'
+                        : 'border-emerald-300 bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                      : showBlue
+                        ? 'border-indigo-500 bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                        : 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100',
+                  ].join(' ');
                   return (
                     <button
                       key={`${platform}-${dateKey}`}
                       type="button"
                       disabled={!connected || isGenerating}
+                      aria-label={
+                        isCampaign
+                          ? `${dateKey}: generated by a campaign`
+                          : undefined
+                      }
                       onClick={() => {
                         if (blocked) {
                           if (selected.length > 0) {
@@ -782,16 +858,7 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
                         }
                         handleToggleDate(platform, dateKey);
                       }}
-                      className={[
-                        'rounded-lg border px-2 py-2 text-center text-xs font-semibold transition',
-                        blocked
-                          ? previewing
-                            ? 'border-emerald-700 bg-emerald-200 text-emerald-950'
-                            : 'border-emerald-300 bg-emerald-100 text-emerald-800'
-                          : showBlue
-                            ? 'border-indigo-500 bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                            : 'border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100',
-                      ].join(' ')}
+                      className={className}
                     >
                       <span className="block">
                         {format(new Date(`${dateKey}T12:00:00`), 'MMM d')}
@@ -901,7 +968,36 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
             <p className="text-xs font-semibold text-slate-700 mb-2">
               Generated preview
             </p>
-            {!activePreviewRow ? (
+            {!activePreviewRow && activePreviewCampaign ? (
+              // Campaign-generated date: the post lives in the campaign
+              // workflow, not here. Show the same message that used to be
+              // a hover tooltip on the cell itself, plus a link out.
+              <article className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-emerald-900">
+                    {format(
+                      new Date(`${activePreviewCampaign.date}T12:00:00`),
+                      'EEEE, MMM d'
+                    )}
+                  </p>
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-800">
+                    Campaign
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-emerald-950">
+                  This date&apos;s content is generated by a campaign. The
+                  post will be scheduled automatically on this day &mdash; you
+                  can review or edit it from the{' '}
+                  <Link
+                    href="/scheduled-post"
+                    className="font-semibold text-emerald-900 underline underline-offset-2 hover:text-emerald-700"
+                  >
+                    Scheduled Posts
+                  </Link>{' '}
+                  page.
+                </p>
+              </article>
+            ) : !activePreviewRow ? (
               <p className="text-xs text-slate-500">
                 Click a green date to view the generated post for that day.
               </p>

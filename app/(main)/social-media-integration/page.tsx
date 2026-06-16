@@ -47,9 +47,12 @@ import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const PLAN_MAX_SOCIAL: Record<string, number> = {
-  prime: 1,
-  elite: 2,
-  legacy: 3,
+  'prime-auto': 1,
+  'prime-manual': 1,
+  'elite-auto': 2,
+  'elite-manual': 2,
+  'legacy-auto': 3,
+  'legacy-manual': 3,
 };
 
 type PlatformId = 'instagram' | 'facebook' | 'linkedin';
@@ -387,11 +390,14 @@ export default function ConnectedPlatformsPage() {
    * Show if every allowed slot is already connected and they can't add more
    * without upgrading.
    */
+  // Both Legacy variants (Studio + AI) already include all 3 platforms,
+  // so they should never see the "Upgrade for more platforms" notice.
   const showPlanLimitNotice =
     !billingLoading &&
     !showSelectionIncompleteNotice &&
     activePlan !== 'non-subscribed' &&
-    activePlan !== 'legacy' &&
+    activePlan !== 'legacy-auto' &&
+    activePlan !== 'legacy-manual' &&
     maxPlatforms > 0 &&
     connectedCount >= maxPlatforms;
 

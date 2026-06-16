@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Crown,
   Eye,
   FileText,
   Heart,
@@ -20,13 +21,18 @@ import {
   trendDelta,
 } from './utils/facebook_components/util_component';
 import { useMemo, useRef, useState } from 'react';
-import { AnalyticsAiInsightCard } from './AnalyticsAiInsightCard';
+import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
 import { SyncErrorBanner } from './SyncErrorBanner';
 import {
   buildReplyQueueGroupsLinkedIn,
   GrowthStudioBlock,
-  mostRecentLinkedInPost,
 } from './growth-studio';
+import {
+  classifyPostsAsNudgeOrDud,
+  weeklyDeltaFromPostFrequency,
+  weeklyDeltaFromTrend,
+} from './utils/utils_functions';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   LinkedInAnalytics,
   LinkedInAnalyticsConnection,
@@ -252,7 +258,6 @@ export default function LinkedInAnalyticsView({
   impressionsChartData,
   updatedLabel,
   repliedCommentIds,
-  firstCommentSentPostIds,
 }: {
   connection: LinkedInAnalyticsConnection;
   li: LinkedInAnalytics | null;
@@ -269,7 +274,6 @@ export default function LinkedInAnalyticsView({
   impressionsChartData: { date: string; impressions: number }[];
   updatedLabel?: string;
   repliedCommentIds?: string[];
-  firstCommentSentPostIds?: string[];
 }) {
   const growthSectionRef = useRef<HTMLElement>(null);
   const topPostsSectionRef = useRef<HTMLElement>(null);
@@ -282,57 +286,49 @@ export default function LinkedInAnalyticsView({
     [topPosts]
   );
 
-  const expandedLinkedIn = useMemo(() => {
-    if (!expandedPost) return null;
-    return topPosts.find((p) => p.postId === expandedPost.postId) ?? null;
-  }, [expandedPost, topPosts]);
-
   const replyGroups = useMemo(
     () => buildReplyQueueGroupsLinkedIn(posts, repliedCommentIds),
     [posts, repliedCommentIds]
   );
-  const recentPost = useMemo(
-    () => mostRecentLinkedInPost(posts),
-    [posts]
+
+  /** Slice for the new "Top 3 ranked posts" highlight section. */
+  const topThreePosts = useMemo(() => topAsPosts.slice(0, 3), [topAsPosts]);
+
+  /**
+   * Splits the full top-posts list into Nudges vs Duds using the 1.5×
+   * average-engagement threshold so we can render filter tabs below.
+   */
+  const nudgeDud = useMemo(
+    () =>
+      classifyPostsAsNudgeOrDud(
+        topAsPosts,
+        (p) => p.postId,
+        (p) => p.engagementScore ?? 0
+      ),
+    [topAsPosts]
   );
 
-  const liPostAiContext = useMemo(() => {
-    if (!expandedLinkedIn) return null;
-    const asPost = linkedInPostToPost(expandedLinkedIn);
-    const scores = topAsPosts.map((p) => p.engagementScore ?? 0);
-    const avg = scores.length
-      ? scores.reduce((a, b) => a + b, 0) / scores.length
-      : 0;
-    const sorted = [...scores].sort((a, b) => a - b);
-    const median = sorted.length
-      ? sorted[Math.floor(sorted.length / 2)]
-      : 0;
-    const rank =
-      [...topAsPosts]
-        .sort((a, b) => (b.engagementScore ?? 0) - (a.engagementScore ?? 0))
-        .findIndex((p) => p.postId === asPost.postId) + 1;
-    return {
-      post: {
-        messagePreview: asPost.message?.slice(0, 600),
-        mediaUrl: asPost.mediaUrl?.trim() || undefined,
-        type: asPost.type,
-        reactions: asPost.reactions,
-        comments: asPost.comments,
-        shares: asPost.shares,
-        engagementScore: asPost.engagementScore,
-        impressions: asPost.impressions,
-        uniqueImpressions: asPost.uniqueImpressions,
-        clicks: asPost.clicks,
-        engagementRate: asPost.engagementRate,
-      },
-      peers: {
-        count: topAsPosts.length,
-        avgEngagement: avg,
-        medianEngagement: median,
-        rankByEngagement: rank || undefined,
-      },
-    };
-  }, [expandedLinkedIn, topAsPosts]);
+  /** Weekly +/- deltas surfaced on the five overview StatCards. */
+  const followersDelta = useMemo(
+    () => weeklyDeltaFromTrend(merged.followersTrend),
+    [merged.followersTrend]
+  );
+  const pageViewsDelta = useMemo(
+    () => weeklyDeltaFromTrend(merged.pageViewsTrend),
+    [merged.pageViewsTrend]
+  );
+  const impressionsDelta = useMemo(
+    () => weeklyDeltaFromTrend(merged.impressionsTrend),
+    [merged.impressionsTrend]
+  );
+  const engagementDelta = useMemo(
+    () => weeklyDeltaFromTrend(merged.engagementsTrend),
+    [merged.engagementsTrend]
+  );
+  const postsDelta = useMemo(
+    () => weeklyDeltaFromPostFrequency(li?.postFrequency),
+    [li?.postFrequency]
+  );
 
   const handleMetricToggle = (id: LiFocusMetric) => {
     setFocusedMetric((prev) => (prev === id ? null : id));
@@ -421,16 +417,12 @@ export default function LinkedInAnalyticsView({
         ) : null}
       </header>
 
+      <AnalyticsWeeklyVerdict platform="linkedin" context={pageAiContext} />
+
       <section aria-labelledby="li-analytics-cards-heading">
         <h2 id="li-analytics-cards-heading" className="sr-only">
           Overview metrics
         </h2>
-        <AnalyticsAiInsightCard
-          platform="linkedin"
-          scope="page"
-          context={pageAiContext}
-          className="mb-4"
-        />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Followers"
@@ -439,6 +431,7 @@ export default function LinkedInAnalyticsView({
             icon={Users}
             selected={focusedMetric === 'followers'}
             onClick={() => handleMetricToggle('followers')}
+            delta={followersDelta?.pct ?? null}
           />
           <StatCard
             label="Page views"
@@ -447,6 +440,7 @@ export default function LinkedInAnalyticsView({
             icon={Eye}
             selected={focusedMetric === 'pageViews'}
             onClick={() => handleMetricToggle('pageViews')}
+            delta={pageViewsDelta?.pct ?? null}
           />
           <StatCard
             label="Impressions"
@@ -454,6 +448,7 @@ export default function LinkedInAnalyticsView({
             icon={TrendingUp}
             selected={focusedMetric === 'impressions'}
             onClick={() => handleMetricToggle('impressions')}
+            delta={impressionsDelta?.pct ?? null}
           />
           <StatCard
             label="Posts"
@@ -462,6 +457,7 @@ export default function LinkedInAnalyticsView({
             icon={FileText}
             selected={focusedMetric === 'posts'}
             onClick={() => handleMetricToggle('posts')}
+            delta={postsDelta?.pct ?? null}
           />
           <StatCard
             label="Engagement"
@@ -474,6 +470,7 @@ export default function LinkedInAnalyticsView({
             icon={Heart}
             selected={focusedMetric === 'engagement'}
             onClick={() => handleMetricToggle('engagement')}
+            delta={engagementDelta?.pct ?? null}
           />
         </div>
         {focusedMetric ? (
@@ -485,12 +482,40 @@ export default function LinkedInAnalyticsView({
         ) : null}
       </section>
 
+      {topThreePosts.length > 0 ? (
+        <section
+          className="space-y-4 scroll-mt-6"
+          aria-labelledby="li-top-three-heading"
+        >
+          <h2
+            id="li-top-three-heading"
+            className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+          >
+            <Crown className="h-5 w-5 text-amber-500" aria-hidden />
+            Top 3 ranked posts
+            <span className="text-xs font-normal text-zinc-500">
+              best performers in the last 3 weeks
+            </span>
+          </h2>
+          <div className="space-y-4">
+            {topThreePosts.map((post, i) => (
+              <TopPostCard
+                key={`top3-${post.postId}`}
+                post={post}
+                rank={i + 1}
+                onExpandImage={setExpandedPost}
+                externalSiteName="LinkedIn"
+                classification={nudgeDud.classifications.get(post.postId)}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <GrowthStudioBlock
         platform="linkedin"
-        recentPost={recentPost}
         replyGroups={replyGroups}
         pageName={li?.pageName ?? li?.displayName}
-        firstCommentSentPostIds={firstCommentSentPostIds}
       />
 
       <section
@@ -541,23 +566,72 @@ export default function LinkedInAnalyticsView({
         >
           <Trophy className="h-5 w-5 text-amber-600" aria-hidden />
           Top posts
+          <span className="text-xs font-normal text-zinc-500">
+            classified vs. the cohort average (1.5× cutoff)
+          </span>
         </h2>
         {topAsPosts.length === 0 ? (
           <p className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600">
             No post data yet. Sync LinkedIn insights to populate this section.
           </p>
         ) : (
-          <div className="space-y-4">
-            {topAsPosts.map((post, i) => (
-              <TopPostCard
-                key={post.postId}
-                post={post}
-                rank={i + 1}
-                onExpandImage={setExpandedPost}
-                externalSiteName="LinkedIn"
-              />
-            ))}
-          </div>
+          <Tabs defaultValue="nudge" className="space-y-4">
+            <TabsList className="grid h-auto w-full max-w-sm grid-cols-2 gap-1">
+              <TabsTrigger value="nudge" className="gap-2">
+                Nudges
+                <span className="rounded-full bg-emerald-100 px-1.5 text-[10px] font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                  {nudgeDud.nudges.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="dud" className="gap-2">
+                Duds
+                <span className="rounded-full bg-zinc-200 px-1.5 text-[10px] font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300">
+                  {nudgeDud.duds.length}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="nudge" className="space-y-4 outline-none">
+              {nudgeDud.nudges.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+                  No nudges yet — nothing in this window scored 1.5× above
+                  your average. Recreate the framing of past winners to
+                  push one over the bar.
+                </p>
+              ) : (
+                nudgeDud.nudges.map((post, i) => (
+                  <TopPostCard
+                    key={post.postId}
+                    post={post}
+                    rank={i + 1}
+                    onExpandImage={setExpandedPost}
+                    externalSiteName="LinkedIn"
+                    classification="nudge"
+                  />
+                ))
+              )}
+            </TabsContent>
+
+            <TabsContent value="dud" className="space-y-4 outline-none">
+              {nudgeDud.duds.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+                  No duds — every recent post is performing at or above the
+                  nudge bar. Keep the streak going.
+                </p>
+              ) : (
+                nudgeDud.duds.map((post, i) => (
+                  <TopPostCard
+                    key={post.postId}
+                    post={post}
+                    rank={i + 1}
+                    onExpandImage={setExpandedPost}
+                    externalSiteName="LinkedIn"
+                    classification="dud"
+                  />
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </section>
 
@@ -625,17 +699,6 @@ export default function LinkedInAnalyticsView({
           if (!next) setExpandedPost(null);
         }}
         externalSiteName="LinkedIn"
-        aiFooter={
-          expandedPost && liPostAiContext ? (
-            <AnalyticsAiInsightCard
-              platform="linkedin"
-              scope="post"
-              context={liPostAiContext}
-              compact
-              embed
-            />
-          ) : null
-        }
       />
     </div>
   );

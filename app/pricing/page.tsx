@@ -16,8 +16,9 @@ import {
   CREDIT_TOPUP_PACKS,
   PLAN_TRIAL_BUTTON_SUBLABEL,
   PLAN_TRIAL_HERO_LINE,
-  PRICING_PLANS,
+  pricingPlansForMode,
   planButtonDisplayName,
+  type PlanMode,
 } from '@/lib/landing-pricing';
 
 const NAV_ITEMS = [
@@ -51,10 +52,13 @@ const BILLING_FAQ_ITEMS = [
 ] as const;
 
 const CREDIT_ACTIONS = [
-  { label: 'Product Advert post', credits: '4 credits' },
-  { label: 'Quick creation post', credits: '2 credits' },
+  { label: 'Product Advert', credits: '4 credits' },
+  { label: 'Campaign post', credits: '3 credits / day' },
+  { label: 'Quick Create', credits: '2 credits' },
+  { label: 'Bulk Create', credits: '2 credits' },
+  { label: 'AI engine (manual trigger)', credits: '2 credits' },
   { label: 'Festive post', credits: '2 credits' },
-  { label: 'Regeneration post', credits: '1 credit' },
+  { label: 'Regeneration', credits: '1 credit' },
 ] as const;
 
 const fadeIn = {
@@ -82,6 +86,11 @@ const scaleIn = {
 
 export default function PricingPage() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  /** "Studio" = manual mode (you curate every post). "AI" = auto mode
+   *  (daily orchestrator generates posts automatically). Pricing + credit
+   *  counts differ between the two within the same tier. */
+  const [planMode, setPlanMode] = useState<PlanMode>('manual');
+  const visiblePlans = pricingPlansForMode(planMode);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -263,13 +272,52 @@ export default function PricingPage() {
             </motion.h1>
             <motion.p
               variants={fadeIn}
-              className="mx-auto mb-10 max-w-2xl text-center text-sm text-muted-foreground sm:text-base font-(--font-dm-sans) text-pretty"
+              className="mx-auto mb-6 max-w-2xl text-center text-sm text-muted-foreground sm:text-base font-(--font-dm-sans) text-pretty"
             >
               Pricing for our plans and credit packs. {PLAN_TRIAL_HERO_LINE}
             </motion.p>
 
+            {/* Mode toggle: Studio (you curate) vs AI (daily auto-posting).
+                Switches the visible plan cards between manual and auto
+                pricing; the underlying activePlan ids differ
+                (prime-manual vs prime-auto) so checkout routes correctly. */}
+            <div
+              role="tablist"
+              aria-label="Plan mode"
+              className="mx-auto mb-8 inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 backdrop-blur-sm w-fit flex justify-center"
+            >
+              {(['manual', 'auto'] as const).map((mode) => {
+                const selected = planMode === mode;
+                const label = mode === 'manual' ? 'Studio' : 'AI';
+                const sublabel =
+                  mode === 'manual'
+                    ? 'You curate every post'
+                    : 'Daily automated posts';
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => setPlanMode(mode)}
+                    className={cn(
+                      'rounded-full px-5 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary-blue/40',
+                      selected
+                        ? 'bg-foreground text-background shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <span className="block leading-none">{label}</span>
+                    <span className="mt-0.5 block text-[10px] font-medium opacity-80">
+                      {sublabel}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
             <div className="grid gap-6 md:grid-cols-3 items-stretch max-w-6xl mx-auto">
-              {PRICING_PLANS.map((p) => (
+              {visiblePlans.map((p) => (
                 <motion.div
                   variants={scaleIn}
                   key={p.name}
