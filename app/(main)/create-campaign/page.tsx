@@ -2,12 +2,21 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { addDays, format, isAfter, parseISO, startOfToday } from 'date-fns';
+import {
+  addDays,
+  endOfWeek,
+  format,
+  isAfter,
+  parseISO,
+  startOfToday,
+  startOfWeek,
+} from 'date-fns';
 import {
   ArrowLeft,
   CalendarCheck2,
   CalendarDays,
   CalendarPlus,
+  CalendarRange,
   ImageIcon,
   Inbox,
   Loader2,
@@ -34,11 +43,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -139,6 +143,97 @@ function formatDisplayDate(iso: string | null): string {
   } catch {
     return iso;
   }
+}
+
+/**
+ * Calendar week the given date falls into, Monday → Sunday. Returned
+ * `label` is the compact range we render in the UI (e.g. `16–22 Jun` when
+ * the range stays inside one month, `28 Jun – 4 Jul` when it crosses).
+ * `key` is a stable string id we can use as a Map key.
+ */
+function getWeekRange(date: Date): {
+  start: Date;
+  end: Date;
+  key: string;
+  label: string;
+} {
+  const start = startOfWeek(date, { weekStartsOn: 1 });
+  const end = endOfWeek(date, { weekStartsOn: 1 });
+  const sameMonth = start.getMonth() === end.getMonth();
+  const label = sameMonth
+    ? `${format(start, 'd')}–${format(end, 'd MMM')}`
+    : `${format(start, 'd MMM')} – ${format(end, 'd MMM')}`;
+  return { start, end, key: format(start, 'yyyy-MM-dd'), label };
+}
+
+/**
+ * Bucket a list of items into Mon–Sun calendar weeks based on a per-item
+ * date string (YYYY-MM-DD or ISO). Items with a missing/invalid date are
+ * gathered into a trailing `__unscheduled__` group so the UI can show
+ * them under a "No date" header instead of dropping them silently.
+ */
+function groupByWeek<T>(
+  items: T[],
+  getDate: (item: T) => string | null | undefined
+): Array<{
+  key: string;
+  label: string;
+  start: Date | null;
+  end: Date | null;
+  items: T[];
+}> {
+  const groups = new Map<
+    string,
+    { key: string; label: string; start: Date; end: Date; items: T[] }
+  >();
+  const unscheduled: T[] = [];
+
+  for (const item of items) {
+    const iso = getDate(item);
+    if (!iso) {
+      unscheduled.push(item);
+      continue;
+    }
+    let date: Date;
+    try {
+      date = parseISO(iso);
+    } catch {
+      unscheduled.push(item);
+      continue;
+    }
+    if (Number.isNaN(date.getTime())) {
+      unscheduled.push(item);
+      continue;
+    }
+    const range = getWeekRange(date);
+    const group = groups.get(range.key);
+    if (group) {
+      group.items.push(item);
+    } else {
+      groups.set(range.key, { ...range, items: [item] });
+    }
+  }
+
+  const sorted: Array<{
+    key: string;
+    label: string;
+    start: Date | null;
+    end: Date | null;
+    items: T[];
+  }> = Array.from(groups.values())
+    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .map((group) => ({ ...group }));
+
+  if (unscheduled.length > 0) {
+    sorted.push({
+      key: '__unscheduled__',
+      label: 'No date yet',
+      start: null,
+      end: null,
+      items: unscheduled,
+    });
+  }
+  return sorted;
 }
 
 /** Parse Firestore timestamps that come back as `{_seconds, _nanoseconds}`
@@ -611,6 +706,8 @@ export default function CreateCampaignPage() {
               onPickDate={setDayDate}
               onRemove={removeDay}
             />
+
+            <CampaignWeeksOverview days={days} />
 
             <div className="flex flex-wrap items-center gap-3">
               <button
@@ -1114,6 +1211,102 @@ function DayDraftList(props: DayDraftListProps) {
 }
 
 // =============================================================================
+// Weekly overview (renders dated days grouped Mon–Sun for a quick at-a-glance
+// view between the per-day editor and the platform/credit summary panel)
+// =============================================================================
+
+type CampaignWeeksOverviewProps = {
+  days: CampaignDayDraft[];
+};
+
+function CampaignWeeksOverview({ days }: CampaignWeeksOverviewProps) {
+  const datedDays = useMemo(
+    () =>
+      days.filter(
+        (d): d is CampaignDayDraft & { date: string } => !!d.date
+      ),
+    [days]
+  );
+  const weeks = useMemo(
+    () => groupByWeek(datedDays, (d) => d.date),
+    [datedDays]
+  );
+
+  if (datedDays.length === 0) return null;
+
+  return (
+    <section className="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-slate-100 flex items-center gap-3 bg-white/50">
+        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+          <CalendarRange className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <h2 className="text-lg font-bold text-slate-900">
+            Weekly overview
+          </h2>
+          <p className="text-xs text-slate-500">
+            Your dated campaign days, grouped by calendar week
+            (Mon&nbsp;–&nbsp;Sun).
+          </p>
+        </div>
+        <span className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+          {weeks.length} week{weeks.length === 1 ? '' : 's'}
+        </span>
+      </div>
+      <div className="p-5 grid gap-4 md:grid-cols-2">
+        {weeks.map((week) => {
+          const sortedDays = [...week.items].sort((a, b) =>
+            a.date.localeCompare(b.date)
+          );
+          return (
+            <article
+              key={week.key}
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <header className="flex items-center justify-between gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700">
+                  <CalendarRange className="h-3.5 w-3.5" />
+                  {week.label}
+                </span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                  {sortedDays.length} day
+                  {sortedDays.length === 1 ? '' : 's'}
+                </span>
+              </header>
+              <ul className="mt-3 space-y-2">
+                {sortedDays.map((day) => (
+                  <li
+                    key={day.dayNumber}
+                    className="flex items-start gap-3 rounded-xl bg-slate-50/70 px-3 py-2"
+                  >
+                    <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white">
+                      {day.dayNumber}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-slate-800 truncate">
+                        {day.title || `Day ${day.dayNumber}`}
+                      </p>
+                      <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                        {format(parseISO(day.date), 'EEE, MMM d')}
+                      </p>
+                      {day.reference && (
+                        <p className="mt-1 text-[11px] text-slate-500 line-clamp-2">
+                          {day.reference}
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// =============================================================================
 // Summary / submit panel
 // =============================================================================
 
@@ -1419,6 +1612,14 @@ function DraftsDrawer(props: DraftsDrawerProps) {
     void refresh();
   }, [refresh]);
 
+  // Bucket the drafts by Mon–Sun calendar week so the drawer can show
+  // section headers like "16–22 Jun" — matches the weekly overview on
+  // the campaign page and makes it easy to scan a multi-week campaign.
+  const groupedDrafts = useMemo(
+    () => groupByWeek(drafts, (d) => d.targetDate ?? null),
+    [drafts]
+  );
+
   const handleRegenerate = useCallback(
     async (draftId: string) => {
       if (regeneratingDraftId) {
@@ -1463,7 +1664,12 @@ function DraftsDrawer(props: DraftsDrawerProps) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-xl flex flex-col gap-0 p-0"
+        // Wide, rectangular drawer — caps at 1400px so the 3-column draft
+        // grid below has ~420px per card (plenty for image + controls)
+        // while never quite covering the underlying campaign editor on
+        // ultra-wide displays. Falls back to 95vw on smaller laptops so
+        // the user always gets the full grid experience.
+        className="w-full sm:!max-w-[min(95vw,1400px)] flex flex-col gap-0 p-0"
         // The per-row image preview overlay (rendered by `ImagePreviewOverlay`
         // via createPortal -> document.body) lives OUTSIDE this Sheet's DOM
         // tree, so Radix's default outside-click detection treats clicks on
@@ -1537,7 +1743,7 @@ function DraftsDrawer(props: DraftsDrawerProps) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
           {loading && drafts.length === 0 && (
             <>
               <Skeleton className="h-28 w-full rounded-2xl" />
@@ -1552,19 +1758,39 @@ function DraftsDrawer(props: DraftsDrawerProps) {
                 ' Generate a campaign and the renders will land here.'}
             </div>
           )}
-          {drafts.map((draft) => (
-            <DraftRow
-              key={draft.draftId}
-              draft={draft}
-              dateWindow={dateWindow}
-              formattedToday={formattedToday}
-              onScheduled={handleScheduled}
-              onRegenerate={handleRegenerate}
-              isRegenerating={regeneratingDraftId === draft.draftId}
-              isAnyRegenInFlight={
-                regeneratingDraftId != null || isCampaignJobRunning
-              }
-            />
+          {groupedDrafts.map((week) => (
+            <section key={week.key} className="space-y-3">
+              {/* Sticky week header. MUST be fully opaque (no /95 + blur)
+                  because the previous section's cards scroll up behind it
+                  and would otherwise bleed through. The shadow gives a
+                  clean break from the scrolling content below. */}
+              <header className="sticky top-0 z-20 -mx-6 flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-6 py-3 shadow-[0_2px_6px_-2px_rgba(15,23,42,0.06)]">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700">
+                  <CalendarRange className="h-3.5 w-3.5" />
+                  {week.label}
+                </span>
+                <span className="text-[11px] font-medium text-slate-500">
+                  {week.items.length} draft
+                  {week.items.length === 1 ? '' : 's'}
+                </span>
+              </header>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {week.items.map((draft) => (
+                  <DraftRow
+                    key={draft.draftId}
+                    draft={draft}
+                    dateWindow={dateWindow}
+                    formattedToday={formattedToday}
+                    onScheduled={handleScheduled}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={regeneratingDraftId === draft.draftId}
+                    isAnyRegenInFlight={
+                      regeneratingDraftId != null || isCampaignJobRunning
+                    }
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       </SheetContent>
@@ -1662,15 +1888,18 @@ function DraftRow(props: DraftRowProps) {
     preview.open(draft.imageUrl, previewAlt);
   }, [draft.imageUrl, preview, previewAlt]);
 
-  // Only mount the HoverCard wrapper when there's actually an image to
-  // preview — otherwise hovering the empty placeholder would open an empty
-  // popover, which is more confusing than helpful.
-  const thumbnail = (
+  // Square image at the top of the card — gives the render the visual
+  // weight it deserves in a 3-column grid. The hover-card with the bigger
+  // preview is no longer mounted here because the card image is already
+  // ~400px wide; the per-card zoom button + fullscreen overlay still cover
+  // the "I want to see this larger" need.
+  const cardImage = (
     <div
       className={cn(
-        'group relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-slate-100',
+        'group relative aspect-square w-full overflow-hidden bg-slate-100',
         draft.imageUrl && 'cursor-zoom-in'
       )}
+      onClick={draft.imageUrl ? openPreview : undefined}
     >
       {draft.imageUrl ? (
         /* eslint-disable-next-line @next/next/no-img-element */
@@ -1681,9 +1910,19 @@ function DraftRow(props: DraftRowProps) {
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-slate-300">
-          <ImageIcon className="h-6 w-6" />
+          <ImageIcon className="h-10 w-10" />
         </div>
       )}
+      <span
+        className={cn(
+          'absolute top-2 left-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm',
+          isScheduled
+            ? 'bg-emerald-100 text-emerald-700'
+            : 'bg-white/90 text-slate-700'
+        )}
+      >
+        {isScheduled ? 'scheduled' : 'draft'}
+      </span>
       {draft.imageUrl && (
         <ImagePreviewButton
           variant="overlay-icon"
@@ -1691,72 +1930,15 @@ function DraftRow(props: DraftRowProps) {
           ariaLabel="Open full-size preview"
           label="Preview"
           onClick={openPreview}
-          className="absolute bottom-1 right-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+          className="absolute bottom-2 right-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
         />
       )}
     </div>
   );
 
   return (
-    <div className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
-      {draft.imageUrl ? (
-        <HoverCard openDelay={120} closeDelay={80}>
-          <HoverCardTrigger asChild>{thumbnail}</HoverCardTrigger>
-          <HoverCardContent
-            side="left"
-            align="start"
-            sideOffset={12}
-            collisionPadding={16}
-            className="w-80 p-0 overflow-hidden"
-          >
-            <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={draft.imageUrl}
-                alt={previewAlt}
-                className="w-full max-h-80 object-contain bg-slate-100"
-              />
-              <ImagePreviewButton
-                variant="overlay-icon"
-                stopPropagation
-                ariaLabel="Open full-size preview"
-                label="Preview"
-                onClick={openPreview}
-                className="absolute bottom-2 right-2"
-              />
-            </div>
-            <div className="p-3 space-y-2">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-bold text-slate-900 leading-snug">
-                  {previewAlt}
-                </p>
-                <span
-                  className={cn(
-                    'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-                    isScheduled
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-slate-100 text-slate-600'
-                  )}
-                >
-                  {isScheduled ? 'scheduled' : 'draft'}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 capitalize">
-                {draft.platform || 'unknown'} ·{' '}
-                {formatDisplayDate(draft.targetDate)}
-                {draft.campaignTheme ? ` · ${draft.campaignTheme}` : ''}
-              </p>
-              {draft.message && (
-                <p className="text-xs text-slate-600 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-                  {draft.message}
-                </p>
-              )}
-            </div>
-          </HoverCardContent>
-        </HoverCard>
-      ) : (
-        thumbnail
-      )}
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md">
+      {cardImage}
       {preview.isOpen && (
         <ImagePreviewOverlay
           src={preview.previewUrl}
@@ -1765,47 +1947,46 @@ function DraftRow(props: DraftRowProps) {
         />
       )}
 
-      <div className="flex-1 min-w-0 flex flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-slate-900 truncate">
-              {draft.eventName || draft.campaignTheme || 'Untitled day'}
-            </p>
-            <p className="text-[11px] text-slate-500 capitalize">
-              {draft.platform || 'unknown'} ·{' '}
-              {formatDisplayDate(draft.targetDate)}
-            </p>
-          </div>
-          <span
-            className={cn(
-              'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
-              isScheduled
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-slate-100 text-slate-600'
-            )}
-          >
-            {isScheduled ? 'scheduled' : 'draft'}
-          </span>
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug">
+            {draft.eventName || draft.campaignTheme || 'Untitled day'}
+          </p>
+          <p className="mt-1 text-[11px] text-slate-500 capitalize">
+            {draft.platform || 'unknown'} ·{' '}
+            {formatDisplayDate(draft.targetDate)}
+            {draft.campaignTheme &&
+            draft.campaignTheme !== draft.eventName
+              ? ` · ${draft.campaignTheme}`
+              : ''}
+          </p>
         </div>
 
         {draft.message && (
-          <p className="mt-1 text-[11px] text-slate-500 line-clamp-2">
+          <p className="text-[11px] text-slate-500 line-clamp-3">
             {draft.message}
           </p>
         )}
 
         {isScheduled ? (
-          <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
-            <CalendarCheck2 className="h-3 w-3" />
-            {scheduledAtDate
-              ? `Will publish ${format(scheduledAtDate, "EEE, MMM d 'at' h:mm a")}`
-              : 'Scheduled'}
-          </p>
+          <div className="mt-auto rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-[11px] font-semibold text-emerald-700">
+            <p className="inline-flex items-center gap-1">
+              <CalendarCheck2 className="h-3.5 w-3.5" />
+              {scheduledAtDate
+                ? `Will publish ${format(scheduledAtDate, "EEE, MMM d 'at' h:mm a")}`
+                : 'Scheduled'}
+            </p>
+          </div>
         ) : (
-          <>
-            <div className="mt-2 flex flex-wrap items-end gap-2">
+          <div className="mt-auto space-y-3">
+            <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                Date <span className="ml-1 normal-case text-slate-400">(locked)</span>
+                <span>
+                  Date
+                  <span className="ml-1 normal-case text-slate-400">
+                    (locked)
+                  </span>
+                </span>
                 {/* The date was committed when the campaign was generated —
                      the user only picks a time of day here. Disabled +
                      readOnly so neither click nor keyboard can change it. */}
@@ -1815,7 +1996,7 @@ function DraftRow(props: DraftRowProps) {
                   disabled
                   readOnly
                   aria-readonly="true"
-                  className="mt-1 rounded-lg border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 cursor-not-allowed"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs font-medium text-slate-600 cursor-not-allowed"
                 />
               </label>
               <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-slate-500">
@@ -1824,29 +2005,30 @@ function DraftRow(props: DraftRowProps) {
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
                 />
               </label>
-              <button
-                type="button"
-                onClick={handleSchedule}
-                disabled={scheduling || isRegenerating}
-                className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {scheduling ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <CalendarPlus className="h-3.5 w-3.5" />
-                )}
-                Schedule
-              </button>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-              <span className="text-[10px] text-slate-400">
+            <button
+              type="button"
+              onClick={handleSchedule}
+              disabled={scheduling || isRegenerating}
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {scheduling ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CalendarPlus className="h-3.5 w-3.5" />
+              )}
+              Schedule
+            </button>
+
+            <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+              <span className="text-[10px] text-slate-400 line-clamp-2 flex-1">
                 {draft.regenerationCount > 0
-                  ? `Regenerated ${draft.regenerationCount}× · next regen ${regenCost} credit${regenCost === 1 ? '' : 's'}`
-                  : 'First regeneration is free'}
+                  ? `Regenerated ${draft.regenerationCount}× · next ${regenCost} credit${regenCost === 1 ? '' : 's'}`
+                  : 'First regen is free'}
               </span>
               <button
                 type="button"
@@ -1858,7 +2040,7 @@ function DraftRow(props: DraftRowProps) {
                     : `Re-render this draft (${regenCost} credits)`
                 }
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition',
+                  'shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition',
                   regenCost === 0
                     ? 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
                     : 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100',
@@ -1873,11 +2055,11 @@ function DraftRow(props: DraftRowProps) {
                 {isRegenerating
                   ? 'Regenerating…'
                   : regenCost === 0
-                    ? 'Regenerate · Free'
-                    : `Regenerate · ${regenCost} credits`}
+                    ? 'Free'
+                    : `${regenCost} cr`}
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

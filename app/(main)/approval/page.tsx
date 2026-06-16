@@ -9,7 +9,7 @@ import {
   type MouseEvent,
 } from 'react';
 import Link from 'next/link';
-import { Calendar, ExternalLink, Sparkles } from 'lucide-react';
+import { Calendar, ExternalLink, Info, Loader2, Sparkles } from 'lucide-react';
 import { performActionByUserOnScheduledPost } from '@/src/service/api/userService';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { showErrorToast } from '@/lib/show-error-toast';
@@ -56,9 +56,43 @@ export type PendingScheduledPost = {
   error?: string | null;
   errors?: string[] | null;
   GeneratedBy?: string;
+  /**
+   * Mirrors `users/{uid}/scheduledPosts/{postId}.regenratedCount` (typo
+   * preserved to match the Firestore field). The backend initializes it to
+   * `1` when the AI engine first writes the post, increments by `1` on every
+   * user-initiated regen, and only deducts credits once the count has rolled
+   * past the first free slot — see
+   * `backend/apps/worker/src/pipelines/ai-engine/regenerate/regenerate_scheduled_post.ts`.
+   * The UI consults this so the cost preview matches what the worker will
+   * actually charge.
+   */
+  regenratedCount?: number;
 };
 
 type ApprovalAction = 'regenerate' | 'approve' | 'reject';
+
+/**
+ * Credit cost per paid regeneration. MUST stay in sync with the
+ * `deductCredits(..., 2, ...)` call in
+ * `backend/apps/worker/src/pipelines/ai-engine/regenerate/regenerate_scheduled_post.ts`.
+ */
+const REGENERATE_CREDIT_COST = 2;
+
+/**
+ * Read the post's persisted regen count, defaulting to `0` for posts that
+ * predate the field. Threshold check (`>= 2`) matches the worker's
+ * `priorRegenCount >= 2` deduction gate — i.e. the very first user-initiated
+ * regen (when the field is at its `1` initial value) is free, every regen
+ * after that costs `REGENERATE_CREDIT_COST` credits.
+ */
+function getRegenCount(post: PendingScheduledPost): number {
+  const n = post.regenratedCount;
+  return typeof n === 'number' && Number.isFinite(n) ? n : 0;
+}
+
+function willRegenChargeCredits(post: PendingScheduledPost): boolean {
+  return getRegenCount(post) >= 2;
+}
 
 function ApprovalActionButtons({
   size,
@@ -67,6 +101,7 @@ function ApprovalActionButtons({
   onReject,
   stopPropagation,
   disabled,
+  regenChargesCredits,
 }: {
   size: 'card' | 'modal';
   onRegenerate?: () => void;
@@ -74,6 +109,9 @@ function ApprovalActionButtons({
   onReject?: () => void;
   stopPropagation?: boolean;
   disabled?: boolean;
+  /** When true, the next regen will deduct credits — surface that on the
+   *  button so the user isn't surprised after clicking. */
+  regenChargesCredits?: boolean;
 }) {
   const handle = (fn: (() => void) | undefined, e: MouseEvent) => {
     if (disabled) return;
@@ -93,9 +131,25 @@ function ApprovalActionButtons({
         type="button"
         disabled={disabled}
         onClick={(e) => handle(onRegenerate, e)}
-        className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500`}
+        title={
+          regenChargesCredits
+            ? `Next regeneration will deduct ${REGENERATE_CREDIT_COST} credits`
+            : undefined
+        }
+        className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500 ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
       >
-        Regenerate
+        <span>Regenerate</span>
+        {regenChargesCredits ? (
+          <span
+            className={
+              isCard
+                ? 'max-w-44 text-[9px] font-normal leading-snug text-amber-900/90'
+                : 'max-w-56 text-[11px] font-normal leading-snug text-amber-900/90'
+            }
+          >
+            {`${REGENERATE_CREDIT_COST} credits will be deducted`}
+          </span>
+        ) : null}
       </button>
       <button
         type="button"
@@ -127,6 +181,7 @@ function PendingPostCard({
   onReject,
   actionDisabled,
   onPreviewImage,
+  isRegenerating,
 }: {
   post: PendingScheduledPost;
   scheduleAt: string;
@@ -137,16 +192,24 @@ function PendingPostCard({
   onReject: () => void;
   actionDisabled: boolean;
   onPreviewImage: (url: string, alt?: string) => void;
+  /** Set while the worker is regenerating this post. The card stays in the
+   *  grid so the user knows the click landed, but actions + click-to-open are
+   *  disabled and a spinner overlay covers the (now stale) image. */
+  isRegenerating: boolean;
 }) {
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
+  const regenChargesCredits = willRegenChargeCredits(post);
   return (
     <div
       ref={cardRef}
       role="button"
-      tabIndex={0}
-      onClick={onSelect}
+      tabIndex={isRegenerating ? -1 : 0}
+      aria-busy={isRegenerating || undefined}
+      aria-disabled={isRegenerating || undefined}
+      onClick={isRegenerating ? undefined : onSelect}
       onKeyDown={(e) => {
+        if (isRegenerating) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onSelect();
@@ -155,8 +218,9 @@ function PendingPostCard({
       className={cn(
         'group relative flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm',
         'transition-all duration-300',
-        'hover:border-[#4A8FF6]/35 hover:bg-slate-50/80',
-        'hover:shadow-md hover:shadow-slate-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]/30'
+        isRegenerating
+          ? 'cursor-not-allowed'
+          : 'hover:border-[#4A8FF6]/35 hover:bg-slate-50/80 hover:shadow-md hover:shadow-slate-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]/30'
       )}
     >
       <div className="relative mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 aspect-4/3">
@@ -194,7 +258,7 @@ function PendingPostCard({
             </span>
           </div>
         ) : null}
-        {post.imageUrl ? (
+        {post.imageUrl && !isRegenerating ? (
           <div className="absolute bottom-2 right-2">
             <ImagePreviewButton
               variant="overlay-icon"
@@ -203,6 +267,20 @@ function PendingPostCard({
                 onPreviewImage(post.imageUrl as string, 'Scheduled post image')
               }
             />
+          </div>
+        ) : null}
+        {isRegenerating ? (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/75 backdrop-blur-sm"
+            aria-live="polite"
+          >
+            <Loader2 className="h-6 w-6 animate-spin text-[#4A8FF6]" aria-hidden />
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+              Regenerating…
+            </span>
+            <span className="px-3 text-center text-[11px] leading-snug text-slate-500">
+              This usually takes 30–60 seconds. Refresh to see the new version.
+            </span>
           </div>
         ) : null}
       </div>
@@ -240,13 +318,16 @@ function PendingPostCard({
         <ApprovalActionButtons
           size="card"
           stopPropagation
-          disabled={actionDisabled}
+          disabled={actionDisabled || isRegenerating}
           onRegenerate={onRegenerate}
           onAccept={onAccept}
           onReject={onReject}
+          regenChargesCredits={regenChargesCredits}
         />
         <p className="text-[11px] text-slate-400 group-hover:text-slate-500">
-          Click for full details
+          {isRegenerating
+            ? 'Regeneration in progress — refresh to see the new version'
+            : 'Click for full details'}
         </p>
       </div>
     </div>
@@ -299,6 +380,7 @@ function DetailModal({
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
+  const regenChargesCredits = willRegenChargeCredits(post);
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
@@ -405,6 +487,20 @@ function DetailModal({
           ) : null}
           <div className="pt-4 border-t border-slate-200">
             <p className="text-xs font-medium text-slate-500 mb-3">Actions</p>
+            {regenChargesCredits ? (
+              <div
+                className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                role="note"
+              >
+                <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                <span className="leading-snug">
+                  <span className="font-semibold">
+                    {REGENERATE_CREDIT_COST} credits will be deducted
+                  </span>{' '}
+                  if you regenerate this post.
+                </span>
+              </div>
+            ) : null}
             <ApprovalActionButtons
               size="modal"
               disabled={actionLoading}
@@ -413,6 +509,7 @@ function DetailModal({
               }
               onAccept={() => onAction(post.postId, 'approve', post.platform)}
               onReject={() => onAction(post.postId, 'reject', post.platform)}
+              regenChargesCredits={regenChargesCredits}
             />
           </div>
         </div>
@@ -431,6 +528,21 @@ export default function ApprovalPage() {
   const [cursor, setCursor] = useState<FirestoreTimestamp | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [actingPostId, setActingPostId] = useState<string | null>(null);
+  /**
+   * Posts the user has hit "Regenerate" on, whose worker job is still in
+   * flight. Used to render the inline "Regenerating…" overlay on each card
+   * instead of optimistically removing it — the card disappearing made users
+   * think the page had reloaded, and there was no way to tell that a fresh
+   * image was actually on the way.
+   *
+   * The set is cleared on a successful background refresh (when the
+   * server-side regen count moves past what we observed at submit time) and
+   * cleared per-post on regen failure (so the card snaps back to its normal
+   * action state and the user can retry).
+   */
+  const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(
+    () => new Set()
+  );
   const { billing } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -502,7 +614,35 @@ export default function ApprovalPage() {
       const response = await getScheduledPosts();
       const data = response.data;
       const posts: PendingScheduledPost[] = data.posts ?? [];
-      setPendingPosts(posts);
+      setPendingPosts((prev) => {
+        // The "Regenerating…" overlay is keyed off `regeneratingPostIds`.
+        // Clear that flag for any post whose freshly-fetched
+        // `regenratedCount` is now higher than what we saw locally — that's
+        // the signal the worker actually finished and the next render will
+        // pick up the new image / caption.
+        const prevById = new Map(prev.map((p) => [p.postId, p]));
+        setRegeneratingPostIds((flagSet) => {
+          if (flagSet.size === 0) return flagSet;
+          let mutated = false;
+          const next = new Set(flagSet);
+          for (const p of posts) {
+            if (!flagSet.has(p.postId)) continue;
+            const before = prevById.get(p.postId);
+            const beforeCount =
+              typeof before?.regenratedCount === 'number'
+                ? before.regenratedCount
+                : 0;
+            const afterCount =
+              typeof p.regenratedCount === 'number' ? p.regenratedCount : 0;
+            if (afterCount > beforeCount) {
+              next.delete(p.postId);
+              mutated = true;
+            }
+          }
+          return mutated ? next : flagSet;
+        });
+        return posts;
+      });
       const next = data.nextCursor ?? null;
       cursorRef.current = next;
       setCursor(next);
@@ -551,29 +691,61 @@ export default function ApprovalPage() {
         return;
       }
 
-      // Snapshot for rollback if the API rejects after we optimistically pop.
+      // Approve / reject mutate the post's flags synchronously on the server,
+      // so we optimistically pop the card out of the "needs my approval"
+      // bucket and snapshot the previous list to roll back on failure.
+      //
+      // Regenerate is fundamentally different — the API just enqueues a Cloud
+      // Tasks job (worker takes ~30-60s to re-render the image). If we pop
+      // the card here, the user sees it vanish and thinks the page reloaded;
+      // they also lose any signal that work is in progress. So for regen we
+      // keep the card in place and switch it into a "Regenerating…" overlay
+      // state via `regeneratingPostIds` instead.
       const previousPosts = pendingPosts;
       const previousSelected = selectedPost;
+      const isRegen = action === 'regenerate';
 
-      // Optimistic: pop the post out of the approval list immediately. All
-      // three actions (approve / reject / regenerate) take the post out of the
-      // "pending your approval" bucket — approval moves it forward, reject
-      // marks `rejectedByUser`, regenerate kicks off a new job and the worker
-      // refreshes the doc. The silent background refresh below reconciles.
-      setPendingPosts((prev) => prev.filter((p) => p.postId !== postId));
-      if (selectedPost?.postId === postId) {
-        setSelectedPost(null);
+      if (!isRegen) {
+        setPendingPosts((prev) => prev.filter((p) => p.postId !== postId));
+        if (selectedPost?.postId === postId) {
+          setSelectedPost(null);
+        }
+      } else {
+        setRegeneratingPostIds((prev) => {
+          const next = new Set(prev);
+          next.add(postId);
+          return next;
+        });
+        // Close the modal so the user can see the card-level overlay land —
+        // the modal would otherwise sit on top of the freshly-spinning card.
+        if (selectedPost?.postId === postId) {
+          setSelectedPost(null);
+        }
       }
 
       setActingPostId(postId);
       try {
         await performActionByUserOnScheduledPost(postId, action, platform);
-        void silentRefresh();
+        // Only approve / reject can be reconciled by an immediate refresh.
+        // A regen refresh would re-pull the same `pending` doc with the
+        // stale image, defeating the overlay we just put up.
+        if (!isRegen) {
+          void silentRefresh();
+        }
       } catch {
         showErrorToast('Failed to perform action on scheduled post');
-        setPendingPosts(previousPosts);
-        if (previousSelected?.postId === postId) {
-          setSelectedPost(previousSelected);
+        if (isRegen) {
+          setRegeneratingPostIds((prev) => {
+            if (!prev.has(postId)) return prev;
+            const next = new Set(prev);
+            next.delete(postId);
+            return next;
+          });
+        } else {
+          setPendingPosts(previousPosts);
+          if (previousSelected?.postId === postId) {
+            setSelectedPost(previousSelected);
+          }
         }
       } finally {
         setActingPostId(null);
@@ -593,7 +765,15 @@ export default function ApprovalPage() {
     );
   }
 
-  const actionDisabled = actingPostId !== null;
+  /**
+   * Globally lock action buttons only while a non-regen action (approve /
+   * reject) is mid-flight — those mutate state synchronously and we don't
+   * want concurrent decisions racing. Regen is fire-and-forget; the per-card
+   * `isRegenerating` overlay handles its own disabled state, so other cards
+   * stay actionable while one is regenerating.
+   */
+  const actionDisabled =
+    actingPostId !== null && !regeneratingPostIds.has(actingPostId);
 
   return (
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
@@ -653,6 +833,7 @@ export default function ApprovalPage() {
                   post.scheduleAt as FirestoreTimestamp
                 );
                 const isLast = index === visiblePendingPosts.length - 1;
+                const isRegenerating = regeneratingPostIds.has(post.postId);
                 return (
                   <PendingPostCard
                     key={post.postId ?? `post-${index}`}
@@ -671,6 +852,7 @@ export default function ApprovalPage() {
                     }
                     actionDisabled={actionDisabled}
                     onPreviewImage={imagePreview.open}
+                    isRegenerating={isRegenerating}
                   />
                 );
               })}

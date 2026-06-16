@@ -1062,6 +1062,12 @@ export default function SchedulePostPage() {
   const obserVerRef = useRef<IntersectionObserver | null>(null);
   const fetchingRef = useRef(false);
   const cursorRef = useRef<FirestoreTimestamp | null>(null);
+  // Monotonic token. Every fetch captures the value at its start; on response
+  // it bails if the token has moved on (meaning the user switched tabs / a
+  // newer fetch is in flight). Without this, a slow response from the
+  // previous tab would land in the new tab's list, e.g. rejected posts
+  // briefly appearing in Upcoming after a fast All → Upcoming click.
+  const fetchTokenRef = useRef(0);
   const fetchScheduledPostsRef = useRef<() => Promise<void>>(async () => { });
 
   useEffect(() => {
@@ -1085,6 +1091,15 @@ export default function SchedulePostPage() {
     // tab to fetch even though the previous tab just set `hasMore = false`.
     if (!hasMoreRef.current || fetchingRef.current) return;
     fetchingRef.current = true;
+    // Snapshot the token + tab at start. After every `await` we re-check
+    // both: if either moved on, the user switched tabs while we were in
+    // flight and this response now belongs to a list we no longer show.
+    // Bailing without touching state keeps the freshly-started fetch fully
+    // in control of `scheduledPosts`, `cursor`, `hasMore`, and the loading
+    // flags — that's the actual cure for "rejected posts appear in
+    // Upcoming after fast tab switches".
+    const myToken = ++fetchTokenRef.current;
+    const myTab = activeTabRef.current;
     const isFirstPage = cursorRef.current == null;
     if (isFirstPage) {
       setScheduledPostsLoading(true);
@@ -1094,8 +1109,9 @@ export default function SchedulePostPage() {
     try {
       const response = await getScheduledPosts({
         cursor: cursorRef.current ?? undefined,
-        tab: activeTabRef.current,
+        tab: myTab,
       });
+      if (myToken !== fetchTokenRef.current) return;
       const data = response.data;
       setScheduledPosts((prev) =>
         dedupeScheduledPosts([...prev, ...(data.posts ?? [])])
@@ -1108,6 +1124,7 @@ export default function SchedulePostPage() {
         setHasMore(false);
       }
     } catch (error) {
+      if (myToken !== fetchTokenRef.current) return;
       // Don't wipe a successful prior page when a later page fails — that
       // would erase content the user can already see. Only clear when the
       // very first page errors out (so we don't leave a stale skeleton).
@@ -1124,9 +1141,15 @@ export default function SchedulePostPage() {
       hasMoreRef.current = false;
       setHasMore(false);
     } finally {
-      fetchingRef.current = false;
-      setScheduledPostsLoading(false);
-      setMorePostsLoading(false);
+      // Only release the in-flight flag / loading skeletons if this fetch
+      // is still the active one. A stale fetch flipping these would let a
+      // second background fetch start (fetchingRef = false) or hide the
+      // newer fetch's spinner mid-load.
+      if (myToken === fetchTokenRef.current) {
+        fetchingRef.current = false;
+        setScheduledPostsLoading(false);
+        setMorePostsLoading(false);
+      }
     }
   }, []);
 
@@ -1137,6 +1160,14 @@ export default function SchedulePostPage() {
   // first page for the new tab. The cursor is intentionally NOT in deps — the
   // fetch reads it through a ref so this effect doesn't re-run on every page.
   useEffect(() => {
+    // Bump the fetch token so any in-flight request for the *previous* tab
+    // discards its response when it finally lands — without this, a slow
+    // response from the old tab can stomp on the new tab's freshly-loaded
+    // list (e.g. rejected posts appearing in Upcoming on a fast switch).
+    fetchTokenRef.current++;
+    // Also clear `fetchingRef` so the new fetch below isn't blocked by the
+    // (now-invalidated) previous fetch's in-flight flag.
+    fetchingRef.current = false;
     cursorRef.current = null;
     setCursor(null);
     // Sync the ref BEFORE the fetch so the guard inside `fetchScheduledPosts`
@@ -1156,10 +1187,14 @@ export default function SchedulePostPage() {
    */
   const silentRefreshScheduledPosts = useCallback(
     async (options?: { keepSelectionForPostId?: string }) => {
+      // Same stale-response guard as `fetchScheduledPosts`. If the user
+      // switches tabs while this background refresh is in flight, the
+      // response is silently dropped instead of overwriting the new tab.
+      const myToken = ++fetchTokenRef.current;
+      const myTab = activeTabRef.current;
       try {
-        const response = await getScheduledPosts({
-          tab: activeTabRef.current,
-        });
+        const response = await getScheduledPosts({ tab: myTab });
+        if (myToken !== fetchTokenRef.current) return;
         const data = response.data;
         const posts = dedupeScheduledPosts(data.posts ?? []);
         setScheduledPosts(posts);
