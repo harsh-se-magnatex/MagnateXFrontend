@@ -1,7 +1,7 @@
 import { ComponentType, type ReactNode } from "react";
 import { InstagramPost } from "../../../types";
 import { ExternalLink, ImageIcon } from "lucide-react";
-import { formatCompact } from "../facebook_components/util_component";
+import { DeltaBadge, formatCompact, NudgeDudBadge } from "../facebook_components/util_component";
 import { formatWatchSeconds } from "../utils_functions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -13,10 +13,13 @@ export function IgMetricTile({
     label,
     value,
     icon: Icon,
+    delta,
   }: {
     label: string;
     value: string;
     icon: ComponentType<{ className?: string }>;
+    /** Signed % change vs the previous 7-day window. Pass `null` for "n/a". */
+    delta?: number | null;
   }) {
     return (
       <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
@@ -24,9 +27,17 @@ export function IgMetricTile({
           <p className="text-sm font-medium text-zinc-500">{label}</p>
           <Icon className="h-5 w-5 shrink-0 text-pink-400" aria-hidden />
         </div>
-        <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-900">
-          {value}
-        </p>
+        <div className="mt-2 flex items-center gap-2">
+          <p className="text-2xl font-semibold tabular-nums text-zinc-900">
+            {value}
+          </p>
+          {delta !== undefined ? <DeltaBadge pct={delta} /> : null}
+        </div>
+        {delta !== undefined ? (
+          <p className="mt-0.5 text-[10px] uppercase tracking-wide text-zinc-400">
+            vs last week
+          </p>
+        ) : null}
       </div>
     );
   }
@@ -35,10 +46,13 @@ export function IgMetricTile({
     post,
     rank,
     onExpand,
+    classification,
   }: {
     post: InstagramPost;
     rank: number;
     onExpand?: (post: InstagramPost) => void;
+    /** Nudge/Dud classification (computed in the parent against the cohort). */
+    classification?: 'nudge' | 'dud';
   }) {
     const fmtTimestamp = useTimestampFormatter();
     const preview = post.caption?.trim().slice(0, 140) || 'No caption';
@@ -78,6 +92,7 @@ export function IgMetricTile({
               {fmtTimestamp(post.timestamp as TimestampInput, {
                 style: 'date',
               })}
+              {classification ? <NudgeDudBadge kind={classification} /> : null}
               {post.permalink ? (
                 <a
                   href={post.permalink}

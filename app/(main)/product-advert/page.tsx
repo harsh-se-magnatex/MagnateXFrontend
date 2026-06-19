@@ -24,6 +24,9 @@ import {
   type PostSchedulerPrefillPost,
 } from '@/lib/post-scheduler-prefill-store';
 import { DownloadPngButton } from '@/components/download-png-button';
+// EDIT_PHOTO_DISABLED
+// import { GeneratedCreativeActions } from '@/components/creative-editor/GeneratedCreativeActions';
+// import type { CreativeDesignDocument } from '@/lib/creative-design/types';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -31,6 +34,7 @@ import {
 } from '@/components/image-preview';
 import { Progress } from '@/components/ui/progress';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import {
   useProductAdvertState,
   type AdvertResult,
@@ -353,6 +357,20 @@ export default function ProductAdvertPage() {
               : undefined,
           productAdvertDocId:
             typeof r.postId === 'string' ? r.postId : null,
+          // EDIT_PHOTO_DISABLED — creative editor fields
+          // designJson:
+          //   r.designJson && typeof r.designJson === 'object'
+          //     ? (r.designJson as CreativeDesignDocument)
+          //     : undefined,
+          // backgroundUrl:
+          //   typeof r.backgroundUrl === 'string' ? r.backgroundUrl : undefined,
+          // previewImageUrl:
+          //   typeof r.previewImageUrl === 'string' ? r.previewImageUrl : undefined,
+          // logoUrl: typeof r.logoUrl === 'string' ? r.logoUrl : undefined,
+          // canvasWidth:
+          //   typeof r.canvasWidth === 'number' ? r.canvasWidth : undefined,
+          // canvasHeight:
+          //   typeof r.canvasHeight === 'number' ? r.canvasHeight : undefined,
         };
       });
 
@@ -458,6 +476,10 @@ export default function ProductAdvertPage() {
 
   if (creditsLoading) {
     return <PageLoadingState message="Loading your account..." />;
+  }
+
+  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+    return <NonSubscribedFeatureBlock />;
   }
 
   if (
@@ -840,6 +862,24 @@ export default function ProductAdvertPage() {
                       }
                       className="w-full sm:w-auto cursor-pointer rounded-full px-6 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:opacity-100"
                     />
+                    {/* EDIT_PHOTO_DISABLED
+                    <GeneratedCreativeActions
+                      designJson={item.designJson}
+                      platform={item.platform}
+                      onUpdated={({ imageUrl, designJson }) => {
+                        const prev = useProductAdvertState.getState().finalResult;
+                        if (!prev) return;
+                        setFinalResult({
+                          ...prev,
+                          platformResults: prev.platformResults.map((r) =>
+                            r.platform === item.platform
+                              ? { ...r, imageUrl, designJson }
+                              : r
+                          ),
+                        });
+                      }}
+                    />
+                    */}
                     <DownloadPngButton
                       url={item.imageUrl}
                       getFilename={() =>

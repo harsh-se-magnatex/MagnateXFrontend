@@ -242,15 +242,26 @@ function NotificationCountsScope({
     const unsub = onSnapshot(
       doc(db, 'users', uid),
       (snap) => {
+        const data = snap.data();
         const raw =
-          (snap.data()?.notificationsReadAt as
-            | Record<string, unknown>
-            | undefined) ?? {};
+          (data?.notificationsReadAt as Record<string, unknown> | undefined) ??
+          {};
+        const userCreatedAtMs = tsToMillis(data?.createdAt);
+        const effectiveReadAt = (
+          cat: NotificationCategory,
+          value: unknown
+        ): number => {
+          const readMs = tsToMillis(value);
+          if (cat === 'email' || cat === 'newReleases') {
+            return Math.max(readMs, userCreatedAtMs);
+          }
+          return readMs;
+        };
         const next: Record<NotificationCategory, number> = {
-          email: tsToMillis(raw.email),
-          postSuccess: tsToMillis(raw.postSuccess),
-          postFailure: tsToMillis(raw.postFailure),
-          newReleases: tsToMillis(raw.newReleases),
+          email: effectiveReadAt('email', raw.email),
+          postSuccess: effectiveReadAt('postSuccess', raw.postSuccess),
+          postFailure: effectiveReadAt('postFailure', raw.postFailure),
+          newReleases: effectiveReadAt('newReleases', raw.newReleases),
         };
         setReadAt(next);
 

@@ -1,5 +1,13 @@
 import { ComponentType, useId, type ReactNode } from 'react';
-import { FileText, ExternalLink } from 'lucide-react';
+import {
+  FileText,
+  ExternalLink,
+  ArrowDownRight,
+  ArrowUpRight,
+  Minus,
+  Sparkles,
+  Snowflake,
+} from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +40,61 @@ export function formatChartTooltipDate(raw: string): string {
   });
 }
 
+/**
+ * Compact +/-% pill rendered next to a stat value, comparing the current
+ * 7-day window to the prior 7 days. Green for growth, red for drops,
+ * zinc for "flat" or unknown. The "vs last week" hint is intentionally
+ * subtle so the badge reads at a glance.
+ */
+export function DeltaBadge({
+  pct,
+  className,
+}: {
+  /** Signed percent change vs the prior 7-day window, or null when unknown. */
+  pct: number | null | undefined;
+  className?: string;
+}) {
+  if (pct === null || pct === undefined || !Number.isFinite(pct)) {
+    return (
+      <span
+        className={cn(
+          'inline-flex items-center gap-0.5 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 ring-1 ring-inset ring-zinc-200',
+          className
+        )}
+        title="Not enough recent data to compare to last week"
+      >
+        <Minus className="h-3 w-3" aria-hidden /> n/a
+      </span>
+    );
+  }
+  const rounded = Math.round(pct * 10) / 10;
+  const isFlat = Math.abs(rounded) < 0.05;
+  const isUp = rounded > 0;
+  const Icon = isFlat ? Minus : isUp ? ArrowUpRight : ArrowDownRight;
+  const tone = isFlat
+    ? 'bg-zinc-100 text-zinc-600 ring-zinc-200'
+    : isUp
+      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+      : 'bg-red-50 text-red-700 ring-red-200';
+  const sign = isFlat ? '' : isUp ? '+' : '';
+  const displayPct = Math.abs(rounded) >= 1000
+    ? `${(rounded / 1000).toFixed(1)}k`
+    : rounded.toFixed(Math.abs(rounded) < 10 ? 1 : 0);
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums ring-1 ring-inset',
+        tone,
+        className
+      )}
+      title="Versus the previous 7-day window"
+    >
+      <Icon className="h-3 w-3" aria-hidden />
+      {`${sign}${displayPct}%`}
+    </span>
+  );
+}
+
 export function StatCard({
   label,
   value,
@@ -40,6 +103,7 @@ export function StatCard({
   className,
   selected,
   onClick,
+  delta,
 }: {
   label: string;
   value: string;
@@ -48,6 +112,8 @@ export function StatCard({
   className?: string;
   selected?: boolean;
   onClick?: () => void;
+  /** Signed % vs previous 7-day window; `null` renders an "n/a" badge. */
+  delta?: number | null;
 }) {
   return (
     <button
@@ -67,9 +133,17 @@ export function StatCard({
         <p className="text-sm font-medium text-zinc-500">{label}</p>
         <Icon className="h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
       </div>
-      <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-900">
-        {value}
-      </p>
+      <div className="mt-2 flex items-center gap-2">
+        <p className="text-2xl font-semibold tabular-nums text-zinc-900">
+          {value}
+        </p>
+        {delta !== undefined ? <DeltaBadge pct={delta} /> : null}
+      </div>
+      {delta !== undefined ? (
+        <p className="mt-0.5 text-[10px] uppercase tracking-wide text-zinc-400">
+          vs last week
+        </p>
+      ) : null}
       {hint ? (
         <p className="mt-1.5 text-xs leading-snug text-zinc-400">{hint}</p>
       ) : (
@@ -227,17 +301,56 @@ export function GrowthAreaChart({
   );
 }
 
+/**
+ * Compact pill that classifies an individual post as either a "Nudge"
+ * (engagement ≥ 1.5× the visible cohort average) or a "Dud" (everything
+ * else). Rendered inline at the top of `TopPostCard` / `InstagramMediaCard`
+ * so a quick scan tells the user which posts are worth recreating.
+ */
+export function NudgeDudBadge({
+  kind,
+  className,
+}: {
+  kind: 'nudge' | 'dud';
+  className?: string;
+}) {
+  const isNudge = kind === 'nudge';
+  const Icon = isNudge ? Sparkles : Snowflake;
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset',
+        isNudge
+          ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+          : 'bg-zinc-100 text-zinc-600 ring-zinc-200',
+        className
+      )}
+      title={
+        isNudge
+          ? 'Outperformer — at least 1.5× the average engagement in this window'
+          : 'Below the 1.5× engagement bar — review and iterate'
+      }
+    >
+      <Icon className="h-3 w-3" aria-hidden />
+      {isNudge ? 'Nudge' : 'Dud'}
+    </span>
+  );
+}
+
 export function TopPostCard({
   post,
   rank,
   onExpandImage,
   externalSiteName = 'Facebook',
+  classification,
 }: {
   post: Post;
   rank: number;
   onExpandImage?: (post: Post) => void;
   /** e.g. "LinkedIn" for permalink label */
   externalSiteName?: string;
+  /** Nudge/Dud classification (computed in the parent against the cohort). */
+  classification?: 'nudge' | 'dud';
 }) {
   const fmtTimestamp = useTimestampFormatter();
   const preview = post.message?.trim().slice(0, 160) || 'No caption';
@@ -294,6 +407,7 @@ export function TopPostCard({
                 {post.type}
               </span>
             ) : null}
+            {classification ? <NudgeDudBadge kind={classification} /> : null}
             {permalink ? (
               <a
                 href={permalink}

@@ -49,19 +49,41 @@ export async function generateInstantPostsBatchApi(params: {
   return response.data.data;
 }
 
+/**
+ * What occupies a "blocked" bulk-create cell.
+ *  - `ai-engine`: a previous batch / cron run scheduled a post here. The
+ *    row carries `scheduledPostId` + (when `includePostPreview`) `post`.
+ *  - `campaign`: a campaign draft or scheduled-campaign post is targeting
+ *    this (date, platform). The cell renders darker green with a tooltip
+ *    instead of opening a preview.
+ *  - `null` / missing: cell is free to select.
+ */
+export type AiEngineDateSource = 'ai-engine' | 'campaign';
+
+// EDIT_PHOTO_DISABLED
+// import type { CreativeDesignDocument } from '@/lib/creative-design/types';
+
 export type AiEngineDateStatusRow = {
   date: string;
   exists: boolean;
+  source?: AiEngineDateSource | null;
   scheduledPostId?: string;
   contentType?: string | null;
   platform?: string | null;
   post?: {
     postId: string;
     message?: string | null;
+    // caption?: string | null;
     imageFilePath?: string | null;
     imageUrl?: string | null;
     postStatus?: string | null;
     removedByUser?: boolean;
+    // designJson?: CreativeDesignDocument | null;
+    // backgroundUrl?: string | null;
+    // previewImageUrl?: string | null;
+    // logoUrl?: string | null;
+    // canvasWidth?: number | null;
+    // canvasHeight?: number | null;
   } | null;
 };
 

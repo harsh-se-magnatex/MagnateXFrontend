@@ -38,6 +38,13 @@ export type GeneratedMediaLibraryItem = {
   userId?: string;
   earlierScheduled?: boolean;
   canSchedule?: boolean;
+  // EDIT_PHOTO_DISABLED
+  // designJson?: import('@/lib/creative-design/types').CreativeDesignDocument | null;
+  // backgroundUrl?: string | null;
+  // previewImageUrl?: string | null;
+  // logoUrl?: string | null;
+  // canvasWidth?: number | null;
+  // canvasHeight?: number | null;
   /** Campaign-draft only: doc id under `users/{uid}/campaignDrafts/{id}`. The
    *  gallery uses this to call `/campaign/drafts/:id/schedule` directly. */
   campaignDraftId?: string;

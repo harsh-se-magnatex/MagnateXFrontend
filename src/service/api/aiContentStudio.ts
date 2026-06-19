@@ -14,6 +14,9 @@ type ApiEnvelope<T> = {
  * content). Reconstructed on the client from `jobs/{jobId}.result` snapshots —
  * see `instant-generation/page.tsx`.
  */
+// EDIT_PHOTO_DISABLED
+// import type { CreativeDesignDocument, MandateSnapshot } from '@/lib/creative-design/types';
+
 export type StudioRenderedImage = {
   platform: string;
   caption: string;
@@ -22,6 +25,13 @@ export type StudioRenderedImage = {
   aspectRatio?: string;
   imageSize?: string;
   generatedAt?: string;
+  // backgroundUrl?: string;
+  // designJson?: CreativeDesignDocument;
+  // previewImageUrl?: string;
+  // mandateSnapshot?: MandateSnapshot;
+  // logoUrl?: string;
+  // canvasWidth?: number;
+  // canvasHeight?: number;
 };
 
 export type StudioGenerateResult = {

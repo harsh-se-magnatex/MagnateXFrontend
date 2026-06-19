@@ -1,13 +1,19 @@
 'use client';
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import {
   getInsightsFaceBook,
   getInsightsInstagram,
   getInsightsLinkedIn,
-  syncInsights,
 } from '@/src/service/api/analyticService';
+import {
+  getInsightsSnapshot,
+  type AnalyticsSnapshotDocument,
+} from '@/src/service/api/insights-snapshot.service';
+import { useWhatToPostNextCache } from '@/src/stores/whatToPostNextCache';
+import { useWhereToSpendCache } from '@/src/stores/whereToSpendCache';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FaceBookAnalytics from '../_components/AnalyticsComponent/FaceBook';
 import { InstagramAnalyticsView } from '../_components/AnalyticsComponent/Instagram';
@@ -32,6 +38,18 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { AlertCircle } from 'lucide-react';
 import { useTimestampFormatter } from '@/lib/user-timezone';
+
+function formatRefreshedAgo(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return 'recently';
+  const diffMin = Math.max(0, Math.round((Date.now() - then) / 60_000));
+  if (diffMin < 1) return 'moments ago';
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.round(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.round(diffHr / 24);
+  return `${diffDay}d ago`;
+}
 
 function trendSeries(
   page: PageAnalytics | null | undefined,
@@ -129,15 +147,6 @@ export default function AnalyticsPage() {
   const [fbRepliedCommentIds, setFbRepliedCommentIds] = useState<string[]>([]);
   const [igRepliedCommentIds, setIgRepliedCommentIds] = useState<string[]>([]);
   const [liRepliedCommentIds, setLiRepliedCommentIds] = useState<string[]>([]);
-  const [fbFirstCommentSentPostIds, setFbFirstCommentSentPostIds] = useState<
-    string[]
-  >([]);
-  const [igFirstCommentSentPostIds, setIgFirstCommentSentPostIds] = useState<
-    string[]
-  >([]);
-  const [liFirstCommentSentPostIds, setLiFirstCommentSentPostIds] = useState<
-    string[]
-  >([]);
   const [loading, setLoading] = useState(true);
   const [platform, setPlatform] = useState<PlatformTab>('facebook');
   const [expandedPost, setExpandedPost] = useState<Post | null>(null);
@@ -155,9 +164,12 @@ export default function AnalyticsPage() {
   const activePlan = billing?.activePlan ?? 'non-subscribed';
   const selectedCount = Object.values(selected ?? {}).filter(Boolean).length;
   const PLAN_MAX_SOCIAL: Record<string, number> = {
-    prime: 1,
-    elite: 2,
-    legacy: 3,
+    'prime-AI': 1,
+    'prime-Studio': 1,
+    'elite-AI': 2,
+    'elite-Studio': 2,
+    'legacy-AI': 3,
+    'legacy-Studio': 3,
   };
   const maxPlatforms = PLAN_MAX_SOCIAL[activePlan] ?? 0;
 
@@ -178,14 +190,42 @@ export default function AnalyticsPage() {
     setPlatform((prev) => (available.includes(prev) ? prev : available[0]));
   }, [selected]);
 
+  // Tracks the cron snapshot for the "Refreshed Xh ago" badge. Null
+  // means either no snapshot exists yet (brand-new user / first run) or
+  // the read itself failed; either way the UI degrades to the existing
+  // live OpenAI calls inside each Growth Studio section.
+  const [snapshot, setSnapshot] = useState<AnalyticsSnapshotDocument | null>(
+    null
+  );
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        // Pull the cron-built snapshot first so we can seed the
+        // What-to-post-next + Where-to-spend Zustand caches BEFORE the
+        // per-platform sections mount. Each cache hit skips an OpenAI
+        // call (3 + 3 = 6 saved per page view). syncInsights is
+        // intentionally NOT called here \u2014 it's expensive (Meta /
+        // LinkedIn round-trips) and now runs once per 24h via
+        // `/cron/sync-analytics` on the API.
         try {
-          await syncInsights();
+          const { snapshot: latest } = await getInsightsSnapshot();
+          if (!cancelled && latest) {
+            setSnapshot(latest);
+            const wtnCache = useWhatToPostNextCache.getState();
+            const wtsCache = useWhereToSpendCache.getState();
+            (['facebook', 'instagram', 'linkedin'] as const).forEach(
+              (p) => {
+                const wtn = latest.whatToPostNext[p];
+                if (wtn) wtnCache.set(p, wtn);
+                const wts = latest.whereToSpend[p];
+                if (wts) wtsCache.set(p, wts);
+              }
+            );
+          }
         } catch (e) {
-          console.error('[analytics] sync failed', e);
+          console.warn('[analytics] snapshot read failed', e);
         }
         if (cancelled) return;
 
@@ -211,9 +251,6 @@ export default function AnalyticsPage() {
             Array.isArray(postsUnknown) ? (postsUnknown as Post[]) : []
           );
           setFbRepliedCommentIds(response.data.repliedCommentIds ?? []);
-          setFbFirstCommentSentPostIds(
-            response.data.firstCommentSentPostIds ?? []
-          );
         }
 
         if (igOutcome.status === 'fulfilled') {
@@ -233,9 +270,6 @@ export default function AnalyticsPage() {
               : []
           );
           setIgRepliedCommentIds(response.data.repliedCommentIds ?? []);
-          setIgFirstCommentSentPostIds(
-            response.data.firstCommentSentPostIds ?? []
-          );
         }
 
         if (liOutcome.status === 'fulfilled') {
@@ -256,9 +290,6 @@ export default function AnalyticsPage() {
               : []
           );
           setLiRepliedCommentIds(response.data.repliedCommentIds ?? []);
-          setLiFirstCommentSentPostIds(
-            response.data.firstCommentSentPostIds ?? []
-          );
           setLiConnection({
             connected: Boolean(response.data.linkedinAnalyticsConnected),
           });
@@ -589,6 +620,14 @@ export default function AnalyticsPage() {
     [liAnalytics]
   );
 
+  if (billingLoading && !billing) {
+    return <PageLoadingState />;
+  }
+
+  if (activePlan === 'non-subscribed') {
+    return <NonSubscribedFeatureBlock />;
+  }
+
   if (loading) {
     return <PageLoadingState />;
   }
@@ -630,6 +669,18 @@ export default function AnalyticsPage() {
 
   return (
     <div className="mx-auto max-w-5xl pb-8">
+      {snapshot && (
+        <p className="mb-3 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+          <span
+            aria-hidden
+            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"
+          />
+          <span>
+            AI insights refreshes and 
+            updates once every 24 hours.
+          </span>
+        </p>
+      )}
       <Tabs
         value={platform}
         onValueChange={(v) => setPlatform(v as PlatformTab)}
@@ -656,7 +707,6 @@ export default function AnalyticsPage() {
             topPosts={topPosts}
             pageAiContext={fbPageAiContext}
             repliedCommentIds={fbRepliedCommentIds}
-            firstCommentSentPostIds={fbFirstCommentSentPostIds}
           />
         </TabsContent>
 
@@ -669,7 +719,6 @@ export default function AnalyticsPage() {
             onExpandedPostChange={setExpandedIgPost}
             pageAiContext={igPageAiContext}
             repliedCommentIds={igRepliedCommentIds}
-            firstCommentSentPostIds={igFirstCommentSentPostIds}
           />
         </TabsContent>
 
@@ -692,7 +741,6 @@ export default function AnalyticsPage() {
               placeholder: '',
             })}
             repliedCommentIds={liRepliedCommentIds}
-            firstCommentSentPostIds={liFirstCommentSentPostIds}
           />
         </TabsContent>
       </Tabs>

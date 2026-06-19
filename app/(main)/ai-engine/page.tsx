@@ -47,13 +47,15 @@ import {
 } from '@/src/service/api/social.servce';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const SUBSCRIPTION_ACK_KEY = 'magnatex-ai-engine-subscription-ack';
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? '';
 
 const PLAN_MAX_SOCIAL: Record<string, number> = {
-  prime: 1,
-  elite: 2,
-  legacy: 3,
+  'prime-AI': 1,
+  'prime-Studio': 1,
+  'elite-AI': 2,
+  'elite-Studio': 2,
+  'legacy-AI': 3,
+  'legacy-Studio': 3,
 };
 
 type SelectedPlatforms = {
@@ -63,7 +65,7 @@ type SelectedPlatforms = {
 };
 
 type UserData = {
-  plan: 'non-subscribed' | 'prime' | 'elite' | 'legacy';
+  plan: 'non-subscribed' | 'legacy-AI' | 'legacy-Studio' | 'elite-AI' | 'elite-Studio' | 'prime-AI' | 'prime-Studio';
   onBoarded: boolean;
   socialAccounts: number;
   availableFBPages: {
@@ -105,27 +107,16 @@ const BASE_STEP_IDS = new Set<StepId>([
 /** Connect steps; user may go Next / jump ahead without finishing each link. */
 const CONNECT_STEP_IDS = new Set<StepId>(['facebook', 'instagram', 'linkedin']);
 
-function hasCommittedSocialSelection(selected: SelectedPlatforms): boolean {
-  return [selected.facebook, selected.instagram, selected.linkedin].some(
-    Boolean
-  );
-}
-
-function readSubscriptionAck(): boolean {
-  if (typeof window === 'undefined') return false;
-  return localStorage.getItem(SUBSCRIPTION_ACK_KEY) === 'true';
+function isSubscribedPlan(plan: string | undefined | null): boolean {
+  return typeof plan === 'string' && plan.length > 0 && plan !== 'non-subscribed';
 }
 
 function buildStepMeta(selected: SelectedPlatforms): StepMeta[] {
-  const committed = hasCommittedSocialSelection(selected);
   const steps: StepMeta[] = [
     { id: 'plan', label: 'Plan', icon: DollarSign },
     { id: 'business', label: 'Business', icon: BriefcaseBusiness },
+    { id: 'selectSocial', label: 'Select Accounts', icon: Share2 },
   ];
-
-  if (!committed) {
-    steps.push({ id: 'selectSocial', label: 'Select Accounts', icon: Share2 });
-  }
 
   steps.push({ id: 'automation', label: 'Automation', icon: Bot });
 
@@ -143,12 +134,11 @@ function buildStepMeta(selected: SelectedPlatforms): StepMeta[] {
 function isStepComplete(
   stepId: StepId,
   data: UserData,
-  subscriptionAck: boolean,
   skipped: Set<StepId>
 ): boolean {
   switch (stepId) {
     case 'plan':
-      return data.plan !== 'non-subscribed' || subscriptionAck;
+      return isSubscribedPlan(data.plan);
     case 'business':
       if (skipped.has('business')) return true;
       return data.onBoarded === true;
@@ -392,7 +382,6 @@ export default function AIEnginePage() {
     selected: { facebook: false, instagram: false, linkedin: false },
   });
   const [dataLoading, setDataLoading] = React.useState(true);
-  const [subscriptionAck, setSubscriptionAck] = React.useState(false);
   const [currentStep, setCurrentStep] = React.useState(0);
   const [selectFacebookPageModalOpen, setSelectFacebookPageModalOpen] =
     React.useState(false);
@@ -409,10 +398,6 @@ export default function AIEnginePage() {
   const [confirmSelectionOpen, setConfirmSelectionOpen] = React.useState(false);
   const router = useRouter();
 
-  React.useEffect(() => {
-    setSubscriptionAck(readSubscriptionAck());
-  }, []);
-
   const getDetails = useCallback(async (opts?: { silent?: boolean }) => {
     try {
       if (!opts?.silent) setDataLoading(true);
@@ -426,7 +411,7 @@ export default function AIEnginePage() {
       setData({
         socialAccounts: raw.socialAccounts,
         onBoarded: raw.onBoarded,
-        plan: raw.plan,
+        plan: isSubscribedPlan(raw.plan) ? raw.plan : 'non-subscribed',
         availableFBPages: raw.availableFBPages ?? [],
         selectedPageId: raw.selectedPageId,
         availableLinkedInPages: raw.availableLinkedInPages ?? [],
@@ -462,10 +447,8 @@ export default function AIEnginePage() {
   );
 
   const stepCompletions = useMemo(() => {
-    return stepMeta.map((s) =>
-      isStepComplete(s.id, data, subscriptionAck, skipped)
-    );
-  }, [stepMeta, data, subscriptionAck, skipped]);
+    return stepMeta.map((s) => isStepComplete(s.id, data, skipped));
+  }, [stepMeta, data, skipped]);
 
   const firstStrictIncompleteIdx = useMemo(() => {
     for (let i = 0; i < stepMeta.length - 1; i++) {
@@ -563,6 +546,20 @@ export default function AIEnginePage() {
     localSelected.instagram,
     localSelected.linkedin,
   ].filter(Boolean).length;
+
+  const selectionUnchanged = useMemo(
+    () =>
+      localSelected.facebook === data.selected.facebook &&
+      localSelected.instagram === data.selected.instagram &&
+      localSelected.linkedin === data.selected.linkedin,
+    [localSelected, data.selected]
+  );
+
+  const canSaveSelection =
+    maxAllowed > 0 &&
+    localSelectedCount >= 1 &&
+    localSelectedCount <= maxAllowed &&
+    !selectionUnchanged;
 
   const togglePlatform = (key: keyof SelectedPlatforms) => {
     setLocalSelected((prev) => {
@@ -774,7 +771,7 @@ export default function AIEnginePage() {
                   here once you are on Pro or Enterprise, or open billing to
                   upgrade.
                 </p>
-                {isStepComplete('plan', data, subscriptionAck, skipped) ? (
+                {isStepComplete('plan', data, skipped) ? (
                   <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 shrink-0" />
                     Subscription step satisfied.
@@ -868,12 +865,15 @@ export default function AIEnginePage() {
                   <span className="font-semibold text-foreground">
                     {maxAllowed}
                   </span>{' '}
-                  platform{maxAllowed !== 1 ? 's' : ''}.
+                  platform{maxAllowed !== 1 ? 's' : ''}. You can change this
+                  selection anytime within your plan limit.
                 </p>
-                <p className="text-sm text-amber-700 dark:text-amber-500/90 leading-relaxed rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-                  After you confirm, your choice is saved permanently and cannot
-                  be changed later.
-                </p>
+                {maxAllowed === 0 && (
+                  <p className="text-sm text-amber-600">
+                    Subscribe to a plan from the Subscription step to select
+                    platforms.
+                  </p>
+                )}
 
                 <div className="grid gap-3">
                   {PLATFORM_OPTIONS.map((opt) => {
@@ -929,18 +929,13 @@ export default function AIEnginePage() {
 
                 <Button
                   className="w-full"
-                  disabled={localSelectedCount !== maxAllowed || savingSelection}
+                  disabled={!canSaveSelection || savingSelection}
                   onClick={() => setConfirmSelectionOpen(true)}
                 >
-                  Confirm selection…
+                  Save selection
                 </Button>
 
-                {isStepComplete(
-                  'selectSocial',
-                  data,
-                  subscriptionAck,
-                  skipped
-                ) && (
+                {isStepComplete('selectSocial', data, skipped) && (
                   <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 shrink-0" />
                     Platforms selected.
@@ -1194,8 +1189,9 @@ export default function AIEnginePage() {
                   )}
                 </ul>
                 <p className="text-amber-700 dark:text-amber-500/90">
-                  This cannot be undone. You will not be able to change which
-                  platforms you picked.
+                  Your plan allows up to {maxAllowed} platform
+                  {maxAllowed !== 1 ? 's' : ''}. Saving will update which
+                  accounts the AI engine uses.
                 </p>
               </div>
             </DialogDescription>
@@ -1212,7 +1208,7 @@ export default function AIEnginePage() {
               onClick={() => void performSaveSelection()}
               disabled={savingSelection}
             >
-              {savingSelection ? 'Saving…' : 'Save permanently'}
+              {savingSelection ? 'Saving…' : 'Save selection'}
             </Button>
           </DialogFooter>
         </DialogContent>

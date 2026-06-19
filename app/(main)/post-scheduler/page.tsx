@@ -1,6 +1,7 @@
 'use client';
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -160,6 +161,9 @@ export default function PostSchedulePage() {
   const formattedPlanExpiresAt = planExpiresAt
     ? fmtTimestamp(planExpiresAt)
     : '—';
+  const maxScheduleDate = planExpiresAt
+    ? fmtTimestamp(planExpiresAt, { format: 'yyyy-MM-dd' })
+    : formattedToday;
   const inputLabel = hasImage ? 'Caption' : 'Message';
 
   const hasSelectablePlatforms = useMemo(
@@ -561,6 +565,10 @@ export default function PostSchedulePage() {
     }
   };
 
+  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+    return <NonSubscribedFeatureBlock />;
+  }
+
   if (!isTourDemo && new Date(formattedPlanExpiresAt).getTime() < new Date().getTime()) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center animate-in fade-in duration-500 pb-20 px-4 text-center">
@@ -891,9 +899,21 @@ export default function PostSchedulePage() {
                       key={platform}
                       className="rounded-2xl border border-slate-200 bg-white/80 p-3 space-y-3"
                     >
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                        {formatPlatformLabel(platform)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        {isPrefilledFlow ? (
+                          <input
+                            type="checkbox"
+                            checked
+                            disabled
+                            readOnly
+                            aria-label={`${formatPlatformLabel(platform)} selected`}
+                            className="size-4 shrink-0 rounded border-slate-300 text-indigo-600 disabled:cursor-default disabled:opacity-100"
+                          />
+                        ) : null}
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                          {formatPlatformLabel(platform)}
+                        </p>
+                      </div>
                       <div>
                         <label className="mb-1.5 text-sm font-medium text-slate-700 flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-slate-400" /> Date
@@ -901,6 +921,7 @@ export default function PostSchedulePage() {
                         <input
                           type="date"
                           min={formattedToday}
+                          max={maxScheduleDate}
                           value={slot.date}
                           onChange={(e) =>
                             setPlatformScheduleValue(platform, {

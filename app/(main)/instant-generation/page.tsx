@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { getTodatDate } from '@/utils/getTodayDate';
 import {
   generateAiContentStudio,
@@ -40,6 +41,9 @@ import {
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { DownloadPngButton } from '@/components/download-png-button';
+// EDIT_PHOTO_DISABLED
+// import { GeneratedCreativeActions } from '@/components/creative-editor/GeneratedCreativeActions';
+// import type { CreativeDesignDocument } from '@/lib/creative-design/types';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -342,6 +346,9 @@ export default function AIContentPage() {
   }, [selectedAccounts, platform, creditsLoading]);
   const hasImage = selectedImage !== null;
   const formattedToday = getTodatDate();
+  const maxDate = billing?.planExpiresAt
+    ? fmtTimestamp(billing.planExpiresAt, { format: 'yyyy-MM-dd' })
+    : formattedToday;
   const credits = billing?.credits;
 
   const previewUrl = useMemo(
@@ -448,10 +455,14 @@ export default function AIContentPage() {
     }
     if (
       selectedRenderedImage?.imageUrl &&
-      typeof platform === 'string' &&
-      isSocialPlatform(platform)
+      isSocialPlatform(selectedRenderedImage.platform)
     ) {
-      return [{ asset: selectedRenderedImage, platform }];
+      return [
+        {
+          asset: selectedRenderedImage,
+          platform: selectedRenderedImage.platform,
+        },
+      ];
     }
     return [];
   }, [generated, isAllPlatforms, platform, selectedRenderedImage]);
@@ -591,6 +602,20 @@ export default function AIContentPage() {
             typeof r.imageSize === 'string' ? r.imageSize : undefined,
           generatedAt:
             typeof r.generatedAt === 'string' ? r.generatedAt : undefined,
+          // EDIT_PHOTO_DISABLED — creative editor fields
+          // backgroundUrl:
+          //   typeof r.backgroundUrl === 'string' ? r.backgroundUrl : undefined,
+          // designJson:
+          //   r.designJson && typeof r.designJson === 'object'
+          //     ? (r.designJson as CreativeDesignDocument)
+          //     : undefined,
+          // previewImageUrl:
+          //   typeof r.previewImageUrl === 'string' ? r.previewImageUrl : undefined,
+          // logoUrl: typeof r.logoUrl === 'string' ? r.logoUrl : undefined,
+          // canvasWidth:
+          //   typeof r.canvasWidth === 'number' ? r.canvasWidth : undefined,
+          // canvasHeight:
+          //   typeof r.canvasHeight === 'number' ? r.canvasHeight : undefined,
         };
       });
 
@@ -698,12 +723,12 @@ export default function AIContentPage() {
     setGenPlatforms([...allowedPlatforms]);
   };
 
-  const handleSchedulePlatformToggle = (platformToToggle: SocialPlatform) => {
-    setPlatform(platform === platformToToggle ? '' : platformToToggle);
-  };
-
   if (loading || creditsLoading) {
     return <PageLoadingState message="Loading your account..." />;
+  }
+
+  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+    return <NonSubscribedFeatureBlock />;
   }
 
   if (
@@ -1038,7 +1063,7 @@ export default function AIContentPage() {
                           </span>
                         </span>
                       </button>
-                      <div className="flex flex-col sm:flex-row gap-4 mt-4">
+                      <div className="flex flex-col sm:flex-row flex-wrap gap-4 mt-4">
                         <ImagePreviewButton
                           onClick={() =>
                             imagePreview.open(
@@ -1048,6 +1073,36 @@ export default function AIContentPage() {
                           }
                           className="w-full sm:w-auto rounded-full px-6 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:opacity-100"
                         />
+                        {/* EDIT_PHOTO_DISABLED
+                        <GeneratedCreativeActions
+                          designJson={asset.designJson}
+                          caption={asset.caption}
+                          platform={asset.platform}
+                          onUpdated={({ imageUrl, designJson }) => {
+                            const prev =
+                              useInstantGeneratedState.getState().createdContent;
+                            if (!prev) return;
+                            setGenerated({
+                              ...prev,
+                              renderedImages: prev.renderedImages.map((r) =>
+                                r.platform === asset.platform
+                                  ? { ...r, imageUrl, designJson }
+                                  : r
+                              ),
+                            });
+                            const sel =
+                              useInstantGeneratedState.getState()
+                                .selectedRenderedImage;
+                            if (sel?.platform === asset.platform) {
+                              setSelectedRenderedImage({
+                                ...sel,
+                                imageUrl,
+                                designJson,
+                              });
+                            }
+                          }}
+                        />
+                        */}
                         <DownloadPngButton
                           url={asset.imageUrl}
                           getFilename={() =>
@@ -1108,7 +1163,7 @@ export default function AIContentPage() {
                         </p>
                       )}
                       {asset.imageUrl ? (
-                        <div className="flex flex-col sm:flex-row gap-4 mt-3">
+                        <div className="flex flex-col sm:flex-row flex-wrap gap-4 mt-3">
                           <ImagePreviewButton
                             onClick={() =>
                               imagePreview.open(
@@ -1118,6 +1173,26 @@ export default function AIContentPage() {
                             }
                             className="w-full sm:w-auto rounded-full px-6 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:opacity-100"
                           />
+                          {/* EDIT_PHOTO_DISABLED
+                          <GeneratedCreativeActions
+                            designJson={asset.designJson}
+                            caption={asset.caption}
+                            platform={asset.platform}
+                            onUpdated={({ imageUrl, designJson }) => {
+                              const prev =
+                                useInstantGeneratedState.getState().createdContent;
+                              if (!prev) return;
+                              setGenerated({
+                                ...prev,
+                                renderedImages: prev.renderedImages.map((r) =>
+                                  r.platform === asset.platform
+                                    ? { ...r, imageUrl, designJson }
+                                    : r
+                                ),
+                              });
+                            }}
+                          />
+                          */}
                           <DownloadPngButton
                             url={asset.imageUrl}
                             getFilename={() =>
@@ -1194,9 +1269,19 @@ export default function AIContentPage() {
                         key={targetPlatform}
                         className="rounded-2xl border border-slate-200 bg-white/80 p-3 space-y-3"
                       >
-                        <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                          {platformLabel(targetPlatform)}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked
+                            disabled
+                            readOnly
+                            aria-label={`${platformLabel(targetPlatform)} selected`}
+                            className="size-4 shrink-0 rounded border-slate-300 text-indigo-600 disabled:cursor-default disabled:opacity-100"
+                          />
+                          <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                            {platformLabel(targetPlatform)}
+                          </p>
+                        </div>
                         <div>
                           <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-700">
                             <Calendar className="h-4 w-4 text-slate-400" /> Date
@@ -1204,6 +1289,7 @@ export default function AIContentPage() {
                           <input
                             type="date"
                             min={formattedToday}
+                            max={maxDate}
                             value={slot.date}
                             onChange={(e) =>
                               setPlatformScheduleValue(targetPlatform, {
@@ -1327,22 +1413,22 @@ export default function AIContentPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-4 sm:gap-6">
-                  {allowedPlatforms.map((p) => (
-                    <label
-                      key={p}
-                      htmlFor={`schedule-platform-${p}`}
-                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-800"
-                    >
+                  {selectedRenderedImage &&
+                  isSocialPlatform(selectedRenderedImage.platform) ? (
+                    <label className="inline-flex cursor-default items-center gap-2 text-sm font-medium text-slate-800">
                       <input
-                        id={`schedule-platform-${p}`}
                         type="checkbox"
-                        checked={platform === p}
-                        onChange={() => handleSchedulePlatformToggle(p)}
-                        className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/30"
+                        checked
+                        disabled
+                        readOnly
+                        aria-label={`${platformLabel(selectedRenderedImage.platform)} selected`}
+                        className="size-4 shrink-0 rounded border-slate-300 text-indigo-600 disabled:cursor-default disabled:opacity-100"
                       />
-                      <span>{platformLabel(p)}</span>
+                      <span>
+                        {platformLabel(selectedRenderedImage.platform)}
+                      </span>
                     </label>
-                  ))}
+                  ) : null}
                 </div>
 
                 {scheduleTargets.map(({ platform: targetPlatform }) => {
@@ -1356,9 +1442,19 @@ export default function AIContentPage() {
                       key={targetPlatform}
                       className="rounded-2xl border border-slate-200 bg-white/80 p-3 space-y-3"
                     >
-                      <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
-                        {platformLabel(targetPlatform)}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked
+                          disabled
+                          readOnly
+                          aria-label={`${platformLabel(targetPlatform)} selected`}
+                          className="size-4 shrink-0 rounded border-slate-300 text-indigo-600 disabled:cursor-default disabled:opacity-100"
+                        />
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
+                          {platformLabel(targetPlatform)}
+                        </p>
+                      </div>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                           <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-slate-700">

@@ -24,7 +24,7 @@ import {
 } from '@/lib/workspace-nav';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getTodatDate } from '@/utils/getTodayDate';
-import { EVENTS } from './events';
+import { EVENTS, isFestiveDateOnOrAfterToday } from './events';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { Progress } from '@/components/ui/progress';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import {
   allPlatformsSelectionLabel,
   areAllEnabledSelected,
@@ -60,16 +61,6 @@ function firstEnabledPlatform(
   if (!accounts) return undefined;
   return PLATFORM_ORDER.find((p) => accounts[p] === true);
 }
-
-const BUILT_IN_EVENTS: FestiveEventItem[] = EVENTS.map(
-  ({ id, name, date, description, reason }) => ({
-    id,
-    name,
-    date,
-    description,
-    reason,
-  })
-);
 
 export default function AutomatedPostPage() {
   const submitGuardRef = useRef(false);
@@ -111,6 +102,19 @@ export default function AutomatedPostPage() {
   const setIsSubmitting = useFestivePostState((s) => s.setIsSubmitting);
 
   const formattedToday = getTodatDate();
+  const builtInEvents = useMemo<FestiveEventItem[]>(
+    () =>
+      EVENTS.filter((event) =>
+        isFestiveDateOnOrAfterToday(event.date, formattedToday)
+      ).map(({ id, name, date, description, reason }) => ({
+        id,
+        name,
+        date,
+        description,
+        reason,
+      })),
+    [formattedToday]
+  );
   const { billing, loading: planCreditsLoading } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
   const isTourDemo = useTourDemo();
@@ -216,7 +220,7 @@ export default function AutomatedPostPage() {
       return;
     }
     const eventMap = new Map(
-      [...BUILT_IN_EVENTS, ...customEvents].map((event) => [event.id, event])
+      [...builtInEvents, ...customEvents].map((event) => [event.id, event])
     );
     const selectedEvents = selected
       .map((id) => eventMap.get(id))
@@ -344,7 +348,15 @@ export default function AutomatedPostPage() {
     setEditingId(null);
   };
 
-  const allEvents = [...BUILT_IN_EVENTS, ...customEvents];
+  const allEvents = useMemo(
+    () => [
+      ...builtInEvents,
+      ...customEvents.filter((event) =>
+        isFestiveDateOnOrAfterToday(event.date, formattedToday)
+      ),
+    ],
+    [builtInEvents, customEvents, formattedToday]
+  );
   const sortedEvents = allEvents
     .filter((e) => e && e.date)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -361,6 +373,10 @@ export default function AutomatedPostPage() {
 
   if (planCreditsLoading) {
     return <PageLoadingState message="Loading your account..." />;
+  }
+
+  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+    return <NonSubscribedFeatureBlock />;
   }
   
   if (
@@ -808,6 +824,7 @@ export default function AutomatedPostPage() {
                 className="w-full text-center py-3 rounded-full bg-cyan-600 text-white font-semibold hover:opacity-90 transition"
               >
                 Download PNGs (Media Library)
+                {/* EDIT_PHOTO_DISABLED: was "Download PNGs & edit (Media Library)" */}
               </Link>
             </div>
           </section>

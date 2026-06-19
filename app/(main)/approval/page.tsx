@@ -1,6 +1,6 @@
 'use client';
 
-import { getScheduledPosts } from '@/src/service/api/social.servce';
+import { getScheduledPosts, ScheduledPostsPageCursor } from '@/src/service/api/social.servce';
 import {
   useCallback,
   useEffect,
@@ -29,6 +29,11 @@ import {
   ImagePreviewOverlay,
   useImagePreview,
 } from '@/components/image-preview';
+import {
+  SCHEDULED_POST_REGENERATE_CREDIT,
+  willScheduledPostRegenChargeCredits,
+} from '@/lib/scheduled-post-regenerate';
+import { useScheduledPostRegenJob, parseRegenJobFromResponse } from '@/src/hooks/useScheduledPostRegenJob';
 
 type FirestoreTimestamp = {
   _seconds: number;
@@ -71,29 +76,6 @@ export type PendingScheduledPost = {
 
 type ApprovalAction = 'regenerate' | 'approve' | 'reject';
 
-/**
- * Credit cost per paid regeneration. MUST stay in sync with the
- * `deductCredits(..., 2, ...)` call in
- * `backend/apps/worker/src/pipelines/ai-engine/regenerate/regenerate_scheduled_post.ts`.
- */
-const REGENERATE_CREDIT_COST = 2;
-
-/**
- * Read the post's persisted regen count, defaulting to `0` for posts that
- * predate the field. Threshold check (`>= 2`) matches the worker's
- * `priorRegenCount >= 2` deduction gate — i.e. the very first user-initiated
- * regen (when the field is at its `1` initial value) is free, every regen
- * after that costs `REGENERATE_CREDIT_COST` credits.
- */
-function getRegenCount(post: PendingScheduledPost): number {
-  const n = post.regenratedCount;
-  return typeof n === 'number' && Number.isFinite(n) ? n : 0;
-}
-
-function willRegenChargeCredits(post: PendingScheduledPost): boolean {
-  return getRegenCount(post) >= 2;
-}
-
 function ApprovalActionButtons({
   size,
   onRegenerate,
@@ -133,12 +115,12 @@ function ApprovalActionButtons({
         onClick={(e) => handle(onRegenerate, e)}
         title={
           regenChargesCredits
-            ? `Next regeneration will deduct ${REGENERATE_CREDIT_COST} credits`
+            ? `Next regeneration will deduct ${SCHEDULED_POST_REGENERATE_CREDIT} credit`
             : undefined
         }
         className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500 ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
       >
-        <span>Regenerate</span>
+        <span>Regenerate {!regenChargesCredits && 'Free'}</span>
         {regenChargesCredits ? (
           <span
             className={
@@ -147,7 +129,7 @@ function ApprovalActionButtons({
                 : 'max-w-56 text-[11px] font-normal leading-snug text-amber-900/90'
             }
           >
-            {`${REGENERATE_CREDIT_COST} credits will be deducted`}
+            {`${SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted`}
           </span>
         ) : null}
       </button>
@@ -199,7 +181,7 @@ function PendingPostCard({
 }) {
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
-  const regenChargesCredits = willRegenChargeCredits(post);
+  const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   return (
     <div
       ref={cardRef}
@@ -279,7 +261,7 @@ function PendingPostCard({
               Regenerating…
             </span>
             <span className="px-3 text-center text-[11px] leading-snug text-slate-500">
-              This usually takes 30–60 seconds. Refresh to see the new version.
+              Generating a new version…
             </span>
           </div>
         ) : null}
@@ -326,7 +308,7 @@ function PendingPostCard({
         />
         <p className="text-[11px] text-slate-400 group-hover:text-slate-500">
           {isRegenerating
-            ? 'Regeneration in progress — refresh to see the new version'
+            ? 'Regeneration in progress'
             : 'Click for full details'}
         </p>
       </div>
@@ -380,7 +362,7 @@ function DetailModal({
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
-  const regenChargesCredits = willRegenChargeCredits(post);
+  const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
@@ -495,7 +477,7 @@ function DetailModal({
                 <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <span className="leading-snug">
                   <span className="font-semibold">
-                    {REGENERATE_CREDIT_COST} credits will be deducted
+                    {SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted
                   </span>{' '}
                   if you regenerate this post.
                 </span>
@@ -528,21 +510,6 @@ export default function ApprovalPage() {
   const [cursor, setCursor] = useState<FirestoreTimestamp | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [actingPostId, setActingPostId] = useState<string | null>(null);
-  /**
-   * Posts the user has hit "Regenerate" on, whose worker job is still in
-   * flight. Used to render the inline "Regenerating…" overlay on each card
-   * instead of optimistically removing it — the card disappearing made users
-   * think the page had reloaded, and there was no way to tell that a fresh
-   * image was actually on the way.
-   *
-   * The set is cleared on a successful background refresh (when the
-   * server-side regen count moves past what we observed at submit time) and
-   * cleared per-post on regen failure (so the card snaps back to its normal
-   * action state and the user can retry).
-   */
-  const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(
-    () => new Set()
-  );
   const { billing } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -574,7 +541,7 @@ export default function ApprovalPage() {
     }
     try {
       const response = await getScheduledPosts({
-        cursor: cursorRef.current ?? undefined,
+        cursor: cursorRef.current as unknown as ScheduledPostsPageCursor | null | undefined,
       });
       const data = response.data;
       const incoming: PendingScheduledPost[] = data.posts ?? [];
@@ -614,35 +581,7 @@ export default function ApprovalPage() {
       const response = await getScheduledPosts();
       const data = response.data;
       const posts: PendingScheduledPost[] = data.posts ?? [];
-      setPendingPosts((prev) => {
-        // The "Regenerating…" overlay is keyed off `regeneratingPostIds`.
-        // Clear that flag for any post whose freshly-fetched
-        // `regenratedCount` is now higher than what we saw locally — that's
-        // the signal the worker actually finished and the next render will
-        // pick up the new image / caption.
-        const prevById = new Map(prev.map((p) => [p.postId, p]));
-        setRegeneratingPostIds((flagSet) => {
-          if (flagSet.size === 0) return flagSet;
-          let mutated = false;
-          const next = new Set(flagSet);
-          for (const p of posts) {
-            if (!flagSet.has(p.postId)) continue;
-            const before = prevById.get(p.postId);
-            const beforeCount =
-              typeof before?.regenratedCount === 'number'
-                ? before.regenratedCount
-                : 0;
-            const afterCount =
-              typeof p.regenratedCount === 'number' ? p.regenratedCount : 0;
-            if (afterCount > beforeCount) {
-              next.delete(p.postId);
-              mutated = true;
-            }
-          }
-          return mutated ? next : flagSet;
-        });
-        return posts;
-      });
+      setPendingPosts(posts);
       const next = data.nextCursor ?? null;
       cursorRef.current = next;
       setCursor(next);
@@ -652,6 +591,16 @@ export default function ApprovalPage() {
       // Silent — keep current state.
     }
   }, [needApproval]);
+
+  const onRegenSettledRef = useRef<() => Promise<void>>(async () => {});
+  onRegenSettledRef.current = silentRefresh;
+
+  const {
+    regeneratingPostIds,
+    markRegenerating,
+    attachRegenJob,
+    cancelRegeneration,
+  } = useScheduledPostRegenJob(onRegenSettledRef);
 
   const lastPostRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -711,13 +660,7 @@ export default function ApprovalPage() {
           setSelectedPost(null);
         }
       } else {
-        setRegeneratingPostIds((prev) => {
-          const next = new Set(prev);
-          next.add(postId);
-          return next;
-        });
-        // Close the modal so the user can see the card-level overlay land —
-        // the modal would otherwise sit on top of the freshly-spinning card.
+        markRegenerating(postId);
         if (selectedPost?.postId === postId) {
           setSelectedPost(null);
         }
@@ -725,22 +668,26 @@ export default function ApprovalPage() {
 
       setActingPostId(postId);
       try {
-        await performActionByUserOnScheduledPost(postId, action, platform);
-        // Only approve / reject can be reconciled by an immediate refresh.
-        // A regen refresh would re-pull the same `pending` doc with the
-        // stale image, defeating the overlay we just put up.
+        const response = await performActionByUserOnScheduledPost(
+          postId,
+          action,
+          platform
+        );
         if (!isRegen) {
           void silentRefresh();
+        } else {
+          const job = parseRegenJobFromResponse(response.data);
+          if (job) {
+            attachRegenJob(postId, job);
+          } else {
+            cancelRegeneration(postId);
+            showErrorToast('Regeneration started but job tracking failed');
+          }
         }
       } catch {
         showErrorToast('Failed to perform action on scheduled post');
         if (isRegen) {
-          setRegeneratingPostIds((prev) => {
-            if (!prev.has(postId)) return prev;
-            const next = new Set(prev);
-            next.delete(postId);
-            return next;
-          });
+          cancelRegeneration(postId);
         } else {
           setPendingPosts(previousPosts);
           if (previousSelected?.postId === postId) {
@@ -751,7 +698,14 @@ export default function ApprovalPage() {
         setActingPostId(null);
       }
     },
-    [pendingPosts, selectedPost, silentRefresh]
+    [
+      pendingPosts,
+      selectedPost,
+      silentRefresh,
+      markRegenerating,
+      attachRegenJob,
+      cancelRegeneration,
+    ]
   );
 
   if (!needApproval) {

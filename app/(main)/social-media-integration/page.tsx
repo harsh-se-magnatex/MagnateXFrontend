@@ -1,6 +1,7 @@
 'use client';
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import Link from 'next/link';
 import {
   WORKSPACE_NAV_HREFS,
@@ -47,9 +48,12 @@ import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const PLAN_MAX_SOCIAL: Record<string, number> = {
-  prime: 1,
-  elite: 2,
-  legacy: 3,
+  'prime-AI': 1,
+  'prime-Studio': 1,
+  'elite-AI': 2,
+  'elite-Studio': 2,
+  'legacy-AI': 3,
+  'legacy-Studio': 3,
 };
 
 type PlatformId = 'instagram' | 'facebook' | 'linkedin';
@@ -387,17 +391,17 @@ export default function ConnectedPlatformsPage() {
    * Show if every allowed slot is already connected and they can't add more
    * without upgrading.
    */
+  // Both Legacy variants (Studio + AI) already include all 3 platforms,
+  // so they should never see the "Upgrade for more platforms" notice.
   const showPlanLimitNotice =
     !billingLoading &&
     !showSelectionIncompleteNotice &&
     activePlan !== 'non-subscribed' &&
-    activePlan !== 'legacy' &&
+    activePlan !== 'legacy-auto' &&
+    activePlan !== 'legacy-manual' &&
     maxPlatforms > 0 &&
     connectedCount >= maxPlatforms;
 
-  /** Paid plan required; without it `selected` can be all false → empty platform list */
-  const showNeedsPlanPrompt =
-    !billingLoading && hasLoadedOnce && activePlan === 'non-subscribed'
   const handleDisconnect = async (platform: PlatformId) => {
     try {
       const response = await disconnectSocialAccountApi(platform);
@@ -412,6 +416,14 @@ export default function ConnectedPlatformsPage() {
       showErrorToast('Could not disconnect. Try again.');
     }
   };
+
+  if (billingLoading && !billing) {
+    return <PageLoadingState message="Loading your account..." />;
+  }
+
+  if (activePlan === 'non-subscribed') {
+    return <NonSubscribedFeatureBlock />;
+  }
 
   return (
     <div
@@ -479,28 +491,6 @@ export default function ConnectedPlatformsPage() {
         </div>
       )}
 
-      {showNeedsPlanPrompt && (
-        <div
-          className="mx-auto mb-8 max-w-2xl rounded-2xl border border-indigo-200 bg-indigo-50/90 px-6 py-8 text-center shadow-sm sm:px-10"
-          role="status"
-        >
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-            Purchase a plan to connect social accounts
-          </h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-700">
-            Subscribing unlocks which platforms you can use with Sociogenie.
-            After you choose a plan, select the social accounts you want in
-            onboarding or the AI engine, then return here to authorize each
-            connection.
-          </p>
-          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button type="button" asChild className="w-full min-w-36 sm:w-auto">
-              <Link href="/settings/billings">View plans</Link>
-            </Button>
-          </div>
-        </div>
-      )}
-
       {pageModalPlatform && (
         <SelectPageModal
           open={pageModalPlatform !== null}
@@ -521,7 +511,7 @@ export default function ConnectedPlatformsPage() {
         />
       )}
 
-      {!showNeedsPlanPrompt && billing?.selected!==null && (
+      {billing?.selected !== null && (
         <div id="platform-list" className={platformListStyle.outer}>
           {billingLoading || !hasLoadedOnce ? (
             <PageLoadingState className="min-h-[40vh]" />

@@ -17,7 +17,8 @@ export type GenerationType =
   | 'events-post'
   /** Create-campaign drafts. Own activeJobs slot so a campaign run never
    *  blocks (or shares progress UI with) a festive-post run. */
-  | 'campaign-post';
+  | 'campaign-post'
+  | 'memory-layer';
 
 /**
  * Shape of `jobs/{jobId}.result` on a finished doc. The worker stitches feature
@@ -93,5 +94,6 @@ export interface ActiveJobs {
   'product-advert'?: ActiveJobEntry;
   'events-post'?: ActiveJobEntry;
   'campaign-post'?: ActiveJobEntry;
+  'memory-layer'?: ActiveJobEntry;
   'ai-engine'?: ActiveAiEngineSlots;
 }

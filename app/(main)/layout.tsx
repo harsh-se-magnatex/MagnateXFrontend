@@ -1,5 +1,6 @@
 import React from 'react';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { TopNav } from './_components/TopNav';
 import AuthGuard from './_components/AuthGuard';
 import { FrozenAccountGuard } from './_components/FrozenAccountGuard';
@@ -21,6 +22,7 @@ export default async function MainLayout({
       <UserProvider>
           <UserPlanCreditsProvider>
             <NotificationCountsProvider>
+              <TooltipProvider delayDuration={150}>
         <TourLauncher />
         <AppSidebarWrapper />
       <div className="w-full flex flex-col min-h-screen">
@@ -32,6 +34,7 @@ export default async function MainLayout({
             </FrozenAccountGuard>
         </AuthGuard>
       </div>
+              </TooltipProvider>
             </NotificationCountsProvider>
           </UserPlanCreditsProvider>
       </UserProvider>

@@ -548,3 +548,11 @@ export const EVENTS = [
       'It is celebrated to express faith, joy, generosity, and family togetherness.',
   },
 ] as const;
+
+/** ISO `yyyy-MM-dd` dates compare lexicographically in calendar order. */
+export function isFestiveDateOnOrAfterToday(
+  date: string,
+  today: string
+): boolean {
+  return date >= today;
+}

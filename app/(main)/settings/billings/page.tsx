@@ -23,7 +23,9 @@ import {
   PLAN_COMPARISON_BULLETS,
   PLAN_TRIAL_BILLING_NOTICE,
   PLAN_TRIAL_BUTTON_SUBLABEL,
+  PRICING_PLANS_BY_ID,
   planButtonDisplayName,
+  type PlanId,
 } from '@/lib/landing-pricing';
 import {
   getAvailablePlansAndCreditPacks,
@@ -87,56 +89,107 @@ import {
   needsEmailVerificationForPurchase,
 } from '@/lib/email-verification-for-purchase';
 
-const PLAN_COMPARISON_ORDER = ['prime', 'elite', 'legacy'] as const;
-
+/** Tier ladder shown left-to-right in the upgrade dialog. Studio/AI mode
+ *  is chosen via a separate toggle; this controls only the tier order. */
+const PLAN_COMPARISON_ORDER = ['Prime', 'Elite', 'Legacy'] as const;
+type PlanTier = (typeof PLAN_COMPARISON_ORDER)[number];
+type PlanModeDisplay = 'AI' | 'Studio';
+type PlanMode = 'auto' | 'manual';
 const TOP_UP_PACK_LABELS = ['Starter', 'Basic', 'Growth', 'Business'] as const;
 
-const PLAN_PRICING_DISPLAY: Record<
-  string,
-  { discounted: number; original: number; discountLabel: string }
-> = {
-  prime: { discounted: 24.99, original: 24.99, discountLabel: '' },
-  elite: { discounted: 39.99, original: 39.99, discountLabel: '' },
-  legacy: { discounted: 59.99, original: 59.99, discountLabel: '' },
-};
-
+/**
+ * Platform limits keyed by canonical `activePlan` id (`prime-AI`, etc.).
+ * Mirrors `PLAN_MAX_SOCIAL` in the backend.
+ */
 const PLAN_PLATFORM_LIMIT: Record<string, number> = {
-  prime: 1,
-  elite: 2,
-  legacy: 3,
+  'prime-AI': 1,
+  'prime-Studio': 1,
+  'elite-AI': 2,
+  'elite-Studio': 2,
+  'legacy-AI': 3,
+  'legacy-Studio': 3,
 };
 
-/** Fallback when API plan docs omit credits; aligns with upgrade copy. */
+/**
+ * Fallback when API plan docs omit credits; aligns with upgrade copy
+ * and `CREDITS_BY_TIER_MODE` in `scripts/seed-plans.ts`. Manual ("Studio")
+ * plans get MORE credits than Auto ("AI") plans within a tier because
+ * Studio users pay for every action; AI users get most of their content
+ * generated free by the daily orchestrator.
+ */
 const PLAN_MONTHLY_CREDITS_FALLBACK: Record<string, number> = {
-  prime: 50,
-  elite: 120,
-  legacy: 260,
+  'prime-Studio': 60,
+  'prime-AI': 50,
+  'elite-Studio': 120,
+  'elite-AI': 80,
+  'legacy-Studio': 180,
+  'legacy-AI': 110,
 };
 
-/** When API omits tiers, still show Prime / Elite / Legacy rows in the modal. */
-const STATIC_PLAN_FALLBACK: Record<
-  (typeof PLAN_COMPARISON_ORDER)[number],
-  PlanSummary
-> = {
-  prime: {
-    id: 'prime',
-    name: 'prime',
-    description: '1 platform — monthly credits for on-demand actions',
-    price: PLAN_PRICING_DISPLAY.prime.discounted,
-  },
-  elite: {
-    id: 'elite',
-    name: 'elite',
-    description: 'Up to 2 platforms — higher monthly credits',
-    price: PLAN_PRICING_DISPLAY.elite.discounted,
-  },
-  legacy: {
-    id: 'legacy',
-    name: 'legacy',
-    description: 'Up to 3 platforms — highest monthly credits',
-    price: PLAN_PRICING_DISPLAY.legacy.discounted,
-  },
+/** Tab labels match the public pricing page (Studio vs AI). */
+const PLAN_MODE_TAB: Record<PlanModeDisplay, { label: string; sublabel: string }> = {
+  AI: { label: 'AI', sublabel: 'Daily automated posts' },
+  Studio: { label: 'Studio', sublabel: 'You create every post' },
 };
+
+function planModeToDisplay(mode: PlanMode): PlanModeDisplay {
+  return mode === 'auto' ? 'AI' : 'Studio';
+}
+
+function displayModeToPlan(mode: PlanModeDisplay): PlanMode {
+  return mode === 'AI' ? 'auto' : 'manual';
+}
+
+/** Canonical `activePlan` id used across billing + landing pricing. */
+function tierModeToLandingPlanId(tier: PlanTier, mode: PlanModeDisplay): PlanId {
+  return `${tier.toLowerCase()}-${mode}` as PlanId;
+}
+
+/** Firestore `plans/{id}` doc id used at checkout (may differ from `activePlan`). */
+function buildCheckoutPlanId(tier: PlanTier, mode: PlanModeDisplay): string {
+  const modeString = mode === 'AI' ? 'AI' : 'Studio';
+  return `${tier.charAt(0).toUpperCase()}${tier.slice(1).toLowerCase()}-${mode}`;
+}
+
+const PLAN_KEY_ALIASES: Record<string, PlanId> = {
+  'prime-AI': 'prime-AI',
+  'prime-Studio': 'prime-Studio',
+  'elite-AI': 'elite-AI',
+  'elite-Studio': 'elite-Studio',
+  'legacy-AI': 'legacy-AI',
+  'legacy-Studio': 'legacy-Studio',
+};
+
+function normalizePlanKey(value: string | null | undefined): string {
+  if (!value) return '';
+  const key = value.toLowerCase().trim();
+  return PLAN_KEY_ALIASES[key] ?? key;
+}
+
+/** Marketing display name (e.g. `prime-AI` → `Prime AI`). */
+function formatPlanDisplayName(value: string | null | undefined): string {
+  const key = normalizePlanKey(value) as PlanId;
+  return PRICING_PLANS_BY_ID[key]?.name ?? formatTitleCase(value);
+}
+
+/** When API omits tiers, still show Prime / Elite / Legacy rows in the modal,
+ *  one entry per (tier, mode) combination. */
+const STATIC_PLAN_FALLBACK: Record<string, PlanSummary> = (
+  ['Prime', 'Elite', 'Legacy'] as const
+).reduce<Record<string, PlanSummary>>((acc, tier) => {
+  for (const mode of ['AI', 'Studio'] as const) {
+    const checkoutId = buildCheckoutPlanId(tier, mode);
+    const landingId = tierModeToLandingPlanId(tier, mode);
+    const landing = PRICING_PLANS_BY_ID[landingId];
+    acc[checkoutId] = {
+      id: checkoutId,
+      name: landingId,
+      description: landing.subtitle,
+      price: Number.parseFloat(landing.price.replace(/^\$/, '')),
+    };
+  }
+  return acc;
+}, {});
 
 function formatUsd(amount: number | undefined): string {
   if (typeof amount !== 'number' || !Number.isFinite(amount)) return '—';
@@ -297,6 +350,12 @@ export default function BillingsPage() {
     useState<PaymentSummaryPayload | null>(null);
   const [paymentSummaryLoading, setPaymentSummaryLoading] = useState(true);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  /**
+   * Which half of the plan matrix (Auto vs Manual) the upgrade dialog is
+   * currently showing. Defaults to the user's existing mode; otherwise Auto
+   * (the recommended path).
+   */
+  const [upgradeMode, setUpgradeMode] = useState<PlanMode>('auto');
 
   // Deep-link entry: routes that send the user here to upgrade (e.g. the
   // product-tour CTA, the TopNav "Upgrade" pill, etc.) append `?upgrade=1`.
@@ -310,6 +369,14 @@ export default function BillingsPage() {
       window.history.replaceState(null, '', url.pathname + url.search);
     }
   }, [searchParams]);
+
+  // Seed the upgrade-dialog tab from the user's current mode whenever it
+  // changes (e.g. after a fulfillment write). New subscribers default to Auto.
+  useEffect(() => {
+    if (billing?.mode === 'auto' || billing?.mode === 'manual') {
+      setUpgradeMode(billing.mode);
+    }
+  }, [billing?.mode]);
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [billingHistory, setBillingHistory] = useState<UserTransaction[]>([]);
@@ -416,25 +483,30 @@ export default function BillingsPage() {
   }, [subscriptionSummary?.planName, billing?.activePlan]);
 
   const currentPlanRecord = useMemo(() => {
-    const key = currentPlanKey;
-    return plans.find((p) => p.name.toLowerCase() === key);
+    const key = normalizePlanKey(currentPlanKey);
+    return plans.find(
+      (p) =>
+        normalizePlanKey(p.name) === key || normalizePlanKey(p.id) === key
+    );
   }, [plans, currentPlanKey]);
 
   const displayPlanName = useMemo(() => {
-    if (subscriptionSummary?.planName) return subscriptionSummary.planName;
+    if (subscriptionSummary?.planName) {
+      return formatPlanDisplayName(subscriptionSummary.planName.split(" ").join("-"));
+    }
     if (!billing?.activePlan || billing.activePlan === 'non-subscribed')
       return 'No active plan';
-    return billing.activePlan[0].toUpperCase() + billing.activePlan.slice(1);
+    return formatPlanDisplayName(billing.activePlan);
   }, [subscriptionSummary?.planName, billing?.activePlan]);
 
   const platformCount = useMemo(() => {
-    const k = currentPlanKey;
+    const k = normalizePlanKey(currentPlanKey);
     if (k === 'non-subscribed' || !k) return 0;
     return PLAN_PLATFORM_LIMIT[k] ?? 0;
   }, [currentPlanKey]);
 
   const creditsPerMonthCopy = useMemo(() => {
-    const k = currentPlanKey;
+    const k = normalizePlanKey(currentPlanKey);
     return planCreditsPerMonth(currentPlanRecord, k);
   }, [currentPlanRecord, currentPlanKey]);
 
@@ -455,21 +527,30 @@ export default function BillingsPage() {
   const billingFrequencyDisplay = formatBillingFrequency(subscriptionSummary);
 
   const planComparisonRows = useMemo(() => {
+    const modeDisplay = planModeToDisplay(upgradeMode);
     return PLAN_COMPARISON_ORDER.map((tierKey) => {
-      const fromApi = plans.find((p) => p.name.toLowerCase() === tierKey);
-      const plan = fromApi ?? STATIC_PLAN_FALLBACK[tierKey];
-      return { tierKey, plan };
+      const checkoutPlanId = buildCheckoutPlanId(tierKey, modeDisplay);
+      const landingPlanId = tierModeToLandingPlanId(tierKey, modeDisplay);
+      const fromApi = plans.find(
+        (p) =>
+          p.id === checkoutPlanId ||
+          normalizePlanKey(p.id) === landingPlanId ||
+          normalizePlanKey(p.name) === landingPlanId
+      );
+      const plan = fromApi ?? STATIC_PLAN_FALLBACK[checkoutPlanId];
+      const landingPlan = PRICING_PLANS_BY_ID[landingPlanId];
+      return { tierKey, checkoutPlanId, landingPlanId, landingPlan, plan };
     });
-  }, [plans]);
+  }, [plans, upgradeMode]);
 
   const emailVerificationRequired = needsEmailVerificationForPurchase(user);
 
   const handleCreditPackPurchase = async (creditPackId: string) => {
     if (!user) return;
-    if (emailVerificationRequired) {
-      showErrorToast(EMAIL_VERIFICATION_PURCHASE_MESSAGE);
-      return;
-    }
+    // if (emailVerificationRequired) {
+    //   showErrorToast(EMAIL_VERIFICATION_PURCHASE_MESSAGE);
+    //   return;
+    // }
     if (clickedTopUp.current === creditPackId) return;
     try {
       setTopUpLoading(true);
@@ -755,20 +836,6 @@ export default function BillingsPage() {
                   </>
                 ) : null}
               </div>
-              <p className="mt-1 text-sm text-slate-600">
-                {subscriptionSummary && (
-                  <>
-                    {subscriptionSummary.cancelAtNextBillingDate
-                      ? 'Cancels on'
-                      : 'Next billing'}{' '}
-                    <span className="font-medium text-slate-800">
-                      {formatTxnDate(subscriptionSummary.nextBillingDate)}
-                    </span>
-                    <span className="text-slate-400"> · </span>
-                    {billingFrequencyDisplay}
-                  </>
-                )}
-              </p>
               {subscriptionSummary ? (
                 <>
                   <dl className="mt-5 grid overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/50 text-sm sm:grid-cols-3 sm:divide-x sm:divide-slate-200">
@@ -1217,14 +1284,15 @@ export default function BillingsPage() {
             </h2>
           </div>
           <p className="text-sm text-slate-600 mb-4">
-            Credits are used for on-demand content actions. Daily automated
-            posts continue independently of your credit balance.
+           Credit used per action by Manual Trigger:
           </p>
           <ul className="text-sm text-slate-700 space-y-2 list-none pl-0">
-            <li>· Product Advert post: 4 credits</li>
-            <li>· Quick creation post: 2 credits</li>
+            <li>· Product Advert: 4 credits</li>
+            <li>· Campaign post: 3 credits per day</li>
+            <li>· Quick Create: 2 credits</li>
+            <li>· Bulk Create (Studio Plans): 2 credits</li>
             <li>· Festive post: 2 credits</li>
-            <li>· Regeneration post: 1 credit</li>
+            <li>· Regeneration: 1 credit (First regen free)</li>
           </ul>
         </section>
 
@@ -1344,13 +1412,47 @@ export default function BillingsPage() {
             <p className="text-pretty leading-snug">{PLAN_TRIAL_BILLING_NOTICE}</p>
           </div>
 
+          {/* Mode toggle: Studio vs AI — same labels as the public pricing page. */}
+          <div
+            role="tablist"
+            aria-label="Plan mode"
+            className="flex rounded-xl  w-full justify-center p-1 border border-slate-200/60 self-center"
+          >
+            {(['AI', 'Studio'] as const).map((mode) => {
+              const selected = planModeToDisplay(upgradeMode) === mode;
+              const { label, sublabel } = PLAN_MODE_TAB[mode];
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  role="tab"
+                  aria-selected={selected}
+                  onClick={() => setUpgradeMode(displayModeToPlan(mode))}
+                  className={cn(
+                    'min-w-[10rem] rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200',
+                    selected
+                      ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5'
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                  )}
+                >
+                  <span className="block leading-none">{label}</span>
+                  <span className="mt-0.5 block text-[10px] font-medium opacity-80">
+                    {sublabel}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
           <div className="grid gap-4 md:grid-cols-3 md:items-stretch pt-2">
-            {planComparisonRows.map(({ tierKey, plan }) => {
-              const key = tierKey;
-              const meta = PLAN_COMPARISON_BULLETS[key];
-              const displayPricing = PLAN_PRICING_DISPLAY[key];
-              const activeKey = (billing?.activePlan ?? '').toLowerCase();
-              const isActive = activeKey === key;
+            {planComparisonRows.map(
+              ({ tierKey, checkoutPlanId, landingPlanId, landingPlan, plan }) => {
+              const meta = PLAN_COMPARISON_BULLETS[landingPlanId];
+              const activeKey = normalizePlanKey(billing?.activePlan ?? '');
+              const isActive = activeKey === landingPlanId;
+              const displayPrice = Number.parseFloat(
+                landingPlan.price.replace(/^\$/, '')
+              );
               return (
                 <div
                   key={tierKey}
@@ -1366,33 +1468,15 @@ export default function BillingsPage() {
                     </span>
                   ) : null}
                   <h3 className="font-semibold text-slate-900 text-center mt-1">
-                    {meta?.title ?? plan.name}
+                    {landingPlan.name}
                   </h3>
+                  <p className="text-sm text-slate-500 text-center mt-1 leading-snug">
+                   {landingPlan.mode === 'auto' ? 'Auto Plan' : 'Manual Plan'}
+                  </p>
                   <div className="mt-1 mb-4 text-center">
-                    {displayPricing ? (
-                      <>
-                        {displayPricing.discountLabel ? (
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 mb-1">
-                            Save {displayPricing.discountLabel}
-                          </p>
-                        ) : null}
-                        {displayPricing.original !==
-                          displayPricing.discounted ? (
-                          <p className="text-xs text-slate-400 line-through decoration-rose-500/70 decoration-2">
-                            {formatUsd(displayPricing.original)}/mo
-                          </p>
-                        ) : null}
-                        <p className="text-sm font-semibold text-slate-700">
-                          {formatUsd(displayPricing.discounted)}/mo
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-sm text-slate-500">
-                          {formatUsd(plan.price)}/mo
-                        </p>
-                      </>
-                    )}
+                    <p className="text-sm font-semibold text-slate-700">
+                      {formatUsd(displayPrice)}/mo
+                    </p>
                   </div>
                   {isActive ? (
                     <p className="text-sm text-slate-800 text-center space-y-3">
@@ -1400,7 +1484,7 @@ export default function BillingsPage() {
                     </p>
                   ) : null}
                   <ul className="text-xs text-slate-600 space-y-2 flex flex-col justify-end flex-1">
-                    {(meta?.bullets ?? [plan.description]).map((b, i) => (
+                    {(meta?.bullets ?? landingPlan.lines.map((line) => line.text)).map((b, i) => (
                       <li key={i} className="flex gap-2">
                         <span className="text-indigo-500 shrink-0">·</span>
                         <span>{b}</span>
@@ -1432,7 +1516,7 @@ export default function BillingsPage() {
                         onClick={() =>
                           void initiatePlanChoice(
                             plan.id,
-                            meta?.title ?? plan.name
+                            landingPlan.name
                           )
                         }
                       >
@@ -1456,11 +1540,9 @@ export default function BillingsPage() {
                         ) : (
                           <>
                             <span className="text-sm font-semibold leading-tight">
-                              Start{' '}
-                              {meta?.title ??
-                                planButtonDisplayName(plan.name)}
+                              Start {planButtonDisplayName(landingPlan.name)}
                             </span>
-                            {key === 'elite' ? (
+                            {tierKey === 'Elite' ? (
                               <span className="text-[11px] font-medium leading-tight text-slate-500">
                                 {PLAN_TRIAL_BUTTON_SUBLABEL}
                               </span>

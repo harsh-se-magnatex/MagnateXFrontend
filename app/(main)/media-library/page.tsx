@@ -39,6 +39,9 @@ import {
 } from '@/src/service/api/generated-media-library.service';
 import { Button } from '@/components/ui/button';
 import { DownloadPngButton } from '@/components/download-png-button';
+// EDIT_PHOTO_DISABLED
+// import { GeneratedCreativeActions } from '@/components/creative-editor/GeneratedCreativeActions';
+// import type { CreativeDesignDocument } from '@/lib/creative-design/types';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -257,6 +260,14 @@ function MediaDetailModal({
                   onClick={() => onPreviewImage(url, 'Gallery image')}
                   className="rounded-lg bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100 px-4 py-2"
                 />
+                {/* EDIT_PHOTO_DISABLED
+                <GeneratedCreativeActions
+                  designJson={item.designJson as CreativeDesignDocument | undefined}
+                  caption={item.caption}
+                  platform={item.platform}
+                  scheduledPostId={item.scheduledPostId}
+                />
+                */}
                 <DownloadPngButton
                   url={url}
                   getFilename={() =>

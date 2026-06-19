@@ -52,6 +52,8 @@ const Toaster = ({ position = "bottom-right", className, ...props }: ToasterProp
         closeButton={false}
         richColors={false}
         hotkey={[]}
+        expand
+        visibleToasts={Number.POSITIVE_INFINITY}
       />
     </>
   )

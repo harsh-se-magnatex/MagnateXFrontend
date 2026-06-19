@@ -299,12 +299,19 @@ export const createNewAccount = async (
   });
 };
 
+export type ScheduledPostUserActionResult = {
+  message: string;
+  jobId?: string;
+  parentJobId?: string;
+  platform?: string;
+};
+
 export const performActionByUserOnScheduledPost = async (
   postId: string,
   action: string,
   platform: string
 ) => {
-  return apiPost<ApiEnvelope>(
+  return apiPost<ApiEnvelope<ScheduledPostUserActionResult>>(
     '/api/v1/user/perform-action-by-user-on-scheduled-post',
     { postId, action, platform }
   );
@@ -508,7 +515,7 @@ export const uploadMemoryLayerBrandPhotos = async (
     );
     formData.append('descriptions', JSON.stringify(aligned));
   }
-  return apiPost<ApiEnvelope<{ memoryLayer: unknown; uploaded: number }>>(
+  return apiPost<ApiEnvelope<{ memoryLayer: unknown; uploaded: number; describeJobId?: string; parentJobId?: string }>>(
     '/api/v1/user/memory-layer/brand-photos',
     formData
   );
@@ -529,6 +536,23 @@ export const deleteMemoryLayerBrandPhoto = async (path: string) => {
     '/api/v1/user/memory-layer/brand-photos',
     { path }
   );
+};
+
+const MAX_MEMORY_LAYER_PDF_BYTES = 50 * 1024 * 1024;
+
+export const uploadMemoryLayerSourcePdf = async (file: File) => {
+  if (file.size > MAX_MEMORY_LAYER_PDF_BYTES) {
+    throw new Error('PDF must be 50MB or smaller');
+  }
+  const formData = new FormData();
+  formData.append('pdf', file);
+  return apiPost<
+    ApiEnvelope<{
+      parentJobId: string;
+      jobId: string;
+      sourceDocumentId: string;
+    }>
+  >('/api/v1/user/memory-layer/source-pdf', formData);
 };
 
 export const toggleMemoryLayerPreference = async (enabled: boolean) => {

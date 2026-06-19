@@ -8,6 +8,7 @@ import {
   Brain,
   Fingerprint,
   Home,
+  Loader2,
   LogOut,
   MessageSquare,
   Rocket,
@@ -19,8 +20,18 @@ import {
   useNotificationCounts,
 } from './NotificationCountsProvider';
 import { logoutUser } from '@/features/user/api';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTourDemo } from '@/src/stores/tourState';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const topNav = [
   { name: 'Home', href: '/home', icon: Home },
@@ -44,6 +55,8 @@ export function TopNav() {
   );
   const accountFrozen = billing?.isAccountFrozen === true;
   const isTourDemo = useTourDemo();
+  const [signOutConfirmOpen, setSignOutConfirmOpen] = useState(false);
+  const [signOutLoading, setSignOutLoading] = useState(false);
   // The Upgrade pill is a tour-only anchor — once the platform tour
   // finishes or is closed, `isTourDemo` flips off and the pill disappears.
   const showUpgradeCta = isTourDemo;
@@ -61,7 +74,18 @@ export function TopNav() {
   }, [user, accountName]);
 
 
+  const handleSignOut = async () => {
+    setSignOutLoading(true);
+    try {
+      await logoutUser();
+      router.replace('/sign-in');
+    } finally {
+      setSignOutLoading(false);
+    }
+  };
+
   return (
+    <>
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="grid h-14 w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-3">
@@ -147,10 +171,7 @@ export function TopNav() {
             type="button"
             aria-label="Sign out"
             className="flex cursor-pointer shrink-0 items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground sm:px-2.5"
-            onClick={async () => {
-              await logoutUser();
-              router.replace('/sign-in');
-            }}
+            onClick={() => setSignOutConfirmOpen(true)}
           >
             <LogOut className="h-4 w-4 shrink-0" aria-hidden />
             <span className="hidden sm:inline">Sign out</span>
@@ -158,5 +179,42 @@ export function TopNav() {
         </div>
       </div>
     </header>
+
+    <AlertDialog
+      open={signOutConfirmOpen}
+      onOpenChange={(open) => {
+        if (signOutLoading) return;
+        setSignOutConfirmOpen(open);
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Sign out?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to sign out? You will need to log in again to
+            access your account.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={signOutLoading}>
+            Stay signed in
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            disabled={signOutLoading}
+            onClick={(event) => {
+              event.preventDefault();
+              void handleSignOut();
+            }}
+          >
+            {signOutLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            ) : null}
+            Sign out
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

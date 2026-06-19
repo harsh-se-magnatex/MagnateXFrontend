@@ -4,12 +4,10 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   addDays,
-  endOfWeek,
   format,
   isAfter,
   parseISO,
-  startOfToday,
-  startOfWeek,
+  startOfDay,
 } from 'date-fns';
 import {
   ArrowLeft,
@@ -35,6 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   Sheet,
@@ -115,25 +114,65 @@ function isEventFromImagePreviewOverlay(event: Event): boolean {
 }
 
 /**
- * Window the user can pick dates within: today + 1 .. min(today +
- * MAX_DAYS, plan expiry). We start at `today+1` so the user never schedules
- * a day in the past for THEIR timezone — matches the festive/events-post
- * rule and gives the worker enough time to render before the publish slot.
+ * Plan-relative bounds for campaign date picking. A campaign always occupies
+ * one contiguous 7-day window: the first date picked is the anchor, and every
+ * other day must fall within anchor .. anchor+6 (capped at plan expiry).
+ * Anchor starts are limited to today .. (planEnd − 6) so a full week fits.
  */
-function buildDateWindow(planExpiresAt: Date | null): string[] {
-  const today = startOfToday();
-  const horizon = addDays(today, MAX_CAMPAIGN_DAYS);
-  const cap =
-    planExpiresAt && isAfter(horizon, planExpiresAt)
-      ? planExpiresAt
-      : horizon;
+type CampaignDateBounds = {
+  today: string;
+  planEnd: string;
+  latestAnchorStart: string;
+};
+
+function getCampaignDateBounds(
+  formattedToday: string,
+  planExpiresAt: Date | null
+): CampaignDateBounds {
+  const today = formattedToday;
+  const planEnd = planExpiresAt
+    ? format(startOfDay(planExpiresAt), 'yyyy-MM-dd')
+    : format(addDays(parseISO(today), MAX_CAMPAIGN_DAYS - 1), 'yyyy-MM-dd');
+  let latestAnchorStart = format(
+    addDays(parseISO(planEnd), -(MAX_CAMPAIGN_DAYS - 1)),
+    'yyyy-MM-dd'
+  );
+  if (latestAnchorStart < today) {
+    latestAnchorStart = today;
+  }
+  return { today, planEnd, latestAnchorStart };
+}
+
+function getAnchoredWindow(
+  anchor: string,
+  bounds: CampaignDateBounds
+): { min: string; max: string } {
+  const rawEnd = format(
+    addDays(parseISO(anchor), MAX_CAMPAIGN_DAYS - 1),
+    'yyyy-MM-dd'
+  );
+  const max = rawEnd > bounds.planEnd ? bounds.planEnd : rawEnd;
+  return { min: anchor, max };
+}
+
+function datesInIsoRange(min: string, max: string): string[] {
   const out: string[] = [];
-  let cursor = addDays(today, 1);
-  while (!isAfter(cursor, cap)) {
+  let cursor = parseISO(min);
+  const end = parseISO(max);
+  while (!isAfter(cursor, end)) {
     out.push(format(cursor, 'yyyy-MM-dd'));
     cursor = addDays(cursor, 1);
   }
   return out;
+}
+
+/** Full plan span for draft scheduling (draft drawer). */
+function buildPlanDateWindow(
+  formattedToday: string,
+  planExpiresAt: Date | null
+): string[] {
+  const bounds = getCampaignDateBounds(formattedToday, planExpiresAt);
+  return datesInIsoRange(bounds.today, bounds.planEnd);
 }
 
 function formatDisplayDate(iso: string | null): string {
@@ -145,95 +184,103 @@ function formatDisplayDate(iso: string | null): string {
   }
 }
 
-/**
- * Calendar week the given date falls into, Monday → Sunday. Returned
- * `label` is the compact range we render in the UI (e.g. `16–22 Jun` when
- * the range stays inside one month, `28 Jun – 4 Jul` when it crosses).
- * `key` is a stable string id we can use as a Map key.
- */
-function getWeekRange(date: Date): {
-  start: Date;
-  end: Date;
+type CampaignDraftBox = {
   key: string;
-  label: string;
-} {
-  const start = startOfWeek(date, { weekStartsOn: 1 });
-  const end = endOfWeek(date, { weekStartsOn: 1 });
-  const sameMonth = start.getMonth() === end.getMonth();
-  const label = sameMonth
-    ? `${format(start, 'd')}–${format(end, 'd MMM')}`
-    : `${format(start, 'd MMM')} – ${format(end, 'd MMM')}`;
-  return { start, end, key: format(start, 'yyyy-MM-dd'), label };
+  theme: string;
+  weekLabel: string;
+  items: CampaignDraft[];
+};
+
+function campaignDateSpanLabel(start: string, end: string): string {
+  if (!start) return 'No date yet';
+  if (!end || start === end) {
+    try {
+      return format(parseISO(start), 'd MMM');
+    } catch {
+      return start;
+    }
+  }
+  try {
+    const s = parseISO(start);
+    const e = parseISO(end);
+    const sameMonth =
+      s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
+    return sameMonth
+      ? `${format(s, 'd')}–${format(e, 'd MMM')}`
+      : `${format(s, 'd MMM')} – ${format(e, 'd MMM')}`;
+  } catch {
+    return `${start} – ${end}`;
+  }
 }
 
-/**
- * Bucket a list of items into Mon–Sun calendar weeks based on a per-item
- * date string (YYYY-MM-DD or ISO). Items with a missing/invalid date are
- * gathered into a trailing `__unscheduled__` group so the UI can show
- * them under a "No date" header instead of dropping them silently.
- */
-function groupByWeek<T>(
-  items: T[],
-  getDate: (item: T) => string | null | undefined
-): Array<{
-  key: string;
-  label: string;
-  start: Date | null;
-  end: Date | null;
-  items: T[];
-}> {
-  const groups = new Map<
-    string,
-    { key: string; label: string; start: Date; end: Date; items: T[] }
-  >();
-  const unscheduled: T[] = [];
+/** Campaign drawer header from the stored builder window, not post dates. */
+function campaignBoxWeekLabel(items: CampaignDraft[]): string {
+  const withWindow = items.find(
+    (d) => d.campaignWindowStart && d.campaignWindowEnd
+  );
+  if (withWindow?.campaignWindowStart && withWindow.campaignWindowEnd) {
+    return campaignDateSpanLabel(
+      withWindow.campaignWindowStart,
+      withWindow.campaignWindowEnd
+    );
+  }
+  const dates = items
+    .map((d) => d.targetDate)
+    .filter((d): d is string => !!d)
+    .sort();
+  if (dates.length === 0) return 'No date yet';
+  try {
+    const weekEnd = format(
+      addDays(parseISO(dates[0]), MAX_CAMPAIGN_DAYS - 1),
+      'yyyy-MM-dd'
+    );
+    return campaignDateSpanLabel(dates[0], weekEnd);
+  } catch {
+    return dates[0];
+  }
+}
 
-  for (const item of items) {
-    const iso = getDate(item);
-    if (!iso) {
-      unscheduled.push(item);
-      continue;
-    }
-    let date: Date;
-    try {
-      date = parseISO(iso);
-    } catch {
-      unscheduled.push(item);
-      continue;
-    }
-    if (Number.isNaN(date.getTime())) {
-      unscheduled.push(item);
-      continue;
-    }
-    const range = getWeekRange(date);
-    const group = groups.get(range.key);
-    if (group) {
-      group.items.push(item);
-    } else {
-      groups.set(range.key, { ...range, items: [item] });
-    }
+function legacyCampaignBatchKey(draft: CampaignDraft): string {
+  const theme = (draft.campaignTheme || 'Campaign').trim();
+  const goal = (draft.campaignGoal || '').trim();
+  const created = unknownTsToDate(draft.createdAt)?.getTime();
+  if (created == null) return `legacy-${draft.draftId}`;
+  // Sibling drafts from one run land within seconds; bucket by minute so
+  // separate campaign creates (even with the same theme) stay in their own box.
+  const bucket = Math.floor(created / 60_000);
+  return `legacy-${theme}-${goal}-${bucket}`;
+}
+
+/** One bordered box per campaign run (`parentJobId`). */
+function groupDraftsByCampaign(drafts: CampaignDraft[]): CampaignDraftBox[] {
+  const batches = new Map<string, CampaignDraft[]>();
+
+  for (const draft of drafts) {
+    const batchKey = draft.parentJobId
+      ? draft.parentJobId
+      : legacyCampaignBatchKey(draft);
+    const list = batches.get(batchKey) ?? [];
+    list.push(draft);
+    batches.set(batchKey, list);
   }
 
-  const sorted: Array<{
-    key: string;
-    label: string;
-    start: Date | null;
-    end: Date | null;
-    items: T[];
-  }> = Array.from(groups.values())
-    .sort((a, b) => a.start.getTime() - b.start.getTime())
-    .map((group) => ({ ...group }));
-
-  if (unscheduled.length > 0) {
-    sorted.push({
-      key: '__unscheduled__',
-      label: 'No date yet',
-      start: null,
-      end: null,
-      items: unscheduled,
+  const boxes: CampaignDraftBox[] = [];
+  for (const [key, items] of batches) {
+    boxes.push({
+      key,
+      theme: (items[0]?.campaignTheme || 'Campaign').trim(),
+      weekLabel: campaignBoxWeekLabel(items),
+      items: [...items].sort((a, b) =>
+        (a.targetDate || '').localeCompare(b.targetDate || '')
+      ),
     });
   }
-  return sorted;
+
+  return boxes.sort((a, b) => {
+    const aDate = a.items.find((d) => d.targetDate)?.targetDate ?? '';
+    const bDate = b.items.find((d) => d.targetDate)?.targetDate ?? '';
+    return aDate.localeCompare(bDate);
+  });
 }
 
 /** Parse Firestore timestamps that come back as `{_seconds, _nanoseconds}`
@@ -288,9 +335,10 @@ export default function CreateCampaignPage() {
   const clearSelection = useCampaignState((s) => s.clearSelection);
   const updateDay = useCampaignState((s) => s.updateDay);
   const setDayDate = useCampaignState((s) => s.setDayDate);
+  const dateAnchor = useCampaignState((s) => s.dateAnchor);
+  const setDateAnchor = useCampaignState((s) => s.setDateAnchor);
   const clearAllDates = useCampaignState((s) => s.clearAllDates);
   const removeDay = useCampaignState((s) => s.removeDay);
-  const reset = useCampaignState((s) => s.reset);
 
   const featureJob = useFeatureJob('campaign-post');
   const {
@@ -308,10 +356,19 @@ export default function CreateCampaignPage() {
     () => firestoreTimestampToDate(billing?.planExpiresAt ?? null),
     [billing?.planExpiresAt]
   );
-  const dateWindow = useMemo(
-    () => buildDateWindow(planExpiresAt),
-    [planExpiresAt]
+  const dateBounds = useMemo(
+    () => getCampaignDateBounds(formattedToday, planExpiresAt),
+    [formattedToday, planExpiresAt]
   );
+  const dateWindow = useMemo(
+    () => buildPlanDateWindow(formattedToday, planExpiresAt),
+    [formattedToday, planExpiresAt]
+  );
+  const anchoredWindow = useMemo(
+    () => (dateAnchor ? getAnchoredWindow(dateAnchor, dateBounds) : null),
+    [dateAnchor, dateBounds]
+  );
+  const hasValidAnchorRange = dateBounds.latestAnchorStart >= dateBounds.today;
   const selectedAccounts = billing?.selected;
   const userCredits = billing?.credits ?? 0;
   const allowedPlatforms = useMemo(
@@ -508,16 +565,121 @@ export default function CreateCampaignPage() {
     ]
   );
 
+  const handlePickDate = useCallback(
+    (dayNumber: number, date: string | null) => {
+      const day = days.find((d) => d.dayNumber === dayNumber);
+      if (!day) return;
+
+      if (!date) {
+        if (dateAnchor && day.date === dateAnchor) {
+          clearAllDates();
+          return;
+        }
+        setDayDate(dayNumber, null);
+        return;
+      }
+
+      if (!dateAnchor) {
+        if (date < dateBounds.today) {
+          showErrorToast('That date is in the past.');
+          return;
+        }
+        if (date > dateBounds.latestAnchorStart) {
+          showErrorToast(
+            `Pick a start date on or before ${formatDisplayDate(dateBounds.latestAnchorStart)} so all ${MAX_CAMPAIGN_DAYS} days fit before your plan ends.`
+          );
+          return;
+        }
+        const otherUsed = new Set(usedDates);
+        if (day.date) otherUsed.delete(day.date);
+        if (otherUsed.has(date)) {
+          showErrorToast(
+            'That date is already used by another day. Pick a different day.'
+          );
+          return;
+        }
+        setDateAnchor(date);
+        setDayDate(dayNumber, date);
+        return;
+      }
+
+      const isAnchorCell = day.date === dateAnchor;
+      if (isAnchorCell && date !== dateAnchor) {
+        if (date < dateBounds.today) {
+          showErrorToast('That date is in the past.');
+          return;
+        }
+        if (date > dateBounds.latestAnchorStart) {
+          showErrorToast(
+            `Pick a start date on or before ${formatDisplayDate(dateBounds.latestAnchorStart)} so all ${MAX_CAMPAIGN_DAYS} days fit before your plan ends.`
+          );
+          return;
+        }
+        const { min, max } = getAnchoredWindow(date, dateBounds);
+        setDateAnchor(date);
+        days.forEach((d) => {
+          if (d.dayNumber === dayNumber) {
+            setDayDate(d.dayNumber, date);
+            return;
+          }
+          if (d.date && (d.date < min || d.date > max)) {
+            setDayDate(d.dayNumber, null);
+          }
+        });
+        return;
+      }
+
+      const { min, max } = getAnchoredWindow(dateAnchor, dateBounds);
+      if (date < min || date > max) {
+        showErrorToast(
+          `Stay within your ${MAX_CAMPAIGN_DAYS}-day window (${formatDisplayDate(min)} – ${formatDisplayDate(max)}).`
+        );
+        return;
+      }
+      const otherUsed = new Set(usedDates);
+      if (day.date) otherUsed.delete(day.date);
+      if (otherUsed.has(date)) {
+        showErrorToast(
+          'That date is already used by another day. Pick a different day.'
+        );
+        return;
+      }
+      setDayDate(dayNumber, date);
+    },
+    [
+      clearAllDates,
+      dateAnchor,
+      dateBounds,
+      days,
+      setDateAnchor,
+      setDayDate,
+      usedDates,
+    ]
+  );
+
   const handleAutoFillDates = useCallback(() => {
-    if (days.length === 0) return;
-    const window = dateWindow;
-    if (window.length === 0) return;
+    if (days.length === 0 || !hasValidAnchorRange) return;
+    let anchor = dateAnchor;
+    if (!anchor) {
+      anchor = dateBounds.today;
+      if (anchor > dateBounds.latestAnchorStart) return;
+      setDateAnchor(anchor);
+    }
+    const { min, max } = getAnchoredWindow(anchor, dateBounds);
+    const window = datesInIsoRange(min, max);
     days.forEach((day, idx) => {
       const next = window[idx];
       if (next) setDayDate(day.dayNumber, next);
       else setDayDate(day.dayNumber, null);
     });
-  }, [dateWindow, days, setDayDate]);
+  }, [
+    dateAnchor,
+    dateBounds,
+    days,
+    hasValidAnchorRange,
+    setDateAnchor,
+    setDayDate,
+  ]);
 
   // -------------------- create draft batch --------------------
   const handleCreate = useCallback(async () => {
@@ -543,6 +705,12 @@ export default function CreateCampaignPage() {
         theme: theme || 'Brand Campaign',
         description,
         goal: goal || undefined,
+        ...(anchoredWindow
+          ? {
+              windowStart: anchoredWindow.min,
+              windowEnd: anchoredWindow.max,
+            }
+          : {}),
         days: datedDays.map((day) => ({
           dayNumber: day.dayNumber,
           title: day.title,
@@ -573,6 +741,7 @@ export default function CreateCampaignPage() {
       setIsSubmitting(false);
     }
   }, [
+    anchoredWindow,
     canSubmit,
     datedDays,
     days.length,
@@ -603,6 +772,10 @@ export default function CreateCampaignPage() {
 
   if (planCreditsLoading && !billing) {
     return <PageLoadingState message="Loading your account..." />;
+  }
+
+  if (billing?.activePlan === 'non-subscribed') {
+    return <NonSubscribedFeatureBlock />;
   }
 
   const planExpired =
@@ -699,22 +872,26 @@ export default function CreateCampaignPage() {
 
             <DayDraftList
               days={days}
-              dateWindow={dateWindow}
-              usedDates={usedDates}
-              formattedToday={formattedToday}
+              dateBounds={dateBounds}
+              dateAnchor={dateAnchor}
+              anchoredWindow={anchoredWindow}
               onUpdate={updateDay}
-              onPickDate={setDayDate}
+              onPickDate={handlePickDate}
               onRemove={removeDay}
             />
 
-            <CampaignWeeksOverview days={days} />
+            <CampaignWeeksOverview
+              days={days}
+              dateAnchor={dateAnchor}
+              anchoredWindow={anchoredWindow}
+            />
 
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
                 onClick={handleAutoFillDates}
                 className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                disabled={dateWindow.length === 0}
+                disabled={!hasValidAnchorRange}
               >
                 <CalendarDays className="h-3.5 w-3.5" />
                 Auto-fill consecutive dates
@@ -726,13 +903,6 @@ export default function CreateCampaignPage() {
                 disabled={datedDays.length === 0}
               >
                 Clear dates
-              </button>
-              <button
-                type="button"
-                onClick={reset}
-                className="inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100"
-              >
-                Start over
               </button>
             </div>
           </section>
@@ -1054,9 +1224,9 @@ function EditorHeader(props: EditorHeaderProps) {
 
 type DayDraftListProps = {
   days: CampaignDayDraft[];
-  dateWindow: string[];
-  usedDates: Set<string>;
-  formattedToday: string;
+  dateBounds: CampaignDateBounds;
+  dateAnchor: string | null;
+  anchoredWindow: { min: string; max: string } | null;
   onUpdate: (dayNumber: number, patch: Partial<CampaignDayDraft>) => void;
   onPickDate: (dayNumber: number, date: string | null) => void;
   onRemove: (dayNumber: number) => void;
@@ -1065,9 +1235,9 @@ type DayDraftListProps = {
 function DayDraftList(props: DayDraftListProps) {
   const {
     days,
-    dateWindow,
-    usedDates,
-    formattedToday,
+    dateBounds,
+    dateAnchor,
+    anchoredWindow,
     onUpdate,
     onPickDate,
     onRemove,
@@ -1081,8 +1251,14 @@ function DayDraftList(props: DayDraftListProps) {
     );
   }
 
-  const minDate = dateWindow[0] ?? formattedToday;
-  const maxDate = dateWindow[dateWindow.length - 1] ?? '';
+  const firstPickBounds = {
+    min: dateBounds.today,
+    max: dateBounds.latestAnchorStart,
+  };
+  const pickerBounds = anchoredWindow ?? firstPickBounds;
+  const windowHint = anchoredWindow
+    ? `${formatDisplayDate(anchoredWindow.min)} – ${formatDisplayDate(anchoredWindow.max)}`
+    : `Pick a start date (${formatDisplayDate(firstPickBounds.min)} – ${formatDisplayDate(firstPickBounds.max)}) to open a ${MAX_CAMPAIGN_DAYS}-day window`;
 
   return (
     <section className="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -1095,17 +1271,16 @@ function DayDraftList(props: DayDraftListProps) {
             2. Pick dates &amp; tweak briefs
           </h2>
           <p className="text-xs text-slate-500">
-            Dates don&apos;t have to be sequential — pick any day inside your
-            plan window. Remove a day if you only want a shorter campaign
-            (minimum 1 day).
+            Your first date sets a {MAX_CAMPAIGN_DAYS}-day window. All posts
+            must fall inside that range before your plan ends.{' '}
+            <span className="font-medium text-slate-600">{windowHint}</span>
           </p>
         </div>
       </div>
 
       <ul className="divide-y divide-slate-100">
         {days.map((day) => {
-          const otherUsed = new Set(usedDates);
-          if (day.date) otherUsed.delete(day.date);
+          const isAnchorCell = dateAnchor != null && day.date === dateAnchor;
           return (
             <li key={day.dayNumber} className="p-5 sm:p-6">
               <div className="flex flex-col sm:flex-row gap-4">
@@ -1121,20 +1296,19 @@ function DayDraftList(props: DayDraftListProps) {
                   <label className="flex-1 sm:flex-none sm:mt-2 w-full">
                     <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
                       Date
+                      {isAnchorCell && (
+                        <span className="ml-1 normal-case text-indigo-600">
+                          (window start)
+                        </span>
+                      )}
                     </span>
                     <input
                       type="date"
                       value={day.date ?? ''}
-                      min={minDate}
-                      max={maxDate || undefined}
+                      min={pickerBounds.min}
+                      max={pickerBounds.max}
                       onChange={(e) => {
                         const next = e.target.value || null;
-                        if (next && otherUsed.has(next)) {
-                          showErrorToast(
-                            'That date is already used by another day. Pick a different day.'
-                          );
-                          return;
-                        }
                         onPickDate(day.dayNumber, next);
                       }}
                       className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
@@ -1211,28 +1385,49 @@ function DayDraftList(props: DayDraftListProps) {
 }
 
 // =============================================================================
-// Weekly overview (renders dated days grouped Mon–Sun for a quick at-a-glance
-// view between the per-day editor and the platform/credit summary panel)
+// Schedule overview — dated days in chronological order (not split by calendar
+// week, so a Wed→Tue campaign stays one continuous timeline)
 // =============================================================================
+
+function formatScheduleSpanLabel(dates: string[]): string {
+  if (dates.length === 0) return '';
+  const sorted = [...dates].sort();
+  const first = parseISO(sorted[0]);
+  const last = parseISO(sorted[sorted.length - 1]);
+  const sameMonth = first.getMonth() === last.getMonth();
+  if (sorted.length === 1) {
+    return format(first, 'EEE, MMM d');
+  }
+  if (sameMonth) {
+    return `${format(first, 'EEE, MMM d')} – ${format(last, 'EEE, MMM d')}`;
+  }
+  return `${format(first, 'EEE, MMM d')} – ${format(last, 'EEE, MMM d')}`;
+}
 
 type CampaignWeeksOverviewProps = {
   days: CampaignDayDraft[];
+  dateAnchor: string | null;
+  anchoredWindow: { min: string; max: string } | null;
 };
 
-function CampaignWeeksOverview({ days }: CampaignWeeksOverviewProps) {
+function CampaignWeeksOverview({
+  days,
+  dateAnchor,
+  anchoredWindow,
+}: CampaignWeeksOverviewProps) {
   const datedDays = useMemo(
     () =>
-      days.filter(
-        (d): d is CampaignDayDraft & { date: string } => !!d.date
-      ),
+      [...days]
+        .filter((d): d is CampaignDayDraft & { date: string } => !!d.date)
+        .sort((a, b) => a.date.localeCompare(b.date)),
     [days]
-  );
-  const weeks = useMemo(
-    () => groupByWeek(datedDays, (d) => d.date),
-    [datedDays]
   );
 
   if (datedDays.length === 0) return null;
+
+  const spanLabel = anchoredWindow
+    ? `${formatDisplayDate(anchoredWindow.min)} – ${formatDisplayDate(anchoredWindow.max)}`
+    : formatScheduleSpanLabel(datedDays.map((d) => d.date));
 
   return (
     <section className="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -1242,66 +1437,44 @@ function CampaignWeeksOverview({ days }: CampaignWeeksOverviewProps) {
         </div>
         <div className="flex-1">
           <h2 className="text-lg font-bold text-slate-900">
-            Weekly overview
+            Schedule overview
           </h2>
           <p className="text-xs text-slate-500">
-            Your dated campaign days, grouped by calendar week
-            (Mon&nbsp;–&nbsp;Sun).
+            {dateAnchor
+              ? `${MAX_CAMPAIGN_DAYS}-day window · ${spanLabel}`
+              : spanLabel}
           </p>
         </div>
         <span className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
-          {weeks.length} week{weeks.length === 1 ? '' : 's'}
+          {datedDays.length} / {days.length} day
+          {days.length === 1 ? '' : 's'}
         </span>
       </div>
-      <div className="p-5 grid gap-4 md:grid-cols-2">
-        {weeks.map((week) => {
-          const sortedDays = [...week.items].sort((a, b) =>
-            a.date.localeCompare(b.date)
-          );
-          return (
-            <article
-              key={week.key}
-              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-            >
-              <header className="flex items-center justify-between gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700">
-                  <CalendarRange className="h-3.5 w-3.5" />
-                  {week.label}
-                </span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                  {sortedDays.length} day
-                  {sortedDays.length === 1 ? '' : 's'}
-                </span>
-              </header>
-              <ul className="mt-3 space-y-2">
-                {sortedDays.map((day) => (
-                  <li
-                    key={day.dayNumber}
-                    className="flex items-start gap-3 rounded-xl bg-slate-50/70 px-3 py-2"
-                  >
-                    <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white">
-                      {day.dayNumber}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-slate-800 truncate">
-                        {day.title || `Day ${day.dayNumber}`}
-                      </p>
-                      <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                        {format(parseISO(day.date), 'EEE, MMM d')}
-                      </p>
-                      {day.reference && (
-                        <p className="mt-1 text-[11px] text-slate-500 line-clamp-2">
-                          {day.reference}
-                        </p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </article>
-          );
-        })}
-      </div>
+      <ul className="p-5 space-y-2">
+        {datedDays.map((day) => (
+          <li
+            key={day.dayNumber}
+            className="flex items-start gap-3 rounded-xl bg-slate-50/70 px-3 py-2"
+          >
+            <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white">
+              {day.dayNumber}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-slate-800 truncate">
+                {day.title || `Day ${day.dayNumber}`}
+              </p>
+              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                {format(parseISO(day.date), 'EEE, MMM d')}
+              </p>
+              {day.reference && (
+                <p className="mt-1 text-[11px] text-slate-500 line-clamp-2">
+                  {day.reference}
+                </p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
@@ -1612,11 +1785,10 @@ function DraftsDrawer(props: DraftsDrawerProps) {
     void refresh();
   }, [refresh]);
 
-  // Bucket the drafts by Mon–Sun calendar week so the drawer can show
-  // section headers like "16–22 Jun" — matches the weekly overview on
-  // the campaign page and makes it easy to scan a multi-week campaign.
-  const groupedDrafts = useMemo(
-    () => groupByWeek(drafts, (d) => d.targetDate ?? null),
+  // Bucket drafts into one box per campaign run (shared parentJobId).
+  // The "all" tab skips grouping and shows a flat grid instead.
+  const campaignBoxes = useMemo(
+    () => groupDraftsByCampaign(drafts),
     [drafts]
   );
 
@@ -1758,40 +1930,63 @@ function DraftsDrawer(props: DraftsDrawerProps) {
                 ' Generate a campaign and the renders will land here.'}
             </div>
           )}
-          {groupedDrafts.map((week) => (
-            <section key={week.key} className="space-y-3">
-              {/* Sticky week header. MUST be fully opaque (no /95 + blur)
-                  because the previous section's cards scroll up behind it
-                  and would otherwise bleed through. The shadow gives a
-                  clean break from the scrolling content below. */}
-              <header className="sticky top-0 z-20 -mx-6 flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-6 py-3 shadow-[0_2px_6px_-2px_rgba(15,23,42,0.06)]">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-700">
-                  <CalendarRange className="h-3.5 w-3.5" />
-                  {week.label}
-                </span>
-                <span className="text-[11px] font-medium text-slate-500">
-                  {week.items.length} draft
-                  {week.items.length === 1 ? '' : 's'}
-                </span>
-              </header>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {week.items.map((draft) => (
-                  <DraftRow
-                    key={draft.draftId}
-                    draft={draft}
-                    dateWindow={dateWindow}
-                    formattedToday={formattedToday}
-                    onScheduled={handleScheduled}
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={regeneratingDraftId === draft.draftId}
-                    isAnyRegenInFlight={
-                      regeneratingDraftId != null || isCampaignJobRunning
-                    }
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
+          {filter === 'all' ? (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {drafts.map((draft) => (
+                <DraftRow
+                  key={draft.draftId}
+                  draft={draft}
+                  dateWindow={dateWindow}
+                  formattedToday={formattedToday}
+                  onScheduled={handleScheduled}
+                  onRegenerate={handleRegenerate}
+                  isRegenerating={regeneratingDraftId === draft.draftId}
+                  isAnyRegenInFlight={
+                    regeneratingDraftId != null || isCampaignJobRunning
+                  }
+                />
+              ))}
+            </div>
+          ) : (
+            campaignBoxes.map((box) => (
+              <article
+                key={box.key}
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+              >
+                <header className="flex items-start justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
+                  <div className="min-w-0 space-y-1">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-100 px-2.5 py-1 text-xs font-bold text-indigo-800">
+                      <CalendarRange className="h-3.5 w-3.5 shrink-0" />
+                      {box.weekLabel}
+                    </span>
+                    <p className="truncate text-sm font-semibold text-slate-900">
+                      {box.theme}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-[11px] font-medium text-slate-500">
+                    {box.items.length} post
+                    {box.items.length === 1 ? '' : 's'}
+                  </span>
+                </header>
+                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {box.items.map((draft) => (
+                    <DraftRow
+                      key={draft.draftId}
+                      draft={draft}
+                      dateWindow={dateWindow}
+                      formattedToday={formattedToday}
+                      onScheduled={handleScheduled}
+                      onRegenerate={handleRegenerate}
+                      isRegenerating={regeneratingDraftId === draft.draftId}
+                      isAnyRegenInFlight={
+                        regeneratingDraftId != null || isCampaignJobRunning
+                      }
+                    />
+                  ))}
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </SheetContent>
     </Sheet>

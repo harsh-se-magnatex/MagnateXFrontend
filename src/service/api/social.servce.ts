@@ -27,18 +27,24 @@ export type ScheduledPostsTab =
   | 'removed'
   | 'rejected';
 
+/** Compound cursor for list pagination — ties break on `postId`. */
+export type ScheduledPostsPageCursor = {
+  scheduleAt: { _seconds: number; _nanoseconds?: number };
+  postId: string;
+};
+
 /**
  * Cursor-paginated fetch for the list view. The optional `tab` filter is
  * applied on the server — picking "Failed" no longer requires paginating
  * through the entire history client-side just to find a few matches.
  */
 export const getScheduledPosts = async (params?: {
-  cursor?: { _seconds: number; _nanoseconds?: number } | null;
+  cursor?: ScheduledPostsPageCursor | null;
   tab?: ScheduledPostsTab;
 }) => {
   const search = new URLSearchParams();
   const cursor = params?.cursor;
-  if (cursor && '_seconds' in cursor) {
+  if (cursor?.postId && cursor.scheduleAt && '_seconds' in cursor.scheduleAt) {
     search.set('lastCreatedAt', JSON.stringify(cursor));
   }
   // 'all' is the API default; omit it to keep URLs clean and proxy caches happy.

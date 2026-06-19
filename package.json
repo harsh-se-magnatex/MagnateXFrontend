@@ -21,6 +21,7 @@
     "date-fns-tz": "^3.2.0",
     "driver.js": "^1.4.0",
     "embla-carousel-react": "^8.6.0",
+    "_fabric_DISABLED_edit_photo": "^6.9.1",
     "firebase": "^12.9.0",
     "firebase-admin": "^13.6.1",
     "framer-motion": "^12.36.0",

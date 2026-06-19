@@ -5,6 +5,7 @@ import { useAuth } from '@/src/hooks/useAuth';
 import {
   getScheduledPosts,
   getScheduledPostsInRange,
+  type ScheduledPostsPageCursor,
   type ScheduledPostsTab,
 } from '@/src/service/api/social.servce';
 import {
@@ -31,6 +32,7 @@ import {
   ChevronRight,
   ExternalLink,
   LayoutGrid,
+  Loader2,
   Sparkles,
 } from 'lucide-react';
 import {
@@ -56,11 +58,18 @@ import {
 import { cn } from '@/lib/utils';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { DownloadPngButton } from '@/components/download-png-button';
+// EDIT_PHOTO_DISABLED
+// import { GeneratedCreativeActions } from '@/components/creative-editor/GeneratedCreativeActions';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
   useImagePreview,
 } from '@/components/image-preview';
+import {
+  SCHEDULED_POST_REGENERATE_CREDIT,
+  willScheduledPostRegenChargeCredits,
+} from '@/lib/scheduled-post-regenerate';
+import { useScheduledPostRegenJob, parseRegenJobFromResponse } from '@/src/hooks/useScheduledPostRegenJob';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import {
   useTimestampFormatter,
@@ -113,6 +122,13 @@ export type ScheduledPost = {
    * Optional because older docs predate this field.
    */
   GeneratedBy?: string;
+  // EDIT_PHOTO_DISABLED
+  // designJson?: import('@/lib/creative-design/types').CreativeDesignDocument | null;
+  // backgroundUrl?: string | null;
+  // previewImageUrl?: string | null;
+  // logoUrl?: string | null;
+  // canvasWidth?: number | null;
+  // canvasHeight?: number | null;
 };
 
 function dedupeScheduledPosts(posts: ScheduledPost[]): ScheduledPost[] {
@@ -137,7 +153,7 @@ function dedupeScheduledPosts(posts: ScheduledPost[]): ScheduledPost[] {
 function ScheduledPostActionButtons({
   size,
   showRegenerate,
-  regeneratedCount,
+  regenChargesCredits,
   onRegenerate,
   onRemove,
   stopPropagation,
@@ -145,7 +161,7 @@ function ScheduledPostActionButtons({
 }: {
   size: 'card' | 'modal';
   showRegenerate: boolean;
-  regeneratedCount?: number;
+  regenChargesCredits?: boolean;
   onRegenerate?: () => void;
   onRemove?: () => void;
   stopPropagation?: boolean;
@@ -156,9 +172,6 @@ function ScheduledPostActionButtons({
     fn?.();
   };
   const isCard = size === 'card';
-  /** After 2 free regenerations, the 3rd+ costs credits — warn when count >= 2. */
-  const showCreditsWarning =
-    typeof regeneratedCount === 'number' && regeneratedCount >= 2;
   const btn = isCard
     ? 'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none'
     : 'rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
@@ -170,14 +183,14 @@ function ScheduledPostActionButtons({
           disabled={disabled}
           onClick={(e) => handle(onRegenerate, e)}
           title={
-            showCreditsWarning
-              ? 'Next regeneration will deduct 2 credits'
+            regenChargesCredits
+              ? `Next regeneration will deduct ${SCHEDULED_POST_REGENERATE_CREDIT} credit`
               : undefined
           }
-          className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500 inline-flex flex-col items-center justify-center gap-0.5 text-center`}
+          className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500 ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
         >
-          <span>Regenerate</span>
-          {showCreditsWarning ? (
+          <span>Regenerate {!regenChargesCredits && 'Free'}</span>
+          {regenChargesCredits ? (
             <span
               className={
                 isCard
@@ -185,7 +198,7 @@ function ScheduledPostActionButtons({
                   : 'max-w-56 text-[11px] font-normal leading-snug text-amber-900/90'
               }
             >
-              2 credits will be deducted on next regeneration
+              {`${SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted`}
             </span>
           ) : null}
         </button>
@@ -200,11 +213,6 @@ function ScheduledPostActionButtons({
       </button>
     </div>
   );
-}
-
-function getRegeneratedCount(post: ScheduledPost): number {
-  const n = post.regeneratedCount ?? post.regenratedCount;
-  return typeof n === 'number' && Number.isFinite(n) ? n : 0;
 }
 
 /**
@@ -254,7 +262,7 @@ function DetailModal({
   const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
   const showRegenerate = post.generatedByAiEngine === true;
-  const regeneratedCount = getRegeneratedCount(post);
+  const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showPostActions = isUpcomingPost(post);
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
@@ -320,6 +328,14 @@ function DetailModal({
                   }
                   className="w-full sm:w-auto rounded-full px-6 bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100"
                 />
+                {/* EDIT_PHOTO_DISABLED
+                <GeneratedCreativeActions
+                  designJson={post.designJson ?? undefined}
+                  caption={post.message}
+                  platform={post.platform}
+                  scheduledPostId={post.postId}
+                />
+                */}
                 <DownloadPngButton
                   url={post.imageUrl}
                   getFilename={() =>
@@ -371,7 +387,7 @@ function DetailModal({
               <ScheduledPostActionButtons
                 size="modal"
                 showRegenerate={showRegenerate}
-                regeneratedCount={regeneratedCount}
+                regenChargesCredits={regenChargesCredits}
                 onRegenerate={onRegenerate}
                 onRemove={onRemove}
                 disabled={actionDisabled}
@@ -414,6 +430,7 @@ function ScheduledPostCard({
   onRemove,
   actionDisabled,
   onPreviewImage,
+  isRegenerating,
 }: {
   post: ScheduledPost;
   scheduleAt: string;
@@ -423,9 +440,10 @@ function ScheduledPostCard({
   onRemove: () => void;
   actionDisabled: boolean;
   onPreviewImage: (url: string, alt?: string) => void;
+  isRegenerating: boolean;
 }) {
   const showRegenerate = post.generatedByAiEngine === true;
-  const regeneratedCount = getRegeneratedCount(post);
+  const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showPostActions = isUpcomingPost(post);
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
@@ -433,9 +451,12 @@ function ScheduledPostCard({
     <div
       ref={cardRef}
       role="button"
-      tabIndex={0}
-      onClick={onSelect}
+      tabIndex={isRegenerating ? -1 : 0}
+      aria-busy={isRegenerating || undefined}
+      aria-disabled={isRegenerating || undefined}
+      onClick={isRegenerating ? undefined : onSelect}
       onKeyDown={(e) => {
+        if (isRegenerating) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onSelect();
@@ -444,8 +465,9 @@ function ScheduledPostCard({
       className={cn(
         'group relative flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm',
         'transition-all duration-300',
-        'hover:border-[#4A8FF6]/35 hover:bg-slate-50/80',
-        'hover:shadow-md hover:shadow-slate-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]/30'
+        isRegenerating
+          ? 'cursor-not-allowed'
+          : 'hover:border-[#4A8FF6]/35 hover:bg-slate-50/80 hover:shadow-md hover:shadow-slate-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]/30'
       )}
     >
       <div className="relative mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 aspect-4/3">
@@ -460,7 +482,7 @@ function ScheduledPostCard({
             No image
           </div>
         )}
-        {post.imageUrl ? (
+        {post.imageUrl && !isRegenerating ? (
           <div className="absolute bottom-2 right-2">
             <ImagePreviewButton
               variant="overlay-icon"
@@ -491,6 +513,17 @@ function ScheduledPostCard({
             >
               <Sparkles className="h-3 w-3 text-[#4A8FF6]" />
               <span className="truncate">{generatedBy}</span>
+            </span>
+          </div>
+        ) : null}
+        {isRegenerating ? (
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/75 backdrop-blur-sm"
+            aria-live="polite"
+          >
+            <Loader2 className="h-6 w-6 animate-spin text-[#4A8FF6]" aria-hidden />
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+              Regenerating…
             </span>
           </div>
         ) : null}
@@ -530,15 +563,17 @@ function ScheduledPostCard({
           <ScheduledPostActionButtons
             size="card"
             showRegenerate={showRegenerate}
-            regeneratedCount={regeneratedCount}
+            regenChargesCredits={regenChargesCredits}
             stopPropagation
             onRegenerate={onRegenerate}
             onRemove={onRemove}
-            disabled={actionDisabled}
+            disabled={actionDisabled || isRegenerating}
           />
         ) : null}
         <p className="text-[11px] text-slate-400 group-hover:text-slate-500">
-          Click for full details
+          {isRegenerating
+            ? 'Regeneration in progress'
+            : 'Click for full details'}
         </p>
       </div>
     </div>
@@ -1051,7 +1086,7 @@ export default function SchedulePostPage() {
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [actingPostId, setActingPostId] = useState<string | null>(null);
   const imagePreview = useImagePreview();
-  const [cursor, setCursor] = useState<FirestoreTimestamp | null>(null);
+  const [cursor, setCursor] = useState<ScheduledPostsPageCursor | null>(null);
   const [hasMore, setHasMore] = useState(true);
   // Mirrors `hasMore` for synchronous reads inside `fetchScheduledPosts` and
   // for the tab-change effect to flip back to `true` without waiting on a
@@ -1061,7 +1096,7 @@ export default function SchedulePostPage() {
   const hasMoreRef = useRef(true);
   const obserVerRef = useRef<IntersectionObserver | null>(null);
   const fetchingRef = useRef(false);
-  const cursorRef = useRef<FirestoreTimestamp | null>(null);
+  const cursorRef = useRef<ScheduledPostsPageCursor | null>(null);
   // Monotonic token. Every fetch captures the value at its start; on response
   // it bails if the token has moved on (meaning the user switched tabs / a
   // newer fetch is in flight). Without this, a slow response from the
@@ -1198,6 +1233,7 @@ export default function SchedulePostPage() {
         const data = response.data;
         const posts = dedupeScheduledPosts(data.posts ?? []);
         setScheduledPosts(posts);
+
         const next = data.nextCursor ?? null;
         cursorRef.current = next;
         setCursor(next);
@@ -1215,8 +1251,42 @@ export default function SchedulePostPage() {
         console.error('[silentRefreshScheduledPosts] failed', error);
       }
     },
-    []
+    [],
   );
+
+  const silentRefreshRef = useRef(silentRefreshScheduledPosts);
+  silentRefreshRef.current = silentRefreshScheduledPosts;
+
+  // Paginated list data can go stale while the user stays on calendar view
+  // (e.g. after scheduling product-advert full-social). Refresh page 1 when
+  // they switch to list so new posts aren't hidden until a manual tab toggle.
+  const prevViewModeRef = useRef(viewMode);
+  useEffect(() => {
+    if (viewMode === 'list' && prevViewModeRef.current !== 'list') {
+      void silentRefreshRef.current();
+    }
+    prevViewModeRef.current = viewMode;
+  }, [viewMode]);
+
+  const onRegenSettledRef = useRef<() => Promise<void>>(async () => {});
+  onRegenSettledRef.current = async () => {
+    await silentRefreshScheduledPosts();
+    const { fromMs, toMs } = calendarVisibleRange(calendarMode, calendarCursor);
+    const currentKey = `${fromMs}_${toMs}`;
+    setCalendarRangeCache((prev) => {
+      if (!prev.has(currentKey)) return prev;
+      const next = new Map(prev);
+      next.delete(currentKey);
+      return next;
+    });
+  };
+
+  const {
+    regeneratingPostIds,
+    markRegenerating,
+    attachRegenJob,
+    cancelRegeneration,
+  } = useScheduledPostRegenJob(onRegenSettledRef);
 
   const handlePostAction = useCallback(
     async (post: ScheduledPost, action: 'regenerate' | 'remove') => {
@@ -1275,43 +1345,47 @@ export default function SchedulePostPage() {
       try {
         if (action === 'remove') {
           await removeScheduledPost(postId);
+          void silentRefreshScheduledPosts();
+          const { fromMs, toMs } = calendarVisibleRange(
+            calendarMode,
+            calendarCursor
+          );
+          const currentKey = `${fromMs}_${toMs}`;
+          setCalendarRangeCache((prev) => {
+            if (!prev.has(currentKey)) return prev;
+            const next = new Map(prev);
+            next.delete(currentKey);
+            return next;
+          });
         } else {
-          await performActionByUserOnScheduledPost(
+          markRegenerating(postId);
+          if (selectedPost?.postId === postId) {
+            setSelectedPost(null);
+          }
+          const response = await performActionByUserOnScheduledPost(
             postId,
             'regenerate',
             platform
           );
+          const job = parseRegenJobFromResponse(response.data);
+          if (job) {
+            attachRegenJob(postId, job);
+          } else {
+            cancelRegeneration(postId);
+            showErrorToast('Regeneration started but job tracking failed');
+          }
         }
-        // Silent background refresh — no skeleton, no scroll jump. Keeps the
-        // selected post bound to its fresh copy so the modal reflects new data.
-        const keepId =
-          action === 'regenerate' && selectedPost?.postId === postId
-            ? postId
-            : undefined;
-        void silentRefreshScheduledPosts(
-          keepId ? { keepSelectionForPostId: keepId } : undefined
-        );
-        // Drop the current calendar range so the next render refetches it
-        // and picks up the authoritative server state (e.g. regenerated
-        // image/caption). Other cached months stay warm.
-        const { fromMs, toMs } = calendarVisibleRange(
-          calendarMode,
-          calendarCursor
-        );
-        const currentKey = `${fromMs}_${toMs}`;
-        setCalendarRangeCache((prev) => {
-          if (!prev.has(currentKey)) return prev;
-          const next = new Map(prev);
-          next.delete(currentKey);
-          return next;
-        });
       } catch {
         showErrorToast('Failed to perform action on scheduled post');
-        // Roll the optimistic change back.
-        setScheduledPosts(previousPosts);
-        setCalendarRangeCache(previousCalendarCache);
-        if (action === 'remove' && previousSelected?.postId === postId) {
-          setSelectedPost(previousSelected);
+        if (action === 'regenerate') {
+          cancelRegeneration(postId);
+        } else {
+          // Roll the optimistic change back.
+          setScheduledPosts(previousPosts);
+          setCalendarRangeCache(previousCalendarCache);
+          if (previousSelected?.postId === postId) {
+            setSelectedPost(previousSelected);
+          }
         }
       } finally {
         setActingPostId(null);
@@ -1324,11 +1398,14 @@ export default function SchedulePostPage() {
       calendarRangeCache,
       calendarMode,
       calendarCursor,
+      markRegenerating,
+      attachRegenJob,
+      cancelRegeneration,
     ]
   );
 
   const lastPostRef = useCallback((node: HTMLDivElement | null) => {
-    if (scheduledPostsLoading) return;
+    if (scheduledPostsLoading || morePostsLoading) return;
 
     if (obserVerRef.current) obserVerRef.current.disconnect();
 
@@ -1339,7 +1416,7 @@ export default function SchedulePostPage() {
     });
 
     if (node) obserVerRef.current.observe(node);
-  }, [scheduledPostsLoading]);
+  }, [scheduledPostsLoading, morePostsLoading, scheduledPosts.length]);
 
   // Visible window for the calendar. Drives both the range-fetch effect below
   // and the per-range cache lookup that feeds `filteredAndSortedPosts` when in
@@ -1503,6 +1580,10 @@ export default function SchedulePostPage() {
 
   if (loading) return <PageLoadingState />;
   if (!user) return null;
+
+  const postActionDisabled =
+    actingPostId !== null && !regeneratingPostIds.has(actingPostId);
+
   return (
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
       <div
@@ -1694,6 +1775,10 @@ export default function SchedulePostPage() {
 
                 const isLast = index === filteredAndSortedPosts.length - 1;
 
+                const isRegenerating = post.postId
+                  ? regeneratingPostIds.has(post.postId)
+                  : false;
+
                 return (
                   <ScheduledPostCard
                     key={post.postId ?? `post-${index}`}
@@ -1703,8 +1788,9 @@ export default function SchedulePostPage() {
                     cardRef={isLast ? lastPostRef : undefined}
                     onRegenerate={() => handlePostAction(post, 'regenerate')}
                     onRemove={() => handlePostAction(post, 'remove')}
-                    actionDisabled={!post.postId || actingPostId !== null}
+                    actionDisabled={!post.postId || postActionDisabled}
                     onPreviewImage={imagePreview.open}
+                    isRegenerating={isRegenerating}
                   />
                 );
               })}
@@ -1757,7 +1843,7 @@ export default function SchedulePostPage() {
           formatTimestamp={fmtTimestamp}
           onRegenerate={() => handlePostAction(selectedPost, 'regenerate')}
           onRemove={() => handlePostAction(selectedPost, 'remove')}
-          actionDisabled={!selectedPost.postId || actingPostId !== null}
+          actionDisabled={!selectedPost.postId || postActionDisabled}
           onPreviewImage={imagePreview.open}
         />
       )}

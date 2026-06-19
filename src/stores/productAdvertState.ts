@@ -27,6 +27,13 @@ export type AdvertResult = {
   logoVariantSource?: string;
   logoVariantCount?: number;
   marketingTagline?: string;
+  // EDIT_PHOTO_DISABLED
+  // designJson?: import('@/lib/creative-design/types').CreativeDesignDocument;
+  // backgroundUrl?: string;
+  // previewImageUrl?: string;
+  // logoUrl?: string;
+  // canvasWidth?: number;
+  // canvasHeight?: number;
   productAdvertDocId?: string | null;
 };
 

@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Spinner } from '@/components/ui/spinner';
 
 export function RecentlyDeletedAccountDialog({
   open,
@@ -24,8 +25,15 @@ export function RecentlyDeletedAccountDialog({
 }) {
   const [recovering, setRecovering] = useState(false);
   const [creatingNew, setCreatingNew] = useState(false);
+  const busy = recovering || creatingNew;
+
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!busy) onOpenChange(next);
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Account recently deleted</AlertDialogTitle>
@@ -37,25 +45,47 @@ export function RecentlyDeletedAccountDialog({
         <AlertDialogFooter>
           <AlertDialogAction
             variant="outline"
-            onClick={(e) => {
+            disabled={busy}
+            onClick={async (e) => {
               e.preventDefault();
               setCreatingNew(true);
-              void onCreateNew();
-              setCreatingNew(false);
+              try {
+                await onCreateNew();
+              } finally {
+                setCreatingNew(false);
+              }
             }}
           >
-            {creatingNew ? 'Deleting old account...' : 'Delete old account'}
+            {creatingNew ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="size-4" />
+                Deleting old account…
+              </span>
+            ) : (
+              'Delete old account'
+            )}
           </AlertDialogAction>
           <AlertDialogAction
             variant="default"
+            disabled={busy}
             onClick={async (e) => {
               e.preventDefault();
               setRecovering(true);
-              void onContinueOld();
-              setRecovering(false);
+              try {
+                await onContinueOld();
+              } finally {
+                setRecovering(false);
+              }
             }}
           >
-            {recovering ? 'Recovering...' : 'Continue with old one'}
+            {recovering ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner className="size-4" />
+                Recovering…
+              </span>
+            ) : (
+              'Continue with old one'
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
+import { useFeatureJob } from '@/src/hooks/useFeatureJob';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,7 @@ import {
   BRAND_PHOTO_DESCRIPTION_MAX,
   putMemoryLayerBrandPhotoDescription,
   uploadMemoryLayerBrandPhotos,
+  uploadMemoryLayerSourcePdf,
   type MemoryLayerAnswerPayload,
   toggleMemoryLayerPreference,
   generateMemoryLayerQuestions,
@@ -29,6 +31,7 @@ import {
 import {
   Brain,
   ChevronLeft,
+  FileText,
   ImageIcon,
   ImagePlus,
   Loader2,
@@ -39,6 +42,9 @@ import {
   X,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import { Progress } from '@/components/ui/progress';
+
+const MAX_MEMORY_LAYER_PDF_BYTES = 50 * 1024 * 1024;
 
 type Question = {
   id: string;
@@ -53,6 +59,9 @@ type BrandPhoto = {
   path: string;
   createdAt?: string | null;
   description?: string;
+  descriptionSource?: 'ai' | 'user';
+  imageType?: string;
+  sourceDocumentId?: string;
 };
 
 type MemoryPayload = {
@@ -111,9 +120,12 @@ export default function TemplateDnaMemoryLayerPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const fileInputId = useId();
+  const pdfInputId = useId();
   const [loading, setLoading] = useState(true);
   const [savingAnswers, setSavingAnswers] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [pendingPdf, setPendingPdf] = useState<File | null>(null);
   const [savingDescriptionPath, setSavingDescriptionPath] = useState<
     string | null
   >(null);
@@ -130,6 +142,20 @@ export default function TemplateDnaMemoryLayerPage() {
   const [activeTab, setActiveTab] = useState<'questionnaire' | 'images'>(
     'questionnaire'
   );
+  const memoryLayerJob = useFeatureJob('memory-layer');
+  const {
+    onGenerated: onMemoryLayerJobGenerated,
+    overallPct: memoryLayerJobPct,
+    isRunning: memoryLayerJobRunning,
+    anyFailed: memoryLayerJobFailed,
+  } = memoryLayerJob;
+  const isExtracting =
+    uploadingPdf || uploadingPhotos || memoryLayerJobRunning;
+  const extractProgress = memoryLayerJobRunning
+    ? memoryLayerJobPct
+    : uploadingPdf || uploadingPhotos
+      ? 12
+      : 0;
   const [memoryLayerEnabled, setMemoryLayerEnabled] = useState<
     boolean | undefined
   >(undefined);
@@ -156,8 +182,8 @@ export default function TemplateDnaMemoryLayerPage() {
     }
   };
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) setLoading(true);
     try {
       const res = await getMemoryLayer();
       if (!isOk(res as { success?: boolean })) {
@@ -168,9 +194,11 @@ export default function TemplateDnaMemoryLayerPage() {
       setMemory(parseMemory(raw));
       setMemoryLayerEnabled(res.data.memoryLayerEnabled);
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'Load failed');
+      if (!opts?.silent) {
+        showErrorToast(e instanceof Error ? e.message : 'Load failed');
+      }
     } finally {
-      setLoading(false);
+      if (!opts?.silent) setLoading(false);
     }
   }, []);
 
@@ -181,6 +209,24 @@ export default function TemplateDnaMemoryLayerPage() {
   useEffect(() => {
     if (user) void load();
   }, [user, load]);
+
+  const memoryLayerWasRunningRef = useRef(false);
+  useEffect(() => {
+    if (memoryLayerJobRunning) {
+      memoryLayerWasRunningRef.current = true;
+      return;
+    }
+    if (!memoryLayerWasRunningRef.current) return;
+    memoryLayerWasRunningRef.current = false;
+    void load({ silent: true });
+    if (memoryLayerJobFailed) {
+      showErrorToast(
+        'Image processing failed. Try again or upload images manually.'
+      );
+    } else {
+      toast.success('Images processed');
+    }
+  }, [memoryLayerJobRunning, memoryLayerJobFailed, load]);
 
   useEffect(() => {
     const photos = memory?.brandPhotos;
@@ -329,14 +375,60 @@ export default function TemplateDnaMemoryLayerPage() {
       if (!isOk(up as { success?: boolean })) {
         throw new Error('Photo upload failed');
       }
+      const data = (up as {
+        data?: {
+          memoryLayer?: unknown;
+          describeJobId?: string;
+          parentJobId?: string;
+        };
+      }).data;
+      if (data?.describeJobId && data?.parentJobId) {
+        onMemoryLayerJobGenerated({
+          parentJobId: data.parentJobId,
+          jobs: [{ jobId: data.describeJobId, platform: 'instagram' }],
+        });
+      }
       revokePendingUrls(pendingImages);
       setPendingImages([]);
-      await load();
+      if (data?.memoryLayer) setMemory(parseMemory(data.memoryLayer));
       toast.success('Photos uploaded');
     } catch (e) {
       showErrorToast(e instanceof Error ? e.message : 'Upload failed');
     } finally {
       setUploadingPhotos(false);
+    }
+  };
+
+  const handleUploadPdf = async () => {
+    if (!pendingPdf) {
+      toast.message('Choose a PDF first');
+      return;
+    }
+    if (pendingPdf.size > MAX_MEMORY_LAYER_PDF_BYTES) {
+      showErrorToast('PDF must be 50MB or smaller');
+      return;
+    }
+    try {
+      setUploadingPdf(true);
+      const res = await uploadMemoryLayerSourcePdf(pendingPdf);
+      if (!isOk(res as { success?: boolean })) {
+        throw new Error('PDF upload failed');
+      }
+      const data = (res as {
+        data?: { parentJobId?: string; jobId?: string };
+      }).data;
+      if (data?.parentJobId && data?.jobId) {
+        onMemoryLayerJobGenerated({
+          parentJobId: data.parentJobId,
+          jobs: [{ jobId: data.jobId, platform: 'instagram' }],
+        });
+      }
+      setPendingPdf(null);
+      toast.success('PDF uploaded');
+    } catch (e) {
+      showErrorToast(e instanceof Error ? e.message : 'PDF upload failed');
+    } finally {
+      setUploadingPdf(false);
     }
   };
 
@@ -803,22 +895,96 @@ export default function TemplateDnaMemoryLayerPage() {
                 <h2 className="text-lg font-bold text-slate-900">
                   Brand reference photos
                 </h2>
-                <p className="text-sm text-slate-500 mt-1 max-w-[42ch]">
-                  Saved images are stored for your account. New picks show
-                  previews below before you upload. Up to 30 images total.
+                <p className="text-sm text-slate-500 mt-1 max-w-[48ch]">
+                  Upload a PDF brochure or individual images. AI suggests
+                  descriptions when you leave them blank — edit anytime. Up to
+                  30 images total.
                 </p>
               </div>
               <button
                 type="button"
-                disabled={uploadingPhotos || pendingImages.length === 0}
+                disabled={
+                  uploadingPhotos ||
+                  pendingImages.length === 0 ||
+                  isExtracting
+                }
                 onClick={() => void handleUploadPhotos()}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-emerald-700 disabled:opacity-60 shrink-0"
               >
-                {uploadingPhotos ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : null}
                 Upload new photos
               </button>
+            </div>
+
+            {isExtracting && (
+              <div className="mb-6 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3 space-y-2">
+                <p className="text-xs font-medium text-violet-800">Extracting</p>
+                <Progress
+                  value={extractProgress}
+                  className="h-1.5 bg-violet-100 **:data-[slot=progress-indicator]:bg-violet-600"
+                />
+              </div>
+            )}
+
+            <div className="mb-8 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+                Import from PDF
+              </h3>
+              <p className="text-sm text-slate-600 mb-3 max-w-[52ch]">
+                Upload a product brochure or catalog PDF (max 50MB). We extract
+                photos, filter out logos and icons, and add AI descriptions to
+                your image library.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <label
+                  htmlFor={pdfInputId}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50',
+                    (isExtracting) &&
+                      'opacity-60 pointer-events-none'
+                  )}
+                >
+                  <FileText className="w-4 h-4" />
+                  {pendingPdf ? pendingPdf.name : 'Choose PDF'}
+                  <input
+                    id={pdfInputId}
+                    type="file"
+                    accept="application/pdf"
+                    className="sr-only"
+                    disabled={isExtracting}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      if (f && f.size > MAX_MEMORY_LAYER_PDF_BYTES) {
+                        showErrorToast('PDF must be 50MB or smaller');
+                        e.target.value = '';
+                        return;
+                      }
+                      setPendingPdf(f);
+                      queueMicrotask(() => {
+                        e.target.value = '';
+                      });
+                    }}
+                  />
+                </label>
+                {pendingPdf ? (
+                  <button
+                    type="button"
+                    onClick={() => setPendingPdf(null)}
+                    className="text-xs text-slate-500 hover:text-slate-800"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={
+                    !pendingPdf || isExtracting
+                  }
+                  onClick={() => void handleUploadPdf()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-violet-700 disabled:opacity-60"
+                >
+                  Upload PDF
+                </button>
+              </div>
             </div>
 
             {brandPhotos.length > 0 && (
@@ -849,10 +1015,17 @@ export default function TemplateDnaMemoryLayerPage() {
                         </button>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs font-medium text-slate-600">
-                          Image description (optional, max{' '}
-                          {BRAND_PHOTO_DESCRIPTION_MAX} characters)
-                        </label>
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="text-xs font-medium text-slate-600">
+                            Image description (max {BRAND_PHOTO_DESCRIPTION_MAX}{' '}
+                            characters)
+                          </label>
+                          {p.descriptionSource === 'ai' ? (
+                            <span className="text-[10px] font-medium uppercase tracking-wide text-violet-600">
+                              AI suggested
+                            </span>
+                          ) : null}
+                        </div>
                         <textarea
                           value={photoDescriptionDrafts[p.path] ?? ''}
                           disabled={savingDescriptionPath === p.path}
@@ -868,7 +1041,7 @@ export default function TemplateDnaMemoryLayerPage() {
                           onBlur={() => void flushPhotoDescription(p.path)}
                           maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
                           rows={3}
-                          placeholder="Describe this product image (you type this; max 500 characters)"
+                          placeholder="AI suggests a description when empty — edit anytime"
                           className={cn(
                             inputBase,
                             'text-sm py-2 resize-y min-h-[72px]',
@@ -892,7 +1065,10 @@ export default function TemplateDnaMemoryLayerPage() {
               </h3>
               <label
                 htmlFor={fileInputId}
-                className="inline-flex items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-3 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-100"
+                className={cn(
+                  'inline-flex items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-3 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-100',
+                  isExtracting && 'opacity-60 pointer-events-none'
+                )}
               >
                 <ImagePlus className="w-4 h-4" />
                 Choose images
@@ -902,6 +1078,7 @@ export default function TemplateDnaMemoryLayerPage() {
                   accept="image/*"
                   multiple
                   className="sr-only"
+                  disabled={isExtracting}
                   onChange={(e) => {
                     const files = e.target.files;
                     addFilesFromPicker(files);
@@ -914,8 +1091,8 @@ export default function TemplateDnaMemoryLayerPage() {
               </label>
               <p className="text-xs text-slate-400 mt-2">
                 {maxNewSlots} slot
-                {maxNewSlots === 1 ? '' : 's'} left. JPEG, PNG, or WebP
-                upload best; other types may be rejected on upload.
+                {maxNewSlots === 1 ? '' : 's'} left. JPEG, PNG, or WebP upload
+                best. Leave descriptions blank for AI suggestions.
               </p>
             </div>
 
@@ -951,8 +1128,7 @@ export default function TemplateDnaMemoryLayerPage() {
                       </div>
                       <div className="space-y-1">
                         <label className="text-xs font-medium text-slate-600">
-                          Image description (optional, max{' '}
-                          {BRAND_PHOTO_DESCRIPTION_MAX} characters)
+                          Image description (optional — AI fills if blank)
                         </label>
                         <textarea
                           value={p.description}
@@ -973,7 +1149,7 @@ export default function TemplateDnaMemoryLayerPage() {
                           }
                           maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
                           rows={3}
-                          placeholder="Describe this image before upload"
+                          placeholder="Optional — leave blank for AI suggestion"
                           className={cn(
                             inputBase,
                             'text-sm py-2 resize-y min-h-[72px]'
@@ -993,13 +1169,14 @@ export default function TemplateDnaMemoryLayerPage() {
             <div className="mt-8 flex justify-end pt-4 border-t border-slate-100">
               <button
                 type="button"
-                disabled={uploadingPhotos || pendingImages.length === 0}
+                disabled={
+                  uploadingPhotos ||
+                  pendingImages.length === 0 ||
+                  isExtracting
+                }
                 onClick={() => void handleUploadPhotos()}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-emerald-700 disabled:opacity-60"
               >
-                {uploadingPhotos ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : null}
                 Upload new photos
               </button>
             </div>
