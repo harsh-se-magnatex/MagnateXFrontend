@@ -21,8 +21,6 @@ import {
 import { cn } from '@/lib/utils';
 import {
   PLAN_COMPARISON_BULLETS,
-  PLAN_TRIAL_BILLING_NOTICE,
-  PLAN_TRIAL_BUTTON_SUBLABEL,
   PRICING_PLANS_BY_ID,
   planButtonDisplayName,
   type PlanId,
@@ -304,8 +302,6 @@ function planCreditsPerMonth(
     return extra.credits;
   return PLAN_MONTHLY_CREDITS_FALLBACK[planNameKey] ?? 150;
 }
-
-
 
 export default function BillingsPage() {
   const { user, loading } = useAuth();
@@ -785,7 +781,7 @@ export default function BillingsPage() {
         {/* Current plan */}
         <section
           className={cn(
-            'glass-card rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 transition-colors',
+            'glass-card rounded-3xl border border-border p-6 sm:p-8 transition-colors',
             isSubscribed && 'border-emerald-100 shadow-sm shadow-emerald-900/5'
           )}
         >
@@ -838,8 +834,8 @@ export default function BillingsPage() {
               </div>
               {subscriptionSummary ? (
                 <>
-                  <dl className="mt-5 grid overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/50 text-sm sm:grid-cols-3 sm:divide-x sm:divide-slate-200">
-                    <div className="border-b border-slate-200 px-4 py-3 sm:border-b-0">
+                  <dl className="mt-5 grid overflow-hidden rounded-2xl border border-border bg-muted text-sm sm:grid-cols-3 sm:divide-x sm:divide-border">
+                    <div className="border-b border-border px-4 py-3 sm:border-b-0">
                       <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                         Billing cycle
                       </dt>
@@ -847,16 +843,16 @@ export default function BillingsPage() {
                         {billingFrequencyDisplay}
                       </dd>
                     </div>
-                    <div className="border-b border-slate-200 px-4 py-3 sm:border-b-0">
-                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    <div className="border-b border-border px-4 py-3 sm:border-b-0">
+                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         Started
                       </dt>
                       <dd className="mt-1 font-semibold text-slate-900">
                         {formatTxnDate(subscriptionSummary.createdAt)}
                       </dd>
                     </div>
-                    <div className="border-b border-slate-200 px-4 py-3 sm:border-b-0">
-                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    <div className="border-b border-border px-4 py-3 sm:border-b-0">
+                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         {subscriptionSummary.cancelAtNextBillingDate
                           ? 'Access until'
                           : 'Next billing'}
@@ -1064,10 +1060,10 @@ export default function BillingsPage() {
               const deleteDisabled =
                 deletePaymentMethodLoading || !d.paymentMethodId;
               return (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5">
+                <div className="rounded-2xl border border-border bg-muted p-5">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5">
                     <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-indigo-600 ring-1 ring-slate-200">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-card text-primary ring-1 ring-border">
                         <CreditCard className="h-5 w-5" />
                       </div>
                       <div>
@@ -1188,7 +1184,7 @@ export default function BillingsPage() {
             </Button>
           </div>
 
-          <div className="rounded-2xl border border-amber-100 bg-amber-50/35 overflow-hidden divide-y divide-amber-100/80">
+          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 overflow-hidden divide-y divide-border/60">
             {/* Subscription (plan) pool */}
             <div className="p-4 sm:p-5">
               <p className="text-xs font-medium text-amber-900 uppercase tracking-wide">
@@ -1230,7 +1226,7 @@ export default function BillingsPage() {
             </div>
 
             {/* Top-up pool */}
-            <div className="p-4 sm:p-5 bg-white/40">
+            <div className="p-4 sm:p-5 bg-muted/30">
               <p className="text-xs font-medium text-violet-900 uppercase tracking-wide">
                 Top-up credits
               </p>
@@ -1401,22 +1397,11 @@ export default function BillingsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div
-            className="flex gap-3 rounded-xl border border-indigo-200/80 bg-indigo-50/90 px-4 py-3 text-sm text-slate-700"
-            role="note"
-          >
-            <Info
-              className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600"
-              aria-hidden
-            />
-            <p className="text-pretty leading-snug">{PLAN_TRIAL_BILLING_NOTICE}</p>
-          </div>
-
           {/* Mode toggle: Studio vs AI — same labels as the public pricing page. */}
           <div
             role="tablist"
             aria-label="Plan mode"
-            className="flex rounded-xl  w-full justify-center p-1 border border-slate-200/60 self-center"
+            className="flex rounded-xl w-full justify-center p-1 border border-border self-center"
           >
             {(['AI', 'Studio'] as const).map((mode) => {
               const selected = planModeToDisplay(upgradeMode) === mode;
@@ -1431,8 +1416,8 @@ export default function BillingsPage() {
                   className={cn(
                     'min-w-[10rem] rounded-lg px-4 py-2 text-sm font-semibold transition-all duration-200',
                     selected
-                      ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                      ? 'bg-card text-foreground shadow-sm ring-1 ring-border'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                   )}
                 >
                   <span className="block leading-none">{label}</span>
@@ -1457,26 +1442,38 @@ export default function BillingsPage() {
                 <div
                   key={tierKey}
                   className={cn(
-                    'relative flex h-full min-h-0 flex-col rounded-2xl border p-5 bg-white transition-[box-shadow,background-color,border-color]',
+                    'relative flex h-full min-h-0 flex-col rounded-2xl border border-border p-5 bg-card transition-[box-shadow,background-color,border-color]',
                     isActive &&
-                    'border-2 border-emerald-400 bg-gradient-to-b from-emerald-50/90 to-white shadow-md shadow-emerald-900/5 ring-2 ring-emerald-400/35'
+                    'border-2 border-emerald-500/50 bg-gradient-to-b from-emerald-500/10 to-card shadow-md shadow-emerald-900/10 ring-2 ring-emerald-500/30',
+                    !isActive &&
+                    landingPlan.highlighted &&
+                    'border-2 border-primary/50 bg-gradient-to-b from-primary/10 to-card shadow-md shadow-primary/10 ring-2 ring-primary/25'
                   )}
                 >
                   {isActive ? (
                     <span className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-bold bg-emerald-600 text-white pl-2 pr-2.5 py-0.5 rounded-full shadow-sm ring-2 ring-white">
                       <Check className="h-3 w-3 stroke-[3]" aria-hidden />
                     </span>
+                  ) : landingPlan.badge ? (
+                    <span className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 inline-flex items-center text-[10px] uppercase tracking-wide font-bold bg-gradient-primary text-white px-3 py-0.5 rounded-full shadow-sm ring-2 ring-white">
+                      {landingPlan.badge}
+                    </span>
                   ) : null}
                   <h3 className="font-semibold text-slate-900 text-center mt-1">
                     {landingPlan.name}
                   </h3>
                   <p className="text-sm text-slate-500 text-center mt-1 leading-snug">
-                   {landingPlan.mode === 'auto' ? 'Auto Plan' : 'Manual Plan'}
+                   {landingPlan.mode === 'AI' ? 'Auto Plan' : 'Manual Plan'}
                   </p>
                   <div className="mt-1 mb-4 text-center">
                     <p className="text-sm font-semibold text-slate-700">
                       {formatUsd(displayPrice)}/mo
                     </p>
+                    {landingPlan.trialOffer ? (
+                      <p className="mt-1 text-xs font-semibold text-emerald-600">
+                        {landingPlan.trialOffer}
+                      </p>
+                    ) : null}
                   </div>
                   {isActive ? (
                     <p className="text-sm text-slate-800 text-center space-y-3">
@@ -1542,9 +1539,9 @@ export default function BillingsPage() {
                             <span className="text-sm font-semibold leading-tight">
                               Start {planButtonDisplayName(landingPlan.name)}
                             </span>
-                            {tierKey === 'Elite' ? (
-                              <span className="text-[11px] font-medium leading-tight text-slate-500">
-                                {PLAN_TRIAL_BUTTON_SUBLABEL}
+                            {landingPlan.trialOffer ? (
+                              <span className="text-[11px] font-medium leading-tight text-emerald-600">
+                                {landingPlan.trialOffer}
                               </span>
                             ) : null}
                           </>

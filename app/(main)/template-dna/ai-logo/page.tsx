@@ -23,6 +23,18 @@ type Basics = {
 
 const MAX_AI_LOGO_PICKS = 10;
 
+function getCreatedAtMs(
+  createdAt: string | { _seconds?: number; seconds?: number } | undefined
+): number {
+  if (!createdAt) return 0;
+  if (typeof createdAt === 'string') {
+    const ms = Date.parse(createdAt);
+    return Number.isNaN(ms) ? 0 : ms;
+  }
+  const seconds = createdAt._seconds ?? createdAt.seconds;
+  return typeof seconds === 'number' ? seconds * 1000 : 0;
+}
+
 function getApiErrorMessage(error: unknown, fallback: string) {
   if (typeof error !== 'object' || error === null || !('response' in error)) {
     return fallback;
@@ -95,7 +107,7 @@ export default function AILogoPage() {
       const nextPicks = response?.data?.picks || [];
       if (!nextPicks.length) throw new Error('No logo pick was generated.');
       setPicks((currentPicks) =>
-        [...currentPicks, ...nextPicks].slice(0, MAX_AI_LOGO_PICKS)
+        [...nextPicks, ...currentPicks].slice(0, MAX_AI_LOGO_PICKS)
       );
       toast.success('Logo pick is ready.');
       void handleGetAiGeneratedLogos(); 
@@ -135,11 +147,17 @@ export default function AILogoPage() {
     }
   }
 
-async function handleGetAiGeneratedLogos() {
-  const response = await getAiGeneratedLogos();
-  const logos = response?.data?.logos || [];
-  setPicks(logos.map((logo) => logo.url)); 
-}
+  async function handleGetAiGeneratedLogos() {
+    const response = await getAiGeneratedLogos();
+    const logos = response?.data?.logos || [];
+    setPicks(
+      [...logos]
+        .sort(
+          (a, b) => getCreatedAtMs(b.createdAt) - getCreatedAtMs(a.createdAt)
+        )
+        .map((logo) => logo.url)
+    );
+  }
 
 useEffect(() => {
   void handleGetAiGeneratedLogos();
@@ -194,7 +212,7 @@ useEffect(() => {
           <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
             Credits available
           </span>
-          <span className="mt-1 text-2xl font-bold text-emerald-950">
+          <span className="mt-1 text-2xl font-bold text-emerald-100">
             {billing?.credits ?? 0}
           </span>
           <span className="mt-1 text-xs font-medium text-emerald-700">

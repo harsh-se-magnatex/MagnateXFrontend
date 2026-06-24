@@ -21,6 +21,11 @@ import {
   Expand,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  workspaceInputClass,
+  workspacePageDescriptionClass,
+  workspacePageTitleClass,
+} from '@/lib/workspace-ui';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { getTodatDate } from '@/utils/getTodayDate';
@@ -41,9 +46,6 @@ import {
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { DownloadPngButton } from '@/components/download-png-button';
-// EDIT_PHOTO_DISABLED
-// import { GeneratedCreativeActions } from '@/components/creative-editor/GeneratedCreativeActions';
-// import type { CreativeDesignDocument } from '@/lib/creative-design/types';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -66,11 +68,10 @@ import {
 import { consumeAssistantPrefill } from '@/lib/assistant-prefill-store';
 import { useTourDemo } from '@/src/stores/tourState';
 
-const inputBase =
-  'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all';
+const inputBase = workspaceInputClass;
 
 const scheduleButtonClass =
-  'w-full rounded-xl bg-gradient-primary px-4 py-3 text-sm font-bold text-white shadow-sm shadow-slate-900/20 transition-all mt-1 hover:opacity-95 hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:opacity-45 disabled:shadow-none';
+  'w-full rounded-xl bg-gradient-action px-4 py-3 text-sm font-bold text-white shadow-md shadow-primary-purple/30 transition-all mt-1 hover:brightness-105 hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:opacity-45 disabled:shadow-none disabled:hover:brightness-100';
 
 const ACCEPTED_IMAGE_TYPES = [
   'image/jpeg',
@@ -602,20 +603,6 @@ export default function AIContentPage() {
             typeof r.imageSize === 'string' ? r.imageSize : undefined,
           generatedAt:
             typeof r.generatedAt === 'string' ? r.generatedAt : undefined,
-          // EDIT_PHOTO_DISABLED — creative editor fields
-          // backgroundUrl:
-          //   typeof r.backgroundUrl === 'string' ? r.backgroundUrl : undefined,
-          // designJson:
-          //   r.designJson && typeof r.designJson === 'object'
-          //     ? (r.designJson as CreativeDesignDocument)
-          //     : undefined,
-          // previewImageUrl:
-          //   typeof r.previewImageUrl === 'string' ? r.previewImageUrl : undefined,
-          // logoUrl: typeof r.logoUrl === 'string' ? r.logoUrl : undefined,
-          // canvasWidth:
-          //   typeof r.canvasWidth === 'number' ? r.canvasWidth : undefined,
-          // canvasHeight:
-          //   typeof r.canvasHeight === 'number' ? r.canvasHeight : undefined,
         };
       });
 
@@ -758,10 +745,10 @@ export default function AIContentPage() {
     <div className="max-w-6xl mx-auto animate-in fade-in duration-500 pb-20">
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 leading-tight">
+          <h1 className={workspacePageTitleClass}>
             {workspacePageTitle(WORKSPACE_NAV_HREFS.quickCreate)}
           </h1>
-          <p className="mt-2 text-base text-slate-500 max-w-2xl">
+          <p className={workspacePageDescriptionClass}>
             Turn a simple reference text or product photo into ready-to-schedule social
             content and ads.
           </p>
@@ -1073,36 +1060,6 @@ export default function AIContentPage() {
                           }
                           className="w-full sm:w-auto rounded-full px-6 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:opacity-100"
                         />
-                        {/* EDIT_PHOTO_DISABLED
-                        <GeneratedCreativeActions
-                          designJson={asset.designJson}
-                          caption={asset.caption}
-                          platform={asset.platform}
-                          onUpdated={({ imageUrl, designJson }) => {
-                            const prev =
-                              useInstantGeneratedState.getState().createdContent;
-                            if (!prev) return;
-                            setGenerated({
-                              ...prev,
-                              renderedImages: prev.renderedImages.map((r) =>
-                                r.platform === asset.platform
-                                  ? { ...r, imageUrl, designJson }
-                                  : r
-                              ),
-                            });
-                            const sel =
-                              useInstantGeneratedState.getState()
-                                .selectedRenderedImage;
-                            if (sel?.platform === asset.platform) {
-                              setSelectedRenderedImage({
-                                ...sel,
-                                imageUrl,
-                                designJson,
-                              });
-                            }
-                          }}
-                        />
-                        */}
                         <DownloadPngButton
                           url={asset.imageUrl}
                           getFilename={() =>
@@ -1173,26 +1130,6 @@ export default function AIContentPage() {
                             }
                             className="w-full sm:w-auto rounded-full px-6 bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:opacity-100"
                           />
-                          {/* EDIT_PHOTO_DISABLED
-                          <GeneratedCreativeActions
-                            designJson={asset.designJson}
-                            caption={asset.caption}
-                            platform={asset.platform}
-                            onUpdated={({ imageUrl, designJson }) => {
-                              const prev =
-                                useInstantGeneratedState.getState().createdContent;
-                              if (!prev) return;
-                              setGenerated({
-                                ...prev,
-                                renderedImages: prev.renderedImages.map((r) =>
-                                  r.platform === asset.platform
-                                    ? { ...r, imageUrl, designJson }
-                                    : r
-                                ),
-                              });
-                            }}
-                          />
-                          */}
                           <DownloadPngButton
                             url={asset.imageUrl}
                             getFilename={() =>
@@ -1273,7 +1210,6 @@ export default function AIContentPage() {
                           <input
                             type="checkbox"
                             checked
-                            disabled
                             readOnly
                             aria-label={`${platformLabel(targetPlatform)} selected`}
                             className="size-4 shrink-0 rounded border-slate-300 text-indigo-600 disabled:cursor-default disabled:opacity-100"
@@ -1412,25 +1348,6 @@ export default function AIContentPage() {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-4 sm:gap-6">
-                  {selectedRenderedImage &&
-                  isSocialPlatform(selectedRenderedImage.platform) ? (
-                    <label className="inline-flex cursor-default items-center gap-2 text-sm font-medium text-slate-800">
-                      <input
-                        type="checkbox"
-                        checked
-                        disabled
-                        readOnly
-                        aria-label={`${platformLabel(selectedRenderedImage.platform)} selected`}
-                        className="size-4 shrink-0 rounded border-slate-300 text-indigo-600 disabled:cursor-default disabled:opacity-100"
-                      />
-                      <span>
-                        {platformLabel(selectedRenderedImage.platform)}
-                      </span>
-                    </label>
-                  ) : null}
-                </div>
-
                 {scheduleTargets.map(({ platform: targetPlatform }) => {
                   const slot = platformSchedule[targetPlatform] ?? {
                     date: '',
@@ -1446,7 +1363,6 @@ export default function AIContentPage() {
                         <input
                           type="checkbox"
                           checked
-                          disabled
                           readOnly
                           aria-label={`${platformLabel(targetPlatform)} selected`}
                           className="size-4 shrink-0 rounded border-slate-300 text-indigo-600 disabled:cursor-default disabled:opacity-100"

@@ -134,12 +134,12 @@ export function AnalyticsAiInsightCard({
   
   const ring =
     platform === 'facebook'
-      ? 'ring-blue-100/80 bg-gradient-to-br from-blue-50/90 to-white'
-      : 'ring-pink-100/80 bg-gradient-to-br from-pink-50/90 to-white';
+      ? 'ring-primary/20 bg-gradient-to-br from-primary/10 to-card'
+      : 'ring-secondary/20 bg-gradient-to-br from-secondary/10 to-card';
 
   const shell = embed
     ? `rounded-none border-0 bg-transparent shadow-none ring-0 ${className}`
-    : `rounded-xl border border-zinc-200/80 shadow-sm ring-1 ${ring} ${className}`;
+    : `rounded-xl border border-border shadow-sm ring-1 ${ring} ${className}`;
 
   return (
     <div
@@ -161,35 +161,35 @@ export function AnalyticsAiInsightCard({
           'flex items-center gap-2 px-4 py-3',
           compact ? 'py-2' : '',
           embed
-            ? 'border-t border-zinc-200 px-0 pt-4'
-            : 'border-b border-zinc-100/90'
+            ? 'border-t border-border px-0 pt-4'
+            : 'border-b border-border/60'
         )}
       >
         <Sparkles
           className={cn(
             'shrink-0',
             compact ? 'h-4 w-4' : 'h-5 w-5',
-            platform === 'facebook' ? 'text-blue-600' : 'text-pink-600'
+            platform === 'facebook' ? 'text-primary' : 'text-pink-600'
           )}
           aria-hidden
         />
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              'font-semibold text-zinc-900',
+              'font-semibold text-foreground',
               compact ? 'text-xs' : 'text-sm'
             )}
           >
-            AI recommendations
+            Recommendations
           </p>
           {!compact && data?.source === 'fallback' ? (
-            <p className="text-[10px] font-normal text-zinc-500">
+            <p className="text-[10px] font-normal text-muted-foreground">
               Rule-based insights (set OpenAI key on the server for richer tips)
             </p>
           ) : null}
         </div>
         {loading ? (
-          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-zinc-400" />
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
         ) : null}
       </div>
       <div
@@ -205,7 +205,7 @@ export function AnalyticsAiInsightCard({
             {[1, 2, 3].map((i) => (
               <li
                 key={i}
-                className="h-3 animate-pulse rounded bg-zinc-200/80"
+                className="h-3 animate-pulse rounded bg-accent"
                 style={{ width: `${78 - i * 6}%` }}
               />
             ))}
@@ -213,7 +213,7 @@ export function AnalyticsAiInsightCard({
         ) : data?.bullets?.length ? (
           <ul
             className={cn(
-              'list-disc space-y-1.5 pl-4 text-zinc-700',
+              'list-disc space-y-1.5 pl-4 text-foreground/90',
               compact ? 'text-xs' : 'text-sm'
             )}
           >
@@ -224,7 +224,7 @@ export function AnalyticsAiInsightCard({
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-zinc-500">No suggestions yet.</p>
+          <p className="text-xs text-muted-foreground">No suggestions yet.</p>
         )}
       </div>
 
@@ -238,7 +238,7 @@ export function AnalyticsAiInsightCard({
             aria-hidden={!expanded}
           >
             <div className="min-h-0 overflow-hidden">
-              <div className="border-t border-zinc-100 px-2 py-3 sm:px-4">
+              <div className="border-t border-border px-2 py-3 sm:px-4">
                 {expanded ? (
                   <AnalyticsStructuredInsightsPanel
                     platform={platform}
@@ -253,7 +253,7 @@ export function AnalyticsAiInsightCard({
               </div>
             </div>
           </div>
-          <div className="mt-auto  flex justify-end border-t border-zinc-100/80 px-4 py-2">
+          <div className="mt-auto flex justify-end border-t border-border/60 px-4 py-2">
             {(() => {
               // Plan IDs are `{tier}-{mode}` after the Phase 1 6-plan
               // split; both legacy variants unlock the "View more"

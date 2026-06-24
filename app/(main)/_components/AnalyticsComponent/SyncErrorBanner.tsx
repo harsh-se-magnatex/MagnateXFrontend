@@ -47,7 +47,7 @@ export function SyncErrorBanner({ platform, status, error, lastSyncAt }: Props) 
   return (
     <div
       role="alert"
-      className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-sm"
+      className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 shadow-sm"
     >
       <AlertTriangle
         className="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
@@ -58,7 +58,7 @@ export function SyncErrorBanner({ platform, status, error, lastSyncAt }: Props) 
           {platform} analytics didn’t refresh
           {when ? <span className="font-normal"> · last tried {when}</span> : null}
         </p>
-        <p className="font-mono text-xs leading-relaxed text-amber-800 break-all">
+        <p className="font-mono text-xs leading-relaxed text-amber-200 break-all">
           {message}
         </p>
       </div>

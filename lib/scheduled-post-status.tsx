@@ -135,23 +135,23 @@ export function getDisplayStatus(post: ScheduledPostStatusInput): DisplayStatus 
 export function statusBadgeClasses(variant: DisplayStatusVariant): string {
   switch (variant) {
     case 'failed':
-      return 'bg-red-50 text-red-700 border-red-200';
+      return 'bg-red-500/15 text-red-300 border-red-500/30';
     case 'posted':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
     case 'approved':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
     case 'processing':
-      return 'bg-amber-50 text-amber-800 border-amber-200';
+      return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
     case 'rejected':
-      return 'bg-rose-50 text-rose-700 border-rose-200';
+      return 'bg-rose-500/15 text-rose-300 border-rose-500/30';
     case 'removedByYou':
-      return 'bg-slate-100 text-slate-700 border-slate-300';
+      return 'bg-muted text-muted-foreground border-border';
     case 'removedByAdmin':
-      return 'bg-zinc-100 text-zinc-700 border-zinc-300';
+      return 'bg-muted text-muted-foreground border-border';
     case 'pendingByYou':
-      return 'bg-sky-50 text-sky-800 border-sky-200';
+      return 'bg-sky-500/15 text-sky-300 border-sky-500/30';
     case 'pendingByAdmin':
-      return 'bg-indigo-50 text-indigo-800 border-indigo-200';
+      return 'bg-primary/15 text-primary border-primary/30';
   }
 }
 

@@ -20,7 +20,7 @@ import {
   useNotificationCounts,
 } from './NotificationCountsProvider';
 import { logoutUser } from '@/features/user/api';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTourDemo } from '@/src/stores/tourState';
 import {
   AlertDialog,
@@ -45,7 +45,6 @@ const topNav = [
 export function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading: authLoading, accountName } = useAuth();
   const { billing } = useUserPlanCredits();
   const { total: notificationTotal, cap: notificationCap } =
     useNotificationCounts();
@@ -61,19 +60,6 @@ export function TopNav() {
   // finishes or is closed, `isTourDemo` flips off and the pill disappears.
   const showUpgradeCta = isTourDemo;
 
-  const displayName = useMemo(() => {
-    const raw =
-      accountName?.trim() ||
-      user?.displayName?.trim() ||
-      user?.email?.split('@')[0] ||
-      (user?.phoneNumber
-        ? `…${user.phoneNumber.replace(/\D/g, '').slice(-4)}`
-        : '') ||
-      'there';
-    return raw;
-  }, [user, accountName]);
-
-
   const handleSignOut = async () => {
     setSignOutLoading(true);
     try {
@@ -86,7 +72,7 @@ export function TopNav() {
 
   return (
     <>
-    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-card/75 backdrop-blur-xl">
       <div className="grid h-14 w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-3 sm:px-4">
         <div className="flex min-w-0 items-center gap-3">
           <SidebarInset className="bg-transparent">
@@ -94,14 +80,6 @@ export function TopNav() {
               <SidebarTrigger className="text-muted-foreground transition-colors hover:text-foreground" />
             </div>
           </SidebarInset>
-          {!authLoading && (
-          <p className="min-w-0 sm:flex hidden truncate text-sm font-medium leading-none">
-            <span className="text-muted-foreground">Hello,</span>
-            <span className="font-semibold tracking-tight text-foreground">
-            &nbsp; {displayName}
-            </span>
-          </p>
-          )}
         </div>
 
         {!accountFrozen && (

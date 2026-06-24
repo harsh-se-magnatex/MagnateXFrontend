@@ -39,9 +39,6 @@ import {
 } from '@/src/service/api/generated-media-library.service';
 import { Button } from '@/components/ui/button';
 import { DownloadPngButton } from '@/components/download-png-button';
-// EDIT_PHOTO_DISABLED
-// import { GeneratedCreativeActions } from '@/components/creative-editor/GeneratedCreativeActions';
-// import type { CreativeDesignDocument } from '@/lib/creative-design/types';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -161,12 +158,12 @@ function DetailRow({
 }) {
   return (
     <div className={long ? 'min-w-0' : undefined}>
-      <p className="text-xs font-medium text-slate-500 mb-0.5">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground mb-0.5">{label}</p>
       <p
         className={
           long
-            ? 'text-sm text-slate-800 min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
-            : 'text-sm text-slate-800'
+            ? 'text-sm text-foreground min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
+            : 'text-sm text-foreground'
         }
       >
         {value}
@@ -211,17 +208,17 @@ function MediaDetailModal({
       aria-labelledby="media-detail-modal-title"
     >
       <div
-        className="rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
+        className="rounded-2xl border border-border bg-card text-foreground shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 p-4 border-b border-slate-200 flex items-center justify-between gap-3">
+        <div className="shrink-0 p-4 border-b border-border flex items-center justify-between gap-3">
           <h2 id="media-detail-modal-title" className="text-lg font-semibold">
             Media details
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/40"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             aria-label="Close"
           >
             <svg
@@ -242,32 +239,24 @@ function MediaDetailModal({
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-10 space-y-4 overscroll-contain">
           {url ? (
             <div>
-              <p className="text-xs font-medium text-slate-500 mb-1">Image</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Image</p>
               <button
                 type="button"
                 onClick={() => onPreviewImage(url, 'Gallery image')}
-                className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]"
+                className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Open image preview"
               >
                 <img
                   src={url}
                   alt=""
-                  className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
+                  className="w-full max-h-64 object-contain rounded-xl bg-muted border border-border transition-transform duration-200 group-hover:scale-[1.01]"
                 />
               </button>
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
                 <ImagePreviewButton
                   onClick={() => onPreviewImage(url, 'Gallery image')}
-                  className="rounded-lg bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100 px-4 py-2"
+                  className="rounded-lg border border-primary/30 bg-card text-primary hover:bg-primary/10 hover:opacity-100 px-4 py-2"
                 />
-                {/* EDIT_PHOTO_DISABLED
-                <GeneratedCreativeActions
-                  designJson={item.designJson as CreativeDesignDocument | undefined}
-                  caption={item.caption}
-                  platform={item.platform}
-                  scheduledPostId={item.scheduledPostId}
-                />
-                */}
                 <DownloadPngButton
                   url={url}
                   getFilename={() =>
@@ -277,7 +266,7 @@ function MediaDetailModal({
                 {canSchedule ? (
                   <Button
                     type="button"
-                    className="rounded-lg bg-gradient-primary text-white shadow-lg shadow-[#4A8FF6]/20"
+                    className="rounded-lg bg-gradient-primary text-white shadow-lg shadow-primary/20"
                     onClick={onSchedule}
                   >
                     <Calendar className="mr-2 h-4 w-4" />
@@ -290,7 +279,7 @@ function MediaDetailModal({
                   href={url}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-[#4A8FF6]/20"
+                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-primary/20"
                 >
                   Open in new tab
                   <ExternalLink className="h-4 w-4" />
@@ -298,7 +287,7 @@ function MediaDetailModal({
               </div>
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-600">
+            <div className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-sm text-muted-foreground">
               Preview unavailable. Refresh the library or regenerate if the file
               was removed.
             </div>
@@ -439,39 +428,39 @@ function CampaignDraftScheduleModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"
+        className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h3
           id="campaign-draft-schedule-title"
-          className="text-base font-semibold text-slate-900"
+          className="text-base font-semibold text-foreground"
         >
           Schedule campaign draft
         </h3>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           The date was locked when you created the campaign. Pick a time of day
           and we&apos;ll queue it for publishing.
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            Date <span className="ml-1 normal-case text-slate-400">(locked)</span>
+          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Date <span className="ml-1 normal-case text-muted-foreground/70">(locked)</span>
             <input
               type="date"
               value={targetDate}
               disabled
               readOnly
               aria-readonly="true"
-              className="mt-1 rounded-lg border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs font-medium text-slate-600 cursor-not-allowed"
+              className="mt-1 rounded-lg border border-border bg-muted px-2 py-1.5 text-xs font-medium text-muted-foreground cursor-not-allowed"
             />
           </label>
-          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Time
             <input
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="mt-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              className="mt-1 rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none"
             />
           </label>
         </div>
@@ -481,7 +470,7 @@ function CampaignDraftScheduleModal({
             type="button"
             onClick={onClose}
             disabled={scheduling}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-60"
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
           >
             Cancel
           </button>
@@ -640,8 +629,7 @@ export default function MediaLibraryPage() {
           {workspacePageTitle(WORKSPACE_NAV_HREFS.gallery)}
         </h1>
         <p className="text-sm text-muted-foreground max-w-2xl">
-          A single place for images produced across quick create, batch
-          workflow, and product ads. Each quick-create or product-ad image can be
+          A single place for images produced across SocioGenie. Each quick-create or product-ad image can be
           scheduled once from the gallery. Links expire after about an hour—refresh
           if an image stops loading.
         </p>
@@ -754,13 +742,13 @@ export default function MediaLibraryPage() {
                   }
                 }}
                 className={cn(
-                  'group relative flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm',
+                  'group relative flex min-w-0 flex-col rounded-2xl border border-border bg-card p-4 shadow-sm',
                   'transition-all duration-300 cursor-pointer',
-                  'hover:border-[#4A8FF6]/35 hover:bg-slate-50/80',
-                  'hover:shadow-md hover:shadow-slate-200/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]/30'
+                  'hover:border-primary/35 hover:bg-accent/40',
+                  'hover:shadow-md hover:shadow-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
                 )}
               >
-                <div className="relative mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 aspect-4/3">
+                <div className="relative mb-3 overflow-hidden rounded-xl border border-border bg-muted aspect-4/3">
                   {url ? (
                     <img
                       src={url}
@@ -769,9 +757,9 @@ export default function MediaLibraryPage() {
                       loading="lazy"
                     />
                   ) : (
-                    <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-4 text-center text-sm text-slate-500">
+                    <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground">
                       <ImageOff
-                        className="h-8 w-8 text-slate-400"
+                        className="h-8 w-8 text-muted-foreground/70"
                         aria-hidden
                       />
                       <span>Preview unavailable</span>
@@ -789,42 +777,42 @@ export default function MediaLibraryPage() {
                   {generatedBy ? (
                     <div className="absolute right-2 top-2 max-w-[60%]">
                       <span
-                        className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 shadow-sm backdrop-blur"
+                        className="inline-flex items-center gap-1 rounded-md border border-border bg-card/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm backdrop-blur"
                         title={`Generated by: ${generatedBy}`}
                       >
-                        <Sparkles className="h-3 w-3 text-[#4A8FF6]" />
+                        <Sparkles className="h-3 w-3 text-primary" />
                         <span className="truncate">{generatedBy}</span>
                       </span>
                     </div>
                   ) : null}
                 </div>
 
-                <p className="line-clamp-3 text-sm font-medium leading-snug text-slate-900">
+                <p className="line-clamp-3 text-sm font-medium leading-snug text-foreground">
                   {captionLabel ? (
                     captionLabel
                   ) : (
-                    <span className="text-slate-400 italic">No caption</span>
+                    <span className="text-muted-foreground italic">No caption</span>
                   )}
                 </p>
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-500">
+                <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-[#4A8FF6]" />
+                    <Calendar className="h-3.5 w-3.5 text-primary" />
                     <span className="truncate">{whenLabel}</span>
                   </span>
                   {item.platform ? (
                     <>
-                      <span className="text-slate-400">·</span>
-                      <span className="capitalize text-slate-500">
+                      <span className="text-muted-foreground/60">·</span>
+                      <span className="capitalize text-muted-foreground">
                         {item.platform.replace(/_/g, ' ')}
                       </span>
                     </>
                   ) : null}
                   {item.creditsCharged != null && item.creditsCharged > 0 ? (
                     <>
-                      <span className="text-slate-400">·</span>
+                      <span className="text-muted-foreground/60">·</span>
                       <span
-                        className="tabular-nums text-slate-500"
+                        className="tabular-nums text-muted-foreground"
                         title="Credits charged for this generation"
                       >
                         {item.creditsCharged}{' '}
@@ -836,15 +824,15 @@ export default function MediaLibraryPage() {
 
                 <div className="mt-2 space-y-1">
                   {canSchedule ? (
-                    <p className="text-[11px] font-medium text-[#4A8FF6]">
+                    <p className="text-[11px] font-medium text-primary">
                       Ready to schedule
                     </p>
                   ) : item.earlierScheduled ? (
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-muted-foreground">
                       Already scheduled
                     </p>
                   ) : null}
-                  <p className="text-[11px] text-slate-400 group-hover:text-slate-500">
+                  <p className="text-[11px] text-muted-foreground/70 group-hover:text-muted-foreground">
                     Click for full details
                   </p>
                 </div>

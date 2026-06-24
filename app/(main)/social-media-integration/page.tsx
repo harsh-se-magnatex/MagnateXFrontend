@@ -549,7 +549,7 @@ export default function ConnectedPlatformsPage() {
                     <Card
                       key={platform.id}
                       className={cn(
-                        'flex h-full flex-col border-slate-200/80 py-0 shadow-sm transition-[box-shadow,ring-color] duration-200 hover:shadow-md hover:ring-slate-300/40',
+                        'flex h-full flex-col border-border/60 py-0 shadow-sm transition-[box-shadow,ring-color] duration-200 hover:shadow-md hover:ring-border',
                         connected &&
                           'ring-1 ring-emerald-500/15 hover:ring-emerald-500/25',
                         singleOffCenterTier2 &&
@@ -558,7 +558,7 @@ export default function ConnectedPlatformsPage() {
                           'lg:col-span-3 sm:mx-auto sm:w-full sm:max-w-md lg:max-w-md'
                       )}
                     >
-                      <CardHeader className="flex-1 gap-4 border-b border-slate-100/80 px-5 pb-4 pt-5">
+                      <CardHeader className="flex-1 gap-4 px-5 pb-4 pt-5">
                         <div className="flex gap-4">
                           <div
                             className={cn(
@@ -617,7 +617,7 @@ export default function ConnectedPlatformsPage() {
                           </div>
                         </div>
                       </CardHeader>
-                      <CardFooter className="flex-col gap-2 border-slate-100/80 bg-slate-50/40 px-5 py-4 sm:flex-row sm:justify-end">
+                      <CardFooter className="flex-col gap-2 border-t border-border/50 bg-muted/20 px-5 py-4 sm:flex-row sm:justify-end">
                         {connected ? (
                           <div className='w-full flex items-center justify-between'>
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-2 text-xs font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-600/20">
@@ -631,7 +631,7 @@ export default function ConnectedPlatformsPage() {
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="w-full border-slate-200 text-slate-700 hover:bg-white hover:text-slate-900 sm:w-auto sm:min-w-36"
+                              className="w-full border-border text-foreground hover:bg-accent hover:text-foreground sm:w-auto sm:min-w-36"
                               onClick={() => handleDisconnect(platform.id)}
                             >
                               Remove connection

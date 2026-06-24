@@ -22,19 +22,19 @@ export function IgMetricTile({
     delta?: number | null;
   }) {
     return (
-      <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium text-zinc-500">{label}</p>
+          <p className="text-sm font-medium text-muted-foreground">{label}</p>
           <Icon className="h-5 w-5 shrink-0 text-pink-400" aria-hidden />
         </div>
         <div className="mt-2 flex items-center gap-2">
-          <p className="text-2xl font-semibold tabular-nums text-zinc-900">
+          <p className="text-2xl font-semibold tabular-nums text-foreground">
             {value}
           </p>
           {delta !== undefined ? <DeltaBadge pct={delta} /> : null}
         </div>
         {delta !== undefined ? (
-          <p className="mt-0.5 text-[10px] uppercase tracking-wide text-zinc-400">
+          <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
             vs last week
           </p>
         ) : null}
@@ -60,13 +60,13 @@ export function IgMetricTile({
     const isStory = post.mediaType === 'STORY';
   
     return (
-      <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+      <article className="overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
         <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-stretch">
           {post.mediaUrl ? (
             <button
               type="button"
               onClick={() => onExpand?.(post)}
-              className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-lg border-0 bg-zinc-100 p-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-400 sm:h-auto sm:w-40"
+              className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-lg border-0 bg-muted p-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/40 sm:h-auto sm:w-40"
               aria-label="Open media preview"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -77,16 +77,16 @@ export function IgMetricTile({
               />
             </button>
           ) : (
-            <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 sm:h-auto sm:w-40">
+            <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground sm:h-auto sm:w-40">
               <ImageIcon className="h-10 w-10" aria-hidden />
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-500">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-pink-100 text-pink-800">
                 {rank}
               </span>
-              <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 font-mono text-[10px] uppercase text-zinc-700">
+              <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase text-foreground">
                 {post.mediaType}
               </span>
               {fmtTimestamp(post.timestamp as TimestampInput, {
@@ -105,63 +105,63 @@ export function IgMetricTile({
                 </a>
               ) : null}
             </div>
-            <p className="mt-2 line-clamp-3 text-sm text-zinc-800">
+            <p className="mt-2 line-clamp-3 text-sm text-foreground">
               {preview}
               {ellipsis}
             </p>
-            <dl className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-600">
+            <dl className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <div>
-                <dt className="inline text-zinc-500">Likes </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-900">
+                <dt className="inline text-muted-foreground">Likes </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.likes)}
                 </dd>
               </div>
               <div>
-                <dt className="inline text-zinc-500">Comments </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-900">
+                <dt className="inline text-muted-foreground">Comments </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.comments)}
                 </dd>
               </div>
               <div>
-                <dt className="inline text-zinc-500">Saved </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-900">
+                <dt className="inline text-muted-foreground">Saved </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.saved)}
                 </dd>
               </div>
               <div>
-                <dt className="inline text-zinc-500">Shares </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-900">
+                <dt className="inline text-muted-foreground">Shares </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.shares)}
                 </dd>
               </div>
               <div>
-                <dt className="inline text-zinc-500">Score </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-900">
+                <dt className="inline text-muted-foreground">Score </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.engagementScore)}
                 </dd>
               </div>
               <div>
-                <dt className="inline text-zinc-500">Rate </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-900">
+                <dt className="inline text-muted-foreground">Rate </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {Number(post.engagementRate).toFixed(1)}%
                 </dd>
               </div>
               <div>
-                <dt className="inline text-zinc-500">Reach </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-900">
+                <dt className="inline text-muted-foreground">Reach </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.reach)}
                 </dd>
               </div>
               <div>
-                <dt className="inline text-zinc-500">Views </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-900">
+                <dt className="inline text-muted-foreground">Views </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.views)}
                 </dd>
               </div>
               {post.mediaType === 'REELS' && post.avgWatchTime > 0 ? (
                 <div>
-                  <dt className="inline text-zinc-500">Avg watch </dt>
-                  <dd className="inline font-medium tabular-nums text-zinc-900">
+                  <dt className="inline text-muted-foreground">Avg watch </dt>
+                  <dd className="inline font-medium tabular-nums text-foreground">
                     {formatWatchSeconds(post.avgWatchTime)}
                   </dd>
                 </div>
@@ -169,26 +169,26 @@ export function IgMetricTile({
               {isStory ? (
                 <>
                   <div>
-                    <dt className="inline text-zinc-500">Replies </dt>
-                    <dd className="inline font-medium tabular-nums text-zinc-900">
+                    <dt className="inline text-muted-foreground">Replies </dt>
+                    <dd className="inline font-medium tabular-nums text-foreground">
                       {formatCompact(post.replies)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="inline text-zinc-500">Fwd taps </dt>
-                    <dd className="inline font-medium tabular-nums text-zinc-900">
+                    <dt className="inline text-muted-foreground">Fwd taps </dt>
+                    <dd className="inline font-medium tabular-nums text-foreground">
                       {formatCompact(post.tapsForward)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="inline text-zinc-500">Back taps </dt>
-                    <dd className="inline font-medium tabular-nums text-zinc-900">
+                    <dt className="inline text-muted-foreground">Back taps </dt>
+                    <dd className="inline font-medium tabular-nums text-foreground">
                       {formatCompact(post.tapsBack)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="inline text-zinc-500">Exits </dt>
-                    <dd className="inline font-medium tabular-nums text-zinc-900">
+                    <dt className="inline text-muted-foreground">Exits </dt>
+                    <dd className="inline font-medium tabular-nums text-foreground">
                       {formatCompact(post.exits)}
                     </dd>
                   </div>
@@ -225,7 +225,7 @@ export function IgMetricTile({
           className="max-h-[90vh] max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden p-0 sm:max-w-2xl lg:max-w-3xl"
         >
           <div className="max-h-[inherit] overflow-y-auto">
-            <div className="flex max-h-[min(70vh,720px)] items-center justify-center bg-zinc-950/5">
+            <div className="flex max-h-[min(70vh,720px)] items-center justify-center bg-background/40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={post.mediaUrl}
@@ -233,8 +233,8 @@ export function IgMetricTile({
                 className="h-auto max-h-[min(70vh,720px)] w-full object-contain"
               />
             </div>
-            <DialogHeader className="gap-2 border-t border-zinc-200 p-4 text-left sm:p-5">
-              <DialogTitle className="text-base text-zinc-900">
+            <DialogHeader className="gap-2 border-t border-border p-4 text-left sm:p-5">
+              <DialogTitle className="text-base text-foreground">
                 {post.mediaType} · Instagram
               </DialogTitle>
               <DialogDescription className="sr-only">
@@ -251,7 +251,7 @@ export function IgMetricTile({
                   <ExternalLink className="h-3 w-3" aria-hidden />
                 </a>
               ) : null}
-              <p className="text-sm leading-relaxed whitespace-pre-wrap text-zinc-800">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap text-foreground">
                 {post.caption?.trim() || 'No caption'}
               </p>
               {aiFooter}

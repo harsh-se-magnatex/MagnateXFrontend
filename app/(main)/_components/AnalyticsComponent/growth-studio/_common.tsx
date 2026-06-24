@@ -16,31 +16,31 @@ import { cn } from '@/lib/utils';
 export type Accent = 'amber' | 'sky' | 'emerald' | 'violet';
 
 const ACCENT_BORDER: Record<Accent, string> = {
-  amber: 'border-amber-200',
-  sky: 'border-sky-200',
-  emerald: 'border-emerald-200',
-  violet: 'border-violet-200',
+  amber: 'border-amber-500/30',
+  sky: 'border-sky-500/30',
+  emerald: 'border-emerald-500/30',
+  violet: 'border-violet-500/30',
 };
 
 const ACCENT_BG: Record<Accent, string> = {
-  amber: 'bg-amber-50/60',
-  sky: 'bg-sky-50/60',
-  emerald: 'bg-emerald-50/60',
-  violet: 'bg-violet-50/60',
+  amber: 'bg-amber-500/10',
+  sky: 'bg-sky-500/10',
+  emerald: 'bg-emerald-500/10',
+  violet: 'bg-violet-500/10',
 };
 
 const ACCENT_ICON_BG: Record<Accent, string> = {
-  amber: 'bg-amber-100',
-  sky: 'bg-sky-100',
-  emerald: 'bg-emerald-100',
-  violet: 'bg-violet-100',
+  amber: 'bg-amber-500/20',
+  sky: 'bg-sky-500/20',
+  emerald: 'bg-emerald-500/20',
+  violet: 'bg-violet-500/20',
 };
 
 const ACCENT_ICON: Record<Accent, string> = {
-  amber: 'text-amber-700',
-  sky: 'text-sky-700',
-  emerald: 'text-emerald-700',
-  violet: 'text-violet-700',
+  amber: 'text-amber-300',
+  sky: 'text-sky-300',
+  emerald: 'text-emerald-300',
+  violet: 'text-violet-300',
 };
 
 export function PlaceholderShell({
@@ -79,15 +79,15 @@ export function PlaceholderShell({
             <Icon className={cn('h-4 w-4', ACCENT_ICON[accent])} />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-zinc-900">{title}</p>
-            <p className="text-xs leading-relaxed text-zinc-600">
+            <p className="text-sm font-semibold text-foreground">{title}</p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
               {description}
             </p>
           </div>
         </div>
         <Badge
           variant="outline"
-          className="shrink-0 bg-white/70 text-[10px] font-medium uppercase tracking-wide text-zinc-500"
+          className="shrink-0 bg-card/70 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
         >
           Coming soon
         </Badge>

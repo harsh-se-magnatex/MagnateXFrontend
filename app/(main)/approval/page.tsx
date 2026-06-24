@@ -31,6 +31,7 @@ import {
 } from '@/components/image-preview';
 import {
   SCHEDULED_POST_REGENERATE_CREDIT,
+  canScheduledPostRegenerate,
   willScheduledPostRegenChargeCredits,
 } from '@/lib/scheduled-post-regenerate';
 import { useScheduledPostRegenJob, parseRegenJobFromResponse } from '@/src/hooks/useScheduledPostRegenJob';
@@ -84,6 +85,7 @@ function ApprovalActionButtons({
   stopPropagation,
   disabled,
   regenChargesCredits,
+  showRegenerate = true,
 }: {
   size: 'card' | 'modal';
   onRegenerate?: () => void;
@@ -94,6 +96,7 @@ function ApprovalActionButtons({
   /** When true, the next regen will deduct credits — surface that on the
    *  button so the user isn't surprised after clicking. */
   regenChargesCredits?: boolean;
+  showRegenerate?: boolean;
 }) {
   const handle = (fn: (() => void) | undefined, e: MouseEvent) => {
     if (disabled) return;
@@ -109,30 +112,32 @@ function ApprovalActionButtons({
       className={`flex items-center gap-3 ${!isCard ? 'flex-wrap' : 'flex-wrap'}`}
       aria-busy={disabled ? true : undefined}
     >
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={(e) => handle(onRegenerate, e)}
-        title={
-          regenChargesCredits
-            ? `Next regeneration will deduct ${SCHEDULED_POST_REGENERATE_CREDIT} credit`
-            : undefined
-        }
-        className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500 ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
-      >
-        <span>Regenerate {!regenChargesCredits && 'Free'}</span>
-        {regenChargesCredits ? (
-          <span
-            className={
-              isCard
-                ? 'max-w-44 text-[9px] font-normal leading-snug text-amber-900/90'
-                : 'max-w-56 text-[11px] font-normal leading-snug text-amber-900/90'
-            }
-          >
-            {`${SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted`}
-          </span>
-        ) : null}
-      </button>
+      {showRegenerate ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={(e) => handle(onRegenerate, e)}
+          title={
+            regenChargesCredits
+              ? `Next regeneration will deduct ${SCHEDULED_POST_REGENERATE_CREDIT} credit`
+              : undefined
+          }
+          className={`${btn} bg-amber-200 text-neutral-900 cursor-pointer  hover:bg-amber-200 focus:ring-amber-500 ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
+        >
+          <span>Regenerate {!regenChargesCredits && 'Free'}</span>
+          {regenChargesCredits ? (
+            <span
+              className={
+                isCard
+                  ? 'max-w-44 text-[9px] font-normal leading-snug text-neutral-900 '
+                  : 'max-w-56 text-[11px] font-normal leading-snug text-neutral-900 '
+              }
+            >
+              {`${SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted`}
+            </span>
+          ) : null}
+        </button>
+      ) : null}
       <button
         type="button"
         disabled={disabled}
@@ -145,7 +150,7 @@ function ApprovalActionButtons({
         type="button"
         disabled={disabled}
         onClick={(e) => handle(onReject, e)}
-        className={`${btn} bg-red-100 text-red-800 hover:bg-red-200 focus:ring-red-500`}
+        className={`${btn} bg-red-300 text-red-900 cursor-pointer hover:bg-red-200 focus:ring-red-500`}
       >
         Reject
       </button>
@@ -182,6 +187,7 @@ function PendingPostCard({
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
+  const showRegenerate = canScheduledPostRegenerate(post);
   return (
     <div
       ref={cardRef}
@@ -301,6 +307,7 @@ function PendingPostCard({
           size="card"
           stopPropagation
           disabled={actionDisabled || isRegenerating}
+          showRegenerate={showRegenerate}
           onRegenerate={onRegenerate}
           onAccept={onAccept}
           onReject={onReject}
@@ -363,6 +370,7 @@ function DetailModal({
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
+  const showRegenerate = canScheduledPostRegenerate(post);
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
@@ -486,6 +494,7 @@ function DetailModal({
             <ApprovalActionButtons
               size="modal"
               disabled={actionLoading}
+              showRegenerate={showRegenerate}
               onRegenerate={() =>
                 onAction(post.postId, 'regenerate', post.platform)
               }

@@ -41,16 +41,20 @@ function AlertItem({
   onSelect,
 }: AlertItemProps) {
   const badge = formatNotificationCount(count, cap);
+  const hasUnread = !countsLoading && count > 0;
   return (
     <button
       type="button"
       onClick={() => onSelect(href)}
-      className="group flex w-full items-start gap-4 py-5 hover:bg-slate-50/80 px-4 -mx-4 rounded-2xl transition-colors text-left"
+      className={cn(
+        'group flex w-full items-start gap-4 py-5 hover:bg-accent/40 px-4 -mx-4 rounded-2xl transition-colors text-left',
+        hasUnread && 'ring-1 ring-indigo-400/50'
+      )}
     >
       <div
         className={cn(
           'p-2 rounded-lg transition-colors mt-0.5',
-          'bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100'
+          'bg-primary/10 text-primary group-hover:bg-primary/15'
         )}
       >
         <Icon className="h-5 w-5" />
@@ -146,7 +150,7 @@ export default function NotificationsSettingsPage() {
             </button>
           </div>
 
-          <div className="divide-y divide-slate-100/80">
+          <div className="divide-y divide-border/60">
             <AlertItem
               icon={Mail}
               label="Account alerts"

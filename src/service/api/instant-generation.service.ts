@@ -60,9 +60,6 @@ export async function generateInstantPostsBatchApi(params: {
  */
 export type AiEngineDateSource = 'ai-engine' | 'campaign';
 
-// EDIT_PHOTO_DISABLED
-// import type { CreativeDesignDocument } from '@/lib/creative-design/types';
-
 export type AiEngineDateStatusRow = {
   date: string;
   exists: boolean;
@@ -73,17 +70,10 @@ export type AiEngineDateStatusRow = {
   post?: {
     postId: string;
     message?: string | null;
-    // caption?: string | null;
     imageFilePath?: string | null;
     imageUrl?: string | null;
     postStatus?: string | null;
     removedByUser?: boolean;
-    // designJson?: CreativeDesignDocument | null;
-    // backgroundUrl?: string | null;
-    // previewImageUrl?: string | null;
-    // logoUrl?: string | null;
-    // canvasWidth?: number | null;
-    // canvasHeight?: number | null;
   } | null;
 };
 

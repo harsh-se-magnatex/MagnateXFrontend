@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
+import { HashLink } from '@/components/shared/HashLink';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -109,13 +110,23 @@ export function Footer() {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <Link
-                      href={link.href}
-                      className="group flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
-                    >
-                      {link.label}
-                      <ArrowUpRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-                    </Link>
+                    {link.href.includes('#') ? (
+                      <HashLink
+                        href={link.href}
+                        className="group flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
+                      >
+                        {link.label}
+                        <ArrowUpRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                      </HashLink>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="group flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200"
+                      >
+                        {link.label}
+                        <ArrowUpRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -141,8 +152,8 @@ export function Footer() {
                 href={link.href}
                 className={
                   link.accent === 'facebook'
-                    ? 'group inline-flex items-center justify-center gap-2 rounded-xl border-2 border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 transition-all hover:border-blue-300 hover:bg-blue-100 hover:shadow-sm'
-                    : 'group inline-flex items-center justify-center gap-2 rounded-xl border-2 border-pink-200 bg-pink-50 px-5 py-3 text-sm font-semibold text-pink-700 transition-all hover:border-pink-300 hover:bg-pink-100 hover:shadow-sm'
+                    ? 'group inline-flex items-center justify-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/10 px-5 py-3 text-sm font-semibold text-blue-300 transition-all hover:border-blue-400/50 hover:bg-blue-500/15'
+                    : 'group inline-flex items-center justify-center gap-2 rounded-xl border border-pink-500/30 bg-pink-500/10 px-5 py-3 text-sm font-semibold text-pink-300 transition-all hover:border-pink-400/50 hover:bg-pink-500/15'
                 }
               >
                 {link.label}
@@ -157,9 +168,6 @@ export function Footer() {
           className="pt-8 border-t border-border/50 flex flex-col gap-4 text-xs text-muted-foreground font-(--font-dm-sans) leading-relaxed"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <p>
-              Plans from $24.99/month · No contracts · Cancel anytime
-            </p>
             <p>
               © {new Date().getFullYear()} MAGNATEX LLP. All rights reserved.
             </p>
@@ -179,7 +187,7 @@ export function Footer() {
               >
                 founder@magnatex.co
               </a>{' '}
-              · Mon–Fri 09:00–18:00 IST.
+              · Mon–Fri 10:00–19:00 IST.
             </p>
             <p className="mt-2">
               Payments are processed by Dodo Payments Inc. (Merchant of Record)

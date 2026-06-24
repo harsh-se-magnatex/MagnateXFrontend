@@ -94,9 +94,8 @@ export default function RootLayout({
         <meta property="fb:app_id" content="949135284535930" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen relative`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased text-foreground min-h-screen relative`}
       >
-        <div className="fixed inset-0 z-[-1] bg-background pattern-grid opacity-60" />
         {children}
         <Toaster />
         <AnalyticsProvider />

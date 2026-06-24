@@ -29,7 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { scrapeUrl } from '@/src/service/api/scrape';
+import { scrapeUrl, extractCatalogPdf } from '@/src/service/api/scrape';
 import {
   onBoardUser,
   suggestOnboardingBrandCopy,
@@ -60,9 +60,9 @@ type Question = {
 const questions: Question[] = [
   {
     name: 'website',
-    label: 'Website URL',
+    label: 'Get started',
     description:
-      "Paste your site and we'll try to fill in the rest of the form for you.",
+      "Paste your website URL or upload a catalog PDF — we'll try to fill in the rest of the form for you.",
     placeholder: 'https://yourbrand.com',
     type: 'text',
     icon: Globe,
@@ -202,6 +202,31 @@ function parseHashtagTokens(raw: unknown): string[] {
     .filter(Boolean);
 }
 
+type SourceMode = 'website' | 'catalog';
+
+function mergeDnaIntoForm(
+  dnaFields: Record<string, unknown>
+): Record<string, unknown> {
+  const flat = { ...dnaFields };
+
+  if (typeof flat.businesscontact === 'number') {
+    flat.businesscontact = String(flat.businesscontact);
+  }
+
+  if (
+    Array.isArray(flat.recommendedHashtags) &&
+    !flat.hashtags &&
+    flat.recommendedHashtags.length
+  ) {
+    flat.hashtags = (flat.recommendedHashtags as string[])
+      .map((t) => String(t).replace(/^#+/, '').trim())
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  return flat;
+}
+
 function normalizeHashtagKey(t: string): string {
   return t.replace(/^#+/, '').trim().toLowerCase();
 }
@@ -209,6 +234,8 @@ function normalizeHashtagKey(t: string): string {
 export default function OnboardingMenu() {
   const [step, setStep] = useState<number>(0);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const [sourceMode, setSourceMode] = useState<SourceMode>('website');
+  const [catalogFile, setCatalogFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fetchingBusinessData, setFetchingBusinessData] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -340,18 +367,23 @@ export default function OnboardingMenu() {
     else void handleNext();
   };
 
-  const fetchOnboarding = async (name: string) => {
-    if (name === 'website') {
+  const fetchOnboarding = async (mode: SourceMode) => {
+    if (mode === 'website') {
+      const url = String(formData.website ?? '').trim();
+      if (!url) return;
       setFetchingBusinessData(true);
       try {
-        const response = await scrapeUrl(String(formData.website ?? ''));
+        const response = await scrapeUrl(url) as {
+          data?: { dna?: Record<string, unknown> };
+          dna?: Record<string, unknown>;
+        };
         const payload = response.data ?? response;
         const dnaFields =
           (payload as { dna?: Record<string, unknown> }).dna ?? payload;
-        const flat: Record<string, unknown> = {
-          ...(dnaFields as Record<string, unknown>),
-        };
-        setFormData((prev) => ({ ...prev, ...flat }));
+        setFormData((prev) => ({
+          ...prev,
+          ...mergeDnaIntoForm(dnaFields as Record<string, unknown>),
+        }));
       } catch (error) {
         showErrorToast(
           error instanceof Error
@@ -361,10 +393,74 @@ export default function OnboardingMenu() {
       } finally {
         setFetchingBusinessData(false);
       }
+      return;
+    }
+
+    if (!catalogFile) return;
+    setFetchingBusinessData(true);
+    try {
+      const response = await extractCatalogPdf(catalogFile);
+      const envelope = response as {
+        data?: { dna?: Record<string, unknown>; warnings?: string[] };
+        dna?: Record<string, unknown>;
+      };
+      const payload = envelope.data ?? envelope;
+      const dnaFields =
+        (payload as { dna?: Record<string, unknown> }).dna ?? payload;
+      const merged = mergeDnaIntoForm(dnaFields as Record<string, unknown>);
+      setFormData((prev) => ({ ...prev, ...merged }));
+      const tags = merged.recommendedHashtags;
+      const slogans = merged.recommendedSlogans;
+      if (Array.isArray(tags) && Array.isArray(slogans) && tags.length && slogans.length) {
+        setCopySuggestions({
+          hashtags: tags.map((t) => String(t)),
+          slogans: slogans.map((s) => String(s)),
+        });
+        hashtagSuggestStartedRef.current = true;
+      }
+      const apiWarnings = (payload as { warnings?: string[] }).warnings;
+      if (apiWarnings?.length) {
+        console.warn('[onboarding] catalog extract warnings:', apiWarnings);
+      }
+    } catch (error) {
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : 'Failed to extract business data from catalog'
+      );
+      throw error;
+    } finally {
+      setFetchingBusinessData(false);
     }
   };
 
   const current = questions[step];
+
+  const handleStepNext = async () => {
+    if (current.name === 'website') {
+      if (sourceMode === 'catalog') {
+        if (!catalogFile) return;
+        try {
+          await fetchOnboarding('catalog');
+        } catch {
+          return;
+        }
+      } else {
+        const url = String(formData.website ?? '').trim();
+        if (url) void fetchOnboarding('website');
+      }
+    }
+    if (step < questions.length - 1) setStep(step + 1);
+    else void handleNext();
+  };
+
+  const stepNextDisabled =
+    loading ||
+    fetchingBusinessData ||
+    (current.name === 'website' &&
+      sourceMode === 'catalog' &&
+      !catalogFile);
+
   const Icon = current.icon;
   const totalSteps = questions.length;
   const progressValue = useMemo(
@@ -512,6 +608,120 @@ export default function OnboardingMenu() {
   const renderField = () => {
     if (current.type === 'hashtags') return renderHashtagsStep();
     if (current.type === 'brandSlogan') return renderBrandSloganStep();
+
+    if (current.name === 'website') {
+      return (
+        <div className="space-y-4">
+          <div className="flex rounded-xl border border-border bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={() => setSourceMode('website')}
+              className={cn(
+                'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                sourceMode === 'website'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Globe className="size-4" />
+              Website
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceMode('catalog')}
+              className={cn(
+                'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                sourceMode === 'catalog'
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <FileText className="size-4" />
+              Catalog PDF
+            </button>
+          </div>
+
+          {sourceMode === 'website' ? (
+            <Input
+              id={current.name}
+              type="text"
+              name={current.name}
+              value={String(formData[current.name] ?? '')}
+              onChange={handleChange}
+              placeholder={current.placeholder}
+              className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+            />
+          ) : (
+            <div className="space-y-3">
+              <label
+                htmlFor="catalog-upload"
+                className={cn(
+                  'group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card/60 px-6 py-10 text-center transition-all',
+                  'hover:border-primary-blue/50 hover:bg-primary-blue/5'
+                )}
+              >
+                {catalogFile ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <FileText className="size-10 text-primary-blue" />
+                    <p className="text-sm font-medium text-foreground">
+                      {catalogFile.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {(catalogFile.size / (1024 * 1024)).toFixed(1)} MB · Click
+                      to replace
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <span className="flex size-12 items-center justify-center rounded-full bg-gradient-primary text-white shadow-sm transition-transform group-hover:scale-105">
+                      <Upload className="size-5" />
+                    </span>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Upload your catalog or brochure PDF
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PDF only · up to 50 MB
+                      </p>
+                    </div>
+                  </>
+                )}
+                <input
+                  id="catalog-upload"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (file.type !== 'application/pdf') {
+                      showErrorToast('Please upload a PDF file');
+                      return;
+                    }
+                    if (file.size > 50 * 1024 * 1024) {
+                      showErrorToast('PDF must be 50 MB or smaller');
+                      return;
+                    }
+                    setCatalogFile(file);
+                  }}
+                  className="sr-only"
+                />
+              </label>
+              {catalogFile && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={() => setCatalogFile(null)}
+                >
+                  Remove file
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    }
 
     if (current.type === 'textarea') {
       return (
@@ -690,7 +900,9 @@ export default function OnboardingMenu() {
               <Sparkles className="size-5" />
             </span>
             <p className="bg-gradient-primary-text text-xl font-bold">
-              Reading your website…
+              {sourceMode === 'catalog' && step === 0
+                ? 'Reading your catalog…'
+                : 'Reading your website…'}
             </p>
             <p className="text-sm text-muted-foreground">
               We&apos;re extracting brand details so you can review and edit
@@ -789,13 +1001,8 @@ export default function OnboardingMenu() {
               </Button>
               <Button
                 type="button"
-                onClick={() => {
-                  if (current.name === 'website') {
-                    void fetchOnboarding(current.name);
-                  }
-                  void handleNext();
-                }}
-                disabled={loading || fetchingBusinessData}
+                onClick={() => void handleStepNext()}
+                disabled={stepNextDisabled}
                 aria-busy={loading || fetchingBusinessData}
                 className="h-11 flex-1 rounded-xl bg-gradient-primary text-white shadow-md shadow-primary-blue/20 transition-all hover:shadow-lg hover:shadow-primary-blue/25"
               >

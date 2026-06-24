@@ -9,14 +9,10 @@ export const DEFAULT_CAMPAIGN_SET_SIZE = 5;
 /** Credit cost per (day × platform) — mirrors backend
  *  `CAMPAIGN_CREDIT_PER_DAY`. Update both in lockstep. */
 export const CAMPAIGN_CREDIT_PER_DAY = 3;
-/** Credit cost per regeneration AFTER the user's free first regen.
- *  Mirrors backend `CAMPAIGN_REGENERATE_CREDIT`. Update both in lockstep.
- *  `regenerationCount === 0` is always free; every regen after that is
- *  exactly this many credits.
- *
- *  Unified with the ai-engine scheduled-post regen cost (also 1 credit
- *  after the free first attempt) so users see one regen price everywhere. */
+/** Credit cost per paid regeneration. Mirrors backend
+ *  `CAMPAIGN_REGENERATE_CREDIT`. Max 2 regens per draft: 1st free, 2nd paid. */
 export const CAMPAIGN_REGENERATE_CREDIT = 1;
+export const MAX_CAMPAIGN_REGENERATIONS = 2;
 
 export type CampaignDayPlan = {
   dayNumber: number;
@@ -275,8 +271,20 @@ export async function regenerateCampaignDraftApi(params: {
 /**
  * Convenience helper: the dollar-cost of the NEXT regen for a draft. Free
  * on the first attempt (`regenerationCount === 0`), `CAMPAIGN_REGENERATE_CREDIT`
- * thereafter. Kept here so the UI never hard-codes the cost branching.
+ * on the second (`=== 1`). No further regens after that.
  */
+export function canRegenerateDraft(regenerationCount: number): boolean {
+  const count =
+    typeof regenerationCount === 'number' && Number.isFinite(regenerationCount)
+      ? Math.max(0, Math.floor(regenerationCount))
+      : 0;
+  return count < MAX_CAMPAIGN_REGENERATIONS;
+}
+
 export function nextRegenerationCost(regenerationCount: number): number {
-  return regenerationCount > 0 ? CAMPAIGN_REGENERATE_CREDIT : 0;
+  const count =
+    typeof regenerationCount === 'number' && Number.isFinite(regenerationCount)
+      ? Math.max(0, Math.floor(regenerationCount))
+      : 0;
+  return count === 1 ? CAMPAIGN_REGENERATE_CREDIT : 0;
 }

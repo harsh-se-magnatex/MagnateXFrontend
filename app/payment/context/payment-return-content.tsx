@@ -188,7 +188,7 @@ export function PaymentReturnContent() {
 
   if (checkoutFailed) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4 py-12 font-(--font-sora) text-foreground">
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
         <div className="pointer-events-none fixed inset-0 -z-10">
           <div className="absolute -top-[10%] right-[-4%] h-[min(460px,80vw)] w-[min(460px,80vw)] rounded-full bg-rose-400/14 blur-[100px] dark:bg-rose-500/12" />
           <div className="absolute -bottom-[12%] left-[-8%] h-[min(340px,72vw)] w-[min(340px,72vw)] rounded-full bg-red-500/10 blur-[95px] dark:bg-red-500/8" />
@@ -276,7 +276,7 @@ export function PaymentReturnContent() {
 
   if (checkoutLinkExpired) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4 py-12 font-(--font-sora) text-foreground">
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
         <div className="pointer-events-none fixed inset-0 -z-10">
           <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-amber-400/12 blur-[100px] dark:bg-amber-500/10" />
           <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-orange-400/10 blur-[90px] dark:bg-orange-500/8" />
@@ -364,7 +364,7 @@ export function PaymentReturnContent() {
 
   if (!checkoutFailed && !checkoutLinkExpired && hasBrokenSessionPlaceholder) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4 py-12 font-(--font-sora) text-foreground">
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
         <div className="pointer-events-none fixed inset-0 -z-10">
           <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-amber-400/14 blur-[100px] dark:bg-amber-500/10" />
           <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-orange-400/10 blur-[90px] dark:bg-orange-500/8" />
@@ -506,7 +506,7 @@ export function PaymentReturnContent() {
         : "bg-emerald-50 text-emerald-600 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-500/30";
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4 py-12 font-(--font-sora) text-foreground">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-emerald-400/15 blur-[100px] dark:bg-emerald-500/10" />
         <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-teal-400/12 blur-[90px] dark:bg-teal-500/8" />

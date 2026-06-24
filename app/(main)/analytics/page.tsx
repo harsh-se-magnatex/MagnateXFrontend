@@ -636,15 +636,15 @@ export default function AnalyticsPage() {
     return (
       <>
         <div
-          className="mb-6 flex flex-col gap-3 rounded-xl border border-blue-200 bg-blue-50/90 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
           role="status"
         >
           <div className="flex items-start gap-3">
             <AlertCircle
-              className="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
+              className="mt-0.5 h-5 w-5 shrink-0 text-primary"
               aria-hidden
             />
-            <p className="text-sm text-blue-900">
+            <p className="text-sm text-foreground">
               Your{' '}
               <span className="font-semibold capitalize">{activePlan}</span>{' '}
               plan supports{' '}
@@ -670,13 +670,13 @@ export default function AnalyticsPage() {
   return (
     <div className="mx-auto max-w-5xl pb-8">
       {snapshot && (
-        <p className="mb-3 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500">
+        <p className="mb-3 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
           <span
             aria-hidden
             className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"
           />
           <span>
-            AI insights refreshes and 
+            Insights refreshes and 
             updates once every 24 hours.
           </span>
         </p>

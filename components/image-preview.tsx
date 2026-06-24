@@ -5,6 +5,21 @@ import { createPortal } from 'react-dom';
 import { Expand, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+/** Marker on `document.body` while a fullscreen preview is open. */
+export const IMAGE_PREVIEW_OPEN_BODY_ATTR = 'data-image-preview-open';
+
+/** Selector for the portaled overlay root — keep in sync with `ImagePreviewOverlay`. */
+export const IMAGE_PREVIEW_OVERLAY_SELECTOR = '[data-image-preview-overlay]';
+
+/** True when a fullscreen image preview is mounted (e.g. block parent Sheet dismiss). */
+export function isImagePreviewOverlayMounted(): boolean {
+  if (typeof document === 'undefined') return false;
+  return (
+    document.body.hasAttribute(IMAGE_PREVIEW_OPEN_BODY_ATTR) ||
+    !!document.querySelector(IMAGE_PREVIEW_OVERLAY_SELECTOR)
+  );
+}
+
 export function useImagePreview() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewAlt, setPreviewAlt] = useState<string>('Image preview');
@@ -19,69 +34,108 @@ export function useImagePreview() {
 
   useEffect(() => {
     if (!previewUrl) return;
+
+    document.body.setAttribute(IMAGE_PREVIEW_OPEN_BODY_ATTR, '');
+
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setPreviewUrl(null);
+      if (e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPreviewUrl(null);
     };
+
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keydown', onKeyDown, true);
+
     return () => {
-      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keydown', onKeyDown, true);
       document.body.style.overflow = prevOverflow;
+      document.body.removeAttribute(IMAGE_PREVIEW_OPEN_BODY_ATTR);
     };
   }, [previewUrl]);
 
   return { previewUrl, previewAlt, open, close, isOpen: !!previewUrl };
 }
 
+type ImagePreviewOverlayProps = {
+  src: string | null;
+  alt?: string;
+  onClose: () => void;
+  /**
+   * Portals to `document.body` by default. Inside a Radix Sheet/Dialog, pass
+   * `portalled={false}` and render this component as a child of the sheet
+   * content — otherwise `react-remove-scroll` blocks pointer events on the
+   * overlay and backdrop / close clicks never fire.
+   */
+  portalled?: boolean;
+};
+
 export function ImagePreviewOverlay({
   src,
   alt = 'Image preview',
   onClose,
-}: {
-  src: string | null;
-  alt?: string;
-  onClose: () => void;
-}) {
+  portalled = true,
+}: ImagePreviewOverlayProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  const dismiss = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onClose();
+    },
+    [onClose]
+  );
+
+  const keepOpen = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
   if (!mounted || !src) return null;
 
-  return createPortal(
+  const overlay = (
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+      className="pointer-events-auto fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ minHeight: '100dvh' }}
       role="dialog"
       aria-modal="true"
       aria-label="Image preview"
-      onClick={onClose}
-      // Used by parent dialogs/sheets (e.g. Radix Sheet drafts drawer) to
-      // recognize that an interaction (pointer / key) originates from this
-      // portal and SHOULD NOT auto-close the parent. Don't change the
-      // attribute name without grepping for it.
       data-image-preview-overlay=""
     >
       <button
         type="button"
-        onClick={onClose}
-        className="absolute cursor-pointer right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white ring-1 ring-white/30 transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+        className="absolute inset-0 z-0 h-full w-full border-0 bg-black/85 p-0 backdrop-blur-sm"
         aria-label="Close image preview"
-      >
-        <X className="h-5 w-5" />
-      </button>
+        onClick={dismiss}
+      />
+
       <img
         src={src}
         alt={alt}
-        className="max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
+        className="relative z-10 max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
+        onClick={keepOpen}
       />
-    </div>,
-    document.body
+
+      <button
+        type="button"
+        aria-label="Close image preview"
+        onClick={dismiss}
+        className="absolute right-2 top-2 z-20 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-0 bg-white/10 text-white ring-1 ring-white/30 transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-4 sm:top-4"
+      >
+        <X className="h-5 w-5 pointer-events-none" />
+      </button>
+    </div>
   );
+
+  if (portalled) {
+    return createPortal(overlay, document.body);
+  }
+
+  return overlay;
 }
 
 type ImagePreviewButtonProps = {
@@ -90,7 +144,6 @@ type ImagePreviewButtonProps = {
   className?: string;
   label?: string;
   ariaLabel?: string;
-  /** Stops click propagation so wrapping elements (e.g. card link/handlers) don't react. */
   stopPropagation?: boolean;
 };
 
@@ -108,6 +161,12 @@ export function ImagePreviewButton({
   ariaLabel = 'Open image preview',
   stopPropagation = false,
 }: ImagePreviewButtonProps) {
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (stopPropagation) {
+      e.stopPropagation();
+    }
+  };
+
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (stopPropagation) {
       e.stopPropagation();
@@ -119,6 +178,7 @@ export function ImagePreviewButton({
     return (
       <button
         type="button"
+        onPointerDown={handlePointerDown}
         onClick={handleClick}
         aria-label={ariaLabel}
         title={label}
@@ -132,6 +192,7 @@ export function ImagePreviewButton({
   return (
     <button
       type="button"
+      onPointerDown={handlePointerDown}
       onClick={handleClick}
       aria-label={ariaLabel}
       className={cn(baseDefault, className)}

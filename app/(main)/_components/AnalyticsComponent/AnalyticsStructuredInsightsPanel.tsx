@@ -20,8 +20,8 @@ function SubBlock({
 }) {
   return (
     <div className={cn('space-y-1', className)}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{label}</p>
-      <div className="text-sm leading-relaxed text-zinc-800">{children}</div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+      <div className="text-sm leading-relaxed text-foreground">{children}</div>
     </div>
   );
 }
@@ -38,13 +38,13 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3 rounded-lg border border-zinc-100 bg-zinc-50/50 p-4">
+    <section className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
       <div>
-        <h3 className="text-base font-semibold text-zinc-900">
+        <h3 className="text-base font-semibold text-foreground">
           {number}. {title}
         </h3>
         {description ? (
-          <p className="mt-1 text-xs text-zinc-500 leading-snug">{description}</p>
+          <p className="mt-1 text-xs text-muted-foreground leading-snug">{description}</p>
         ) : null}
       </div>
       <div className="space-y-3">{children}</div>
@@ -102,7 +102,7 @@ function NaturalLanguageSnapshot({
       ? `In human-readable terms: ${bits.join('; ')}. Use the numbered sections below for interpretation—not raw dashboards alone.`
       : 'Sync analytics to populate a readable snapshot of followers, reach, and activity.';
 
-  return <p className="text-sm leading-relaxed text-zinc-800">{paragraph}</p>;
+  return <p className="text-sm leading-relaxed text-foreground">{paragraph}</p>;
 }
 
 export function AnalyticsStructuredInsightsPanel({
@@ -124,7 +124,7 @@ export function AnalyticsStructuredInsightsPanel({
 
   if (loading || !payload?.structured) {
     return (
-      <div className="flex items-center justify-center gap-2 py-10 text-sm text-zinc-500">
+      <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
         Generating structured insights…
       </div>
@@ -156,7 +156,7 @@ export function AnalyticsStructuredInsightsPanel({
   return (
     <div className="space-y-4 pb-2">
       {payload?.source === 'fallback' ? (
-        <p className="text-[11px] text-zinc-500">
+        <p className="text-[11px] text-muted-foreground">
           Rule-based structured fill-in. Configure the server OpenAI key for full AI narrative in every section.
         </p>
       ) : null}
@@ -208,7 +208,7 @@ export function AnalyticsStructuredInsightsPanel({
         title="Anomaly detection"
         description="Unusual changes worth investigating when the data supports it."
       >
-        <ul className="list-disc space-y-2 pl-4 text-sm text-zinc-800">
+        <ul className="list-disc space-y-2 pl-4 text-sm text-foreground">
           {an6.items.map((line, i) => (
             <li key={i}>{line}</li>
           ))}
@@ -220,21 +220,21 @@ export function AnalyticsStructuredInsightsPanel({
         title="Sentiment analysis on comments"
         description="Positive, neutral, and negative mix. Percentages only when sentiment exists in your metrics payload."
       >
-        <p className="text-sm text-zinc-700">{se4.narrative}</p>
-        <div className="overflow-hidden rounded-md border border-zinc-200 bg-white text-sm">
+        <p className="text-sm text-foreground">{se4.narrative}</p>
+        <div className="overflow-hidden rounded-md border border-border bg-card text-sm">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium text-zinc-600">
+              <tr className="border-b border-border bg-muted text-left text-xs font-medium text-muted-foreground">
                 <th className="px-3 py-2">Sentiment</th>
                 <th className="px-3 py-2">Percentage</th>
               </tr>
             </thead>
-            <tbody className="text-zinc-800">
-              <tr className="border-b border-zinc-100">
+            <tbody className="text-foreground">
+              <tr className="border-b border-border/60">
                 <td className="px-3 py-2">Positive</td>
                 <td className="px-3 py-2 tabular-nums">{formatPct(se4.positivePercent)}</td>
               </tr>
-              <tr className="border-b border-zinc-100">
+              <tr className="border-b border-border/60">
                 <td className="px-3 py-2">Neutral</td>
                 <td className="px-3 py-2 tabular-nums">{formatPct(se4.neutralPercent)}</td>
               </tr>
@@ -246,7 +246,7 @@ export function AnalyticsStructuredInsightsPanel({
           </table>
         </div>
         {!hasSentimentNumbers ? (
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             Percentages stay blank until comment sentiment is supplied in analytics data.
           </p>
         ) : null}

@@ -1,18 +1,37 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { getUserDetailForHomePage } from '@/src/service/api/userService';
+import {
+  getScheduledPostsInRange,
+  getSocialAccountsApi,
+} from '@/src/service/api/social.servce';
+import {
+  getInsightsFaceBook,
+  getInsightsInstagram,
+  getInsightsLinkedIn,
+} from '@/src/service/api/analyticService';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import {
+  ActivityStatusIcon,
+  HomeStatBox,
+  PlatformIcon,
+  formatPlatformLabel,
+  type PlatformId,
+  type ActivityScheduleState,
+} from '@/components/home/dashboard-ui';
 import {
   Sparkles,
   AlertTriangle,
   ChevronRight,
   Zap,
-  Inbox,
   Fingerprint,
+  CalendarClock,
+  TrendingUp,
+  Share2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
@@ -28,6 +47,23 @@ import {
   parseTimestampInput,
   type TimestampInput,
 } from '@/lib/user-timezone';
+import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
+import {
+  generatedByLabel,
+  getDisplayStatus,
+  type ScheduledPostStatusInput,
+} from '@/lib/scheduled-post-status';
+import { weeklyDeltaFromTrend } from '../_components/AnalyticsComponent/utils/utils_functions';
+
+const SOCIAL_INTEGRATION_PATH = '/social-media-integration';
+const ANALYTICS_PATH = '/analytics';
+const BILLINGS_PATH = '/settings/billings';
+const UPCOMING_RANGE_MS = 365 * 24 * 60 * 60 * 1000;
+
+type SocialAccountRow = {
+  platform: string;
+  expiresAt?: { _seconds: number; _nanoseconds?: number };
+};
 
 export type SocialAccountWarning = {
   platform: string;
@@ -47,6 +83,8 @@ type DashboardPost = {
   platform: string;
   postStatus?: string;
   UserApprovalStatus?: string;
+  removedByUser?: boolean;
+  GeneratedBy?: string;
 };
 
 type HomePageData = {
@@ -57,10 +95,7 @@ type HomePageData = {
   warnings: SocialAccountWarning[];
   brandProfileComplete?: boolean;
   reviewPreferencesComplete?: boolean;
-  scheduledPosts?: DashboardPost[];
 };
-
-const SOCIAL_INTEGRATION_PATH = '/social-media-integration';
 
 const QUICK_SUGGESTIONS = [
   {
@@ -77,9 +112,71 @@ const QUICK_SUGGESTIONS = [
   },
 ] as const;
 
-function formatPlatformLabel(platform: string) {
-  if (!platform) return 'Account';
-  return platform.charAt(0).toUpperCase() + platform.slice(1).toLowerCase();
+/** Today boundaries in the user's timezone, as UTC epoch ms for range queries. */
+function computeTodayBounds(tz: string): {
+  todayStartMs: number;
+  todayEndMs: number;
+} {
+  const now = new Date();
+  const todayStr = formatInTimeZone(now, tz, 'yyyy-MM-dd');
+  const todayStart = fromZonedTime(`${todayStr} 00:00:00`, tz);
+  const [y, m, d] = todayStr.split('-').map(Number);
+  const tomorrowLocal = new Date(y, m - 1, d + 1);
+  const yy = tomorrowLocal.getFullYear();
+  const mm = String(tomorrowLocal.getMonth() + 1).padStart(2, '0');
+  const dd = String(tomorrowLocal.getDate()).padStart(2, '0');
+  const todayEnd = fromZonedTime(`${yy}-${mm}-${dd} 00:00:00`, tz);
+  return { todayStartMs: todayStart.getTime(), todayEndMs: todayEnd.getTime() };
+}
+
+function getActivityDescription(
+  post: ScheduledPostStatusInput & {
+    GeneratedBy?: string;
+    scheduleAt?: FirestoreTimestamp;
+  },
+  fmtTimestamp: (input: TimestampInput, options?: { style?: 'time' }) => string
+): string {
+  const feature = generatedByLabel(post.GeneratedBy) ?? 'Post';
+  const time = fmtTimestamp(post.scheduleAt, { style: 'time' });
+  const status = getDisplayStatus(post);
+
+  switch (status.variant) {
+    case 'posted':
+      return `${feature} · Posted at ${time}`;
+    case 'approved':
+      return `${feature} · Scheduled for ${time}`;
+    case 'processing':
+      return `${feature} · Publishing at ${time}`;
+    case 'pendingByYou':
+      return `${feature} · Awaiting your review`;
+    case 'pendingByAdmin':
+      return `${feature} · Awaiting admin review`;
+    case 'failed':
+      return `${feature} · Failed to publish`;
+    case 'rejected':
+      return `${feature} · Rejected`;
+    case 'removedByYou':
+      return `${feature} · Removed by you`;
+    case 'removedByAdmin':
+      return `${feature} · Removed by admin`;
+    default:
+      return time && time !== '—'
+        ? `${feature} · ${time}`
+        : feature;
+  }
+}
+
+function getActivityScheduleState(
+  post: ScheduledPostStatusInput
+): ActivityScheduleState {
+  const variant = getDisplayStatus(post).variant;
+  if (variant === 'approved' || variant === 'processing' || variant === 'posted') {
+    return 'scheduled';
+  }
+  if (variant === 'pendingByYou' || variant === 'pendingByAdmin') {
+    return 'pending';
+  }
+  return 'issue';
 }
 
 function warningMessage(w: SocialAccountWarning) {
@@ -94,22 +191,90 @@ function warningMessage(w: SocialAccountWarning) {
   return 'Action may be required for this connection.';
 }
 
-function isScheduledTodayInTz(
-  ts: TimestampInput,
-  timeZone: string
+function isUpcomingPost(post: DashboardPost, todayStartMs: number): boolean {
+  if (post.removedByUser === true) return false;
+  const ua = (post.UserApprovalStatus ?? '').toLowerCase();
+  if (ua === 'rejected') return false;
+  const ps = (post.postStatus ?? '').toLowerCase();
+  if (ps === 'posted' || ps === 'failed' || ps === 'removed') return false;
+  const scheduledAt = parseTimestampInput(post.scheduleAt);
+  if (!scheduledAt) return false;
+  return scheduledAt.getTime() >= todayStartMs;
+}
+
+function isPlatformConnected(
+  accounts: SocialAccountRow[],
+  platformId: PlatformId
 ): boolean {
-  const d = parseTimestampInput(ts);
-  if (!d) return false;
-  // Compare calendar days in the user's preferred timezone so a 10pm post
-  // in `Asia/Kolkata` isn't mis-classified as "tomorrow" when the browser
-  // is somewhere west of it.
-  const fmt = new Intl.DateTimeFormat('en-CA', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    timeZone: timeZone || undefined,
-  });
-  return fmt.format(d) === fmt.format(new Date());
+  const acc = accounts.find((a) => a.platform === platformId);
+  if (!acc?.expiresAt?._seconds) return false;
+  return acc.expiresAt._seconds * 1000 > Date.now();
+}
+
+function countConnectedPlatforms(accounts: SocialAccountRow[]): number {
+  return (['facebook', 'instagram', 'linkedin'] as const).filter((id) =>
+    isPlatformConnected(accounts, id)
+  ).length;
+}
+
+function analyticsTrendSeries(
+  analytics: Record<string, unknown> | null | undefined,
+  trendKey: string
+): { date: string; value: number }[] {
+  const trend = analytics?.[trendKey];
+  if (!Array.isArray(trend)) return [];
+  return [...trend]
+    .filter((point) => point && typeof point === 'object' && 'date' in point)
+    .map((point) => ({
+      date: String((point as { date: string }).date),
+      value: Number((point as { value: number }).value) || 0,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function platformGrowthPct(
+  analytics: Record<string, unknown> | null | undefined,
+  primaryKey: string,
+  fallbackKey?: string
+): number | null {
+  const primary = weeklyDeltaFromTrend(analyticsTrendSeries(analytics, primaryKey));
+  if (primary) return primary.pct;
+  if (fallbackKey) {
+    return weeklyDeltaFromTrend(analyticsTrendSeries(analytics, fallbackKey))?.pct ?? null;
+  }
+  return null;
+}
+
+function averageGrowthOverviewPct(
+  fbAnalytics: Record<string, unknown> | null,
+  igAnalytics: Record<string, unknown> | null,
+  liAnalytics: Record<string, unknown> | null
+): number | null {
+  const deltas = [
+    platformGrowthPct(fbAnalytics, 'reachTrend', 'engagementsTrend'),
+    platformGrowthPct(igAnalytics, 'reachTrend', 'interactionsTrend'),
+    platformGrowthPct(liAnalytics, 'pageViewsTrend', 'engagementsTrend'),
+  ].filter((value): value is number => value !== null && Number.isFinite(value));
+
+  if (deltas.length === 0) return null;
+  return Math.round((deltas.reduce((sum, n) => sum + n, 0) / deltas.length) * 10) / 10;
+}
+
+function formatGrowthValue(pct: number | null): ReactNode {
+  if (pct === null || !Number.isFinite(pct)) return '—';
+  const sign = pct > 0 ? '+' : '';
+  return (
+    <span
+      className={cn(
+        pct > 0 && 'text-emerald-600 dark:text-emerald-400',
+        pct < 0 && 'text-rose-600 dark:text-rose-400',
+        Math.abs(pct) < 0.05 && 'text-muted-foreground'
+      )}
+    >
+      {sign}
+      {pct}%
+    </span>
+  );
 }
 
 export default function Home() {
@@ -118,8 +283,14 @@ export default function Home() {
   const fmtTimestamp = useTimestampFormatter();
   const userTz = useUserTimezone();
   const [loading, setLoading] = useState(true);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [userDetail, setUserDetail] = useState<HomePageData | null>(null);
-  const [scheduledPosts, setScheduledPosts] = useState<DashboardPost[]>([]);
+  const [upcomingRangePosts, setUpcomingRangePosts] = useState<DashboardPost[]>([]);
+  const [todaysActivityPosts, setTodaysActivityPosts] = useState<DashboardPost[]>([]);
+  const [todayStartMs, setTodayStartMs] = useState(0);
+  const [connectedPlatformCount, setConnectedPlatformCount] = useState(0);
+  const [growthOverviewPct, setGrowthOverviewPct] = useState<number | null>(null);
   const [command, setCommand] = useState('');
   const [isNeedApproval, setIsNeedApproval] = useState(false);
   const router = useRouter();
@@ -158,59 +329,150 @@ export default function Home() {
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
-    try {
-      const homeResult = await getUserDetailForHomePage();
-      const homePayload = homeResult?.data as { data?: HomePageData } | undefined;
-      const data = homePayload?.data;
-      if (data) {
-        setUserDetail(data);
-        const posts = data.scheduledPosts ?? [];
-        setScheduledPosts(Array.isArray(posts) ? posts : []);
-      } else {
-        setUserDetail(null);
-        setScheduledPosts([]);
-      }
-    } catch (error) {
-      console.error(error);
-      setScheduledPosts([]);
-    } finally {
-      setLoading(false);
+    setActivityLoading(true);
+    setStatsLoading(true);
+    const { todayStartMs: startMs, todayEndMs } = computeTodayBounds(userTz);
+    setTodayStartMs(startMs);
+
+    const [
+      homeOutcome,
+      todayActivityOutcome,
+      rangeOutcome,
+      socialOutcome,
+      fbOutcome,
+      igOutcome,
+      liOutcome,
+    ] = await Promise.allSettled([
+      getUserDetailForHomePage(),
+      getScheduledPostsInRange({
+        fromMs: startMs,
+        toMs: todayEndMs - 1,
+      }),
+      getScheduledPostsInRange({
+        fromMs: startMs,
+        toMs: startMs + UPCOMING_RANGE_MS,
+      }),
+      getSocialAccountsApi(),
+      getInsightsFaceBook(),
+      getInsightsInstagram(),
+      getInsightsLinkedIn(),
+    ]);
+
+    if (homeOutcome.status === 'fulfilled') {
+      const homePayload = homeOutcome.value?.data as
+        | { data?: HomePageData }
+        | undefined;
+      setUserDetail(homePayload?.data ?? null);
+    } else {
+      console.error('[home] getUserDetailForHomePage failed', homeOutcome.reason);
+      setUserDetail(null);
     }
-  }, []);
+
+    if (todayActivityOutcome.status === 'fulfilled') {
+      const todayPosts = (todayActivityOutcome.value?.data?.posts ??
+        []) as DashboardPost[];
+      setTodaysActivityPosts(
+        todayPosts.filter((p) => p.removedByUser !== true)
+      );
+    } else {
+      console.error(
+        '[home] today activity fetch failed',
+        todayActivityOutcome.reason
+      );
+      setTodaysActivityPosts([]);
+    }
+
+    if (rangeOutcome.status === 'fulfilled') {
+      const rangePosts = (rangeOutcome.value?.data?.posts ?? []) as DashboardPost[];
+      setUpcomingRangePosts(
+        rangePosts.filter((p) => p.removedByUser !== true)
+      );
+    } else {
+      console.error('[home] getScheduledPostsInRange failed', rangeOutcome.reason);
+      setUpcomingRangePosts([]);
+    }
+
+    if (socialOutcome.status === 'fulfilled') {
+      const socialRows = socialOutcome.value?.data?.data;
+      setConnectedPlatformCount(
+        countConnectedPlatforms(Array.isArray(socialRows) ? socialRows : [])
+      );
+    } else {
+      console.error('[home] getSocialAccountsApi failed', socialOutcome.reason);
+      setConnectedPlatformCount(0);
+    }
+
+    const fbAnalytics =
+      fbOutcome.status === 'fulfilled'
+        ? (fbOutcome.value.data.pageAnalytics as Record<string, unknown> | null)
+        : null;
+    const igAnalytics =
+      igOutcome.status === 'fulfilled'
+        ? (igOutcome.value.data.igAnalytics as Record<string, unknown> | null)
+        : null;
+    const liAnalytics =
+      liOutcome.status === 'fulfilled'
+        ? (liOutcome.value.data.liAnalytics as Record<string, unknown> | null)
+        : null;
+
+    if (fbOutcome.status === 'rejected') {
+      console.warn('[home] Facebook insights unavailable', fbOutcome.reason);
+    }
+    if (igOutcome.status === 'rejected') {
+      console.warn('[home] Instagram insights unavailable', igOutcome.reason);
+    }
+    if (liOutcome.status === 'rejected') {
+      console.warn('[home] LinkedIn insights unavailable', liOutcome.reason);
+    }
+
+    setGrowthOverviewPct(
+      averageGrowthOverviewPct(fbAnalytics, igAnalytics, liAnalytics)
+    );
+
+    setLoading(false);
+    setActivityLoading(false);
+    setStatsLoading(false);
+  }, [userTz]);
 
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
 
   const { pendingReviewCount, pendingReviewIsSingular } = useMemo(() => {
-    const n = scheduledPosts.filter(
-      (p) => p.UserApprovalStatus === 'pending'
+    const n = upcomingRangePosts.filter(
+      (p) =>
+        getDisplayStatus(p).variant === 'pendingByYou' ||
+        p.UserApprovalStatus === 'pending'
     ).length;
     return {
       pendingReviewCount: String(n),
       pendingReviewIsSingular: n === 1,
     };
-  }, [scheduledPosts]);
+  }, [upcomingRangePosts]);
 
   const creditRemaining = billing?.credits ?? userDetail?.credits ?? 0;
   const creditLabel = `${creditRemaining}`;
 
-  const todaysCalendarItems = useMemo(() => {
-    return scheduledPosts
-      .filter((p) => isScheduledTodayInTz(p.scheduleAt, userTz))
+  const upcomingCount = useMemo(() => {
+    if (!todayStartMs) return 0;
+    return upcomingRangePosts.filter((p) => isUpcomingPost(p, todayStartMs))
+      .length;
+  }, [upcomingRangePosts, todayStartMs]);
+
+  const todaysActivityItems = useMemo(() => {
+    return todaysActivityPosts
       .map((post) => ({
         key: post.postId ?? `${post.platform}-${post.scheduleAt?._seconds}`,
         post,
-        platform: formatPlatformLabel(post.platform),
-        time: fmtTimestamp(post.scheduleAt, { style: 'time' }),
-        pending: post.UserApprovalStatus === 'pending',
+        description: getActivityDescription(post, fmtTimestamp),
+        scheduleState: getActivityScheduleState(post),
       }))
       .sort((a, b) => {
         const sa = a.post.scheduleAt?._seconds ?? 0;
         const sb = b.post.scheduleAt?._seconds ?? 0;
         return sa - sb;
       });
-  }, [scheduledPosts, userTz, fmtTimestamp]);
+  }, [todaysActivityPosts, fmtTimestamp]);
 
   const brandVoiceHealth = useMemo(() => {
     const brandOk = userDetail?.brandProfileComplete === true;
@@ -252,6 +514,10 @@ export default function Home() {
     if (h < 17) return 'Good afternoon';
     return 'Good evening';
   }
+
+  const displayName = useMemo(() => {
+    return user?.displayName?.split(' ')[0] ?? 'there';
+  }, [user]);
 
   if (loading || authLoading || billingLoading) {
     return <PageLoadingState />;
@@ -310,7 +576,7 @@ export default function Home() {
       <section className="space-y-6" aria-label="Create">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <span className="text-muted-foreground">{timeGreeting()},</span>
+            <span className="text-muted-foreground">{timeGreeting()}, {displayName}</span>
             <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight text-balance">
               What do you want to create today?
             </h1>
@@ -319,7 +585,7 @@ export default function Home() {
 
         <div
           id="tour-home-command"
-          className="rounded-2xl border border-border/50 bg-card/80 shadow-sm p-1.5 sm:p-2 flex flex-col sm:flex-row gap-2 sm:items-center"
+          className="rounded-2xl border border-border bg-card shadow-sm p-1.5 sm:p-2 flex flex-col sm:flex-row gap-2 sm:items-center"
         >
           <Input
             value={command}
@@ -331,7 +597,7 @@ export default function Home() {
               }
             }}
             placeholder="Describe a post, campaign, or idea…"
-            className="h-11 flex-1 rounded-xl border-0 bg-background/80 shadow-none focus-visible:ring-2 focus-visible:ring-primary/25 text-base px-4"
+            className="h-11 flex-1 rounded-xl border border-border/50 bg-muted shadow-none focus-visible:ring-2 focus-visible:ring-primary/25 text-base px-4"
             aria-label="What do you want to create?"
           />
           <Button
@@ -345,6 +611,39 @@ export default function Home() {
           </Button>
         </div>
 
+        <div
+          className="grid grid-cols-2 gap-3 sm:grid-cols-4"
+          aria-label="Home overview stats"
+        >
+          <HomeStatBox
+            label="Upcoming"
+            sublabel="Today and future"
+            icon={CalendarClock}
+            value={statsLoading ? '…' : upcomingCount}
+          />
+          <HomeStatBox
+            label="Analytics"
+            sublabel="Growth overview · avg across platforms"
+            icon={TrendingUp}
+            href={ANALYTICS_PATH}
+            value={statsLoading ? '…' : formatGrowthValue(growthOverviewPct)}
+          />
+          <HomeStatBox
+            label="Credits"
+            sublabel="AI credits remaining"
+            icon={Zap}
+            href={BILLINGS_PATH}
+            value={statsLoading ? '…' : creditLabel}
+          />
+          <HomeStatBox
+            label="Platforms"
+            sublabel="Connected profiles"
+            icon={Share2}
+            href={SOCIAL_INTEGRATION_PATH}
+            value={statsLoading ? '…' : connectedPlatformCount}
+          />
+        </div>
+
         <div className="space-y-2">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Quick suggestions
@@ -355,7 +654,7 @@ export default function Home() {
                 key={s.label}
                 href={s.href}
                 className={cn(
-                  'inline-flex items-center rounded-full border border-border/60 bg-background/60 px-3.5 py-1.5 text-sm font-medium text-foreground transition-all',
+                  'inline-flex items-center rounded-full border border-border bg-muted px-3.5 py-1.5 text-sm font-medium text-foreground transition-all',
                   'hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
                 )}
               >
@@ -366,147 +665,66 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Today’s calendar */}
-      <section className="space-y-3" aria-label="Today on your calendar">
+      {/* Today's activity */}
+      <section className="space-y-3" aria-label="Today's activity">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-foreground">
-            Today&rsquo;s calendar
+            Today&rsquo;s activity
           </h2>
         </div>
-        <Card className="rounded-2xl border-border/40 overflow-hidden divide-y divide-border/40">
-          {todaysCalendarItems.length === 0 ? (
+        <Card className="rounded-2xl border-border overflow-hidden">
+          {activityLoading ? (
+            <div className="max-h-80 overflow-y-auto custom-scrollbar p-5 space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 animate-pulse">
+                  <div className="h-9 w-9 rounded-full bg-muted" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 w-3/4 rounded bg-muted" />
+                    <div className="h-3 w-1/2 rounded bg-muted" />
+                  </div>
+                  <div className="h-5 w-5 rounded-full bg-muted" />
+                </div>
+              ))}
+            </div>
+          ) : todaysActivityItems.length === 0 ? (
             <div className="p-5 text-sm text-muted-foreground">
-              Nothing scheduled for today.{' '}
-              <Link
-                href="/post-scheduler"
-                className="font-medium text-primary hover:underline"
-              >
-                Plan a post
-              </Link>
+              No activity scheduled for today.{' '}
             </div>
           ) : (
-            todaysCalendarItems.map(
-              ({ key, post, platform, time, pending }) => (
-                <div key={key} className="flex items-center gap-3 p-4 sm:p-4">
-                  <div className="h-12 w-12 shrink-0 rounded-xl bg-muted overflow-hidden border border-border/50">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={post.imageUrl || '/logo.png'}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
+            <div
+              className="max-h-80 overflow-y-auto overscroll-y-contain custom-scrollbar divide-y divide-border/40"
+              role="list"
+              aria-label="Today's scheduled activity"
+            >
+              {todaysActivityItems.map(({ key, post, description, scheduleState }) => {
+                return (
+                  <div
+                    key={key}
+                    role="listitem"
+                    className="flex items-center gap-3 p-4 sm:px-5 transition-colors hover:bg-accent/40"
+                  >
+                    <PlatformIcon platform={post.platform} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground text-pretty leading-snug">
+                        {description}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatPlatformLabel(post.platform)}
+                        {post.scheduleAt ? (
+                          <>
+                            {' '}
+                            ·{' '}
+                            {fmtTimestamp(post.scheduleAt, { style: 'time' })}
+                          </>
+                        ) : null}
+                      </p>
+                    </div>
+                    <ActivityStatusIcon state={scheduleState} />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-foreground text-sm">
-                      {platform}
-                      <span className="text-muted-foreground font-normal">
-                        {' '}
-                        · {time}
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {pending ? (
-                        <>
-                          Pending review ·{' '}
-                          <Link
-                            href="/approval"
-                            className="text-primary font-medium hover:underline"
-                          >
-                            Review
-                          </Link>
-                        </>
-                      ) : (
-                        'Scheduled'
-                      )}
-                    </p>
-                  </div>
-                </div>
-              )
-            )
+                );
+              })}
+            </div>
           )}
-        </Card>
-      </section>
-
-      {/* Connected accounts */}
-      {/* <section className="space-y-3" aria-label="Connected accounts">
-        <h2 className="text-lg font-semibold text-foreground">
-          Connected accounts
-        </h2>
-        <Card className="rounded-2xl border-border/40 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-linear-to-br from-primary-purple to-violet-400 p-2.5 text-white shadow-sm">
-              <Users className="size-5" />
-            </div>
-            <div>
-              <p className="font-medium text-foreground">
-                {userDetail?.totalSocialAccounts ?? '—'} connected
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Instagram, Facebook, and LinkedIn from one workspace.
-              </p>
-            </div>
-          </div>
-          <Button asChild variant="outline" className="rounded-xl shrink-0">
-            <Link href={SOCIAL_INTEGRATION_PATH}>
-              Manage
-              <ArrowRight className="ml-1 size-4" />
-            </Link>
-          </Button>
-        </Card>
-      </section> */}
-
-      {/* Drafts waiting */}
-      <section className="space-y-3" aria-label="Drafts waiting">
-        <h2 className="text-lg font-semibold text-foreground">
-          {isNeedApproval ? 'Drafts waiting' : 'Scheduled posts'}
-        </h2>
-        <Card className="rounded-2xl border-border/40 p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-linear-to-br from-primary-blue to-blue-400 p-2.5 text-white shadow-sm">
-              <Inbox className="size-5" />
-            </div>
-            <div>
-              {isNeedApproval && (
-                <p className="font-medium text-foreground">
-                  <span className="tabular-nums">{pendingReviewCount}</span>{' '}
-                  {pendingReviewIsSingular ? 'post' : 'posts'} need review
-                </p>
-              )}
-              <p className="text-sm text-muted-foreground">
-                {isNeedApproval
-                  ? 'Approve or edit before they go live.'
-                  : 'View your scheduled posts.'}
-              </p>
-            </div>
-          </div>
-          <Button asChild className="rounded-xl shrink-0">
-            <Link href={isNeedApproval ? '/approval' : '/scheduled-post'}>
-              Open queue
-            </Link>
-          </Button>
-        </Card>
-      </section>
-
-      {/* Performance summary */}
-      <section className="space-y-3" aria-label="Performance summary">
-        <h2 className="text-lg font-semibold text-foreground">
-          Performance summary
-        </h2>
-        <Card className="rounded-2xl border-border/40 p-5 space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">AI credits</p>
-              <p className="text-2xl font-bold text-foreground tabular-nums mt-0.5 flex items-center gap-1.5 justify-end">
-                <Zap className="size-5 text-amber-500 shrink-0" />
-                {creditLabel}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Button asChild variant="outline" size="sm" className="rounded-lg">
-              <Link href="/settings/billings">Billing &amp; credits</Link>
-            </Button>
-          </div>
         </Card>
       </section>
 
@@ -515,7 +733,7 @@ export default function Home() {
         <h2 className="text-lg font-semibold text-foreground">
           Brand voice & consistency
         </h2>
-        <Card className="rounded-2xl border-border/40 p-5 space-y-4">
+        <Card className="rounded-2xl border-border p-5 space-y-4">
           <div className="flex items-start gap-3">
             <div className="rounded-xl bg-linear-to-br from-emerald-500 to-teal-400 p-2.5 text-white shadow-sm shrink-0">
               <Fingerprint className="size-5" />
@@ -529,11 +747,11 @@ export default function Home() {
                   className={cn(
                     'text-xs font-medium rounded-full px-2 py-0.5',
                     brandVoiceHealth.tone === 'positive' &&
-                      'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+                    'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
                     brandVoiceHealth.tone === 'warning' &&
-                      'bg-amber-500/15 text-amber-800 dark:text-amber-400',
+                    'bg-amber-500/15 text-amber-800 dark:text-amber-400',
                     brandVoiceHealth.tone === 'muted' &&
-                      'bg-muted text-muted-foreground'
+                    'bg-muted text-muted-foreground'
                   )}
                 >
                   {brandVoiceHealth.percent}% profile
@@ -550,11 +768,11 @@ export default function Home() {
                   className={cn(
                     'h-full rounded-full transition-all',
                     brandVoiceHealth.tone === 'positive' &&
-                      'bg-linear-to-r from-emerald-500 to-teal-400',
+                    'bg-linear-to-r from-emerald-500 to-teal-400',
                     brandVoiceHealth.tone === 'warning' &&
-                      'bg-linear-to-r from-amber-500 to-orange-400',
+                    'bg-linear-to-r from-amber-500 to-orange-400',
                     brandVoiceHealth.tone === 'muted' &&
-                      'bg-muted-foreground/30'
+                    'bg-muted-foreground/30'
                   )}
                   style={{ width: `${brandVoiceHealth.percent}%` }}
                 />

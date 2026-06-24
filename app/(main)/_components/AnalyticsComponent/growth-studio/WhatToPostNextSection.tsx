@@ -57,20 +57,20 @@ function BriefCard({
 }) {
   const Icon = ICONS[brief.key];
   return (
-    <div className="flex h-full flex-col gap-3 rounded-xl border border-emerald-200 bg-white p-4 shadow-sm">
+    <div className="flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
       <div className="flex items-start gap-2">
-        <div className="rounded-lg bg-emerald-100 p-1.5" aria-hidden>
-          <Icon className="h-4 w-4 text-emerald-700" />
+        <div className="rounded-lg bg-emerald-500/20 p-1.5" aria-hidden>
+          <Icon className="h-4 w-4 text-emerald-300" />
         </div>
         <div className="flex-1 space-y-1">
-          <p className="text-sm font-semibold text-zinc-900">{brief.title}</p>
-          <p className="text-xs leading-relaxed text-zinc-600">
+          <p className="text-sm font-semibold text-foreground">{brief.title}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">
             {brief.description}
           </p>
         </div>
       </div>
 
-      <div className="rounded-md border border-dashed border-zinc-200 bg-zinc-50/60 px-2.5 py-2 text-[11px] text-zinc-500">
+      <div className="rounded-md border border-dashed border-border bg-muted/40 px-2.5 py-2 text-[11px] text-muted-foreground">
         {brief.hint}
       </div>
 
@@ -81,13 +81,13 @@ function BriefCard({
       */}
       {brief.prompt ? (
         <div
-          className="rounded-md border border-emerald-100 bg-emerald-50/70 px-2.5 py-2 text-[11px] leading-relaxed text-emerald-900"
+          className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-emerald-300"
           title={brief.prompt}
         >
-          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
             Prompt preview
           </p>
-          <p className="line-clamp-4 whitespace-pre-wrap text-zinc-700">
+          <p className="line-clamp-4 whitespace-pre-wrap text-foreground">
             {brief.prompt}
           </p>
         </div>
@@ -111,7 +111,7 @@ function SkeletonCard() {
     <div
       role="status"
       aria-label="Loading post idea"
-      className="h-44 animate-pulse rounded-xl border border-emerald-100 bg-emerald-50/40"
+      className="h-44 animate-pulse rounded-xl border border-emerald-500/25 bg-emerald-500/10"
     />
   );
 }
@@ -162,13 +162,13 @@ export function WhatToPostNextSection({
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h2
           id="growth-studio-what-to-post-heading"
-          className="flex items-center gap-2 text-sm font-semibold text-zinc-900"
+          className="flex items-center gap-2 text-sm font-semibold text-foreground"
         >
           <Sparkles className="h-4 w-4 text-emerald-600" aria-hidden />
           What to post next
         </h2>
       </header>
-      <p className="text-xs leading-relaxed text-zinc-600">
+      <p className="text-xs leading-relaxed text-muted-foreground">
         Three {platformLabel(platform)} idea cards tuned to your analytics —
         your best winner, a gap you’ve been avoiding, and a format you haven’t
         tried yet.
@@ -181,7 +181,7 @@ export function WhatToPostNextSection({
           <SkeletonCard />
         </div>
       ) : state.status === 'error' ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
           Couldn’t load post ideas: {state.error}
         </p>
       ) : state.payload.visible && state.payload.briefs.length > 0 ? (
@@ -195,7 +195,7 @@ export function WhatToPostNextSection({
           ))}
         </div>
       ) : (
-        <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-3 text-xs text-zinc-600">
+        <p className="rounded-lg border border-border bg-muted px-3 py-3 text-xs text-muted-foreground">
           {state.payload.reason ??
             'Post idea cards will appear here once we have enough data.'}
         </p>

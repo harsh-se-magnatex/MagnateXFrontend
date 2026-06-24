@@ -59,8 +59,8 @@ export function BoostSettingsList({ settings }: { settings: BoostSettings }) {
     <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1.5 text-xs leading-relaxed">
       {rows.map((row) => (
         <div key={row.label} className="contents">
-          <dt className="font-medium text-zinc-700">{row.label}</dt>
-          <dd className="text-zinc-900">{row.value}</dd>
+          <dt className="font-medium text-foreground">{row.label}</dt>
+          <dd className="text-foreground">{row.value}</dd>
         </div>
       ))}
     </dl>

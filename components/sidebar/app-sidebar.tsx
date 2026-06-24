@@ -44,7 +44,12 @@ import {
 import { usePathname } from 'next/navigation';
 import { WORKSPACE_NAV, type WorkspaceNavHref } from '@/lib/workspace-nav';
 import { useTourState } from '@/src/stores/tourState';
-import { Sparkles as TourSparkles } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useUserPlanCredits } from '@/app/(main)/_components/UserPlanCreditsProvider';
+import {
+  PRICING_PLANS_BY_ID,
+  type PlanId,
+} from '@/lib/landing-pricing';
 import {
   formatNotificationCount,
   useNotificationCounts,
@@ -56,6 +61,25 @@ import {
 function tourNavId(href: string): string {
   const slug = href.replace(/^\//, '').replace(/\//g, '-') || 'home';
   return `tour-nav-${slug}`;
+}
+
+function getNameInitials(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+  const first = parts[0][0] ?? '';
+  const last = parts[parts.length - 1][0] ?? '';
+  return `${first}${last}`.toUpperCase();
+}
+
+function formatActivePlanLabel(activePlan: string | null | undefined): string {
+  if (!activePlan || activePlan === 'non-subscribed') {
+    return 'No active plan';
+  }
+  const key = activePlan.trim().toLowerCase() as PlanId;
+  return PRICING_PLANS_BY_ID[key]?.name ?? activePlan.replace(/[-_]+/g, ' ').charAt(0).toUpperCase() + activePlan.replace(/[-_]+/g, ' ').slice(1);
 }
 
 const workspaceNavIcons: Record<WorkspaceNavHref, typeof Brain> = {
@@ -115,17 +139,29 @@ export function AppSidebar({
     ? settingsChildrenFrozen
     : settingsNavItems;
   const { isMobile, setOpenMobile } = useSidebar();
+  const { user, accountName, loading: authLoading } = useAuth();
+  const { billing } = useUserPlanCredits();
+
+  const displayName =
+    (accountName ?? user?.displayName ?? user?.email ?? 'Account').trim();
+  const nameInitials = getNameInitials(displayName);
+  const planLabel = formatActivePlanLabel(billing?.activePlan);
+
+  const startPlatformTour = () => {
+    if (isMobile) setOpenMobile(false);
+    useTourState.getState().requestTour('platform');
+  };
 
   React.useEffect(() => {
     if (isMobile) {
       setOpenMobile(false);
     }
-  }, [pathname, isMobile]);
+  }, [pathname, isMobile, setOpenMobile]);
 
   return (
-    <Sidebar className="h-screen border-r border-border/40">
+    <Sidebar className="h-screen border-r border-sidebar-border bg-sidebar shadow-[4px_0_24px_-12px_rgba(0,0,0,0.35)] [&_[data-slot=sidebar-inner]]:bg-sidebar">
       {/* Brand Header */}
-      <SidebarHeader className="mt-1, flex">
+      <SidebarHeader className="mt-1 flex border-b border-sidebar-border/80 pb-3">
         <Link
           href={isAccountFrozen ? '/settings/billings' : '/home'}
           className="flex items-center gap-3 group flex-col"
@@ -137,21 +173,13 @@ export function AppSidebar({
               className="w-full h-30 rounded-xl transition-transform group-hover:scale-105"
             />
           </div>
-          <div className="flex flex-col">
-            <span className="text-lg font-bold tracking-tight bg-gradient-primary-text">
-              SocioGenie
-            </span>
-            <span className="text-[10px] text-center font-medium text-muted-foreground uppercase tracking-widest">
-              Social Hub
-            </span>
-          </div>
         </Link>
       </SidebarHeader>
 
       <SidebarContent className="custom-scrollbar">
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 px-4 ">
+          <SidebarGroupLabel className="mb-1 px-4 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/45">
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -165,16 +193,16 @@ export function AppSidebar({
                         id={tourNavId(item.href)}
                         href={item.href}
                         className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${isActive
-                            ? 'bg-gradient-primary shadow-sm'
-                            : 'text-foreground/70 hover:bg-accent hover:text-foreground'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                           }`}
                       >
                         <item.icon
-                          className={`h-4 w-4 shrink-0 ${isActive ? 'text-white' : 'text-foreground'}`}
+                          className={`h-4 w-4 shrink-0 ${isActive ? 'text-primary-foreground' : 'text-sidebar-foreground/80'}`}
                         />
                         <span
                           className={
-                            isActive ? 'text-white' : 'text-foreground'
+                            isActive ? 'text-primary-foreground' : 'text-sidebar-foreground'
                           }
                         >
                           {item.name}
@@ -195,15 +223,15 @@ export function AppSidebar({
                     <Link
                       href={'/approval'}
                       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${pathname === '/approval'
-                          ? 'bg-gradient-primary shadow-sm'
-                          : 'text-foreground/70 hover:bg-accent hover:text-foreground'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                         }`}
                     >
                       <Eye
-                        className={`h-4 w-4 shrink-0 ${pathname === '/approval' ? 'text-white' : 'text-foreground'}`}
+                        className={`h-4 w-4 shrink-0 ${pathname === '/approval' ? 'text-primary-foreground' : 'text-sidebar-foreground/80'}`}
                       />
                       <span
-                        className={`${pathname === '/approval' ? 'text-white' : 'text-foreground'}`}
+                        className={`${pathname === '/approval' ? 'text-primary-foreground' : 'text-sidebar-foreground'}`}
                       >
                         Approval
                       </span>
@@ -217,7 +245,7 @@ export function AppSidebar({
 
         {/* Settings — always expanded (no collapsible); heading mirrors former dropdown row */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 px-4 mb-1 flex items-center gap-2">
+          <SidebarGroupLabel className="mb-1 flex items-center gap-2 px-4 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/45">
             <Settings className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
             Settings
           </SidebarGroupLabel>
@@ -235,16 +263,16 @@ export function AppSidebar({
                         id={tourNavId(href)}
                         href={href}
                         className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${isChildActive
-                            ? 'bg-gradient-primary shadow-sm'
-                            : 'text-foreground/70 hover:bg-accent hover:text-foreground'
+                            ? 'bg-primary text-primary-foreground shadow-sm'
+                            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                           }`}
                       >
                         <child.icon
-                          className={`h-4 w-4 shrink-0 ${isChildActive ? 'text-white' : 'text-foreground'}`}
+                          className={`h-4 w-4 shrink-0 ${isChildActive ? 'text-primary-foreground' : 'text-sidebar-foreground/80'}`}
                         />
                         <span
                           className={
-                            isChildActive ? 'text-white' : 'text-foreground'
+                            isChildActive ? 'text-primary-foreground' : 'text-sidebar-foreground'
                           }
                         >
                           {child.name}
@@ -266,6 +294,18 @@ export function AppSidebar({
                   </SidebarMenuItem>
                 );
               })}
+              {!isAccountFrozen && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    type="button"
+                    onClick={startPlatformTour}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  >
+                    <Sparkles className="h-4 w-4 shrink-0 text-sidebar-foreground/80" />
+                    <span className="text-sidebar-foreground">Take the tour</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -273,7 +313,7 @@ export function AppSidebar({
         {/* Admin Section */}
         {isAdmin && !isAccountFrozen && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-[10px] font-bold uppercase tracking-widest text-destructive/60 px-4 mb-1">
+            <SidebarGroupLabel className="mb-1 px-4 text-[10px] font-bold uppercase tracking-widest text-destructive/70">
               Admin
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -286,8 +326,8 @@ export function AppSidebar({
                     <Link
                       href="/admin/users"
                       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${(pathname?.startsWith('/admin/users') ?? false)
-                          ? 'bg-gradient-primary text-white shadow-sm'
-                          : 'text-foreground/70 hover:bg-accent hover:text-foreground'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                         }`}
                     >
                       <User className="h-4 w-4 shrink-0" />
@@ -303,8 +343,8 @@ export function AppSidebar({
                     <Link
                       href="/adminsupport"
                       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${pathname === '/adminsupport'
-                          ? 'bg-gradient-primary text-white shadow-sm'
-                          : 'text-foreground/70 hover:bg-accent hover:text-foreground'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                         }`}
                     >
                       <HelpCircle className="h-4 w-4 shrink-0" />
@@ -320,12 +360,29 @@ export function AppSidebar({
                     <Link
                       href="/monitoring"
                       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${pathname === '/monitoring'
-                          ? 'bg-gradient-primary text-white shadow-sm'
-                          : 'text-foreground/70 hover:bg-accent hover:text-foreground'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                         }`}
                     >
                       <Activity className="h-4 w-4 shrink-0" />
                       <span>Monitoring</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname?.startsWith('/admin/subscriptions') ?? false}
+                  >
+                    <Link
+                      href="/admin/subscriptions"
+                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${(pathname?.startsWith('/admin/subscriptions') ?? false)
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                        }`}
+                    >
+                      <CreditCard className="h-4 w-4 shrink-0" />
+                      <span>Subscriptions</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -337,8 +394,8 @@ export function AppSidebar({
                     <Link
                       href="/admin/ai-engine-review"
                       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${(pathname?.startsWith('/admin/ai-engine-review') ?? false)
-                          ? 'bg-gradient-primary text-white shadow-sm'
-                          : 'text-foreground/70 hover:bg-accent hover:text-foreground'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                         }`}
                     >
                       <Wand2 className="h-4 w-4 shrink-0" />
@@ -354,8 +411,8 @@ export function AppSidebar({
                     <Link
                       href="/send-notification"
                       className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${pathname === '/send-notification'
-                          ? 'bg-gradient-primary text-white shadow-sm'
-                          : 'text-foreground/70 hover:bg-accent hover:text-foreground'
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                         }`}
                     >
                       <Send className="h-4 w-4 shrink-0" />
@@ -368,23 +425,24 @@ export function AppSidebar({
           </SidebarGroup>
         )}
       </SidebarContent>
-      {!isAccountFrozen && (
-        <SidebarFooter className="border-t border-border/40">
-          <button
-            type="button"
-            onClick={() => {
-              // Close the mobile drawer first so it doesn't sit on top of
-              // the tour popover and highlighted page content.
-              if (isMobile) setOpenMobile(false);
-              useTourState.getState().requestTour('platform');
-            }}
-            className="mx-2 mb-2 mt-1 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium text-foreground/70 transition-colors hover:bg-accent hover:text-foreground"
+      <SidebarFooter className="border-t border-sidebar-border bg-sidebar p-3">
+        <div
+          className="flex cursor-default items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-sidebar-accent"
+        >
+          <div
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-sm ring-1 ring-primary/30"
+            aria-hidden
           >
-            <TourSparkles className="h-3.5 w-3.5 shrink-0" />
-            Take the tour
-          </button>
-        </SidebarFooter>
-      )}
+            {authLoading ? '…' : nameInitials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-sidebar-foreground">
+              {authLoading ? 'Loading…' : displayName}
+            </p>
+            <p className="truncate text-xs text-sidebar-foreground/60">{planLabel}</p>
+          </div>
+        </div>
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );

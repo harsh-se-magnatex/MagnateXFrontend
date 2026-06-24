@@ -140,12 +140,12 @@ export default function FaceBookAnalytics({
   if (!pageAnalytics && topPosts.length === 0) {
     const oauthHref = facebookOAuthAnalyticsHref();
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-6 py-14 text-center">
+      <div className="rounded-xl border border-dashed border-border bg-muted/40 px-6 py-14 text-center">
         <Facebook className="mx-auto h-10 w-10 text-blue-700" aria-hidden />
-        <p className="mt-3 text-sm font-medium text-zinc-800">
+        <p className="mt-3 text-sm font-medium text-foreground">
           No Facebook analytics yet
         </p>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Connect Facebook, choose a Page, and sync insights to see reach,
           audience, and post performance here.
         </p>
@@ -154,7 +154,7 @@ export default function FaceBookAnalytics({
             <a href={oauthHref}>Connect Facebook</a>
           </Button>
         ) : (
-          <p className="mt-6 text-xs text-amber-800">
+          <p className="mt-6 text-xs text-amber-200">
             Set <span className="font-mono">NEXT_PUBLIC_BACKEND_URL</span> to enable
             the connect button.
           </p>
@@ -172,13 +172,13 @@ export default function FaceBookAnalytics({
         lastSyncAt={pageAnalytics?.lastSyncAt}
       />
       <header className="space-y-1">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-zinc-900">
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground">
           <Facebook className="h-7 w-7 text-blue-700" />
           Analytics
         </h1>
         <p>Page Name: {pageAnalytics?.pageName}</p>
         {metrics.updatedLabel ? (
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-muted-foreground">
             Last updated {metrics.updatedLabel}
           </p>
         ) : null}
@@ -252,11 +252,11 @@ export default function FaceBookAnalytics({
         >
           <h2
             id="top-three-posts-heading"
-            className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+            className="flex items-center gap-2 text-lg font-semibold text-foreground"
           >
             <Crown className="h-5 w-5 text-amber-500" aria-hidden />
             Top 3 ranked posts
-            <span className="text-xs font-normal text-zinc-500">
+            <span className="text-xs font-normal text-muted-foreground">
               best performers in the last 3 weeks
             </span>
           </h2>
@@ -287,9 +287,9 @@ export default function FaceBookAnalytics({
       >
         <h2
           id="growth-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+          className="flex items-center gap-2 text-lg font-semibold text-foreground"
         >
-          <TrendingUp className="h-5 w-5 text-zinc-600" aria-hidden />
+          <TrendingUp className="h-5 w-5 text-muted-foreground" aria-hidden />
           Growth
         </h2>
         <div className="grid gap-4 lg:grid-cols-2">
@@ -315,16 +315,16 @@ export default function FaceBookAnalytics({
       >
         <h2
           id="top-posts-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+          className="flex items-center gap-2 text-lg font-semibold text-foreground"
         >
           <Trophy className="h-5 w-5 text-amber-600" aria-hidden />
           Top posts
-          <span className="text-xs font-normal text-zinc-500">
+          <span className="text-xs font-normal text-muted-foreground">
             classified vs. the cohort average (1.5× cutoff)
           </span>
         </h2>
         {topPosts.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600">
+          <p className="rounded-xl border border-border bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
             No post data yet. Sync insights from Facebook to populate this
             section.
           </p>
@@ -333,13 +333,13 @@ export default function FaceBookAnalytics({
             <TabsList className="grid h-auto w-full max-w-sm grid-cols-2 gap-1">
               <TabsTrigger value="nudge" className="gap-2">
                 Nudges
-                <span className="rounded-full bg-emerald-100 px-1.5 text-[10px] font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                <span className="rounded-full bg-emerald-500/20 px-1.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
                   {nudgeDud.nudges.length}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="dud" className="gap-2">
                 Duds
-                <span className="rounded-full bg-zinc-200 px-1.5 text-[10px] font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300">
+                <span className="rounded-full bg-accent px-1.5 text-[10px] font-semibold text-foreground ring-1 ring-inset ring-border">
                   {nudgeDud.duds.length}
                 </span>
               </TabsTrigger>
@@ -347,7 +347,7 @@ export default function FaceBookAnalytics({
 
             <TabsContent value="nudge" className="space-y-4 outline-none">
               {nudgeDud.nudges.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+                <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
                   No nudges yet — nothing in this window scored 1.5× above
                   your average. Recreate the framing of past winners to push
                   one over the bar.
@@ -367,7 +367,7 @@ export default function FaceBookAnalytics({
 
             <TabsContent value="dud" className="space-y-4 outline-none">
               {nudgeDud.duds.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+                <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
                   No duds — every recent post is performing at or above the
                   nudge bar. Keep the streak going.
                 </p>
@@ -390,32 +390,32 @@ export default function FaceBookAnalytics({
       <section className="space-y-4" aria-labelledby="audience-heading">
         <h2
           id="audience-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+          className="flex items-center gap-2 text-lg font-semibold text-foreground"
         >
-          <MapPin className="h-5 w-5 text-zinc-600" aria-hidden />
+          <MapPin className="h-5 w-5 text-muted-foreground" aria-hidden />
           Audience
-          <span className="text-xs font-normal text-zinc-400">(optional)</span>
+          <span className="text-xs font-normal text-muted-foreground">(optional)</span>
         </h2>
         {audienceRanked.countries.length === 0 &&
         audienceRanked.cities.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+          <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
             Location breakdown will appear here when available.
           </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {audienceRanked.countries.length > 0 ? (
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-zinc-700">
+              <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="text-sm font-medium text-foreground">
                   Top countries
                 </h3>
-                <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                   {audienceRanked.countries.map(({ name, count }) => (
                     <li
                       key={name}
-                      className="flex items-center justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0 last:pb-0"
+                      className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-zinc-800">{name}</span>
-                      <span className="tabular-nums text-zinc-500">
+                      <span className="font-medium text-foreground">{name}</span>
+                      <span className="tabular-nums text-muted-foreground">
                         {formatCompact(count)}
                       </span>
                     </li>
@@ -424,18 +424,18 @@ export default function FaceBookAnalytics({
               </div>
             ) : null}
             {audienceRanked.cities.length > 0 ? (
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-zinc-700">
+              <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="text-sm font-medium text-foreground">
                   Top cities
                 </h3>
-                <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                   {audienceRanked.cities.map(({ name, count }) => (
                     <li
                       key={name}
-                      className="flex items-center justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0 last:pb-0"
+                      className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-zinc-800">{name}</span>
-                      <span className="tabular-nums text-zinc-500">
+                      <span className="font-medium text-foreground">{name}</span>
+                      <span className="tabular-nums text-muted-foreground">
                         {formatCompact(count)}
                       </span>
                     </li>

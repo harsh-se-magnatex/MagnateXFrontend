@@ -149,12 +149,12 @@ export function InstagramAnalyticsView({
     if (!ig && posts.length === 0) {
       const oauthHref = instagramOAuthAnalyticsHref();
       return (
-        <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-6 py-14 text-center">
+        <div className="rounded-xl border border-dashed border-border bg-muted/40 px-6 py-14 text-center">
           <Instagram className="mx-auto h-10 w-10 text-pink-400" aria-hidden />
-          <p className="mt-3 text-sm font-medium text-zinc-800">
+          <p className="mt-3 text-sm font-medium text-foreground">
             No Instagram analytics yet
           </p>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Connect Instagram and sync insights to see reach, views, audience, and
             per-media metrics here.
           </p>
@@ -166,7 +166,7 @@ export function InstagramAnalyticsView({
               <a href={oauthHref}>Connect Instagram</a>
             </Button>
           ) : (
-            <p className="mt-6 text-xs text-amber-800">
+            <p className="mt-6 text-xs text-amber-200">
               Set <span className="font-mono">NEXT_PUBLIC_BACKEND_URL</span> to enable
               the connect button.
             </p>
@@ -186,17 +186,17 @@ export function InstagramAnalyticsView({
           lastSyncAt={ig?.lastSyncAt}
         />
         <header className="space-y-1">
-          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-zinc-900">
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground">
             <Instagram className="h-7 w-7 text-pink-600" aria-hidden />
             Analytics
           </h1>
           {ig?.username ? (
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-muted-foreground">
               @{ig.username} · {formatCompact(ig.mediaCount)} media
             </p>
           ) : null}
           {ig?.lastUpdated ? (
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               Last updated {formatLastUpdated(ig.lastUpdated)}
             </p>
           ) : null}
@@ -268,11 +268,11 @@ export function InstagramAnalyticsView({
           >
             <h2
               id="ig-top-three-heading"
-              className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+              className="flex items-center gap-2 text-lg font-semibold text-foreground"
             >
               <Crown className="h-5 w-5 text-amber-500" aria-hidden />
               Top 3 ranked posts
-              <span className="text-xs font-normal text-zinc-500">
+              <span className="text-xs font-normal text-muted-foreground">
                 best performers in the last 3 weeks
               </span>
             </h2>
@@ -301,7 +301,7 @@ export function InstagramAnalyticsView({
           <section className="space-y-3" aria-labelledby="ig-content-mix">
             <h2
               id="ig-content-mix"
-              className="text-lg font-semibold text-zinc-900"
+              className="text-lg font-semibold text-foreground"
             >
               Content mix
             </h2>
@@ -315,12 +315,12 @@ export function InstagramAnalyticsView({
               ].map(({ label, n, Icon }) => (
                 <div
                   key={label}
-                  className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-3 shadow-sm"
+                  className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-3 shadow-sm"
                 >
                   <Icon className="h-5 w-5 text-pink-500" aria-hidden />
                   <div>
-                    <p className="text-xs text-zinc-500">{label}</p>
-                    <p className="text-lg font-semibold tabular-nums text-zinc-900">
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-lg font-semibold tabular-nums text-foreground">
                       {formatCompact(n)}
                     </p>
                   </div>
@@ -333,7 +333,7 @@ export function InstagramAnalyticsView({
         <section className="space-y-4" aria-labelledby="ig-growth-heading">
           <h2
             id="ig-growth-heading"
-            className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+            className="flex items-center gap-2 text-lg font-semibold text-foreground"
           >
             <TrendingUp className="h-5 w-5 text-pink-600" aria-hidden />
             Growth
@@ -356,19 +356,19 @@ export function InstagramAnalyticsView({
   
         {freqChips.length > 0 ? (
           <section className="space-y-2" aria-label="Post frequency">
-            <h2 className="text-sm font-medium text-zinc-700">
+            <h2 className="text-sm font-medium text-foreground">
               Recent posting days
             </h2>
             <ul className="flex flex-wrap gap-2">
               {freqChips.map(({ date, count }) => (
                 <li
                   key={date}
-                  className="rounded-lg bg-white px-2.5 py-1 text-xs ring-1 ring-zinc-200"
+                  className="rounded-lg bg-card px-2.5 py-1 text-xs ring-1 ring-border"
                 >
-                  <span className="text-zinc-500">
+                  <span className="text-muted-foreground">
                     {formatChartTooltipDate(date)}
                   </span>{' '}
-                  <span className="font-medium tabular-nums text-zinc-900">
+                  <span className="font-medium tabular-nums text-foreground">
                     ×{count}
                   </span>
                 </li>
@@ -380,16 +380,16 @@ export function InstagramAnalyticsView({
         <section className="space-y-4" aria-labelledby="ig-top-media">
           <h2
             id="ig-top-media"
-            className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+            className="flex items-center gap-2 text-lg font-semibold text-foreground"
           >
             <Trophy className="h-5 w-5 text-amber-600" aria-hidden />
             Top media
-            <span className="text-xs font-normal text-zinc-500">
+            <span className="text-xs font-normal text-muted-foreground">
               classified vs. the cohort average (1.5× cutoff)
             </span>
           </h2>
           {topMedia.length === 0 ? (
-            <p className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600">
+            <p className="rounded-xl border border-border bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
               No media loaded yet. Sync Instagram insights to populate this list.
             </p>
           ) : (
@@ -397,13 +397,13 @@ export function InstagramAnalyticsView({
               <TabsList className="grid h-auto w-full max-w-sm grid-cols-2 gap-1">
                 <TabsTrigger value="nudge" className="gap-2">
                   Nudges
-                  <span className="rounded-full bg-emerald-100 px-1.5 text-[10px] font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                  <span className="rounded-full bg-emerald-500/20 px-1.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
                     {nudgeDud.nudges.length}
                   </span>
                 </TabsTrigger>
                 <TabsTrigger value="dud" className="gap-2">
                   Duds
-                  <span className="rounded-full bg-zinc-200 px-1.5 text-[10px] font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300">
+                  <span className="rounded-full bg-accent px-1.5 text-[10px] font-semibold text-foreground ring-1 ring-inset ring-border">
                     {nudgeDud.duds.length}
                   </span>
                 </TabsTrigger>
@@ -411,7 +411,7 @@ export function InstagramAnalyticsView({
 
               <TabsContent value="nudge" className="space-y-4 outline-none">
                 {nudgeDud.nudges.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+                  <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
                     No nudges yet — nothing in this window scored 1.5× above
                     your average. Recreate the framing of past winners to
                     push one over the bar.
@@ -431,7 +431,7 @@ export function InstagramAnalyticsView({
 
               <TabsContent value="dud" className="space-y-4 outline-none">
                 {nudgeDud.duds.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+                  <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
                     No duds — every recent post is performing at or above
                     the nudge bar. Keep the streak going.
                   </p>
@@ -454,7 +454,7 @@ export function InstagramAnalyticsView({
         <section className="space-y-4" aria-labelledby="ig-audience">
           <h2
             id="ig-audience"
-            className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+            className="flex items-center gap-2 text-lg font-semibold text-foreground"
           >
             <MapPin className="h-5 w-5 text-pink-600" aria-hidden />
             Audience
@@ -463,25 +463,25 @@ export function InstagramAnalyticsView({
           igAudience.cities.length === 0 &&
           igAudience.ageGender.length === 0 &&
           igAudience.genderSplit.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+            <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
               Demographics will appear after Instagram provides audience
               breakdowns.
             </p>
           ) : (
             <div className="grid gap-4 lg:grid-cols-2">
               {igAudience.countries.length > 0 ? (
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-                  <h3 className="text-sm font-medium text-zinc-700">
+                <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-foreground">
                     Top countries
                   </h3>
-                  <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                     {igAudience.countries.map(({ name, count }) => (
                       <li
                         key={name}
-                        className="flex justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0 last:pb-0"
+                        className="flex justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
                       >
-                        <span className="font-medium text-zinc-800">{name}</span>
-                        <span className="tabular-nums text-zinc-500">
+                        <span className="font-medium text-foreground">{name}</span>
+                        <span className="tabular-nums text-muted-foreground">
                           {formatCompact(count)}
                         </span>
                       </li>
@@ -490,18 +490,18 @@ export function InstagramAnalyticsView({
                 </div>
               ) : null}
               {igAudience.cities.length > 0 ? (
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-                  <h3 className="text-sm font-medium text-zinc-700">
+                <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                  <h3 className="text-sm font-medium text-foreground">
                     Top cities
                   </h3>
-                  <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                     {igAudience.cities.map(({ name, count }) => (
                       <li
                         key={name}
-                        className="flex justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0 last:pb-0"
+                        className="flex justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
                       >
-                        <span className="font-medium text-zinc-800">{name}</span>
-                        <span className="tabular-nums text-zinc-500">
+                        <span className="font-medium text-foreground">{name}</span>
+                        <span className="tabular-nums text-muted-foreground">
                           {formatCompact(count)}
                         </span>
                       </li>
@@ -510,15 +510,15 @@ export function InstagramAnalyticsView({
                 </div>
               ) : null}
               {igAudience.ageGender.length > 0 ? (
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm lg:col-span-2">
-                  <h3 className="text-sm font-medium text-zinc-700">
+                <div className="rounded-xl border border-border bg-card p-4 shadow-sm lg:col-span-2">
+                  <h3 className="text-sm font-medium text-foreground">
                     Age & gender
                   </h3>
                   <ul className="mt-3 flex flex-wrap gap-2">
                     {igAudience.ageGender.map(({ name, value }) => (
                       <li
                         key={name}
-                        className="rounded-lg bg-pink-50 px-2.5 py-1 text-xs text-pink-900 ring-1 ring-pink-100"
+                        className="rounded-lg bg-pink-50 px-2.5 py-1 text-xs text-pink-900 ring-1 ring-secondary/20"
                       >
                         <span className="font-medium">{name}</span>{' '}
                         <span className="tabular-nums opacity-80">
@@ -530,18 +530,18 @@ export function InstagramAnalyticsView({
                 </div>
               ) : null}
               {igAudience.genderSplit.length > 0 ? (
-                <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm lg:col-span-2">
-                  <h3 className="text-sm font-medium text-zinc-700">
+                <div className="rounded-xl border border-border bg-card p-4 shadow-sm lg:col-span-2">
+                  <h3 className="text-sm font-medium text-foreground">
                     Gender split
                   </h3>
                   <ul className="mt-3 flex flex-wrap gap-2">
                     {igAudience.genderSplit.map(({ name, value }) => (
                       <li
                         key={name}
-                        className="rounded-lg bg-zinc-50 px-2.5 py-1 text-xs text-zinc-800 ring-1 ring-zinc-200"
+                        className="rounded-lg bg-muted px-2.5 py-1 text-xs text-foreground ring-1 ring-border"
                       >
                         <span className="font-medium">{name}</span>{' '}
-                        <span className="tabular-nums text-zinc-500">
+                        <span className="tabular-nums text-muted-foreground">
                           {formatCompact(value)}
                         </span>
                       </li>

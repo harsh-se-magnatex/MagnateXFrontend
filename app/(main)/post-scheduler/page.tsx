@@ -904,7 +904,6 @@ export default function PostSchedulePage() {
                           <input
                             type="checkbox"
                             checked
-                            disabled
                             readOnly
                             aria-label={`${formatPlatformLabel(platform)} selected`}
                             className="size-4 shrink-0 rounded border-slate-300 text-indigo-600 disabled:cursor-default disabled:opacity-100"

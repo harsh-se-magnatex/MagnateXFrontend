@@ -678,10 +678,10 @@ export default function AutomationPreferencePage() {
                     );
                   }}
                   className={cn(
-                    'flex-1 rounded-2xl border px-6 py-4 text-center transition-all bg-white relative overflow-hidden',
+                    'flex-1 rounded-2xl border px-6 py-4 text-center transition-all bg-card relative overflow-hidden',
                     isSelected
-                      ? 'border-indigo-600 ring-1 ring-indigo-600 shadow-md shadow-indigo-500/10'
-                      : 'border-slate-200/60 hover:border-slate-300 hover:bg-slate-50 shadow-sm'
+                      ? 'border-primary ring-1 ring-primary shadow-md shadow-primary/10'
+                      : 'border-border/60 hover:border-border hover:bg-accent/40 shadow-sm'
                   )}
                 >
                   {isSelected && (
@@ -690,7 +690,7 @@ export default function AutomationPreferencePage() {
                   <span
                     className={cn(
                       'block text-sm font-bold capitalize',
-                      isSelected ? 'text-indigo-700' : 'text-slate-700'
+                      isSelected ? 'text-primary' : 'text-foreground'
                     )}
                   >
                     {len.id}
@@ -730,10 +730,10 @@ export default function AutomationPreferencePage() {
                     );
                   }}
                   className={cn(
-                    'flex-1 rounded-2xl border px-6 py-4 text-center transition-all bg-white relative overflow-hidden',
+                    'flex-1 rounded-2xl border px-6 py-4 text-center transition-all bg-card relative overflow-hidden',
                     isSelected
-                      ? 'border-indigo-600 ring-1 ring-indigo-600 shadow-md shadow-indigo-500/10'
-                      : 'border-slate-200/60 hover:border-slate-300 hover:bg-slate-50 shadow-sm'
+                      ? 'border-primary ring-1 ring-primary shadow-md shadow-primary/10'
+                      : 'border-border/60 hover:border-border hover:bg-accent/40 shadow-sm'
                   )}
                 >
                   {isSelected && (
@@ -742,7 +742,7 @@ export default function AutomationPreferencePage() {
                   <span
                     className={cn(
                       'block text-sm font-bold capitalize',
-                      isSelected ? 'text-indigo-700' : 'text-slate-700'
+                      isSelected ? 'text-primary' : 'text-foreground'
                     )}
                   >
                     {len.id}
@@ -782,10 +782,10 @@ export default function AutomationPreferencePage() {
                     );
                   }}
                   className={cn(
-                    'flex-1 rounded-2xl border px-6 py-4 text-center transition-all bg-white relative overflow-hidden',
+                    'flex-1 rounded-2xl border px-6 py-4 text-center transition-all bg-card relative overflow-hidden',
                     isSelected
-                      ? 'border-indigo-600 ring-1 ring-indigo-600 shadow-md shadow-indigo-500/10'
-                      : 'border-slate-200/60 hover:border-slate-300 hover:bg-slate-50 shadow-sm'
+                      ? 'border-primary ring-1 ring-primary shadow-md shadow-primary/10'
+                      : 'border-border/60 hover:border-border hover:bg-accent/40 shadow-sm'
                   )}
                 >
                   {isSelected && (
@@ -794,7 +794,7 @@ export default function AutomationPreferencePage() {
                   <span
                     className={cn(
                       'block text-sm font-bold capitalize',
-                      isSelected ? 'text-indigo-700' : 'text-slate-700'
+                      isSelected ? 'text-primary' : 'text-foreground'
                     )}
                   >
                     {len.id}
@@ -827,8 +827,7 @@ export default function AutomationPreferencePage() {
                 Post Approval Mode
               </label>
               <p className="text-xs text-slate-500 mb-4">
-                Choose who reviews your scheduled posts before they go live.
-                With{' '}
+                In{' '}
                 <span className="font-semibold text-slate-700">
                   Auto Approve
                 </span>
@@ -840,7 +839,7 @@ export default function AutomationPreferencePage() {
                 , every post must be reviewed and approved by you before it can
                 be published.
               </p>
-              <div className="flex rounded-xl bg-slate-100/80 p-1 border border-slate-200/60">
+              <div className="flex rounded-xl bg-muted p-1 border border-border">
                 <UpgradeGate
                   gated={isAutoMode}
                   tooltip="Upgrade to manual mode"
@@ -866,8 +865,8 @@ export default function AutomationPreferencePage() {
                     className={cn(
                       'w-full rounded-lg py-2.5 text-sm font-semibold transition-all duration-200',
                       needApproval === true
-                        ? 'bg-white text-slate-900 shadow-sm ring-1 ring-black/5'
-                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50',
+                        ? 'bg-card text-foreground shadow-sm ring-1 ring-border'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
                       isAutoMode && 'opacity-50'
                     )}
                   >
@@ -1025,7 +1024,7 @@ export default function AutomationPreferencePage() {
                       <div
                         key={platform}
                         className={cn(
-                          'flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-shadow',
+                          'flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm transition-shadow',
                           !state.connected && 'opacity-70'
                         )}
                       >

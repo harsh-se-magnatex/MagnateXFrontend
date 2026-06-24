@@ -86,6 +86,48 @@ export const updateAdminUserFreezeStatus = async (
   );
 };
 
+export type AdminPlan = {
+  id: string;
+  name: string;
+  displayName: string;
+  mode: 'auto' | 'manual';
+  price: number;
+  credits: number;
+};
+
+export type AdminSubscriptionChangeType =
+  | 'activate'
+  | 'upgrade'
+  | 'downgrade'
+  | 'change';
+
+export type AdminActivateSubscriptionResult = {
+  userId: string;
+  previousPlan: string;
+  newPlan: string;
+  changeType: AdminSubscriptionChangeType;
+  planCredits: number;
+  planExpiresAt: string;
+  mode: 'auto' | 'manual';
+};
+
+export const getAdminPlans = async () => {
+  return apiGet<ApiEnvelope<{ plans: AdminPlan[] }>>('/api/v1/admin/plans');
+};
+
+export const activateAdminUserSubscription = async (payload: {
+  userId: string;
+  planId: string;
+  durationMonths?: number;
+  creditMode?: 'set' | 'add';
+  note?: string;
+}) => {
+  return apiPost<ApiEnvelope<AdminActivateSubscriptionResult>>(
+    '/api/v1/admin/subscriptions/activate',
+    payload
+  );
+};
+
 // ─── AI Engine Review (admin portal) ─────────────────────────────────────────
 
 export type AiEnginePlatform = 'instagram' | 'facebook' | 'linkedin';

@@ -1,7 +1,7 @@
 export type PricingLine = { text: string; sub?: boolean };
 
 export type PlanTier = 'prime' | 'elite' | 'legacy';
-export type PlanMode = 'manual' | 'auto';
+export type PlanMode = 'AI' | 'Studio';
 export type PlanId =
   | 'prime-Studio'
   | 'prime-AI'
@@ -24,29 +24,21 @@ export type PricingPlan = {
   period: string;
   highlighted?: boolean;
   badge?: string;
+  /** Elite-only trial callout (e.g. near price or CTA). */
+  trialOffer?: string;
   /** Prime & Legacy currently show "Coming soon" on the public landing if true. */
   comingSoon?: boolean;
   lines: PricingLine[];
 };
 
-/** Elite-only first line on plan cards (landing + billing plan picker). */
-export const PLAN_TRIAL_FEATURE_LINE: PricingLine = {
-  text: '10-day free trial — full plan access; you are not charged until the trial ends',
-  sub: true,
-};
+export const PLAN_MOST_POPULAR_BADGE = 'Most popular';
 
-/**
- * Billing / checkout-style disclosure: Elite trial vs Prime/Legacy billing at start.
- */
-export const PLAN_TRIAL_BILLING_NOTICE =
-  'Elite includes a 10-day free trial with full plan access; you are not charged until the trial ends. Prime and Legacy subscriptions bill the monthly price when you start your subscription.';
-
-/** One-line trial summary for page intros (e.g. public pricing hero). */
-export const PLAN_TRIAL_HERO_LINE =
-  'Elite includes a 10-day free trial — billing starts after day 10 at Elite’s monthly price. Prime and Legacy bill monthly from when you subscribe.';
-
-/** Second line on plan CTAs (pricing page cards + billing upgrade modal). */
-export const PLAN_TRIAL_BUTTON_SUBLABEL = '10 days free';
+/** Elite 10-day trial — shown on plan cards (pricing + billing). */
+export const PLAN_ELITE_TRIAL_OFFER = 'Free for 10 days';
+export const PLAN_ELITE_TRIAL_DETAIL =
+  'Available free for 10 days with full plan access — you are not charged until the trial ends.';
+export const PLAN_ELITE_TRIAL_HERO_LINE =
+  'Elite is available free for 10 days with full plan access — you are not charged until the trial ends.';
 
 /** Title-case plan name for buttons (e.g. PRIME → Prime, elite → Elite). */
 export function planButtonDisplayName(raw: string): string {
@@ -124,11 +116,8 @@ function buildFeatureLines(id: PlanId): PricingLine[] {
   const campaignPosts = Math.floor(credits / 3);
   const lines: PricingLine[] = [];
 
-  // Elite tiers keep the 10-day free trial as the first bullet.
-  if (tier === 'elite') lines.push(PLAN_TRIAL_FEATURE_LINE);
-
   lines.push({ text: PLATFORMS_BY_TIER[tier] });
-  if (mode === 'auto') lines.push({ text: 'Daily automated posts' });
+  if (mode === 'AI') lines.push({ text: 'Daily automated posts' });
   lines.push({ text: 'Human-reviewed content' });
   lines.push({
     text: `${credits} credits/month \u2014 up to ${quickPosts} quick create OR ${festivePosts} festive OR ${campaignPosts} campaign OR ${productAdverts} product advert posts`,
@@ -149,6 +138,8 @@ function buildPlan(id: PlanId): PricingPlan {
     price: PRICE_BY_PLAN_ID[id],
     period: '/month',
     highlighted: tier === 'elite',
+    badge: tier === 'elite' ? PLAN_MOST_POPULAR_BADGE : undefined,
+    trialOffer: tier === 'elite' ? PLAN_ELITE_TRIAL_OFFER : undefined,
     comingSoon: false,
     lines: buildFeatureLines(id),
   };
@@ -187,9 +178,8 @@ export const PRICING_PLANS_AUTO: PricingPlan[] = [
 export const PRICING_PLANS: PricingPlan[] = PRICING_PLANS_MANUAL;
 
 export function pricingPlansForMode(mode: PlanMode): PricingPlan[] {
-  return mode === 'auto' ? PRICING_PLANS_AUTO : PRICING_PLANS_MANUAL;
+  return mode === 'AI' ? PRICING_PLANS_AUTO : PRICING_PLANS_MANUAL;
 }
-
 /**
  * Plan card metadata for the billing upgrade modal, keyed by full plan
  * id. The modal's mode toggle picks the right entry via

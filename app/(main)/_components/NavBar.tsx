@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { handleSameHashLinkClick } from '@/lib/scroll-to-hash';
 
 const NAV_ITEMS = [
   { label: 'How It Works', href: '#how-it-works' },
@@ -69,15 +70,19 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
             </span>
           </Link>
           <div className="hidden md:flex items-center gap-8">
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.map((item) => {
+              const href = navItemHref(item.href, isAuthRender);
+              return (
               <a
                 key={item.href}
-                href={navItemHref(item.href, isAuthRender)}
+                href={href}
+                onClick={(event) => handleSameHashLinkClick(event, href)}
                 className="relative text-sm font-medium text-muted-foreground transition-colors hover:text-foreground after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-linear-to-r after:from-primary-blue after:to-primary-purple after:transition-all after:duration-300 hover:after:w-full"
               >
                 {item.label}
               </a>
-            ))}
+            );
+            })}
           </div>
           <div className="hidden md:flex items-center gap-3">
             <Link
@@ -143,16 +148,22 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
             <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Navigate
             </p>
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.map((item) => {
+              const href = navItemHref(item.href, isAuthRender);
+              return (
               <a
                 key={item.href}
-                href={navItemHref(item.href, isAuthRender)}
+                href={href}
                 className="rounded-xl px-4 py-3 text-base font-medium text-muted-foreground transition-colors hover:bg-accent/80 hover:text-foreground"
-                onClick={closeMobileNav}
+                onClick={(event) => {
+                  handleSameHashLinkClick(event, href);
+                  closeMobileNav();
+                }}
               >
                 {item.label}
               </a>
-            ))}
+            );
+            })}
             <div className="mt-4 flex flex-col gap-2 border-t border-border/50 pt-4">
               <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Account

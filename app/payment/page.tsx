@@ -10,12 +10,7 @@ import { PaymentReturnContent } from './context/payment-return-content';
 
 function PaymentLanding() {
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-background px-4 py-12 font-(--font-sora) text-foreground">
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -top-[12%] left-1/2 h-[min(520px,80vw)] w-[min(520px,80vw)] -translate-x-1/2 rounded-full bg-primary-blue/10 blur-[100px] sm:h-[560px] sm:w-[560px] sm:blur-[120px]" />
-        <div className="absolute -bottom-[10%] right-[-8%] h-[min(380px,70vw)] w-[min(380px,70vw)] rounded-full bg-primary-purple/10 blur-[100px]" />
-      </div>
-
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
       <div className="relative w-full max-w-lg animate-in fade-in duration-500">
         <div className="glass-card rounded-3xl border border-slate-200/80 bg-white/90 p-8 shadow-xl shadow-primary-blue/10 dark:border-border/60 dark:bg-card/95 sm:p-10">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shadow-sm ring-1 ring-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-400 dark:ring-indigo-500/25">

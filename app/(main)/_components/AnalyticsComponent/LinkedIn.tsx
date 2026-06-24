@@ -116,21 +116,21 @@ function LinkedInMetricDetailPanel({
 
   return (
     <div
-      className="rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 text-sm text-zinc-700"
+      className="rounded-xl border border-border bg-muted/60 p-4 text-sm text-foreground"
       role="region"
       aria-live="polite"
     >
       {metric === 'followers' ? (
         <div className="space-y-2">
-          <p className="font-medium text-zinc-900">Followers</p>
+          <p className="font-medium text-foreground">Followers</p>
           <p>
             Followers for your selected LinkedIn organization. The Growth chart shows
             how this changed over reported periods.
           </p>
           {fmtDelta(fd) ? (
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted-foreground">
               Latest change vs previous bucket:{' '}
-              <span className="font-medium tabular-nums text-zinc-800">
+              <span className="font-medium tabular-nums text-foreground">
                 {fmtDelta(fd)}
               </span>
             </p>
@@ -139,17 +139,17 @@ function LinkedInMetricDetailPanel({
       ) : null}
       {metric === 'pageViews' ? (
         <div className="space-y-2">
-          <p className="font-medium text-zinc-900">Page views</p>
+          <p className="font-medium text-foreground">Page views</p>
           <p>
-            <span className="font-medium tabular-nums text-zinc-900">
+            <span className="font-medium tabular-nums text-foreground">
               {formatCompact(merged.totalPageViews)}
             </span>{' '}
             total LinkedIn organization page views in the current rollup.
           </p>
           {fmtDelta(pd) ? (
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted-foreground">
               Page views vs previous period:{' '}
-              <span className="font-medium tabular-nums text-zinc-800">
+              <span className="font-medium tabular-nums text-foreground">
                 {fmtDelta(pd)}
               </span>
             </p>
@@ -158,17 +158,17 @@ function LinkedInMetricDetailPanel({
       ) : null}
       {metric === 'impressions' ? (
         <div className="space-y-2">
-          <p className="font-medium text-zinc-900">Impressions</p>
+          <p className="font-medium text-foreground">Impressions</p>
           <p>
-            <span className="font-medium tabular-nums text-zinc-900">
+            <span className="font-medium tabular-nums text-foreground">
               {formatCompact(merged.totalImpressions)}
             </span>{' '}
             impressions in your current rollup.
           </p>
           {fmtDelta(id) ? (
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted-foreground">
               Impressions vs previous period:{' '}
-              <span className="font-medium tabular-nums text-zinc-800">
+              <span className="font-medium tabular-nums text-foreground">
                 {fmtDelta(id)}
               </span>
             </p>
@@ -177,28 +177,28 @@ function LinkedInMetricDetailPanel({
       ) : null}
       {metric === 'posts' ? (
         <div className="space-y-2">
-          <p className="font-medium text-zinc-900">Posts</p>
+          <p className="font-medium text-foreground">Posts</p>
           <p>
-            <span className="font-medium tabular-nums text-zinc-900">
+            <span className="font-medium tabular-nums text-foreground">
               {postCount}
             </span>{' '}
             posts stored for analytics (ranked by engagement below).
           </p>
           {merged.postFrequencyTop.length > 0 ? (
             <div>
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Recent days by volume
               </p>
               <ul className="flex flex-wrap gap-2">
                 {merged.postFrequencyTop.map(({ date, count }) => (
                   <li
                     key={date}
-                    className="rounded-lg bg-white px-2.5 py-1 text-xs ring-1 ring-zinc-200"
+                    className="rounded-lg bg-card px-2.5 py-1 text-xs ring-1 ring-border"
                   >
-                    <span className="text-zinc-500">
+                    <span className="text-muted-foreground">
                       {formatChartTooltipDate(date)}
                     </span>{' '}
-                    <span className="font-medium tabular-nums text-zinc-900">
+                    <span className="font-medium tabular-nums text-foreground">
                       ×{count}
                     </span>
                   </li>
@@ -210,11 +210,11 @@ function LinkedInMetricDetailPanel({
       ) : null}
       {metric === 'engagement' ? (
         <div className="space-y-2">
-          <p className="font-medium text-zinc-900">Engagement</p>
+          <p className="font-medium text-foreground">Engagement</p>
           {merged.totalEngagementsPage > 0 ? (
             <p>
               Page-level engagement total:{' '}
-              <span className="font-medium tabular-nums text-zinc-900">
+              <span className="font-medium tabular-nums text-foreground">
                 {formatCompact(merged.totalEngagementsPage)}
               </span>
               .
@@ -222,16 +222,16 @@ function LinkedInMetricDetailPanel({
           ) : (
             <p>
               Sum of engagement scores across stored posts:{' '}
-              <span className="font-medium tabular-nums text-zinc-900">
+              <span className="font-medium tabular-nums text-foreground">
                 {formatCompact(merged.engagementsFromPosts)}
               </span>
               .
             </p>
           )}
           {fmtDelta(ed) ? (
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted-foreground">
               Engagement vs previous period:{' '}
-              <span className="font-medium tabular-nums text-zinc-800">
+              <span className="font-medium tabular-nums text-foreground">
                 {fmtDelta(ed)}
               </span>
             </p>
@@ -242,7 +242,7 @@ function LinkedInMetricDetailPanel({
   );
 }
 
-export default function LinkedInAnalyticsView({
+export default function WLinkedInAnalyticsView({
   connection,
   li,
   posts,
@@ -350,12 +350,12 @@ export default function LinkedInAnalyticsView({
   if (!connection.connected) {
     const oauthHref = linkedInOAuthAnalyticsHref();
     return (
-      <div className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-6 py-14 text-center">
+      <div className="rounded-xl border border-dashed border-border bg-muted/40 px-6 py-14 text-center">
         <Linkedin className="mx-auto h-10 w-10 text-[#0a66c2]" aria-hidden />
-        <p className="mt-3 text-sm font-medium text-zinc-800">
+        <p className="mt-3 text-sm font-medium text-foreground">
           Connect LinkedIn analytics
         </p>
-        <p className="mt-1 mb-6 text-sm text-zinc-500">
+        <p className="mt-1 mb-6 text-sm text-muted-foreground">
           We don&apos;t have analytics saved for your selected LinkedIn page yet.
           Connect LinkedIn, select an organization, and sync insights to see
           them here.
@@ -368,7 +368,7 @@ export default function LinkedInAnalyticsView({
             <a href={oauthHref}>Connect LinkedIn</a>
           </Button>
         ) : (
-          <p className="text-xs text-amber-800">
+          <p className="text-xs text-amber-200">
             Set <span className="font-mono">NEXT_PUBLIC_BACKEND_URL</span> to enable
             the connect button.
           </p>
@@ -398,22 +398,22 @@ export default function LinkedInAnalyticsView({
         lastSyncAt={li?.lastSyncAt}
       />
       <header className="space-y-1">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-zinc-900">
+        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground">
           <Linkedin className="h-7 w-7 text-[#0a66c2]" aria-hidden />
           Analytics
         </h1>
         {li?.pageName || li?.displayName ? (
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-muted-foreground">
             {li.pageName ?? li.displayName}
           </p>
         ) : null}
         {li?.organizationUrn ? (
-          <p className="text-sm text-zinc-500 line-clamp-2">
+          <p className="text-sm text-muted-foreground line-clamp-2">
             {li.organizationUrn}
           </p>
         ) : null}
         {updatedLabel ? (
-          <p className="text-sm text-zinc-500">Last updated {updatedLabel}</p>
+          <p className="text-sm text-muted-foreground">Last updated {updatedLabel}</p>
         ) : null}
       </header>
 
@@ -489,11 +489,11 @@ export default function LinkedInAnalyticsView({
         >
           <h2
             id="li-top-three-heading"
-            className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+            className="flex items-center gap-2 text-lg font-semibold text-foreground"
           >
             <Crown className="h-5 w-5 text-amber-500" aria-hidden />
             Top 3 ranked posts
-            <span className="text-xs font-normal text-zinc-500">
+            <span className="text-xs font-normal text-muted-foreground">
               best performers in the last 3 weeks
             </span>
           </h2>
@@ -525,7 +525,7 @@ export default function LinkedInAnalyticsView({
       >
         <h2
           id="li-growth-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+          className="flex items-center gap-2 text-lg font-semibold text-foreground"
         >
           <TrendingUp className="h-5 w-5 text-[#0a66c2]" aria-hidden />
           Growth
@@ -562,16 +562,16 @@ export default function LinkedInAnalyticsView({
       >
         <h2
           id="li-top-posts-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+          className="flex items-center gap-2 text-lg font-semibold text-foreground"
         >
           <Trophy className="h-5 w-5 text-amber-600" aria-hidden />
           Top posts
-          <span className="text-xs font-normal text-zinc-500">
+          <span className="text-xs font-normal text-muted-foreground">
             classified vs. the cohort average (1.5× cutoff)
           </span>
         </h2>
         {topAsPosts.length === 0 ? (
-          <p className="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-8 text-center text-sm text-zinc-600">
+          <p className="rounded-xl border border-border bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
             No post data yet. Sync LinkedIn insights to populate this section.
           </p>
         ) : (
@@ -579,13 +579,13 @@ export default function LinkedInAnalyticsView({
             <TabsList className="grid h-auto w-full max-w-sm grid-cols-2 gap-1">
               <TabsTrigger value="nudge" className="gap-2">
                 Nudges
-                <span className="rounded-full bg-emerald-100 px-1.5 text-[10px] font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-200">
+                <span className="rounded-full bg-emerald-500/20 px-1.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
                   {nudgeDud.nudges.length}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="dud" className="gap-2">
                 Duds
-                <span className="rounded-full bg-zinc-200 px-1.5 text-[10px] font-semibold text-zinc-700 ring-1 ring-inset ring-zinc-300">
+                <span className="rounded-full bg-accent px-1.5 text-[10px] font-semibold text-foreground ring-1 ring-inset ring-border">
                   {nudgeDud.duds.length}
                 </span>
               </TabsTrigger>
@@ -593,7 +593,7 @@ export default function LinkedInAnalyticsView({
 
             <TabsContent value="nudge" className="space-y-4 outline-none">
               {nudgeDud.nudges.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+                <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
                   No nudges yet — nothing in this window scored 1.5× above
                   your average. Recreate the framing of past winners to
                   push one over the bar.
@@ -614,7 +614,7 @@ export default function LinkedInAnalyticsView({
 
             <TabsContent value="dud" className="space-y-4 outline-none">
               {nudgeDud.duds.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+                <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
                   No duds — every recent post is performing at or above the
                   nudge bar. Keep the streak going.
                 </p>
@@ -638,31 +638,31 @@ export default function LinkedInAnalyticsView({
       <section className="space-y-4" aria-labelledby="li-audience-heading">
         <h2
           id="li-audience-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-zinc-900"
+          className="flex items-center gap-2 text-lg font-semibold text-foreground"
         >
           <MapPin className="h-5 w-5 text-[#0a66c2]" aria-hidden />
           Audience
         </h2>
         {audienceRanked.countries.length === 0 &&
         audienceRanked.cities.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 bg-zinc-50/80 px-4 py-6 text-center text-sm text-zinc-500">
+          <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
             Location breakdown will appear here when your sync includes geography.
           </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {audienceRanked.countries.length > 0 ? (
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-zinc-700">
+              <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="text-sm font-medium text-foreground">
                   Top countries
                 </h3>
-                <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                   {audienceRanked.countries.map(({ name, count }) => (
                     <li
                       key={name}
-                      className="flex items-center justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0 last:pb-0"
+                      className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-zinc-800">{name}</span>
-                      <span className="tabular-nums text-zinc-500">
+                      <span className="font-medium text-foreground">{name}</span>
+                      <span className="tabular-nums text-muted-foreground">
                         {formatCompact(count)}
                       </span>
                     </li>
@@ -671,16 +671,16 @@ export default function LinkedInAnalyticsView({
               </div>
             ) : null}
             {audienceRanked.cities.length > 0 ? (
-              <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-zinc-700">Top cities</h3>
-                <ul className="mt-3 space-y-2 text-sm text-zinc-600">
+              <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="text-sm font-medium text-foreground">Top cities</h3>
+                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                   {audienceRanked.cities.map(({ name, count }) => (
                     <li
                       key={name}
-                      className="flex items-center justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0 last:pb-0"
+                      className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-zinc-800">{name}</span>
-                      <span className="tabular-nums text-zinc-500">
+                      <span className="font-medium text-foreground">{name}</span>
+                      <span className="tabular-nums text-muted-foreground">
                         {formatCompact(count)}
                       </span>
                     </li>

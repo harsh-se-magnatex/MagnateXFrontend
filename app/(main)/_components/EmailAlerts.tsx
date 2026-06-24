@@ -5,17 +5,20 @@ import { useState } from 'react';
 import { getAllNotifications } from '@/src/service/api/userService';
 import { useEffect } from 'react';
 import { useTimestampFormatter } from '@/lib/user-timezone';
-
-type FirestoreTimestamp = {
-  _seconds: number;
-  _nanoseconds: number;
-};
+import {
+  type FirestoreTimestampLike,
+  useNotificationUnreadHighlight,
+} from './NotificationCountsProvider';
+import {
+  NotificationListItem,
+  NotificationNewBadge,
+} from './NotificationListItem';
 
 type SystemMessage = {
   id: string;
   title: string;
   message: string;
-  createdAt: FirestoreTimestamp;
+  createdAt: FirestoreTimestampLike;
   category: 'policy' | 'security' | 'product';
 };
 
@@ -28,6 +31,7 @@ const categoryStyles: Record<SystemMessage['category'], string> = {
 
 export function EmailAlerts() {
   const fmtTimestamp = useTimestampFormatter();
+  const { isUnread } = useNotificationUnreadHighlight('email');
   const [notifications, setNotifications] = useState<SystemMessage[]>([]);
   const getData = async () => {
     const response = await getAllNotifications('notification');
@@ -49,11 +53,14 @@ export function EmailAlerts() {
 
       <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
         <ul className="divide-y divide-zinc-100">
-          {notifications.map((message) => (
-            <li key={message.id} className="p-4 sm:p-5">
+          {notifications.map((message) => {
+            const isNew = isUnread(message.createdAt);
+            return (
+            <NotificationListItem key={message.id} isNew={isNew}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
+                    {isNew ? <NotificationNewBadge /> : null}
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ${categoryStyles[message.category]}`}
                     >
@@ -80,8 +87,9 @@ export function EmailAlerts() {
                   </Link>
                 </div>
               </div>
-            </li>
-          ))}
+            </NotificationListItem>
+            );
+          })}
         </ul>
       </div>
     </section>

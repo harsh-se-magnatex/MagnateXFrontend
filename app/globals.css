@@ -5,44 +5,47 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Logo gradient: blue #4A8FF6 → magenta-purple #D847EF */
-  --primary-blue: #4A8FF6;
-  --primary-purple: #D847EF;
-  --primary-purple-dark: #B830D4;
-  --gradient-primary: linear-gradient(to right, #5a41e3,#3e60ea);
+  /* Brand: indigo #5865f2 → violet #7c3aed (landing wireframe palette) */
+  --primary-blue: #5865f2;
+  --primary-purple: #7c3aed;
+  --primary-purple-dark: #6d28d9;
+  --gradient-primary: linear-gradient(to right, #7c3aed, #4f46e5);
+  /* Authorized workspace primary CTAs */
+  --gradient-action: linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #5865f2 100%);
+  --star-glow: #a7a1ff;
 
-  --background: oklch(0.975 0.005 264);
-  --foreground: oklch(0.25 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.25 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.25 0 0);
-  --primary: var(--primary-purple);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: var(--primary-blue);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-  --accent: oklch(0.92 0.04 260);
-  --accent-foreground: oklch(0.25 0 0);
+  --background: #090b10;
+  --foreground: #f1f5f9;
+  --card: #121820;
+  --card-foreground: #f1f5f9;
+  --popover: #121820;
+  --popover-foreground: #f1f5f9;
+  --primary: var(--primary-blue);
+  --primary-foreground: #ffffff;
+  --secondary: var(--primary-purple);
+  --secondary-foreground: #ffffff;
+  --muted: #1a2230;
+  --muted-foreground: #94a3b8;
+  --accent: #1c2433;
+  --accent-foreground: #f1f5f9;
   --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: var(--primary-purple);
+  --destructive-foreground: #ffffff;
+  --border: #2a3548;
+  --input: #1a2230;
+  --ring: var(--primary-blue);
   --chart-1: var(--primary-blue);
   --chart-2: var(--primary-purple);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.96 0.008 264);
-  --sidebar-foreground: oklch(0.25 0 0);
-  --sidebar-primary: var(--primary-purple);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.92 0.04 260);
-  --sidebar-accent-foreground: oklch(0.25 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: var(--primary-purple);
+  --chart-3: #6366f1;
+  --chart-4: #4f46e5;
+  --chart-5: #6d28d9;
+  --sidebar: #0e0c14;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: var(--primary-blue);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1a2230;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #2a3548;
+  --sidebar-ring: var(--primary-blue);
   /* --font-sans: var(--font-sora), var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; */
   /* --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; */
   /* --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; */
@@ -66,43 +69,46 @@
 }
 
 .dark {
-  --primary-blue: #4A8FF6;
-  --primary-purple: #D847EF;
-  --primary-purple-dark: #B830D4;
-  --gradient-primary: linear-gradient(to right, #4A8FF6, #D847EF);
+  --primary-blue: #5865f2;
+  --primary-purple: #7c3aed;
+  --primary-purple-dark: #6d28d9;
+  --gradient-primary: linear-gradient(to right, #7c3aed, #4f46e5);
+  /* Authorized workspace primary CTAs */
+  --gradient-action: linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #5865f2 100%);
+  --star-glow: #a7a1ff;
 
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: var(--primary-purple);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: var(--primary-blue);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.32 0.06 275);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #090b10;
+  --foreground: #f1f5f9;
+  --card: #121820;
+  --card-foreground: #f1f5f9;
+  --popover: #121820;
+  --popover-foreground: #f1f5f9;
+  --primary: var(--primary-blue);
+  --primary-foreground: #ffffff;
+  --secondary: var(--primary-purple);
+  --secondary-foreground: #ffffff;
+  --muted: #1a2230;
+  --muted-foreground: #94a3b8;
+  --accent: #1c2433;
+  --accent-foreground: #f1f5f9;
   --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: var(--primary-purple);
+  --destructive-foreground: #ffffff;
+  --border: #2a3548;
+  --input: #1a2230;
+  --ring: var(--primary-blue);
   --chart-1: var(--primary-blue);
   --chart-2: var(--primary-purple);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: var(--primary-purple);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.32 0.06 275);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: var(--primary-purple);
+  --chart-3: #6366f1;
+  --chart-4: #4f46e5;
+  --chart-5: #6d28d9;
+  --sidebar: #0e0c14;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: var(--primary-blue);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1a2230;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #2a3548;
+  --sidebar-ring: var(--primary-blue);
   /* --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; */
   --radius: 0.625rem;
   --shadow-x: 0;
@@ -195,6 +201,9 @@
   .bg-gradient-primary {
     background: var(--gradient-primary);
   }
+  .bg-gradient-action {
+    background: var(--gradient-action);
+  }
   .bg-gradient-primary-text {
     background: var(--gradient-primary);
     -webkit-background-clip: text;
@@ -202,32 +211,85 @@
     background-clip: text;
   }
 
+  /* App shell backgrounds */
+  .app-gradient-base--subtle {
+    background:
+      radial-gradient(ellipse 100% 70% at 50% -25%, rgba(88, 101, 242, 0.06), transparent 55%),
+      linear-gradient(180deg, #090b10 0%, #0c1018 48%, #090b10 100%);
+  }
+
+  .app-gradient-base--vivid {
+    background:
+      radial-gradient(ellipse 75% 55% at 50% -8%, rgba(88, 101, 242, 0.12), transparent 58%),
+      radial-gradient(ellipse 55% 45% at 100% 85%, rgba(124, 58, 237, 0.08), transparent 52%),
+      linear-gradient(165deg, #0a0c14 0%, #0f1420 45%, #0a0e16 100%);
+  }
+
+  .app-gradient-base--app {
+    background:
+      radial-gradient(ellipse 85% 65% at 50% -10%, rgba(88, 101, 242, 0.16), transparent 58%),
+      radial-gradient(ellipse 60% 50% at 100% 88%, rgba(45, 42, 94, 0.22), transparent 52%),
+      radial-gradient(ellipse 50% 45% at 0% 55%, rgba(124, 58, 237, 0.1), transparent 55%),
+      linear-gradient(165deg, #050508 0%, #0e0c18 42%, #12101f 100%);
+  }
+
   /* Glass card effect */
   .glass-card {
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(18, 24, 32, 0.88);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(42, 53, 72, 0.45);
+  }
+
+  .workflow-step-card {
+    cursor: pointer;
+    background:
+      radial-gradient(circle at top right, rgba(76, 68, 145, 0.32) 0%, rgba(10, 10, 15, 0.98) 68%),
+      #0a0a0f;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 32px -12px rgba(124, 58, 237, 0.2);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background 0.2s ease;
+  }
+
+  .workflow-step-card:hover {
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 0 40px -10px rgba(124, 58, 237, 0.32);
+    background:
+      radial-gradient(circle at top right, rgba(88, 78, 165, 0.4) 0%, rgba(12, 12, 18, 0.98) 68%),
+      #0c0c12;
   }
   .dark .glass-card {
-    background: rgba(30, 30, 30, 0.6);
-    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(18, 24, 32, 0.88);
+    border-color: rgba(42, 53, 72, 0.45);
   }
 
   /* Subtle grid pattern background */
   .pattern-grid {
     background-image: 
-      linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 32px 32px;
+  }
+
+  /* Authorized workspace: dark grid lines with fine sub-lines */
+  .pattern-grid--app {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.42) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.42) 1px, transparent 1px),
+      linear-gradient(rgba(0, 0, 0, 0.2) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.2) 1px, transparent 1px);
+    background-size: 48px 48px, 48px 48px, 12px 12px, 12px 12px;
   }
 
   /* Glass morphism for panels */
   .glass {
-    background: rgba(255, 255, 255, 0.6);
+    background: rgba(18, 24, 32, 0.75);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(42, 53, 72, 0.6);
   }
 
   /* Smooth page transition */
@@ -252,6 +314,388 @@
   }
 }
 
+/*
+ * Legacy light-theme Tailwind classes used across workspace pages.
+ * Maps hardcoded slate/indigo utilities to dark-theme CSS variables so
+ * pages remain readable after the global rebrand without editing every file.
+ */
+.app-shell .text-slate-900,
+.app-shell .text-slate-800,
+.app-shell .text-slate-700,
+.app-shell .text-black {
+  color: var(--foreground);
+}
+
+.app-shell .text-slate-600,
+.app-shell .text-slate-500,
+.app-shell .text-slate-400 {
+  color: var(--muted-foreground);
+}
+
+.app-shell .bg-white,
+.app-shell .bg-white\/90,
+.app-shell .bg-white\/80,
+.app-shell .bg-white\/70 {
+  background-color: color-mix(in srgb, var(--card) 92%, transparent);
+}
+
+.app-shell .bg-slate-50,
+.app-shell .bg-slate-50\/40,
+.app-shell .bg-slate-50\/50,
+.app-shell .bg-slate-50\/60,
+.app-shell .bg-slate-50\/70 {
+  background-color: var(--muted);
+}
+
+.app-shell .bg-slate-100 {
+  background-color: var(--accent);
+}
+
+.app-shell .border-slate-100,
+.app-shell .border-slate-200,
+.app-shell .border-slate-300 {
+  border-color: var(--border);
+}
+
+.app-shell .bg-indigo-50,
+.app-shell .bg-indigo-50\/20,
+.app-shell .bg-indigo-50\/30,
+.app-shell .bg-indigo-50\/50,
+.app-shell .bg-indigo-50\/60 {
+  background-color: color-mix(in srgb, var(--primary-blue) 14%, transparent);
+}
+
+.app-shell .bg-indigo-100 {
+  background-color: color-mix(in srgb, var(--primary-blue) 22%, transparent);
+}
+
+.app-shell .border-indigo-100,
+.app-shell .border-indigo-100\/50,
+.app-shell .border-indigo-100\/60,
+.app-shell .border-indigo-200 {
+  border-color: color-mix(in srgb, var(--primary-blue) 32%, transparent);
+}
+
+.app-shell .text-indigo-600,
+.app-shell .text-indigo-700,
+.app-shell .text-indigo-700\/80 {
+  color: #a5b4fc;
+}
+
+.app-shell .hover\:text-indigo-700:hover {
+  color: #c7d2fe;
+}
+
+.app-shell .hover\:bg-indigo-50:hover {
+  background-color: color-mix(in srgb, var(--primary-blue) 18%, transparent);
+}
+
+.app-shell .hover\:border-slate-300:hover {
+  border-color: color-mix(in srgb, var(--border) 85%, white);
+}
+
+.app-shell .hover\:bg-slate-100\/50:hover {
+  background-color: color-mix(in srgb, var(--accent) 80%, transparent);
+}
+
+.app-shell .hover\:border-indigo-200:hover,
+.app-shell .hover\:border-indigo-300:hover {
+  border-color: color-mix(in srgb, var(--primary-blue) 45%, transparent);
+}
+
+.app-shell .placeholder-slate-400::placeholder,
+.app-shell .placeholder\:text-slate-400::placeholder {
+  color: var(--muted-foreground);
+}
+
+.app-shell .disabled\:bg-slate-200:disabled {
+  background-color: var(--muted);
+}
+
+.app-shell .disabled\:text-slate-500:disabled {
+  color: var(--muted-foreground);
+}
+
+.app-shell .ring-slate-100 {
+  --tw-ring-color: var(--border);
+}
+
+.app-shell .from-white {
+  --tw-gradient-from: var(--card);
+}
+
+.app-shell .to-slate-50 {
+  --tw-gradient-to: var(--muted);
+}
+
+/* Status / accent tints (amber, emerald, sky, blue, pink) */
+.app-shell .bg-amber-50,
+.app-shell .hover\:bg-amber-100:hover {
+  background-color: color-mix(in srgb, #f59e0b 14%, transparent);
+}
+
+.app-shell .border-amber-200 {
+  border-color: color-mix(in srgb, #f59e0b 35%, transparent);
+}
+
+.app-shell .text-amber-600,
+.app-shell .text-amber-700 {
+  color: #fbbf24;
+}
+
+.app-shell .bg-emerald-50,
+.app-shell .hover\:bg-emerald-100:hover {
+  background-color: color-mix(in srgb, #10b981 14%, transparent);
+}
+
+.app-shell .border-emerald-100,
+.app-shell .border-emerald-200 {
+  border-color: color-mix(in srgb, #10b981 35%, transparent);
+}
+
+.app-shell .text-emerald-600,
+.app-shell .text-emerald-700,
+.app-shell .text-emerald-800 {
+  color: #34d399;
+}
+
+.app-shell .hover\:text-emerald-800:hover {
+  color: #6ee7b7;
+}
+
+.app-shell .bg-emerald-100 {
+  background-color: color-mix(in srgb, #10b981 22%, transparent);
+}
+
+.app-shell .bg-sky-50 {
+  background-color: color-mix(in srgb, #0ea5e9 14%, transparent);
+}
+
+.app-shell .text-sky-600 {
+  color: #38bdf8;
+}
+
+.app-shell .bg-blue-50\/60 {
+  background-color: color-mix(in srgb, #3b82f6 14%, transparent);
+}
+
+.app-shell .border-blue-200,
+.app-shell .hover\:border-blue-300:hover {
+  border-color: color-mix(in srgb, #3b82f6 35%, transparent);
+}
+
+.app-shell .text-blue-700,
+.app-shell .text-blue-800 {
+  color: #60a5fa;
+}
+
+.app-shell .hover\:text-blue-900:hover {
+  color: #93c5fd;
+}
+
+.app-shell .bg-pink-50\/60 {
+  background-color: color-mix(in srgb, #ec4899 14%, transparent);
+}
+
+.app-shell .border-pink-200,
+.app-shell .hover\:border-pink-300:hover {
+  border-color: color-mix(in srgb, #ec4899 35%, transparent);
+}
+
+.app-shell .text-pink-700,
+.app-shell .text-pink-800 {
+  color: #f472b6;
+}
+
+.app-shell .hover\:text-pink-900:hover {
+  color: #f9a8d4;
+}
+
+.app-shell .bg-indigo-600,
+.app-shell .hover\:bg-indigo-700:hover {
+  background: var(--gradient-action);
+  color: #ffffff;
+}
+
+/* Primary action buttons only — explicit gradient / legacy indigo classes */
+.app-shell button.bg-gradient-action,
+.app-shell a.bg-gradient-action,
+.app-shell button.bg-gradient-primary,
+.app-shell a.bg-gradient-primary {
+  background: var(--gradient-action);
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--primary-purple) 35%, transparent);
+}
+
+.app-shell button.bg-gradient-action:hover:not(:disabled),
+.app-shell a.bg-gradient-action:hover,
+.app-shell button.bg-gradient-primary:hover:not(:disabled),
+.app-shell a.bg-gradient-primary:hover,
+.app-shell .hover\:bg-indigo-700:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+/* Sidebar: always solid, never show page background through */
+[data-slot="sidebar-inner"],
+[data-slot="sidebar-container"],
+[data-slot="sidebar"] {
+  background-color: var(--sidebar) !important;
+}
+
+.app-shell .shadow-indigo-600\/20 {
+  --tw-shadow-color: color-mix(in srgb, var(--primary-blue) 20%, transparent);
+}
+
+.app-shell .disabled\:bg-slate-300:disabled {
+  background-color: var(--muted);
+}
+
+.app-shell input,
+.app-shell textarea,
+.app-shell select {
+  color: var(--foreground);
+}
+
+.app-shell input::placeholder,
+.app-shell textarea::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* Zinc palette (analytics, growth studio) */
+.app-shell .text-zinc-900,
+.app-shell .text-zinc-800,
+.app-shell .text-zinc-700 {
+  color: var(--foreground);
+}
+
+.app-shell .text-zinc-600,
+.app-shell .text-zinc-500,
+.app-shell .text-zinc-400 {
+  color: var(--muted-foreground);
+}
+
+.app-shell .border-zinc-200,
+.app-shell .border-zinc-100,
+.app-shell .border-zinc-100\/80,
+.app-shell .border-zinc-100\/90 {
+  border-color: var(--border);
+}
+
+.app-shell .ring-zinc-200,
+.app-shell .ring-zinc-100 {
+  --tw-ring-color: var(--border);
+}
+
+.app-shell .bg-zinc-200,
+.app-shell .bg-zinc-200\/80 {
+  background-color: var(--accent);
+}
+
+.app-shell .divide-zinc-200,
+.app-shell .divide-slate-100,
+.app-shell .divide-slate-100\/80,
+.app-shell .divide-slate-200,
+.app-shell .divide-amber-100,
+.app-shell .divide-amber-100\/80 {
+  border-color: color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.app-shell .hover\:bg-slate-50\/50:hover,
+.app-shell .hover\:bg-slate-50\/80:hover,
+.app-shell .hover\:bg-slate-50:hover,
+.app-shell .hover\:bg-white:hover,
+.app-shell .hover\:bg-white\/80:hover {
+  background-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.app-shell .hover\:bg-slate-100:hover {
+  background-color: var(--accent);
+}
+
+.app-shell .hover\:text-slate-800:hover {
+  color: var(--foreground);
+}
+
+.app-shell .ring-black\/5 {
+  --tw-ring-color: color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.app-shell .to-white {
+  --tw-gradient-to: var(--card);
+}
+
+.app-shell .from-blue-50\/90,
+.app-shell .from-pink-50\/90,
+.app-shell .from-indigo-50\/60,
+.app-shell .from-indigo-50\/90,
+.app-shell .from-emerald-50\/90 {
+  --tw-gradient-from: color-mix(in srgb, var(--primary-blue) 12%, var(--card));
+}
+
+.app-shell .ring-blue-100\/80,
+.app-shell .ring-pink-100\/80,
+.app-shell .ring-violet-200,
+.app-shell .ring-amber-100 {
+  --tw-ring-color: color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+.app-shell .border-violet-200 {
+  border-color: color-mix(in srgb, var(--primary-purple) 35%, transparent);
+}
+
+.app-shell .border-dashed.border-zinc-200,
+.app-shell .border-dashed.border-zinc-300,
+.app-shell .border-dashed.border-slate-300 {
+  border-color: color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.app-shell .bg-red-50\/50 {
+  background-color: color-mix(in srgb, #ef4444 10%, var(--card));
+}
+
+.app-shell .border-red-100 {
+  border-color: color-mix(in srgb, #ef4444 30%, transparent);
+}
+
+.app-shell .text-red-700 {
+  color: #f87171;
+}
+
+.app-shell .bg-red-100 {
+  background-color: color-mix(in srgb, #ef4444 18%, transparent);
+}
+
+.app-shell .text-red-600 {
+  color: #f87171;
+}
+
+.app-shell .text-amber-950,
+.app-shell .text-amber-900,
+.app-shell .text-amber-900\/90,
+.app-shell .text-amber-800 {
+  color: #fcd34d;
+}
+
+.app-shell .border-amber-200,
+.app-shell .border-amber-300 {
+  border-color: color-mix(in srgb, #f59e0b 35%, transparent);
+}
+
+.app-shell .text-violet-900,
+.app-shell .text-violet-400 {
+  color: #c4b5fd;
+}
+
+.app-shell .bg-violet-50\/40,
+.app-shell .via-white {
+  --tw-gradient-via: var(--card);
+}
+
+.app-shell tr.hover\:bg-slate-50\/50:hover,
+.app-shell .hover\:bg-indigo-50\/30:hover {
+  background-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 4px;
@@ -260,11 +704,11 @@
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 999px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* Sonner: dedicated error toaster — true viewport center (not bottom-right stack) */
@@ -428,11 +872,11 @@
 .driver-popover.sociogenie-tour .driver-popover-next-btn {
   background: var(--gradient-primary);
   color: #fff;
-  box-shadow: 0 6px 16px -6px rgba(90, 65, 227, 0.55);
+  box-shadow: 0 6px 16px -6px rgba(79, 70, 229, 0.55);
 }
 .driver-popover.sociogenie-tour .driver-popover-next-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px -8px rgba(90, 65, 227, 0.7);
+  box-shadow: 0 10px 22px -8px rgba(79, 70, 229, 0.7);
 }
 .driver-popover.sociogenie-tour .driver-popover-next-btn:active {
   transform: translateY(0);
@@ -455,7 +899,7 @@
 
 /* Overlay tint stays subtle so highlighted UI remains legible. */
 .driver-overlay {
-  fill: rgba(15, 23, 42, 0.55);
+  fill: rgba(5, 7, 10, 0.75);
 }
 
 .dark .driver-popover.sociogenie-tour {
@@ -464,5 +908,41 @@
     0 8px 16px -8px rgba(0, 0, 0, 0.5);
 }
 .dark .driver-overlay {
-  fill: rgba(0, 0, 0, 0.65);
+  fill: rgba(5, 7, 10, 0.8);
+}
+
+/* Date inputs: native picker icon follows color-scheme */
+input[type="date"] {
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+/* Dark app shell — light icon on dark field */
+.app-shell input[type="date"]:not(.date-input-light) {
+  color-scheme: dark;
+  background-color: var(--input);
+  color: var(--foreground);
+}
+
+.app-shell input[type="date"]:not(.date-input-light)::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.85;
+}
+
+/* White-card / light-surface date fields */
+input[type="date"].date-input-light {
+  color-scheme: light;
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+input[type="date"].date-input-light::-webkit-calendar-picker-indicator {
+  opacity: 0.65;
+}
+
+.app-shell input[type="date"].date-input-light:invalid::-webkit-datetime-edit {
+  color: #94a3b8;
 }

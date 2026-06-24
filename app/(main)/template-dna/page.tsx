@@ -18,6 +18,7 @@ import {
   Sparkles,
   Fingerprint,
   ImagePlus,
+  Smartphone,
   WandSparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -52,6 +53,37 @@ type BusinessProfileForm = {
 
 const inputBase =
   'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all shadow-sm';
+
+function digitsOnly(value: string): string {
+  return value.replace(/\D/g, '');
+}
+
+function splitStoredPhone(stored: unknown): {
+  countryCode: string;
+  nationalNumber: string;
+} {
+  const digits = digitsOnly(String(stored ?? '').replace(/^\+/, ''));
+  if (!digits) return { countryCode: '', nationalNumber: '' };
+
+  if (digits.startsWith('1') && digits.length >= 11) {
+    return { countryCode: '1', nationalNumber: digits.slice(1) };
+  }
+  if (digits.startsWith('91') && digits.length >= 12) {
+    return { countryCode: '91', nationalNumber: digits.slice(2) };
+  }
+  if (digits.startsWith('44') && digits.length >= 12) {
+    return { countryCode: '44', nationalNumber: digits.slice(2) };
+  }
+  if (digits.length <= 10) {
+    return { countryCode: '', nationalNumber: digits };
+  }
+  return { countryCode: digits.slice(0, 2), nationalNumber: digits.slice(2) };
+}
+
+function joinPhone(countryCode: string, nationalNumber: string): string {
+  const combined = `${digitsOnly(countryCode)}${digitsOnly(nationalNumber)}`;
+  return combined ? `+${combined}` : '';
+}
 
 function parseHashtagTokens(raw: unknown): string[] {
   if (raw == null || raw === '') return [];
@@ -111,6 +143,8 @@ export default function BusinessProfilePage() {
   /** Mirrors last-loaded / last-saved profile: hide AI blocks once user has committed values. */
   const [committedHashtagsSaved, setCommittedHashtagsSaved] = useState(false);
   const [committedSloganSaved, setCommittedSloganSaved] = useState(false);
+  const [phoneCountryCode, setPhoneCountryCode] = useState('');
+  const [phoneNationalNumber, setPhoneNationalNumber] = useState('');
 
   const activePlan = billing?.activePlan;
 
@@ -125,6 +159,23 @@ export default function BusinessProfilePage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const updatePhone = (countryCode: string, nationalNumber: string) => {
+    const cc = digitsOnly(countryCode);
+    const nat = digitsOnly(nationalNumber);
+    setPhoneCountryCode(cc);
+    setPhoneNationalNumber(nat);
+    setFormData((prev) => ({
+      ...prev,
+      businesscontact: joinPhone(cc, nat),
+    }));
+  };
+
+  const applyStoredPhone = (stored: unknown) => {
+    const { countryCode, nationalNumber } = splitStoredPhone(stored);
+    setPhoneCountryCode(countryCode);
+    setPhoneNationalNumber(nationalNumber);
   };
 
   const showRecommendedHashtags =
@@ -193,6 +244,7 @@ export default function BusinessProfilePage() {
             recommendedSlogans,
             useLogoVariantsForImages: p.useLogoVariantsForImages === true,
           }));
+          applyStoredPhone(p.businesscontact);
         }
       } finally {
         setProfileLoading(false);
@@ -252,7 +304,7 @@ export default function BusinessProfilePage() {
     setFetchingBusinessData(true);
     try {
       const response = await scrapeUrl(websiteUrl);
-      const payload = response.data ?? response;
+      const payload = (response as any).data ?? response;
       const dnaFields = payload.dna ?? payload;
       const flat: Record<string, unknown> = { ...dnaFields };
       setFormData((prev) => ({
@@ -261,6 +313,9 @@ export default function BusinessProfilePage() {
         recommendedHashtags: prev.recommendedHashtags,
         recommendedSlogans: prev.recommendedSlogans,
       }));
+      if (flat.businesscontact != null) {
+        applyStoredPhone(flat.businesscontact);
+      }
     } catch (error: any) {
       showErrorToast(
         error.response.data.message || 'Failed to extract business data'
@@ -320,9 +375,7 @@ export default function BusinessProfilePage() {
           </div>
         </h1>
         <p className="mt-2 text-base text-slate-500 max-w-2xl">
-          Manage your business details here. Optional Template DNA (from sample
-          posts) is used for seasonal and festive posts; other AI flows use your
-          profile and preferences without that extracted style JSON.
+          Manage your business details here.
         </p>
       </header>
 
@@ -340,9 +393,6 @@ export default function BusinessProfilePage() {
                 <h2 className="text-xl font-bold text-slate-900">
                   Business Profile
                 </h2>
-                <p className="text-sm text-slate-500 mt-0.5">
-                  Details used across scheduling and AI content
-                </p>
               </div>
             </div>
 
@@ -415,22 +465,51 @@ export default function BusinessProfilePage() {
                       />
                     </div>
 
-                    <div>
+                    <div className="sm:col-span-2">
                       <label
                         htmlFor="businesscontact"
                         className="mb-1.5 block text-sm font-semibold text-slate-700"
                       >
                         Business Contact
                       </label>
-                      <input
-                        id="businesscontact"
-                        name="businesscontact"
-                        type="number"
-                        value={formData.businesscontact}
-                        onChange={handleChange}
-                        className={inputBase}
-                        placeholder="+1 234 567 890"
-                      />
+                      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+                        <div className="relative w-full shrink-0 sm:w-[6.5rem]">
+                          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-slate-500">
+                            +
+                          </span>
+                          <input
+                            id="businesscontact-country"
+                            type="tel"
+                            inputMode="numeric"
+                            autoComplete="tel-country-code"
+                            maxLength={4}
+                            value={phoneCountryCode}
+                            onChange={(e) =>
+                              updatePhone(e.target.value, phoneNationalNumber)
+                            }
+                            placeholder="91"
+                            aria-label="Country code"
+                            className={cn(inputBase, 'pl-7')}
+                          />
+                        </div>
+                        <div className="relative min-w-0 flex-1">
+                          <Smartphone className="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                          <input
+                            id="businesscontact"
+                            name="businesscontact"
+                            type="tel"
+                            inputMode="numeric"
+                            autoComplete="tel-national"
+                            maxLength={12}
+                            value={phoneNationalNumber}
+                            onChange={(e) =>
+                              updatePhone(phoneCountryCode, e.target.value)
+                            }
+                            placeholder="98765 43210"
+                            className={cn(inputBase, 'pl-10')}
+                          />
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label
@@ -772,18 +851,16 @@ export default function BusinessProfilePage() {
             <div className="absolute top-0 right-0 w-full h-1 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
 
             <div className="flex items-center gap-3 mb-5">
-              <div className="p-2 bg-purple-50 roddunded-lg text-purple-600">
+              <div className="p-2 bg-purple-50 rounded-lg bg-purple-600">
                 <Sparkles className="w-5 h-5" />
               </div>
               <h2 className="text-lg font-bold text-slate-900">
-                Template DNA
+                Memory Layer
               </h2>
             </div>
 
             <p className="text-sm text-slate-500 leading-relaxed mb-6">
-              {activePlan !== 'non-subscribed'
-                ? 'Upload previous post images to let AI extract your exact brand styling (colors, layouts, typography, and mood). Choose a platform below to begin.'
-                : 'Manage your memory layer with questionnaire answers and brand reference images for AI-generated content.'}
+                Manage your memory layer with questionnaire answers and brand reference images for auto generated content.
             </p>
 
             <nav className="flex flex-col gap-3">

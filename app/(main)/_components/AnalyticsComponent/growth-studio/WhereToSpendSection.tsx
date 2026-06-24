@@ -79,7 +79,7 @@ export function WhereToSpendSection({
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h2
           id="growth-studio-where-to-spend-heading"
-          className="flex items-center gap-2 text-sm font-semibold text-zinc-900"
+          className="flex items-center gap-2 text-sm font-semibold text-foreground"
         >
           <Megaphone className="h-4 w-4 text-violet-600" aria-hidden />
           Where to spend
@@ -90,10 +90,10 @@ export function WhereToSpendSection({
         <div
           role="status"
           aria-label="Loading boost recommendation"
-          className="h-32 animate-pulse rounded-xl border border-violet-100 bg-violet-50/40"
+          className="h-32 animate-pulse rounded-xl border border-violet-500/25 bg-violet-500/10"
         />
       ) : state.status === 'error' ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
           Couldn’t load boost recommendation: {state.error}
         </p>
       ) : state.payload.card &&
@@ -104,7 +104,7 @@ export function WhereToSpendSection({
           platform={platform}
         />
       ) : (
-        <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-3 text-xs text-zinc-600">
+        <p className="rounded-lg border border-border bg-muted px-3 py-3 text-xs text-muted-foreground">
           {state.payload.reason ??
             'No boost candidate this week — your next post might be the one.'}
         </p>

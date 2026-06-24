@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Footer } from '@/components/shared/Footer';
+import { AppGradientBackground } from '@/components/shared/AppGradientBackground';
 import {
   Accordion,
   AccordionContent,
@@ -14,8 +15,7 @@ import {
 import { ArrowRight, Dot } from 'lucide-react';
 import {
   CREDIT_TOPUP_PACKS,
-  PLAN_TRIAL_BUTTON_SUBLABEL,
-  PLAN_TRIAL_HERO_LINE,
+  PLAN_ELITE_TRIAL_HERO_LINE,
   pricingPlansForMode,
   planButtonDisplayName,
   type PlanMode,
@@ -30,14 +30,9 @@ const NAV_ITEMS = [
 
 const BILLING_FAQ_ITEMS = [
   {
-    question: 'What does the Elite free trial include?',
-    answer:
-      'New accounts get a 10-day free trial of Elite with full plan access: up to two platforms, monthly credits for on-demand features, and your daily automated posting workflow. You are not charged until the trial ends.',
-  },
-  {
     question: 'Do I need to enter payment details?',
     answer:
-      'Yes. A valid payment method is required to start the Elite free trial. You will not be charged during the 10-day trial if you cancel before it ends.',
+      'Yes. A valid payment method is required when you subscribe to a paid plan.',
   },
   {
     question: 'Can I buy extra credits?',
@@ -47,7 +42,7 @@ const BILLING_FAQ_ITEMS = [
   {
     question: 'What happens to unused credits?',
     answer:
-      'Credits expire at the end of your current allowance period. Daily automated posts run on their own schedule.',
+      'Credits expire at the end of your current allowance period. Daily automated posts run on their own schedule. Active Plan is must needed for credit Usage',
   },
 ] as const;
 
@@ -88,7 +83,7 @@ export default function PricingPage() {
   /** "Studio" = manual mode (you curate every post). "AI" = auto mode
    *  (daily orchestrator generates posts automatically). Pricing + credit
    *  counts differ between the two within the same tier. */
-  const [planMode, setPlanMode] = useState<PlanMode>('auto');
+  const [planMode, setPlanMode] = useState<PlanMode>('AI');
   const visiblePlans = pricingPlansForMode(planMode);
 
   useEffect(() => {
@@ -117,11 +112,7 @@ export default function PricingPage() {
         tabIndex={mobileNavOpen ? 0 : -1}
       />
 
-      <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
-        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[700px] h-[700px] bg-primary-blue/8 blur-[120px] rounded-full sm:w-[900px] sm:h-[900px]" />
-        <div className="absolute bottom-[-15%] right-[-10%] w-[500px] h-[500px] bg-primary-purple/8 blur-[120px] rounded-full" />
-        <div className="absolute top-1/2 left-[-10%] w-[400px] h-[400px] bg-primary-purple/5 blur-[100px] rounded-full" />
-      </div>
+      <AppGradientBackground variant="vivid" />
 
       <header className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-2xl supports-backdrop-filter:bg-background/50">
         <nav className="relative mx-auto flex w-full items-center justify-between gap-4 px-6 py-4">
@@ -273,7 +264,7 @@ export default function PricingPage() {
               variants={fadeIn}
               className="mx-auto mb-6 max-w-2xl text-center text-sm text-muted-foreground sm:text-base font-(--font-dm-sans) text-pretty"
             >
-              Pricing for our plans and credit packs. {PLAN_TRIAL_HERO_LINE}
+              Pricing for our plans and credit packs. {PLAN_ELITE_TRIAL_HERO_LINE}
             </motion.p>
 
             {/* Mode toggle: Studio (you curate) vs AI (daily auto-posting).
@@ -283,13 +274,13 @@ export default function PricingPage() {
             <div
               role="tablist"
               aria-label="Plan mode"
-              className="mx-auto mb-8 inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 backdrop-blur-sm w-fit flex justify-center w-full"
+              className="mx-auto mb-8 flex w-full max-w-fit items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 backdrop-blur-sm"
             >
-              {(['auto','manual'] as const).map((mode) => {
+              {(['AI','Studio'] as const).map((mode) => {
                 const selected = planMode === mode;
-                const label = mode === 'manual' ? 'Studio' : 'AI';
+                const label = mode === 'Studio' ? 'Studio' : 'AI';
                 const sublabel =
-                  mode === 'manual'
+                  mode === 'Studio'
                     ? 'You create every post'
                     : 'Daily automated posts';
                 return (
@@ -300,7 +291,7 @@ export default function PricingPage() {
                     aria-selected={selected}
                     onClick={() => setPlanMode(mode)}
                     className={cn(
-                      'rounded-full px-5 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary-blue/40',
+                      'rounded-full  px-5 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-primary-blue/40',
                       selected
                         ? 'bg-foreground text-background shadow-sm'
                         : 'text-muted-foreground hover:text-foreground'
@@ -380,6 +371,11 @@ export default function PricingPage() {
                         </span>
                       ) : null}
                     </div>
+                    {p.trialOffer ? (
+                      <p className="mt-2 font-(--font-dm-sans) text-sm font-semibold text-emerald-600">
+                        {p.trialOffer}
+                      </p>
+                    ) : null}
                   </div>
                   <ul className="space-y-2.5 text-sm text-muted-foreground font-(--font-dm-sans)">
                     {p.lines.map((line) => (
@@ -439,7 +435,7 @@ export default function PricingPage() {
                         <span className="relative z-10 text-sm font-bold leading-tight">
                           Start {planButtonDisplayName(p.name)}
                         </span>
-                        {p.name === 'ELITE' ? (
+                        {p.trialOffer ? (
                           <span
                             className={cn(
                               'relative z-10 text-[11px] font-semibold leading-tight',
@@ -448,7 +444,7 @@ export default function PricingPage() {
                                 : 'text-foreground/70'
                             )}
                           >
-                            {PLAN_TRIAL_BUTTON_SUBLABEL}
+                            {p.trialOffer}
                           </span>
                         ) : null}
                         <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full transition-transform duration-700 group-hover:translate-x-full" />
@@ -565,8 +561,8 @@ export default function PricingPage() {
               variants={fadeIn}
               className="text-muted-foreground font-(--font-dm-sans) text-sm sm:text-base leading-relaxed max-w-2xl"
             >
-              Sign up, then subscribe to Elite from Billing — your first 10
-              days are free before the monthly charge applies.
+              Sign up, then subscribe to Elite from Billing — our most popular
+              plan, free for 10 days with full access before your first charge.
             </motion.p>
           </motion.div>
         </section>
@@ -630,7 +626,7 @@ export default function PricingPage() {
                 </span>
               </Link>
               <p className="mt-4 text-sm text-muted-foreground font-(--font-dm-sans)">
-                10-day free trial on Elite · Purchase after sign-in
+                Elite free for 10 days · Purchase after sign-in
               </p>
             </motion.div>
           </motion.div>

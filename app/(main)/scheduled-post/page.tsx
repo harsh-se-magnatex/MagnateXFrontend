@@ -58,8 +58,6 @@ import {
 import { cn } from '@/lib/utils';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { DownloadPngButton } from '@/components/download-png-button';
-// EDIT_PHOTO_DISABLED
-// import { GeneratedCreativeActions } from '@/components/creative-editor/GeneratedCreativeActions';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -67,6 +65,7 @@ import {
 } from '@/components/image-preview';
 import {
   SCHEDULED_POST_REGENERATE_CREDIT,
+  canScheduledPostRegenerate,
   willScheduledPostRegenChargeCredits,
 } from '@/lib/scheduled-post-regenerate';
 import { useScheduledPostRegenJob, parseRegenJobFromResponse } from '@/src/hooks/useScheduledPostRegenJob';
@@ -122,13 +121,6 @@ export type ScheduledPost = {
    * Optional because older docs predate this field.
    */
   GeneratedBy?: string;
-  // EDIT_PHOTO_DISABLED
-  // designJson?: import('@/lib/creative-design/types').CreativeDesignDocument | null;
-  // backgroundUrl?: string | null;
-  // previewImageUrl?: string | null;
-  // logoUrl?: string | null;
-  // canvasWidth?: number | null;
-  // canvasHeight?: number | null;
 };
 
 function dedupeScheduledPosts(posts: ScheduledPost[]): ScheduledPost[] {
@@ -187,15 +179,15 @@ function ScheduledPostActionButtons({
               ? `Next regeneration will deduct ${SCHEDULED_POST_REGENERATE_CREDIT} credit`
               : undefined
           }
-          className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200 focus:ring-amber-500 ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
+          className={`${btn} bg-amber-200 text-neutral-900 cursor-pointer hover:bg-amber-200 focus:ring-amber-500 ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
         >
           <span>Regenerate {!regenChargesCredits && 'Free'}</span>
           {regenChargesCredits ? (
             <span
               className={
                 isCard
-                  ? 'max-w-44 text-[9px] font-normal leading-snug text-amber-900/90'
-                  : 'max-w-56 text-[11px] font-normal leading-snug text-amber-900/90'
+                  ? 'max-w-44 text-[9px] font-normal leading-snug text-neutral-900 '
+                  : 'max-w-56 text-[11px] font-normal leading-snug text-neutral-900 '
               }
             >
               {`${SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted`}
@@ -207,7 +199,7 @@ function ScheduledPostActionButtons({
         type="button"
         disabled={disabled}
         onClick={(e) => handle(onRemove, e)}
-        className={`${btn} bg-red-100 text-red-800 hover:bg-red-200 focus:ring-red-500`}
+        className={`${btn} bg-red-300 text-red-900 cursor-pointer hover:bg-red-200 focus:ring-red-500`}
       >
         Remove
       </button>
@@ -261,7 +253,8 @@ function DetailModal({
 }) {
   const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
-  const showRegenerate = post.generatedByAiEngine === true;
+  const showRegenerate =
+    post.generatedByAiEngine === true && canScheduledPostRegenerate(post);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showPostActions = isUpcomingPost(post);
   const status = getDisplayStatus(post);
@@ -328,14 +321,6 @@ function DetailModal({
                   }
                   className="w-full sm:w-auto rounded-full px-6 bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100"
                 />
-                {/* EDIT_PHOTO_DISABLED
-                <GeneratedCreativeActions
-                  designJson={post.designJson ?? undefined}
-                  caption={post.message}
-                  platform={post.platform}
-                  scheduledPostId={post.postId}
-                />
-                */}
                 <DownloadPngButton
                   url={post.imageUrl}
                   getFilename={() =>
@@ -442,7 +427,8 @@ function ScheduledPostCard({
   onPreviewImage: (url: string, alt?: string) => void;
   isRegenerating: boolean;
 }) {
-  const showRegenerate = post.generatedByAiEngine === true;
+  const showRegenerate =
+    post.generatedByAiEngine === true && canScheduledPostRegenerate(post);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showPostActions = isUpcomingPost(post);
   const status = getDisplayStatus(post);
@@ -657,7 +643,7 @@ function CalendarEventChip({
       onClick={onSelect}
       title={`${time} · ${caption}`}
       className={cn(
-        'group flex w-full items-center gap-1.5 rounded-md border text-left transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/30 hover:bg-white/60',
+        'group flex w-full items-center gap-1.5 rounded-md border text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 hover:bg-accent/40',
         isMd ? 'px-1.5 py-1.5 text-xs' : 'px-1 py-1 text-[11px]',
         statusBadgeClasses(status.variant)
       )}
@@ -668,14 +654,14 @@ function CalendarEventChip({
           alt=""
           loading="lazy"
           className={cn(
-            'shrink-0 rounded object-cover ring-1 ring-white/60',
+            'shrink-0 rounded object-cover ring-1 ring-border/60',
             isMd ? 'h-10 w-10' : 'h-7 w-7'
           )}
         />
       ) : (
         <span
           className={cn(
-            'flex shrink-0 items-center justify-center rounded bg-white/70 font-semibold text-slate-500 ring-1 ring-white/60',
+            'flex shrink-0 items-center justify-center rounded bg-muted font-semibold text-muted-foreground ring-1 ring-border/60',
             isMd ? 'h-10 w-10 text-[11px]' : 'h-7 w-7 text-[10px]'
           )}
         >
@@ -725,7 +711,7 @@ function CalendarMonthBody({
 
   return (
     <>
-      <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+      <div className="grid grid-cols-7 border-b border-border bg-muted text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label} className="px-2 py-2 text-center">
             {label}
@@ -749,11 +735,11 @@ function CalendarMonthBody({
             <div
               key={dayKey}
               className={cn(
-                'flex min-h-[112px] flex-col gap-1 border-slate-200 p-1.5 transition-colors',
+                'flex min-h-[112px] flex-col gap-1 border-border p-1.5 transition-colors',
                 !isLastColumn && 'border-r',
                 !isLastRow && 'border-b',
-                inMonth ? 'bg-white' : 'bg-slate-50/60',
-                isSelectedDay && 'bg-[#4A8FF6]/5'
+                inMonth ? 'bg-card' : 'bg-muted/30',
+                isSelectedDay && 'bg-primary/5'
               )}
             >
               <div className="flex items-center justify-between">
@@ -761,16 +747,16 @@ function CalendarMonthBody({
                   className={cn(
                     'inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold',
                     isToday
-                      ? 'bg-[#4A8FF6] text-white'
+                      ? 'bg-primary text-primary-foreground'
                       : inMonth
-                        ? 'text-slate-700'
-                        : 'text-slate-400'
+                        ? 'text-foreground'
+                        : 'text-muted-foreground'
                   )}
                 >
                   {formatDate(day, 'd')}
                 </span>
                 {dayPosts.length > 0 ? (
-                  <span className="text-[10px] font-medium text-slate-400">
+                  <span className="text-[10px] font-medium text-muted-foreground">
                     {dayPosts.length}
                   </span>
                 ) : null}
@@ -794,7 +780,7 @@ function CalendarMonthBody({
                   <button
                     type="button"
                     onClick={() => onJumpToWeek(day)}
-                    className="self-start rounded px-1 text-[10px] font-semibold text-[#4A8FF6] hover:underline"
+                    className="self-start rounded px-1 text-[10px] font-semibold text-primary hover:underline"
                   >
                     +{moreCount} more
                   </button>
@@ -841,26 +827,26 @@ function CalendarWeekBody({
           <div
             key={dayKey}
             className={cn(
-              'flex min-h-[440px] flex-col border-slate-200 bg-white transition-colors',
+              'flex min-h-[440px] flex-col border-border bg-card transition-colors',
               !isLastColumn && 'border-r',
-              isSelectedDay && 'bg-[#4A8FF6]/5'
+              isSelectedDay && 'bg-primary/5'
             )}
           >
-            <div className="border-b border-slate-200 px-2 py-2 text-center">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <div className="border-b border-border px-2 py-2 text-center">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {formatDate(day, 'EEE')}
               </div>
               <div className="mt-1 flex items-center justify-center gap-1.5">
                 <span
                   className={cn(
                     'inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-sm font-semibold',
-                    isToday ? 'bg-[#4A8FF6] text-white' : 'text-slate-700'
+                    isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'
                   )}
                 >
                   {formatDate(day, 'd')}
                 </span>
                 {dayPosts.length > 0 ? (
-                  <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
+                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
                     {dayPosts.length}
                   </span>
                 ) : null}
@@ -868,7 +854,7 @@ function CalendarWeekBody({
             </div>
             <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto p-2">
               {dayPosts.length === 0 ? (
-                <p className="mt-6 text-center text-[11px] text-slate-400">
+                <p className="mt-6 text-center text-[11px] text-muted-foreground">
                   No posts
                 </p>
               ) : (
@@ -945,13 +931,13 @@ function CalendarView({
   }, [mode, cursor]);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white">
-      <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="rounded-2xl border border-border bg-card">
+      <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/30"
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             aria-label={mode === 'month' ? 'Previous month' : 'Previous week'}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -959,12 +945,12 @@ function CalendarView({
           <button
             type="button"
             onClick={() => navigate(1)}
-            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/30"
+            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
             aria-label={mode === 'month' ? 'Next month' : 'Next week'}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <h2 className="ml-1 text-base font-semibold text-slate-900 sm:text-lg">
+          <h2 className="ml-1 text-base font-semibold text-foreground sm:text-lg">
             {rangeLabel}
           </h2>
         </div>
@@ -1591,15 +1577,35 @@ export default function SchedulePostPage() {
         className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"
       >
         <div className="px-6 pb-8 pt-8 sm:px-10 sm:pt-10">
-          <header className="mb-8 max-w-2xl">
+          <header className="mb-8 ">
             <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
               <span className="text-black">
                 {workspacePageTitle(WORKSPACE_NAV_HREFS.postQueue)}
               </span>
             </h1>
+            <div className="flex sm:flex-row flex-col w-full justify-between gap-2">
             <p className="mt-3 text-base text-slate-500">
               Plan and track what goes out — upcoming and published in one place.
             </p>
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+                  <span className="whitespace-nowrap font-medium">Schedule date</span>
+                  <input
+                    type="date"
+                    value={selectedScheduleDate}
+                    onChange={(e) => setSelectedScheduleDate(e.target.value)}
+                    className="date-input-light h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors focus:border-[#4A8FF6] focus:ring-2 focus:ring-[#4A8FF6]/20"
+                  />
+                  {selectedScheduleDate ? (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedScheduleDate('')}
+                      className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                    >
+                      Clear
+                    </button>
+                  ) : null}
+                </label>
+            </div>
           </header>
 
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1671,24 +1677,6 @@ export default function SchedulePostPage() {
                     </>
                   )}
                 </button>
-                <label className="flex items-center gap-2 text-sm text-slate-600">
-                  <span className="whitespace-nowrap font-medium">Schedule date</span>
-                  <input
-                    type="date"
-                    value={selectedScheduleDate}
-                    onChange={(e) => setSelectedScheduleDate(e.target.value)}
-                    className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 outline-none transition-colors focus:border-[#4A8FF6] focus:ring-2 focus:ring-[#4A8FF6]/20"
-                  />
-                  {selectedScheduleDate ? (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedScheduleDate('')}
-                      className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
-                    >
-                      Clear
-                    </button>
-                  ) : null}
-                </label>
               </div>
               <p className="text-sm text-slate-500">
                 {filteredAndSortedPosts.length} in view

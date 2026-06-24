@@ -19,6 +19,15 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  workspaceInputClass,
+  workspacePageDescriptionSmClass,
+  workspacePageTitleClass,
+  workspaceSectionCardClass,
+  workspaceSectionTitleLgClass,
+  workspaceSectionLabelClass,
+  workspaceIconBadgeClass,
+} from '@/lib/workspace-ui';
 import { forgotPassword, signOutUser } from '@/src/service/auth';
 import {
   AlertDialog,
@@ -37,8 +46,7 @@ import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { updateProfile } from 'firebase/auth';
 
-const inputBase =
-  'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all';
+const inputBase = workspaceInputClass;
 
 export function DeleteAccountModal({
   open,
@@ -229,10 +237,8 @@ export default function AccountSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-          Account Settings
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <h1 className={workspacePageTitleClass}>Account Settings</h1>
+        <p className={workspacePageDescriptionSmClass}>
           Manage your account details, security preferences, and active
           sessions.
         </p>
@@ -240,12 +246,12 @@ export default function AccountSettingsPage() {
 
       <div className="space-y-8">
         {/* Profile Section */}
-        <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+        <section className={workspaceSectionCardClass}>
+          <div className="mb-6 flex items-center gap-3 border-b border-border/60 pb-4">
+            <div className={workspaceIconBadgeClass}>
               <User className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className={workspaceSectionTitleLgClass}>
               Profile Information
             </h2>
           </div>
@@ -255,7 +261,7 @@ export default function AccountSettingsPage() {
               <div className="flex items-center justify-between gap-3">
                 <label
                   htmlFor="account-name"
-                  className="text-sm font-semibold text-slate-700"
+                  className={workspaceSectionLabelClass}
                 >
                   Full Name
                 </label>
@@ -265,7 +271,7 @@ export default function AccountSettingsPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+                      className="h-8 w-8 text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300"
                       disabled={nameSaving || !name.trim()}
                       aria-label="Save name"
                       onClick={handleConfirmName}
@@ -276,7 +282,7 @@ export default function AccountSettingsPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-slate-500 hover:bg-slate-100"
+                      className="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground"
                       disabled={nameSaving}
                       aria-label="Discard name changes"
                       onClick={handleCancelName}
@@ -303,28 +309,26 @@ export default function AccountSettingsPage() {
         {user?.providerData.some(
           (provider) => provider.providerId === 'password'
         ) && (
-          <section className="glass-card rounded-3xl p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-              <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+          <section className={workspaceSectionCardClass}>
+            <div className="mb-6 flex items-center gap-3 border-b border-border/60 pb-4">
+              <div className={workspaceIconBadgeClass}>
                 <Lock className="h-5 w-5" />
               </div>
-              <h2 className="text-xl font-semibold text-slate-900">
-                Reset Password
-              </h2>
+              <h2 className={workspaceSectionTitleLgClass}>Reset Password</h2>
             </div>
 
             <form
               onSubmit={handleSendResetEmail}
               className="flex max-w-xl flex-col gap-5"
             >
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 We’ll email you a password reset link. For security, we don’t
                 show or change your password directly here.
               </p>
               <div className="space-y-2">
                 <label
                   htmlFor="reset-email"
-                  className="text-sm font-semibold text-slate-700"
+                  className={workspaceSectionLabelClass}
                 >
                   Email address
                 </label>
@@ -343,8 +347,8 @@ export default function AccountSettingsPage() {
                   className={cn(
                     'p-3 rounded-xl text-sm flex items-start gap-2 border',
                     passwordMessageTone === 'success'
-                      ? 'bg-emerald-50 border-emerald-100 text-emerald-700'
-                      : 'bg-indigo-50 border-indigo-100 text-indigo-700'
+                      ? 'border-emerald-500/30 bg-emerald-950/50 text-emerald-200'
+                      : 'border-primary/30 bg-primary/10 text-foreground'
                   )}
                 >
                   <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
@@ -355,7 +359,7 @@ export default function AccountSettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="mt-2 w-fit rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-md shadow-indigo-600/20 active:scale-95"
+                className="mt-2 w-fit rounded-xl bg-gradient-action px-6 py-2.5 text-sm font-semibold text-white transition-all shadow-md shadow-primary-purple/30 hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:hover:brightness-100"
               >
                 {saving ? 'Sending email...' : 'Send reset link'}
               </button>
@@ -363,41 +367,39 @@ export default function AccountSettingsPage() {
           </section>
         )}
         {/* Sessions Section */}
-        <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-            <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
+        <section className={workspaceSectionCardClass}>
+          <div className="mb-6 flex items-center gap-3 border-b border-border/60 pb-4">
+            <div className="rounded-lg bg-muted p-2 text-muted-foreground">
               <MonitorSmartphone className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              Active Sessions
-            </h2>
+            <h2 className={workspaceSectionTitleLgClass}>Active Sessions</h2>
           </div>
 
-          <p className="text-sm text-slate-600 mb-6">
+          <p className="mb-6 text-sm text-muted-foreground">
             Sign out on this device and invalidate all other active sessions
             across your devices. You will need to sign in again immediately.
           </p>
           <button
             type="button"
             onClick={handleLogoutAllDevices}
-            className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+            className="rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-accent transition-all shadow-sm active:scale-95"
           >
             Log out everywhere
           </button>
         </section>
 
         {/* Danger Zone */}
-        <section className="rounded-3xl border border-red-100 bg-red-50/50 p-6 sm:p-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-2xl rounded-full translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <section className="relative overflow-hidden rounded-3xl border border-red-500/40 bg-red-950/70 p-6 shadow-sm ring-1 ring-red-500/20 sm:p-8">
+          <div className="pointer-events-none absolute top-0 right-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/15 blur-2xl" />
 
-          <div className="flex items-center gap-3 mb-6 border-b border-red-100 pb-4">
-            <div className="p-2 bg-red-100 rounded-lg text-red-600">
+          <div className="mb-6 flex items-center gap-3 border-b border-red-500/30 pb-4">
+            <div className="rounded-lg bg-red-500/20 p-2 text-red-300">
               <Trash2 className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-red-700">Danger Zone</h2>
+            <h2 className="text-xl font-semibold text-red-300">Danger Zone</h2>
           </div>
 
-          <p className="text-sm text-red-600/80 mb-6 max-w-2xl">
+          <p className="mb-6 max-w-2xl text-sm text-red-200/90">
             Permanently delete your account and all associated data including
             social integrations, templates, and generated content. This action
             is irreversible.

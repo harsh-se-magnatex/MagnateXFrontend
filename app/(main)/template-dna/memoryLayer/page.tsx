@@ -549,7 +549,7 @@ export default function TemplateDnaMemoryLayerPage() {
           className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 mb-4"
         >
           <ChevronLeft className="w-4 h-4" />
-          Back to Template DNA
+          Back to Business DNA
         </Link>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-tr from-violet-600 to-indigo-500 text-white shadow-sm">
@@ -558,8 +558,7 @@ export default function TemplateDnaMemoryLayerPage() {
           Memory layer
         </h1>
         <p className="mt-3 text-base text-slate-500 max-w-2xl leading-relaxed">
-          Product and content signals used when generating posts. Use the tabs
-          to switch between the questionnaire and brand images.
+          Product and content signals used when generating posts.
         </p>
       </div>
       {loading ? (
@@ -567,7 +566,7 @@ export default function TemplateDnaMemoryLayerPage() {
       ) : (
         <div className="space-y-10">
           <div
-            className="flex gap-1 p-1 rounded-2xl bg-slate-100/90 border border-slate-200/80 mb-6"
+            className="flex gap-1 p-1 rounded-2xl bg-muted border border-border mb-6"
             role="tablist"
             aria-label="Memory layer sections"
           >
@@ -579,8 +578,8 @@ export default function TemplateDnaMemoryLayerPage() {
               className={cn(
                 'flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors',
                 activeTab === 'questionnaire'
-                  ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-card text-foreground shadow-sm ring-1 ring-border'
+                  : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <MessageSquareText className="w-4 h-4 shrink-0" />
@@ -594,8 +593,8 @@ export default function TemplateDnaMemoryLayerPage() {
               className={cn(
                 'flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors',
                 activeTab === 'images'
-                  ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/80'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-card text-foreground shadow-sm ring-1 ring-border'
+                  : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <ImageIcon className="w-4 h-4 shrink-0" />
@@ -699,8 +698,8 @@ export default function TemplateDnaMemoryLayerPage() {
                                     className={cn(
                                       'px-3 py-1.5 rounded-lg text-sm border transition-colors',
                                       sel
-                                        ? 'bg-indigo-100 border-indigo-300 text-indigo-900'
-                                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                                        ? 'bg-blue-100 border-blue-300 text-blue-900'
+                                        : 'hover:bg-blue-50 hover:border-blue-300 hover:text-blue-900 border-slate-200 text-slate-700'
                                     )}
                                   >
                                     {opt}
@@ -827,7 +826,7 @@ export default function TemplateDnaMemoryLayerPage() {
             {activeTab === "images" && (
               <section
                 className={cn(
-                  'mb-10 rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-white to-violet-50/40 p-6 shadow-sm ring-1 ring-slate-100/80 transition-opacity',
+                  'mb-10 rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-6 shadow-sm ring-1 ring-border/60 transition-opacity',
                   !memoryLayerPrefReady && 'opacity-75'
                 )}
                 aria-busy={savingMemoryLayerPref || !memoryLayerPrefReady}
@@ -839,7 +838,7 @@ export default function TemplateDnaMemoryLayerPage() {
                     </div>
                     <div className="min-w-0">
                       <h2 className="text-base font-semibold tracking-tight text-slate-900">
-                        Send brand images to the AI model
+                        Send brand images
                       </h2>
                       <p className="mt-1.5 text-sm text-slate-600 leading-relaxed max-w-xl">
                         When this is on, your reference photos are shared with the
@@ -881,8 +880,8 @@ export default function TemplateDnaMemoryLayerPage() {
                       onCheckedChange={(c) => void handleMemoryLayerToggle(c)}
                       aria-label={
                         memoryLayerEnabled
-                          ? 'Disable sending brand images to the AI model'
-                          : 'Enable sending brand images to the AI model'
+                          ? 'Disable sending brand images'
+                          : 'Enable sending brand images'
                       }
                     />
                   </div>
@@ -896,7 +895,7 @@ export default function TemplateDnaMemoryLayerPage() {
                   Brand reference photos
                 </h2>
                 <p className="text-sm text-slate-500 mt-1 max-w-[48ch]">
-                  Upload a PDF brochure or individual images. AI suggests
+                  Upload a PDF brochure or individual images. SocioGenie suggests
                   descriptions when you leave them blank — edit anytime. Up to
                   30 images total.
                 </p>
@@ -925,14 +924,12 @@ export default function TemplateDnaMemoryLayerPage() {
               </div>
             )}
 
-            <div className="mb-8 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">
+            <div className="mb-8 rounded-xl border border-dashed border-slate-300 bg-slate-500/80 p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-black mb-2">
                 Import from PDF
               </h3>
-              <p className="text-sm text-slate-600 mb-3 max-w-[52ch]">
-                Upload a product brochure or catalog PDF (max 50MB). We extract
-                photos, filter out logos and icons, and add AI descriptions to
-                your image library.
+              <p className="text-sm text-black mb-3 max-w-[52ch]">
+                Upload a product brochure or catalog PDF (max 50MB).
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <label
@@ -990,7 +987,7 @@ export default function TemplateDnaMemoryLayerPage() {
             {brandPhotos.length > 0 && (
               <div className="mb-8">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
-                  Saved on server
+                  Saved
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {brandPhotos.map((p) => (
@@ -1022,7 +1019,7 @@ export default function TemplateDnaMemoryLayerPage() {
                           </label>
                           {p.descriptionSource === 'ai' ? (
                             <span className="text-[10px] font-medium uppercase tracking-wide text-violet-600">
-                              AI suggested
+                              Suggested
                             </span>
                           ) : null}
                         </div>
@@ -1041,7 +1038,7 @@ export default function TemplateDnaMemoryLayerPage() {
                           onBlur={() => void flushPhotoDescription(p.path)}
                           maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
                           rows={3}
-                          placeholder="AI suggests a description when empty — edit anytime"
+                          placeholder="SocioGenie Suggests a description when empty — edit anytime"
                           className={cn(
                             inputBase,
                             'text-sm py-2 resize-y min-h-[72px]',
@@ -1092,7 +1089,7 @@ export default function TemplateDnaMemoryLayerPage() {
               <p className="text-xs text-slate-400 mt-2">
                 {maxNewSlots} slot
                 {maxNewSlots === 1 ? '' : 's'} left. JPEG, PNG, or WebP upload
-                best. Leave descriptions blank for AI suggestions.
+                best. Leave descriptions blank for suggestions.
               </p>
             </div>
 
@@ -1128,7 +1125,7 @@ export default function TemplateDnaMemoryLayerPage() {
                       </div>
                       <div className="space-y-1">
                         <label className="text-xs font-medium text-slate-600">
-                          Image description (optional — AI fills if blank)
+                          Image description (optional — SocioGenie fills if blank)
                         </label>
                         <textarea
                           value={p.description}
@@ -1149,7 +1146,7 @@ export default function TemplateDnaMemoryLayerPage() {
                           }
                           maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
                           rows={3}
-                          placeholder="Optional — leave blank for AI suggestion"
+                          placeholder="Optional — leave blank for suggestion"
                           className={cn(
                             inputBase,
                             'text-sm py-2 resize-y min-h-[72px]'

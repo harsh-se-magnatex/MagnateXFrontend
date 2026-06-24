@@ -58,7 +58,7 @@ export function DeltaBadge({
     return (
       <span
         className={cn(
-          'inline-flex items-center gap-0.5 rounded-full bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500 ring-1 ring-inset ring-zinc-200',
+          'inline-flex items-center gap-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-border',
           className
         )}
         title="Not enough recent data to compare to last week"
@@ -72,10 +72,10 @@ export function DeltaBadge({
   const isUp = rounded > 0;
   const Icon = isFlat ? Minus : isUp ? ArrowUpRight : ArrowDownRight;
   const tone = isFlat
-    ? 'bg-zinc-100 text-zinc-600 ring-zinc-200'
+    ? 'bg-muted text-muted-foreground ring-border'
     : isUp
-      ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-      : 'bg-red-50 text-red-700 ring-red-200';
+      ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/30'
+      : 'bg-red-500/15 text-red-300 ring-red-500/30';
   const sign = isFlat ? '' : isUp ? '+' : '';
   const displayPct = Math.abs(rounded) >= 1000
     ? `${(rounded / 1000).toFixed(1)}k`
@@ -120,34 +120,34 @@ export function StatCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-xl border bg-white p-4 text-left shadow-sm transition-all',
-        'hover:border-zinc-300 hover:bg-zinc-50/90',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2',
+        'rounded-xl border bg-card p-4 text-left shadow-sm transition-all',
+        'hover:border-border hover:bg-muted/50',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2',
         selected
-          ? 'border-zinc-900 ring-2 ring-zinc-900/15'
-          : 'border-zinc-200',
+          ? 'border-primary ring-2 ring-primary/25'
+          : 'border-border',
         className
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-zinc-500">{label}</p>
-        <Icon className="h-5 w-5 shrink-0 text-zinc-400" aria-hidden />
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
       </div>
       <div className="mt-2 flex items-center gap-2">
-        <p className="text-2xl font-semibold tabular-nums text-zinc-900">
+        <p className="text-2xl font-semibold tabular-nums text-foreground">
           {value}
         </p>
         {delta !== undefined ? <DeltaBadge pct={delta} /> : null}
       </div>
       {delta !== undefined ? (
-        <p className="mt-0.5 text-[10px] uppercase tracking-wide text-zinc-400">
+        <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
           vs last week
         </p>
       ) : null}
       {hint ? (
-        <p className="mt-1.5 text-xs leading-snug text-zinc-400">{hint}</p>
+        <p className="mt-1.5 text-xs leading-snug text-muted-foreground">{hint}</p>
       ) : (
-        <p className="mt-1.5 text-xs text-zinc-400">Click for details</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">Click for details</p>
       )}
     </button>
   );
@@ -210,18 +210,18 @@ export function GrowthAreaChart({
 
   if (data.length === 0) {
     return (
-      <div className="flex min-h-[220px] flex-col rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-        <p className="text-sm font-medium text-zinc-700">{title}</p>
-        <div className="mt-4 flex flex-1 items-center justify-center rounded-lg border border-dashed border-zinc-200 bg-zinc-50/80">
-          <span className="text-sm text-zinc-500">{emptyHint}</span>
+      <div className="flex min-h-[220px] flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
+        <p className="text-sm font-medium text-foreground">{title}</p>
+        <div className="mt-4 flex flex-1 items-center justify-center rounded-lg border border-dashed border-border bg-muted/60">
+          <span className="text-sm text-muted-foreground">{emptyHint}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
-      <p className="text-sm font-medium text-zinc-700">{title}</p>
+    <div className="flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
+      <p className="text-sm font-medium text-foreground">{title}</p>
       <ChartContainer
         config={config}
         className="mt-2 aspect-auto h-[260px] w-full sm:h-[280px]"
@@ -321,8 +321,8 @@ export function NudgeDudBadge({
       className={cn(
         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset',
         isNudge
-          ? 'bg-emerald-50 text-emerald-700 ring-emerald-200'
-          : 'bg-zinc-100 text-zinc-600 ring-zinc-200',
+          ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/30'
+          : 'bg-muted text-muted-foreground ring-border',
         className
       )}
       title={
@@ -359,13 +359,13 @@ export function TopPostCard({
   const canOpenDetails = Boolean(onExpandImage) && externalSiteName === 'LinkedIn';
 
   return (
-    <article className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <article className="overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-stretch">
         {post.mediaUrl ? (
           <button
             type="button"
             onClick={() => onExpandImage?.(post)}
-            className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-lg border-0 bg-zinc-100 p-0 text-left ring-offset-2 transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 sm:h-auto sm:w-40"
+            className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-lg border-0 bg-muted p-0 text-left ring-offset-2 transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-border sm:h-auto sm:w-40"
             aria-label="Open image in larger view"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -382,19 +382,19 @@ export function TopPostCard({
           <button
             type="button"
             onClick={() => onExpandImage?.(post)}
-            className="flex h-36 w-full shrink-0 cursor-zoom-in items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 ring-offset-2 transition-colors hover:bg-zinc-200/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 sm:h-auto sm:w-40"
+            className="flex h-36 w-full shrink-0 cursor-zoom-in items-center justify-center rounded-lg bg-muted text-muted-foreground ring-offset-2 transition-colors hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-border sm:h-auto sm:w-40"
             aria-label="Open post details"
           >
             <FileText className="h-10 w-10" aria-hidden />
           </button>
         ) : (
-          <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-400 sm:h-auto sm:w-40">
+          <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground sm:h-auto sm:w-40">
             <FileText className="h-10 w-10" aria-hidden />
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-500">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-800">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-amber-300">
               {rank}
             </span>
             <span>
@@ -403,7 +403,7 @@ export function TopPostCard({
               })}
             </span>
             {post.type ? (
-              <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-600">
+              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
                 {post.type}
               </span>
             ) : null}
@@ -413,70 +413,70 @@ export function TopPostCard({
                 href={permalink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-auto inline-flex items-center gap-1 text-zinc-600 underline-offset-2 hover:text-zinc-900 hover:underline"
+                className="ml-auto inline-flex items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               >
                 Open on {externalSiteName}
                 <ExternalLink className="h-3 w-3" aria-hidden />
               </a>
             ) : null}
           </div>
-          <p className="mt-2 line-clamp-3 text-sm text-zinc-800">
+          <p className="mt-2 line-clamp-3 text-sm text-foreground">
             {preview}
             {ellipsis}
           </p>
-          <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-600">
+          <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <div>
-              <dt className="inline text-zinc-500">Reactions </dt>
-              <dd className="inline font-medium tabular-nums text-zinc-800">
+              <dt className="inline text-muted-foreground">Reactions </dt>
+              <dd className="inline font-medium tabular-nums text-foreground">
                 {formatCompact(post.reactions)}
               </dd>
             </div>
             <div>
-              <dt className="inline text-zinc-500">Comments </dt>
-              <dd className="inline font-medium tabular-nums text-zinc-800">
+              <dt className="inline text-muted-foreground">Comments </dt>
+              <dd className="inline font-medium tabular-nums text-foreground">
                 {formatCompact(post.comments)}
               </dd>
             </div>
             <div>
-              <dt className="inline text-zinc-500">Shares </dt>
-              <dd className="inline font-medium tabular-nums text-zinc-800">
+              <dt className="inline text-muted-foreground">Shares </dt>
+              <dd className="inline font-medium tabular-nums text-foreground">
                 {formatCompact(post.shares)}
               </dd>
             </div>
             <div>
-              <dt className="inline text-zinc-500">Score </dt>
-              <dd className="inline font-medium tabular-nums text-zinc-800">
+              <dt className="inline text-muted-foreground">Score </dt>
+              <dd className="inline font-medium tabular-nums text-foreground">
                 {formatCompact(post.engagementScore)}
               </dd>
             </div>
             {post.impressions != null ? (
               <div>
-                <dt className="inline text-zinc-500">Impressions </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-800">
+                <dt className="inline text-muted-foreground">Impressions </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.impressions)}
                 </dd>
               </div>
             ) : null}
             {post.uniqueImpressions != null ? (
               <div>
-                <dt className="inline text-zinc-500">Unique </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-800">
+                <dt className="inline text-muted-foreground">Unique </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.uniqueImpressions)}
                 </dd>
               </div>
             ) : null}
             {post.clicks != null ? (
               <div>
-                <dt className="inline text-zinc-500">Clicks </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-800">
+                <dt className="inline text-muted-foreground">Clicks </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {formatCompact(post.clicks)}
                 </dd>
               </div>
             ) : null}
             {post.engagementRate != null ? (
               <div>
-                <dt className="inline text-zinc-500">Eng. rate </dt>
-                <dd className="inline font-medium tabular-nums text-zinc-800">
+                <dt className="inline text-muted-foreground">Eng. rate </dt>
+                <dd className="inline font-medium tabular-nums text-foreground">
                   {post.engagementRate.toFixed(1)}%
                 </dd>
               </div>
@@ -523,21 +523,21 @@ export function InsightDetailPanel({
 
   return (
     <div
-      className="rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 text-sm text-zinc-700"
+      className="rounded-xl border border-border bg-muted/60 p-4 text-sm text-foreground"
       role="region"
       aria-live="polite"
     >
       {metric === 'followers' ? (
         <div className="space-y-2">
-          <p className="font-medium text-zinc-900">Followers</p>
+          <p className="font-medium text-foreground">Followers</p>
           <p>
             Followers for your selected Facebook page. The Growth chart below
             shows how this changed over the reported periods.
           </p>
           {fmtDelta(fd) ? (
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted-foreground">
               Latest change vs previous bucket:{' '}
-              <span className="font-medium tabular-nums text-zinc-800">
+              <span className="font-medium tabular-nums text-foreground">
                 {fmtDelta(fd)}
               </span>
             </p>
@@ -546,16 +546,16 @@ export function InsightDetailPanel({
       ) : null}
       {metric === 'reach' ? (
         <div className="space-y-2">
-          <p className="font-medium text-zinc-900">Reach</p>
+          <p className="font-medium text-foreground">Reach</p>
           <p>
-            <span className="font-medium tabular-nums text-zinc-900">
+            <span className="font-medium tabular-nums text-foreground">
               {formatCompact(merged.totalReach)}
             </span>{' '}
             media views (reach)
             {merged.totalUniqueReach > 0 ? (
               <>
                 {' · '}
-                <span className="font-medium tabular-nums text-zinc-900">
+                <span className="font-medium tabular-nums text-foreground">
                   {formatCompact(merged.totalUniqueReach)}
                 </span>{' '}
                 unique media views
@@ -564,9 +564,9 @@ export function InsightDetailPanel({
             .
           </p>
           {fmtDelta(rd) ? (
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted-foreground">
               Reach vs previous period:{' '}
-              <span className="font-medium tabular-nums text-zinc-800">
+              <span className="font-medium tabular-nums text-foreground">
                 {fmtDelta(rd)}
               </span>
             </p>
@@ -575,28 +575,28 @@ export function InsightDetailPanel({
       ) : null}
       {metric === 'posts' ? (
         <div className="space-y-2">
-          <p className="font-medium text-zinc-900">Posts</p>
+          <p className="font-medium text-foreground">Posts</p>
           <p>
-            <span className="font-medium tabular-nums text-zinc-900">
+            <span className="font-medium tabular-nums text-foreground">
               {postCount}
             </span>{' '}
             posts stored for analytics for this page.
           </p>
           {merged.postFrequencyTop.length > 0 ? (
             <div>
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Recent days by volume
               </p>
               <ul className="flex flex-wrap gap-2">
                 {merged.postFrequencyTop.map(({ date, count }) => (
                   <li
                     key={date}
-                    className="rounded-lg bg-white px-2.5 py-1 text-xs ring-1 ring-zinc-200"
+                    className="rounded-lg bg-card px-2.5 py-1 text-xs ring-1 ring-border"
                   >
-                    <span className="text-zinc-500">
+                    <span className="text-muted-foreground">
                       {formatChartTooltipDate(date)}
                     </span>{' '}
-                    <span className="font-medium tabular-nums text-zinc-900">
+                    <span className="font-medium tabular-nums text-foreground">
                       ×{count}
                     </span>
                   </li>
@@ -608,11 +608,11 @@ export function InsightDetailPanel({
       ) : null}
       {metric === 'engagement' ? (
         <div className="space-y-2">
-          <p className="font-medium text-zinc-900">Engagement</p>
+          <p className="font-medium text-foreground">Engagement</p>
           {merged.totalEngagementsPage > 0 ? (
             <p>
               Page-level post engagements (Meta insight):{' '}
-              <span className="font-medium tabular-nums text-zinc-900">
+              <span className="font-medium tabular-nums text-foreground">
                 {formatCompact(merged.totalEngagementsPage)}
               </span>
               .
@@ -620,22 +620,22 @@ export function InsightDetailPanel({
           ) : (
             <p>
               Sum of reactions, comments, and shares across stored posts:{' '}
-              <span className="font-medium tabular-nums text-zinc-900">
+              <span className="font-medium tabular-nums text-foreground">
                 {formatCompact(merged.engagementsFromPosts)}
               </span>
               .
             </p>
           )}
           {fmtDelta(ed) ? (
-            <p className="text-xs text-zinc-600">
+            <p className="text-xs text-muted-foreground">
               Page engagements vs previous period:{' '}
-              <span className="font-medium tabular-nums text-zinc-800">
+              <span className="font-medium tabular-nums text-foreground">
                 {fmtDelta(ed)}
               </span>
             </p>
           ) : null}
-          <p className="text-xs text-zinc-500">
-            Open <strong className="text-zinc-700">Top posts</strong> below for
+          <p className="text-xs text-muted-foreground">
+            Open <strong className="text-foreground">Top posts</strong> below for
             per-post breakdown (impressions, clicks, rate).
           </p>
         </div>
@@ -674,7 +674,7 @@ export function TopPostImageDialog({
       >
         <div className="max-h-[inherit] overflow-y-auto">
           {post.mediaUrl ? (
-            <div className="flex max-h-[min(70vh,720px)] items-center justify-center bg-zinc-950/5">
+            <div className="flex max-h-[min(70vh,720px)] items-center justify-center bg-background/40">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={post.mediaUrl}
@@ -683,87 +683,87 @@ export function TopPostImageDialog({
               />
             </div>
           ) : (
-            <div className="flex min-h-48 items-center justify-center bg-zinc-950/5 text-zinc-400">
+            <div className="flex min-h-48 items-center justify-center bg-background/40 text-muted-foreground">
               <FileText className="h-14 w-14" aria-hidden />
             </div>
           )}
-          <DialogHeader className="gap-1 border-t border-zinc-200 p-4 text-left sm:p-5">
-            <DialogTitle className="text-base text-zinc-900">
+          <DialogHeader className="gap-1 border-t border-border p-4 text-left sm:p-5">
+            <DialogTitle className="text-base text-foreground">
               Top post preview
             </DialogTitle>
             <DialogDescription className="sr-only">
               Enlarged post image with full caption and engagement metrics.
             </DialogDescription>
             {dateLabel ? (
-              <p className="text-xs text-zinc-500">{dateLabel}</p>
+              <p className="text-xs text-muted-foreground">{dateLabel}</p>
             ) : null}
             {permalink ? (
               <a
                 href={permalink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex w-fit items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
+                className="inline-flex w-fit items-center gap-1 text-xs font-medium text-primary hover:underline"
               >
                 View on {externalSiteName}
                 <ExternalLink className="h-3 w-3" aria-hidden />
               </a>
             ) : null}
-            <p className="pt-2 text-sm leading-relaxed text-zinc-800 whitespace-pre-wrap">
+            <p className="pt-2 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
               {caption}
             </p>
-            <dl className="flex flex-wrap gap-x-5 gap-y-2 border-t border-zinc-100 pt-3 text-xs text-zinc-600">
+            <dl className="flex flex-wrap gap-x-5 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
               <div>
-                <dt className="text-zinc-500">Reactions</dt>
-                <dd className="font-medium tabular-nums text-zinc-900">
+                <dt className="text-muted-foreground">Reactions</dt>
+                <dd className="font-medium tabular-nums text-foreground">
                   {formatCompact(post.reactions)}
                 </dd>
               </div>
               <div>
-                <dt className="text-zinc-500">Comments</dt>
-                <dd className="font-medium tabular-nums text-zinc-900">
+                <dt className="text-muted-foreground">Comments</dt>
+                <dd className="font-medium tabular-nums text-foreground">
                   {formatCompact(post.comments)}
                 </dd>
               </div>
               <div>
-                <dt className="text-zinc-500">Shares</dt>
-                <dd className="font-medium tabular-nums text-zinc-900">
+                <dt className="text-muted-foreground">Shares</dt>
+                <dd className="font-medium tabular-nums text-foreground">
                   {formatCompact(post.shares)}
                 </dd>
               </div>
               <div>
-                <dt className="text-zinc-500">Engagement score</dt>
-                <dd className="font-medium tabular-nums text-zinc-900">
+                <dt className="text-muted-foreground">Engagement score</dt>
+                <dd className="font-medium tabular-nums text-foreground">
                   {formatCompact(post.engagementScore)}
                 </dd>
               </div>
               {post.impressions != null ? (
                 <div>
-                  <dt className="text-zinc-500">Impressions</dt>
-                  <dd className="font-medium tabular-nums text-zinc-900">
+                  <dt className="text-muted-foreground">Impressions</dt>
+                  <dd className="font-medium tabular-nums text-foreground">
                     {formatCompact(post.impressions)}
                   </dd>
                 </div>
               ) : null}
               {post.uniqueImpressions != null ? (
                 <div>
-                  <dt className="text-zinc-500">Unique impressions</dt>
-                  <dd className="font-medium tabular-nums text-zinc-900">
+                  <dt className="text-muted-foreground">Unique impressions</dt>
+                  <dd className="font-medium tabular-nums text-foreground">
                     {formatCompact(post.uniqueImpressions)}
                   </dd>
                 </div>
               ) : null}
               {post.clicks != null ? (
                 <div>
-                  <dt className="text-zinc-500">Clicks</dt>
-                  <dd className="font-medium tabular-nums text-zinc-900">
+                  <dt className="text-muted-foreground">Clicks</dt>
+                  <dd className="font-medium tabular-nums text-foreground">
                     {formatCompact(post.clicks)}
                   </dd>
                 </div>
               ) : null}
               {post.engagementRate != null ? (
                 <div>
-                  <dt className="text-zinc-500">Engagement rate</dt>
-                  <dd className="font-medium tabular-nums text-zinc-900">
+                  <dt className="text-muted-foreground">Engagement rate</dt>
+                  <dd className="font-medium tabular-nums text-foreground">
                     {post.engagementRate.toFixed(1)}%
                   </dd>
                 </div>
@@ -771,15 +771,15 @@ export function TopPostImageDialog({
             </dl>
             {aiFooter}
             {post.commentsList && post.commentsList.length > 0 ? (
-              <div className="border-t border-zinc-100 pt-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <div className="border-t border-border/60 pt-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Recent comments
                 </p>
                 <ul className="mt-2 space-y-2">
                   {post.commentsList.slice(0, 5).map((comment, index) => (
                     <li
                       key={`${comment.message}-${index}`}
-                      className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-700"
+                      className="rounded-lg bg-muted px-3 py-2 text-xs text-foreground"
                     >
                       {comment.message || 'Empty comment'}
                     </li>

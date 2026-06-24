@@ -4,18 +4,21 @@ import { getSuccessNotifications } from '@/features/user/api';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useTimestampFormatter } from '@/lib/user-timezone';
-
-type FirestoreTimestamp = {
-  _seconds: number;
-  _nanoseconds: number;
-};
+import {
+  type FirestoreTimestampLike,
+  useNotificationUnreadHighlight,
+} from './NotificationCountsProvider';
+import {
+  NotificationListItem,
+  NotificationNewBadge,
+} from './NotificationListItem';
 
 type PostSuccessAlert = {
   postId: string;
   message: string;
-  postedAt: FirestoreTimestamp;
+  postedAt: FirestoreTimestampLike;
   platform: string;
-  createdAt: string;
+  createdAt?: FirestoreTimestampLike;
 };
 
 /**
@@ -30,6 +33,7 @@ function stripBakedDate(message: string): string {
 
 export function PostSuccessAlerts() {
   const fmtTimestamp = useTimestampFormatter();
+  const { isUnread } = useNotificationUnreadHighlight('postSuccess');
   const [successNotifications, setSuccessNotifications] = useState<PostSuccessAlert[]>([]);
   const getData = async () => {
     const response = await getSuccessNotifications();
@@ -51,11 +55,19 @@ export function PostSuccessAlerts() {
 
       <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
         <ul className="divide-y divide-zinc-100">
-          {successNotifications.map((notification) => (
-            <li key={notification.postId + notification.postedAt._seconds} className="p-4 sm:p-5">
+          {successNotifications.map((notification) => {
+            const isNew = isUnread(
+              notification.createdAt ?? notification.postedAt
+            );
+            return (
+            <NotificationListItem
+              key={notification.postId + notification.postedAt._seconds}
+              isNew={isNew}
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
+                    {isNew ? <NotificationNewBadge /> : null}
                     <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 bg-blue-50 text-blue-700 ring-blue-100">
                       {notification.platform}
                     </span>
@@ -78,8 +90,9 @@ export function PostSuccessAlerts() {
                   </Link>
                 </div>
               </div>
-            </li>
-          ))}
+            </NotificationListItem>
+            );
+          })}
         </ul>
       </div>
     </section>

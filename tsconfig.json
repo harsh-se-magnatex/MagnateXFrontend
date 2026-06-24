@@ -31,9 +31,6 @@
     "**/*.mts"
   ],
   "exclude": [
-    "node_modules",
-    "components/creative-editor",
-    "lib/creative-design",
-    "src/service/api/creativeDesign.ts"
+    "node_modules"
   ]
 }

@@ -16,6 +16,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -75,6 +76,8 @@ export type NotificationCountsContextValue = {
   total: number;
   /** Backend caps individual category counts at this value; display as "{cap-1}+". */
   cap: number;
+  /** Per-category read cutoff (ms since epoch) from `users/{uid}.notificationsReadAt`. */
+  readAt: Record<NotificationCategory, number>;
   /**
    * Optimistic + persistent mark-as-read. The badge clears instantly;
    * the user-doc snapshot then confirms with the server timestamp.
@@ -93,6 +96,12 @@ const EMPTY_VALUE: NotificationCountsContextValue = {
   counts: EMPTY_COUNTS,
   total: 0,
   cap: COUNT_CAP,
+  readAt: {
+    email: EPOCH_MS,
+    postSuccess: EPOCH_MS,
+    postFailure: EPOCH_MS,
+    newReleases: EPOCH_MS,
+  },
   markAsRead: async () => {
     /* no-op for unauthenticated sessions */
   },
@@ -406,10 +415,11 @@ function NotificationCountsScope({
       counts,
       total,
       cap: COUNT_CAP,
+      readAt,
       markAsRead,
       refresh,
     }),
-    [loading, error, counts, total, markAsRead, refresh]
+    [loading, error, counts, total, readAt, markAsRead, refresh]
   );
 
   return (
@@ -441,4 +451,40 @@ export function formatNotificationCount(
   if (!Number.isFinite(count) || count <= 0) return null;
   if (count >= cap) return `${cap - 1}+`;
   return String(count);
+}
+
+export type FirestoreTimestampLike = {
+  _seconds: number;
+  _nanoseconds?: number;
+};
+
+export function firestoreTimestampToMs(
+  ts: FirestoreTimestampLike | undefined | null
+): number {
+  if (!ts || typeof ts._seconds !== 'number') return 0;
+  return ts._seconds * 1000 + Math.floor((ts._nanoseconds ?? 0) / 1e6);
+}
+
+/**
+ * Snapshot of the category read cutoff when the list first mounted — keeps
+ * "New" highlighting visible for the session even after mark-as-read clears
+ * the sidebar badge.
+ */
+export function useNotificationUnreadHighlight(category: NotificationCategory) {
+  const { readAt } = useNotificationCounts();
+  const cutoffRef = useRef<number | null>(null);
+  if (cutoffRef.current === null) {
+    cutoffRef.current = readAt[category];
+  }
+
+  const isUnread = useCallback(
+    (ts: FirestoreTimestampLike | undefined | null) => {
+      const ms = firestoreTimestampToMs(ts);
+      if (!ms) return false;
+      return ms > (cutoffRef.current ?? readAt[category]);
+    },
+    [readAt, category]
+  );
+
+  return { isUnread };
 }

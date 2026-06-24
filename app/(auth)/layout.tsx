@@ -1,5 +1,6 @@
 import React from 'react';
 import NavBar from '../(main)/_components/NavBar';
+import { AppGradientBackground } from '@/components/shared/AppGradientBackground';
 
 
 
@@ -10,8 +11,9 @@ export default function AuthLayout({
 }) {
   return (
     <>
+      <AppGradientBackground variant="subtle" />
       <NavBar isAuthRender />
-    <div className="min-h-svh bg-background pb-8 text-foreground sm:pt-22">
+    <div className="relative min-h-svh pb-8 text-foreground sm:pt-22">
       {children}
     </div>
     </>

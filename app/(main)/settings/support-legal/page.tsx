@@ -17,14 +17,21 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 
-const inputBase =
-  'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all';
+import {
+  workspaceInputClass,
+  workspacePageDescriptionSmClass,
+  workspacePageTitleClass,
+  workspaceSectionCardClass,
+  workspaceSectionTitleClass,
+} from '@/lib/workspace-ui';
+
+const inputBase = workspaceInputClass;
 
 const FAQS = [
   {
     question: 'How does automated posting work?',
     answer:
-      'You select festival events, and our system automatically generates and schedules posts using AI, including your business branding.',
+      'You select festival events, and our system automatically generates and schedules posts, including your business branding.',
   },
   {
     question: 'How many times can I regenerate an image?',
@@ -174,10 +181,10 @@ export default function SupportAndLegalPage() {
   return (
     <div className="max-w-6xl mx-auto animate-in fade-in duration-500">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+        <h1 className={workspacePageTitleClass}>
           Support & Legal
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className={workspacePageDescriptionSmClass}>
           Get help with your account, report issues, request refunds, and read
           our policies.
         </p>
@@ -186,12 +193,12 @@ export default function SupportAndLegalPage() {
       <div className="space-y-8">
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Contact Support */}
-          <section className="glass-card rounded-3xl p-6 sm:p-8 h-fit">
-            <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-              <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+          <section className={cn(workspaceSectionCardClass, 'h-fit')}>
+            <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
                 <Mail className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className={workspaceSectionTitleClass}>
                 Contact Us
               </h2>
             </div>
@@ -333,8 +340,8 @@ export default function SupportAndLegalPage() {
                 className={cn(
                   'rounded-2xl border transition-all duration-200 overflow-hidden',
                   openFaqIndex === index
-                    ? 'border-indigo-200 bg-indigo-50/30'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    ? 'border-primary/30 bg-primary/10'
+                    : 'border-border bg-card hover:border-border hover:bg-accent/40'
                 )}
               >
                 <button
@@ -442,7 +449,7 @@ export default function SupportAndLegalPage() {
               <a
                 key={item.href}
                 href={item.href}
-                className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:border-indigo-300 hover:shadow-md hover:-translate-y-1"
+                className="group flex flex-col rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md hover:-translate-y-1"
               >
                 <span className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors mb-2">
                   {item.label}
