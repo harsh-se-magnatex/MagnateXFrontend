@@ -181,6 +181,44 @@ export function StatusBadgeIcon({
   }
 }
 
+/** Activity row icon — exactly four states on the home dashboard. */
+export type ActivityScheduleState = 'posted' | 'failed' | 'approved' | 'pending';
+
+export function getActivityScheduleState(
+  post: ScheduledPostStatusInput
+): ActivityScheduleState | null {
+  const ps = String(post.postStatus ?? '').toLowerCase();
+  const ua = String(post.UserApprovalStatus ?? '').toLowerCase();
+
+  if (ps === 'posted') return 'posted';
+  if (ps === 'failed') return 'failed';
+  if (ua === 'pending' || ps === 'pending') return 'pending';
+  if (ua === 'approved' && ps === 'approved') return 'approved';
+  return null;
+}
+
+export type ScheduledPostScheduleInput = ScheduledPostStatusInput & {
+  scheduleAt?: { _seconds: number } | null;
+};
+
+/**
+ * Matches the Post Queue "Upcoming" tab and `isUpcomingPost` in
+ * `scheduled-post/page.tsx` / `applyScheduledPostsTabFilter` on the API.
+ */
+export function isUpcomingScheduledPost(
+  post: ScheduledPostScheduleInput,
+  scheduleFloorMs: number = Date.now()
+): boolean {
+  const ps = String(post.postStatus ?? '').toLowerCase();
+  const ua = String(post.UserApprovalStatus ?? '').toLowerCase();
+  if (post.removedByUser === true) return false;
+  if (ua === 'rejected' || ua === 'removed') return false;
+  if (ps === 'posted' || ps === 'failed' || ps === 'removed') return false;
+  if (!['pending', 'processing', 'approved'].includes(ps)) return false;
+  const scheduleMs = (post.scheduleAt?._seconds ?? 0) * 1000;
+  return scheduleMs >= scheduleFloorMs;
+}
+
 /** Friendly label for the backend `GeneratedBy` pipeline tag. */
 export function generatedByLabel(value: string | undefined): string | null {
   if (typeof value !== 'string') return null;

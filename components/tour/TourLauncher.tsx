@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTourState, type TourId } from '@/src/stores/tourState';
 import { TOUR_STEPS } from './tour-steps';
-import { isTourActive, startTour } from './tour-runner';
+import { abortTour, isTourActive, startTour } from './tour-runner';
 
 /**
  * Mounts once in the root layout. Decides which (if any) tour to auto-fire
@@ -25,6 +25,8 @@ export function TourLauncher(): null {
   const setDemoActive = useTourState((s) => s.setDemoActive);
   const doneTours = useTourState((s) => s.doneTours);
 
+  useEffect(() => () => abortTour(), []);
+
   useEffect(() => {
     if (!pathname) return;
     // A driver is already running — let it finish/destroy itself before we
@@ -37,14 +39,22 @@ export function TourLauncher(): null {
     // first; the activeTour resume branch below handles the actual kick
     // once the new pathname mounts.
     if (requestedTour) {
-      const firstPath = TOUR_STEPS[requestedTour][0]?.path;
+      const firstPath = TOUR_STEPS[requestedTour.tour][requestedTour.startIndex]?.path;
       if (firstPath && firstPath !== pathname) {
-        setActiveTour({ tour: requestedTour, stepIndex: 0 });
+        setActiveTour({
+          tour: requestedTour.tour,
+          stepIndex: requestedTour.startIndex,
+          endIndex: requestedTour.endIndex,
+        });
         requestTour(null);
         router.push(firstPath);
         return;
       }
-      kick(requestedTour, 0);
+      kick(
+        requestedTour.tour,
+        requestedTour.startIndex,
+        requestedTour.endIndex
+      );
       requestTour(null);
       return;
     }
@@ -54,7 +64,7 @@ export function TourLauncher(): null {
       const expectedPath =
         TOUR_STEPS[activeTour.tour][activeTour.stepIndex]?.path;
       if (expectedPath === pathname) {
-        kick(activeTour.tour, activeTour.stepIndex);
+        kick(activeTour.tour, activeTour.stepIndex, activeTour.endIndex);
         setActiveTour(null);
         return;
       }
@@ -67,26 +77,17 @@ export function TourLauncher(): null {
       kick('onboarding', 0);
       return;
     }
-    if (pathname === '/brand-memory' && !doneTours['brand-memory']) {
-      kick('brand-memory', 0);
-      return;
-    }
-    if (
-      pathname === '/home' &&
-      doneTours['brand-memory'] &&
-      !doneTours.platform
-    ) {
-      kick('platform', 0);
-      return;
-    }
+    // brand-memory and platform tours are requested by their pages after
+    // content mounts — auto-firing here races loading/auth states.
 
-    function kick(tour: TourId, startIndex: number): void {
+    function kick(tour: TourId, startIndex: number, endIndex?: number): void {
       if (tour === 'platform') {
         setDemoActive(true);
       }
       startTour({
         tour,
         initialIndex: startIndex,
+        endIndex,
         router,
       });
     }

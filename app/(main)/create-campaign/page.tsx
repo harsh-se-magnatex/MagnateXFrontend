@@ -970,7 +970,10 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
 
   return (
     <div className="space-y-6">
-      <section className="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <section
+        id="tour-campaign-builder"
+        className="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden"
+      >
         <div className="p-6 border-b border-border flex items-center gap-3 bg-card/50">
           <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
             <Wand2 className="h-5 w-5" />
@@ -1498,7 +1501,10 @@ function CampaignSummary(props: CampaignSummaryProps) {
 
   return (
     <aside className="lg:sticky lg:top-4 self-start">
-      <section className="glass-card rounded-3xl p-6 border border-indigo-100/60 bg-indigo-50/20 shadow-sm">
+      <section
+        id="tour-campaign-confirm"
+        className="glass-card rounded-3xl p-6 border border-indigo-100/60 bg-indigo-50/20 shadow-sm"
+      >
         <h2 className="text-lg font-bold text-slate-900 mb-6">
           3. Confirm &amp; create
         </h2>

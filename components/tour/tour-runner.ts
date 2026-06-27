@@ -17,6 +17,7 @@ type AppRouter = Pick<AppRouterInstance, 'push'>;
 type StartTourOptions = {
   tour: TourId;
   initialIndex: number;
+  endIndex?: number;
   router: AppRouter;
   /** Called after `onComplete` runs (after the last step or close). */
   onFinish?: () => void;
@@ -38,6 +39,17 @@ export function isTourActive(): boolean {
   } catch {
     return false;
   }
+}
+
+/** Tear down the driver without marking the tour done (layout/route change). */
+export function abortTour(): void {
+  try {
+    currentDriver?.destroy();
+  } catch {
+    /* ignore */
+  }
+  currentDriver = null;
+  useTourState.getState().setActiveTour(null);
 }
 
 /** Get the path the current step expects to run on. */
@@ -93,9 +105,12 @@ function waitForElement(
  * and call `router.push()` when the next step lives on another route.
  */
 export function startTour(opts: StartTourOptions): void {
-  const { tour, initialIndex, router, onFinish } = opts;
+  const { tour, initialIndex, endIndex, router, onFinish } = opts;
   const steps = TOUR_STEPS[tour];
   if (!steps || steps.length === 0) return;
+  const windowStart = Math.max(0, initialIndex);
+  const windowEnd = Math.min(endIndex ?? steps.length - 1, steps.length - 1);
+  if (windowStart > windowEnd) return;
 
   // Singleton guard — avoids React Strict Mode double-firing two drivers.
   if (isTourActive()) return;
@@ -111,8 +126,8 @@ export function startTour(opts: StartTourOptions): void {
     onFinish?.();
   };
 
-  const driveSteps = steps.map((s, idx) => {
-    const isLast = idx === steps.length - 1;
+  const driveSteps = steps.slice(windowStart, windowEnd + 1).map((s, idx) => {
+    const isLast = idx === windowEnd - windowStart;
     const final = s.finalCta;
     return {
       element: s.element,
@@ -152,9 +167,11 @@ export function startTour(opts: StartTourOptions): void {
     allowKeyboardControl: true,
     steps: driveSteps,
     onNextClick: (_el, _step, ctx) => {
-      const idx = ctx.state.activeIndex ?? 0;
-      const here = steps[idx];
-      const next = steps[idx + 1];
+      const localIndex = ctx.state.activeIndex ?? 0;
+      const globalIndex = windowStart + localIndex;
+      const here = steps[globalIndex];
+      const next =
+        globalIndex < windowEnd ? steps[globalIndex + 1] : undefined;
 
       // Final CTA — route to /pricing and finish the tour.
       if (here?.finalCta) {
@@ -176,7 +193,8 @@ export function startTour(opts: StartTourOptions): void {
         // Persist where to resume, then hand off to Next.js routing.
         useTourState.getState().setActiveTour({
           tour,
-          stepIndex: idx + 1,
+          stepIndex: globalIndex + 1,
+          endIndex: windowEnd,
         });
         currentDriver = null;
         driverObj?.destroy();
@@ -187,13 +205,16 @@ export function startTour(opts: StartTourOptions): void {
       ctx.driver.moveNext();
     },
     onPrevClick: (_el, _step, ctx) => {
-      const idx = ctx.state.activeIndex ?? 0;
-      const prev = steps[idx - 1];
+      const localIndex = ctx.state.activeIndex ?? 0;
+      const globalIndex = windowStart + localIndex;
+      const prev =
+        globalIndex > windowStart ? steps[globalIndex - 1] : undefined;
       if (!prev) return;
       if (needsRoute(prev)) {
         useTourState.getState().setActiveTour({
           tour,
-          stepIndex: idx - 1,
+          stepIndex: globalIndex - 1,
+          endIndex: windowEnd,
         });
         currentDriver = null;
         driverObj?.destroy();
@@ -214,7 +235,7 @@ export function startTour(opts: StartTourOptions): void {
   // Wait for the first step's anchor to land in the DOM before driving.
   // Some pages render a loading skeleton until billing/auth resolves, so a
   // raw rAF isn't enough — poll the element up to ~4s.
-  const firstSelector = steps[initialIndex]?.element;
+  const firstSelector = steps[windowStart]?.element;
   if (!firstSelector) {
     finish();
     return;
@@ -230,7 +251,7 @@ export function startTour(opts: StartTourOptions): void {
       return;
     }
     try {
-      driverObj?.drive(initialIndex);
+      driverObj?.drive(0);
     } catch (err) {
       console.warn('[tour] driver failed to start', err);
       currentDriver = null;

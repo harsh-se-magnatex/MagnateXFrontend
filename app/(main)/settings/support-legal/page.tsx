@@ -41,7 +41,7 @@ const FAQS = [
   {
     question: 'What is the credit system?',
     answer:
-      'Credits unlock on-demand actions: product advert posts (4 credits), instant generation posts (2), festive posts (2), and regeneration posts (1). Your plan includes a monthly credit allowance; add-on packs are valid for 30 days. Daily automated posting does not use this balance.',
+      'Credits unlock on-demand actions: product advert posts 4 credits, quick create posts 2 credits, Bulk Create 2 credits (Studio Plans), festive posts 2 credits, campaign posts 3 credits per day, and regeneration posts 1 credit (Free first regeneration). Your plan includes a monthly credit allowance; add-on packs are valid for 30 days. Daily automated posting (AI Plans) does not use this balance.',
   },
   {
     question: 'How do I update my profile information?',

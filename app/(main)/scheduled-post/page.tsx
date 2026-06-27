@@ -52,6 +52,7 @@ import {
 import {
   generatedByLabel,
   getDisplayStatus,
+  isUpcomingScheduledPost,
   statusBadgeClasses,
   StatusBadgeIcon,
 } from '@/lib/scheduled-post-status';
@@ -224,14 +225,7 @@ function ScheduledPostActionButtons({
  *   - past-due of any flavour (publish window missed)
  */
 function isUpcomingPost(post: ScheduledPost): boolean {
-  const ps = String(post.postStatus ?? '').toLowerCase();
-  const ua = String(post.UserApprovalStatus ?? '').toLowerCase();
-  if (post.removedByUser === true) return false;
-  if (ua === 'rejected' || ua === 'removed') return false;
-  if (ps === 'posted' || ps === 'failed' || ps === 'removed') return false;
-  if (!['pending', 'processing', 'approved'].includes(ps)) return false;
-  const scheduleMs = (post.scheduleAt?._seconds ?? 0) * 1000;
-  return scheduleMs >= Date.now();
+  return isUpcomingScheduledPost(post);
 }
 
 function DetailModal({
@@ -242,6 +236,7 @@ function DetailModal({
   onRemove,
   actionDisabled,
   onPreviewImage,
+  isRegenerating,
 }: {
   post: ScheduledPost;
   onClose: () => void;
@@ -250,6 +245,7 @@ function DetailModal({
   onRemove: () => void;
   actionDisabled: boolean;
   onPreviewImage: (url: string, alt?: string) => void;
+  isRegenerating: boolean;
 }) {
   const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
@@ -266,6 +262,7 @@ function DetailModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="detail-modal-title"
+      aria-busy={isRegenerating || undefined}
     >
       <div
         className="rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
@@ -300,45 +297,74 @@ function DetailModal({
           {post.imageUrl && (
             <div>
               <p className="text-xs font-medium text-slate-500 mb-1">Image</p>
-              <button
-                type="button"
-                onClick={() =>
-                  onPreviewImage(post.imageUrl as string, 'Scheduled post image')
-                }
-                className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]"
-                aria-label="Open image preview"
-              >
-                <img
-                  src={post.imageUrl}
-                  alt="Post"
-                  className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
-                />
-              </button>
-              <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                <ImagePreviewButton
+              <div className="relative overflow-hidden rounded-xl">
+                <button
+                  type="button"
+                  disabled={isRegenerating}
                   onClick={() =>
                     onPreviewImage(post.imageUrl as string, 'Scheduled post image')
                   }
-                  className="w-full sm:w-auto rounded-full px-6 bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100"
-                />
-                <DownloadPngButton
-                  url={post.imageUrl}
-                  getFilename={() =>
-                    `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
-                  }
-                />
-              </div>
-              <div className="flex w-full justify-end">
-                <a
-                  href={post.imageUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-[#4A8FF6]/20"
+                  className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6] disabled:cursor-not-allowed"
+                  aria-label="Open image preview"
                 >
-                  Open in new tab
-                  <ExternalLink className="h-4 w-4" />
-                </a>
+                  <img
+                    src={post.imageUrl}
+                    alt="Post"
+                    className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
+                  />
+                </button>
+                {isRegenerating ? (
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/75 backdrop-blur-sm"
+                    aria-live="polite"
+                  >
+                    <Loader2
+                      className="h-8 w-8 animate-spin text-[#4A8FF6]"
+                      aria-hidden
+                    />
+                    <span className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+                      Regenerating…
+                    </span>
+                  </div>
+                ) : null}
               </div>
+              {!isRegenerating ? (
+                <>
+                  <div className="flex flex-col sm:flex-row gap-4 mt-4">
+                    <ImagePreviewButton
+                      onClick={() =>
+                        onPreviewImage(
+                          post.imageUrl as string,
+                          'Scheduled post image'
+                        )
+                      }
+                      className="w-full sm:w-auto rounded-full px-6 bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100"
+                    />
+                    <DownloadPngButton
+                      url={post.imageUrl}
+                      getFilename={() =>
+                        `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
+                      }
+                    />
+                  </div>
+                  <div className="flex w-full justify-end">
+                    <a
+                      href={post.imageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-[#4A8FF6]/20"
+                    >
+                      Open in new tab
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </div>
+                </>
+              ) : (
+                <p className="mt-3 text-xs text-slate-500">
+                  Regeneration in progress — new image and caption will appear when
+                  ready.
+                </p>
+              )}
             </div>
           )}
           <DetailRow label="Caption / Message" value={post.message || '—'} long />
@@ -375,7 +401,7 @@ function DetailModal({
                 regenChargesCredits={regenChargesCredits}
                 onRegenerate={onRegenerate}
                 onRemove={onRemove}
-                disabled={actionDisabled}
+                disabled={actionDisabled || isRegenerating}
               />
             </div>
           ) : null}
@@ -628,11 +654,13 @@ function CalendarEventChip({
   time,
   onSelect,
   size = 'sm',
+  isRegenerating = false,
 }: {
   post: ScheduledPost;
   time: string;
   onSelect: () => void;
   size?: 'sm' | 'md';
+  isRegenerating?: boolean;
 }) {
   const status = getDisplayStatus(post);
   const caption = (post.message || 'No caption').trim();
@@ -641,39 +669,72 @@ function CalendarEventChip({
     <button
       type="button"
       onClick={onSelect}
-      title={`${time} · ${caption}`}
+      title={
+        isRegenerating
+          ? `Regenerating… · ${time} · ${caption}`
+          : `${time} · ${caption}`
+      }
+      aria-busy={isRegenerating || undefined}
       className={cn(
-        'group flex w-full items-center gap-1.5 rounded-md border text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 hover:bg-accent/40',
+        'group relative flex w-full items-center gap-1.5 rounded-md border text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 hover:bg-accent/40',
         isMd ? 'px-1.5 py-1.5 text-xs' : 'px-1 py-1 text-[11px]',
         statusBadgeClasses(status.variant)
       )}
     >
       {post.imageUrl ? (
-        <img
-          src={post.imageUrl}
-          alt=""
-          loading="lazy"
+        <span
           className={cn(
-            'shrink-0 rounded object-cover ring-1 ring-border/60',
+            'relative shrink-0 overflow-hidden rounded ring-1 ring-border/60',
             isMd ? 'h-10 w-10' : 'h-7 w-7'
           )}
-        />
+        >
+          <img
+            src={post.imageUrl}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+          {isRegenerating ? (
+            <span className="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-[1px]">
+              <Loader2
+                className={cn(
+                  'animate-spin text-[#4A8FF6]',
+                  isMd ? 'h-4 w-4' : 'h-3 w-3'
+                )}
+                aria-hidden
+              />
+            </span>
+          ) : null}
+        </span>
       ) : (
         <span
           className={cn(
-            'flex shrink-0 items-center justify-center rounded bg-muted font-semibold text-muted-foreground ring-1 ring-border/60',
+            'relative flex shrink-0 items-center justify-center rounded bg-muted font-semibold text-muted-foreground ring-1 ring-border/60',
             isMd ? 'h-10 w-10 text-[11px]' : 'h-7 w-7 text-[10px]'
           )}
         >
           {(post.platform ?? '?').slice(0, 2).toUpperCase()}
+          {isRegenerating ? (
+            <span className="absolute inset-0 flex items-center justify-center bg-white/75">
+              <Loader2
+                className={cn(
+                  'animate-spin text-[#4A8FF6]',
+                  isMd ? 'h-4 w-4' : 'h-3 w-3'
+                )}
+                aria-hidden
+              />
+            </span>
+          ) : null}
         </span>
       )}
       <span className="flex min-w-0 flex-1 flex-col leading-tight">
-        <span className="truncate font-semibold">{time}</span>
+        <span className="truncate font-semibold">
+          {isRegenerating ? 'Regenerating…' : time}
+        </span>
         <span
           className={cn('truncate opacity-90', isMd && 'line-clamp-2 whitespace-normal')}
         >
-          {caption}
+          {isRegenerating ? 'New image in progress' : caption}
         </span>
       </span>
     </button>
@@ -688,6 +749,7 @@ function CalendarMonthBody({
   fmtTimestamp,
   selectedDateKey,
   onJumpToWeek,
+  regeneratingPostIds,
 }: {
   cursor: Date;
   postsByDate: Map<string, ScheduledPost[]>;
@@ -696,6 +758,7 @@ function CalendarMonthBody({
   fmtTimestamp: CalendarFmt;
   selectedDateKey: string;
   onJumpToWeek: (day: Date) => void;
+  regeneratingPostIds: Set<string>;
 }) {
   const cells = useMemo(() => {
     const start = startOfWeek(startOfMonth(cursor), { weekStartsOn: 0 });
@@ -773,6 +836,9 @@ function CalendarMonthBody({
                       post={post}
                       time={time}
                       onSelect={() => onSelectPost(post)}
+                      isRegenerating={
+                        !!post.postId && regeneratingPostIds.has(post.postId)
+                      }
                     />
                   );
                 })}
@@ -801,6 +867,7 @@ function CalendarWeekBody({
   onSelectPost,
   fmtTimestamp,
   selectedDateKey,
+  regeneratingPostIds,
 }: {
   cursor: Date;
   postsByDate: Map<string, ScheduledPost[]>;
@@ -808,6 +875,7 @@ function CalendarWeekBody({
   onSelectPost: (post: ScheduledPost) => void;
   fmtTimestamp: CalendarFmt;
   selectedDateKey: string;
+  regeneratingPostIds: Set<string>;
 }) {
   const days = useMemo(() => {
     const start = startOfWeek(cursor, { weekStartsOn: 0 });
@@ -869,6 +937,9 @@ function CalendarWeekBody({
                       time={time}
                       onSelect={() => onSelectPost(post)}
                       size="md"
+                      isRegenerating={
+                        !!post.postId && regeneratingPostIds.has(post.postId)
+                      }
                     />
                   );
                 })
@@ -896,6 +967,7 @@ function CalendarView({
   fmtTimestamp,
   selectedDateKey,
   rangeStatus,
+  regeneratingPostIds,
 }: {
   mode: CalendarMode;
   cursor: Date;
@@ -906,6 +978,7 @@ function CalendarView({
   fmtTimestamp: CalendarFmt;
   selectedDateKey: string;
   rangeStatus: CalendarRangeStatus;
+  regeneratingPostIds: Set<string>;
 }) {
   const today = startOfToday();
   const postsByDate = usePostsByDate(posts, fmtTimestamp);
@@ -1023,6 +1096,7 @@ function CalendarView({
           onSelectPost={onSelectPost}
           fmtTimestamp={fmtTimestamp}
           selectedDateKey={selectedDateKey}
+          regeneratingPostIds={regeneratingPostIds}
           onJumpToWeek={(day) => {
             onSelectMode('week');
             onSelectCursor(day);
@@ -1036,6 +1110,7 @@ function CalendarView({
           onSelectPost={onSelectPost}
           fmtTimestamp={fmtTimestamp}
           selectedDateKey={selectedDateKey}
+          regeneratingPostIds={regeneratingPostIds}
         />
       )}
     </div>
@@ -1345,9 +1420,6 @@ export default function SchedulePostPage() {
           });
         } else {
           markRegenerating(postId);
-          if (selectedPost?.postId === postId) {
-            setSelectedPost(null);
-          }
           const response = await performActionByUserOnScheduledPost(
             postId,
             'regenerate',
@@ -1483,6 +1555,26 @@ export default function SchedulePostPage() {
     selectedScheduleDate,
     fmtTimestamp,
   ]);
+
+  // Keep the detail modal in sync after regeneration refreshes list/calendar data.
+  useEffect(() => {
+    if (!selectedPost?.postId) return;
+    const updated = filteredAndSortedPosts.find(
+      (p) => p.postId === selectedPost.postId
+    );
+    if (!updated) return;
+    const prevCount =
+      selectedPost.regenratedCount ?? selectedPost.regeneratedCount ?? 0;
+    const nextCount =
+      updated.regenratedCount ?? updated.regeneratedCount ?? 0;
+    if (
+      updated.imageUrl !== selectedPost.imageUrl ||
+      updated.message !== selectedPost.message ||
+      nextCount !== prevCount
+    ) {
+      setSelectedPost(updated);
+    }
+  }, [filteredAndSortedPosts, selectedPost]);
 
   useEffect(() => {
     if (!loading && !user) router.replace('/sign-in');
@@ -1717,6 +1809,7 @@ export default function SchedulePostPage() {
               onSelectPost={setSelectedPost}
               fmtTimestamp={fmtTimestamp}
               selectedDateKey={selectedScheduleDate}
+              regeneratingPostIds={regeneratingPostIds}
               rangeStatus={{
                 isLoading: calendarLoading,
                 loadedCount: filteredAndSortedPosts.length,
@@ -1833,6 +1926,10 @@ export default function SchedulePostPage() {
           onRemove={() => handlePostAction(selectedPost, 'remove')}
           actionDisabled={!selectedPost.postId || postActionDisabled}
           onPreviewImage={imagePreview.open}
+          isRegenerating={
+            !!selectedPost.postId &&
+            regeneratingPostIds.has(selectedPost.postId)
+          }
         />
       )}
       <ImagePreviewOverlay

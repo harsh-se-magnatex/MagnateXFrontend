@@ -61,21 +61,7 @@ function InvoiceCell({ invoiceUrl }: { invoiceUrl?: string }) {
   );
 }
 
-function SpendOnCell({ spendedOn }: { spendedOn?: string }) {
-  const raw = spendedOn?.trim();
-  if (!raw) return <span className="text-slate-500">—</span>;
-  if (raw.startsWith('/')) {
-    return (
-      <Link
-        href={raw}
-        className="font-medium text-indigo-600 hover:underline underline-offset-2"
-      >
-        {spendOnLinkLabel(raw)}
-      </Link>
-    );
-  }
-  return <span className="text-slate-700">{raw}</span>;
-}
+
 
 export default function TransactionsPage() {
   const { user, loading } = useAuth();
@@ -165,11 +151,8 @@ export default function TransactionsPage() {
                   <TableHead className="text-slate-600 text-right w-[9%]">
                     Balance after
                   </TableHead>
-                  <TableHead className="text-slate-600 w-[12%] min-w-24">
-                    Invoice
-                  </TableHead>
                   <TableHead className="text-slate-600 text-right w-[8%] min-w-28">
-                    Spend on
+                    Invoice
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -194,11 +177,8 @@ export default function TransactionsPage() {
                     <TableCell className="text-right text-slate-900 tabular-nums align-top">
                       {typeof row.balanceAfter === 'number' ? row.balanceAfter : '—'}
                     </TableCell>
-                    <TableCell className="align-top whitespace-normal min-w-0">
+                    <TableCell className="align-top text-right whitespace-normal min-w-0">
                       <InvoiceCell invoiceUrl={row.invoiceUrl} />
-                    </TableCell>
-                    <TableCell className="text-right align-top whitespace-normal min-w-0">
-                      <SpendOnCell spendedOn={row.spendedOn} />
                     </TableCell>
                   </TableRow>
                 ))}

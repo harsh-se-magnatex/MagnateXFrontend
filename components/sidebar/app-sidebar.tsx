@@ -44,6 +44,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { WORKSPACE_NAV, type WorkspaceNavHref } from '@/lib/workspace-nav';
 import { useTourState } from '@/src/stores/tourState';
+import { getPageTourRequest } from '@/components/tour/tour-steps';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserPlanCredits } from '@/app/(main)/_components/UserPlanCreditsProvider';
 import {
@@ -146,10 +147,12 @@ export function AppSidebar({
     (accountName ?? user?.displayName ?? user?.email ?? 'Account').trim();
   const nameInitials = getNameInitials(displayName);
   const planLabel = formatActivePlanLabel(billing?.activePlan);
+  const pageTourRequest = pathname ? getPageTourRequest(pathname) : null;
 
-  const startPlatformTour = () => {
+  const startPageTour = () => {
+    if (!pageTourRequest) return;
     if (isMobile) setOpenMobile(false);
-    useTourState.getState().requestTour('platform');
+    useTourState.getState().requestTour(pageTourRequest);
   };
 
   React.useEffect(() => {
@@ -294,15 +297,15 @@ export function AppSidebar({
                   </SidebarMenuItem>
                 );
               })}
-              {!isAccountFrozen && (
+              {!isAccountFrozen && pageTourRequest && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     type="button"
-                    onClick={startPlatformTour}
+                    onClick={startPageTour}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all hover:bg-sidebar-accent hover:text-sidebar-foreground"
                   >
                     <Sparkles className="h-4 w-4 shrink-0 text-sidebar-foreground/80" />
-                    <span className="text-sidebar-foreground">Take the tour</span>
+                    <span className="text-sidebar-foreground">Take this page tour</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}

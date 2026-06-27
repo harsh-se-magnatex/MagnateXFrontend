@@ -1,4 +1,4 @@
-import type { TourId } from '@/src/stores/tourState';
+import type { TourId, TourRequest } from '@/src/stores/tourState';
 
 export type TourStep = {
   /** CSS selector for the target element. */
@@ -219,7 +219,26 @@ const PLATFORM_STEPS: TourStep[] = [
     description:
       'Link Facebook, Instagram, and LinkedIn here. This is free and required before anything we generate can actually publish.',
   },
-  // 8j. Top Nav back on /home (1 step)
+  // 8j. Create Campaign (2 steps)
+  {
+    element: '#tour-campaign-builder',
+    path: '/create-campaign',
+    side: 'bottom',
+    title: 'Plan a full campaign',
+    description:
+      'Start by generating a few campaign ideas around a goal like a product launch, seasonal push, or sale.',
+    paid: true,
+  },
+  {
+    element: '#tour-campaign-confirm',
+    path: '/create-campaign',
+    side: 'left',
+    title: 'Confirm and generate drafts',
+    description:
+      'Choose platforms, review credits, then generate the full set of campaign drafts for the selected days.',
+    paid: true,
+  },
+  // 8k. Top Nav back on /home (1 step)
   {
     element: '#tour-topnav-wrapper',
     path: '/home',
@@ -228,7 +247,7 @@ const PLATFORM_STEPS: TourStep[] = [
     description:
       'From any page: Home for the dashboard, AI Engine to tune prompts, Brand DNA to edit everything you set up in onboarding and the memory layer, Contact Us for support — and the sign-out button on the right.',
   },
-  // 8k. Final CTA
+  // 8l. Final CTA
   FINAL_STEP,
 ];
 
@@ -237,3 +256,34 @@ export const TOUR_STEPS: Record<TourId, TourStep[]> = {
   'brand-memory': BRAND_MEMORY_STEPS,
   platform: PLATFORM_STEPS,
 };
+
+export function getPageTourRequest(pathname: string): TourRequest | null {
+  if (pathname === '/onBoarding') {
+    return { tour: 'onboarding', startIndex: 0 };
+  }
+
+  if (pathname === '/brand-memory') {
+    return { tour: 'brand-memory', startIndex: 0 };
+  }
+
+  const startIndex = PLATFORM_STEPS.findIndex(
+    (step) => step.path === pathname && !step.finalCta
+  );
+
+  if (startIndex === -1) {
+    return null;
+  }
+
+  let endIndex = startIndex;
+  while (endIndex + 1 < PLATFORM_STEPS.length) {
+    const next = PLATFORM_STEPS[endIndex + 1];
+    if (next.path !== pathname || next.finalCta) break;
+    endIndex += 1;
+  }
+
+  return {
+    tour: 'platform',
+    startIndex,
+    endIndex,
+  };
+}

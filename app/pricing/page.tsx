@@ -22,10 +22,10 @@ import {
 } from '@/lib/landing-pricing';
 
 const NAV_ITEMS = [
-  { label: 'How It Works', href: '/#how-it-works' },
-  { label: 'Features', href: '/#features' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'FAQ', href: '/#faq' },
+  { label: 'How It Works', href: '/product#how-it-works' },
+  { label: 'Features', href: '/product#features' },
+  { label: 'Pricing', href: '/product#pricing' },
+  { label: 'FAQ', href: '/product#faq' },
 ] as const;
 
 const BILLING_FAQ_ITEMS = [
@@ -137,7 +137,7 @@ export default function PricingPage() {
                 href={item.href}
                 className={cn(
                   'relative text-sm font-medium transition-colors after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-linear-to-r after:from-primary-blue after:to-primary-purple after:transition-all after:duration-300 hover:after:w-full',
-                  item.href === '/pricing'
+                  item.href === '/product#pricing'
                     ? 'text-foreground'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
