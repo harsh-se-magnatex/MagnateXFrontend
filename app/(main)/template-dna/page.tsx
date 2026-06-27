@@ -258,17 +258,23 @@ export default function BusinessProfilePage() {
     try {
       setSaving(true);
       let finalLogoForVariants = formData.logo;
+      let colorTemplatesGenerationStarted = false;
       if (selectedImage) {
         const uploaded = await uploadLogo(selectedImage);
         finalLogoForVariants = String(
           uploaded?.data?.url || finalLogoForVariants || ''
         );
+        colorTemplatesGenerationStarted =
+          uploaded?.data?.colorTemplatesGenerationStarted === true;
       }
       if (formData.logo && typeof formData.logo === 'string') {
         const response = await uploadLogo(formData.logo);
         finalLogoForVariants = String(
           response?.data?.url || finalLogoForVariants || ''
         );
+        colorTemplatesGenerationStarted =
+          colorTemplatesGenerationStarted ||
+          response?.data?.colorTemplatesGenerationStarted === true;
         setFormData((prev: any) => ({ ...prev, logo: finalLogoForVariants }));
       }
       await updateProfile({
@@ -292,7 +298,9 @@ export default function BusinessProfilePage() {
       }
       setWebsiteUrl('');
       toast.success('Profile updated successfully');
-      
+      if (colorTemplatesGenerationStarted) {
+        toast.message('Analyzing logo colors for image generation…');
+      }
     } catch (error: any) {
       showErrorToast(error.response.data.message || 'Failed to update profile');
     } finally {
@@ -329,6 +337,7 @@ export default function BusinessProfilePage() {
     if (!formData.logo) return;
     try {
       sessionStorage.setItem('template_dna_logo_for_variants', formData.logo);
+      sessionStorage.setItem('template_dna_force_fresh_variants', '1');
     } catch {}
     router.push('/template-dna/variants');
   };
@@ -341,13 +350,19 @@ export default function BusinessProfilePage() {
         ...prev,
         useLogoVariantsForImages: checked,
       }));
+      if (checked && formData.logo) {
+        try {
+          sessionStorage.setItem('template_dna_logo_for_variants', formData.logo);
+          sessionStorage.setItem('template_dna_force_fresh_variants', '1');
+        } catch {}
+      }
       const started = res?.data?.backgroundGenerationStarted === true;
       toast.success(
         checked
           ? started
             ? 'Logo variants are on. We are generating them in the background—open the Variants page in a moment to see them.'
             : 'Logo variants are on. Add a logo to your profile so we can generate variants automatically.'
-          : 'Logo variants are off. Saved variants were removed from your account.'
+          : 'Logo variants are off. AI images will use only your main logo.'
       );
     } catch (error: unknown) {
       const msg = (error as { response?: { data?: { message?: string } } })
@@ -797,8 +812,8 @@ export default function BusinessProfilePage() {
                               <p className="text-xs text-slate-500 leading-relaxed">
                                 Off by default. Turning on generates logo
                                 variants on the server and uses them in AI
-                                images. Off deletes all saved variants and uses
-                                only your main logo.
+                                images. Turning off uses only your main logo;
+                                saved variants are kept.
                               </p>
                             </div>
                             <Switch

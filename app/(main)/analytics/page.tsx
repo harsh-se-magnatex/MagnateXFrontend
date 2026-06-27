@@ -669,18 +669,16 @@ export default function AnalyticsPage() {
 
   return (
     <div className="mx-auto max-w-5xl pb-8">
-      {snapshot && (
         <p className="mb-3 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
           <span
             aria-hidden
-            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"
+            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 text-white"
           />
           <span>
             Insights refreshes and 
             updates once every 24 hours.
           </span>
         </p>
-      )}
       <Tabs
         value={platform}
         onValueChange={(v) => setPlatform(v as PlatformTab)}

@@ -6,6 +6,13 @@ export type TourId = 'onboarding' | 'brand-memory' | 'platform';
 export type ActiveTourSnapshot = {
   tour: TourId;
   stepIndex: number;
+  endIndex?: number;
+};
+
+export type TourRequest = {
+  tour: TourId;
+  startIndex: number;
+  endIndex?: number;
 };
 
 type TourStore = {
@@ -32,8 +39,8 @@ type TourStore = {
    * "Take the tour" link in the sidebar). `TourLauncher` watches this
    * and clears it after kicking off the tour.
    */
-  requestedTour: TourId | null;
-  requestTour: (tour: TourId | null) => void;
+  requestedTour: TourRequest | null;
+  requestTour: (tour: TourRequest | null) => void;
 
   /**
    * Per-tour "already finished this session" flag. In-memory only — wiped
@@ -43,6 +50,15 @@ type TourStore = {
    */
   doneTours: Record<TourId, boolean>;
   markDone: (tour: TourId) => void;
+
+  /** User finished onboarding — suppress the onboarding tour if they return. */
+  markOnboardingComplete: () => void;
+
+  /**
+   * User exited the setup funnel to /home (skip or finish). Marks prior
+   * page tours done and queues the platform walkthrough.
+   */
+  queuePlatformTour: () => void;
 };
 
 export const useTourState = create<TourStore>((set) => ({
@@ -55,6 +71,18 @@ export const useTourState = create<TourStore>((set) => ({
   doneTours: { onboarding: false, 'brand-memory': false, platform: false },
   markDone: (tour) =>
     set((s) => ({ doneTours: { ...s.doneTours, [tour]: true } })),
+  markOnboardingComplete: () =>
+    set((s) => ({
+      doneTours: { ...s.doneTours, onboarding: true },
+    })),
+  queuePlatformTour: () =>
+    set((s) => ({
+      doneTours: {
+        ...s.doneTours,
+        onboarding: true,
+        'brand-memory': true,
+      },
+    })),
 }));
 
 /** Convenience hook for gated pages — returns just the demo flag. */

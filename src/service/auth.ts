@@ -117,15 +117,15 @@ export const createUserEmailPassword = async (
       );
     }
     const result = await createUserWithEmailAndPassword(auth, email, password);
-    if (!result.user.emailVerified) {
-      await sendEmailVerification(result.user, {
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
-        handleCodeInApp: true,
-      });
-      toast.info(
-        'Email verification sent. Please check your inbox (and spam folder).'
-      );
-    }
+    // if (!result.user.emailVerified) {
+    //   await sendEmailVerification(result.user, {
+    //     url: `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
+    //     handleCodeInApp: true,
+    //   });
+    //   toast.info(
+    //     'Email verification sent. Please check your inbox (and spam folder).'
+    //   );
+    // }
     const idToken = await result.user.getIdToken(true);
     await loginUser(idToken, 'signup', 'password');
     void trackSignUp('password');
@@ -162,12 +162,12 @@ export const signInEmailPassword = async (email: string, password: string) => {
     }
     throw error;
   }
-  if (result && !result?.user.emailVerified) {
-    showErrorToast(
-      'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
-    );
-    return result;
-  }
+  // if (result && !result?.user.emailVerified) {
+  //   showErrorToast(
+  //     'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
+  //   );
+  //   return result;
+  // }
   if (!result?.user) {
     throw new Error('Login failed');
   }

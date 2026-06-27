@@ -54,7 +54,7 @@ export function NewReleasesAlerts() {
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     {isNew ? <NotificationNewBadge /> : null}
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 bg-blue-50 text-blue-700 ring-blue-100">
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 bg-blue-300 text-black/90 ring-blue-100">
                       {release.category === 'feature' && 'Feature'}
                       {release.category === 'security' && 'Security'}
                       {release.category === 'improvement' && 'Improvement'}

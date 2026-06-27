@@ -110,7 +110,7 @@ export default function AILogoPage() {
         [...nextPicks, ...currentPicks].slice(0, MAX_AI_LOGO_PICKS)
       );
       toast.success('Logo pick is ready.');
-      void handleGetAiGeneratedLogos(); 
+      void handleGetAiGeneratedLogos();
     } catch (error: unknown) {
       showErrorToast(
         getApiErrorMessage(error, 'Failed to generate AI logo pick.')
@@ -159,9 +159,9 @@ export default function AILogoPage() {
     );
   }
 
-useEffect(() => {
-  void handleGetAiGeneratedLogos();
-}, []);
+  useEffect(() => {
+    void handleGetAiGeneratedLogos();
+  }, []);
 
   if (authLoading || billingLoading || initializing) {
     return (
@@ -299,6 +299,9 @@ useEffect(() => {
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {generating && (
+                  <div className="aspect-square rounded-2xl border border-slate-200 bg-slate-100 animate-pulse" />
+                )}
                 {picks.map((src, idx) => {
                   const active = selectedIndex === idx;
                   return (
@@ -324,9 +327,7 @@ useEffect(() => {
                     </button>
                   );
                 })}
-                {generating && (
-                  <div className="aspect-square rounded-2xl border border-slate-200 bg-slate-100 animate-pulse" />
-                )}
+
               </div>
             )}
           </div>

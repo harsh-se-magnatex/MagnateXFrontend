@@ -12,7 +12,6 @@ import {
   Globe,
   Hash,
   Image as ImageIcon,
-  Loader2,
   MapPin,
   Palette,
   Phone,
@@ -36,6 +35,12 @@ import {
   uploadLogo,
 } from '@/src/service/api/userService';
 import { showErrorToast } from '@/lib/show-error-toast';
+import { useTourState } from '@/src/stores/tourState';
+import {
+  OnboardingSuggestionsPanel,
+  type OnboardingFieldSuggestions,
+  type OnboardingColorSuggestions,
+} from '@/components/onboarding/OnboardingSuggestionsPanel';
 
 type QuestionType =
   | 'text'
@@ -111,7 +116,7 @@ const questions: Question[] = [
   {
     name: 'logo',
     label: 'Upload your logo',
-    description: 'PNG or JPG, ideally on a transparent background.',
+    description: 'Upload manually — website logos appear as suggestions on the right.',
     type: 'file',
     icon: ImageIcon,
   },
@@ -147,7 +152,7 @@ const questions: Question[] = [
   {
     name: 'hashtags',
     label: 'Preferred hashtags',
-    description: 'Tap our AI suggestions or type your own, comma-separated.',
+    description: 'Pick from suggestions or type your own, comma-separated.',
     placeholder: 'e.g. coffee, mornings, yourbrand',
     type: 'hashtags',
     icon: Hash,
@@ -155,7 +160,7 @@ const questions: Question[] = [
   {
     name: 'brandSlogan',
     label: 'Brand slogan',
-    description: 'A short line that captures your brand promise.',
+    description: 'Choose a suggested tagline or write your own.',
     placeholder: 'Your brand slogan or tagline',
     type: 'brandSlogan',
     icon: Sparkles,
@@ -163,7 +168,7 @@ const questions: Question[] = [
   {
     name: 'primaryColor',
     label: 'Primary Brand Color',
-    description: 'Your dominant brand color — used most prominently.',
+    description: 'Dominant brand color — check suggestions for extracted hex values.',
     type: 'color',
     icon: Palette,
   },
@@ -204,27 +209,163 @@ function parseHashtagTokens(raw: unknown): string[] {
 
 type SourceMode = 'website' | 'catalog';
 
-function mergeDnaIntoForm(
-  dnaFields: Record<string, unknown>
-): Record<string, unknown> {
+type ExtractSource = SourceMode | null;
+
+const EMPTY_SUGGESTIONS: OnboardingFieldSuggestions = {
+  logos: [],
+  hashtags: [],
+  slogans: [],
+  colors: { primary: [], secondary: [], accent: [] },
+};
+
+function uniqueHexColors(hexes: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of hexes) {
+    const t = String(raw).trim();
+    if (!t) continue;
+    const withHash = t.startsWith('#') ? t : `#${t}`;
+    const n = withHash.toUpperCase();
+    if (!/^#[0-9A-F]{6}$/.test(n) || seen.has(n)) continue;
+    seen.add(n);
+    out.push(n);
+  }
+  return out;
+}
+
+function parseColorSuggestions(
+  flat: Record<string, unknown>
+): OnboardingColorSuggestions {
+  const empty: OnboardingColorSuggestions = {
+    primary: [],
+    secondary: [],
+    accent: [],
+  };
+  const raw = flat.suggestedColors;
+  if (raw && typeof raw === 'object') {
+    const sc = raw as Record<string, unknown>;
+    return {
+      primary: Array.isArray(sc.primary)
+        ? uniqueHexColors(sc.primary as string[])
+        : [],
+      secondary: Array.isArray(sc.secondary)
+        ? uniqueHexColors(sc.secondary as string[])
+        : [],
+      accent: Array.isArray(sc.accent)
+        ? uniqueHexColors(sc.accent as string[])
+        : [],
+    };
+  }
+  const pick = (v: unknown) =>
+    typeof v === 'string' && v.trim() ? uniqueHexColors([v.trim()]) : [];
+  return {
+    primary: pick(flat.primaryColor),
+    secondary: pick(flat.secondaryColor),
+    accent: pick(flat.accentColor),
+  };
+}
+
+function uniqueHashtags(tags: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of tags) {
+    const clean = String(raw).replace(/^#+/, '').trim();
+    if (!clean) continue;
+    const key = clean.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(clean);
+  }
+  return out;
+}
+
+function uniqueStrings(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of items) {
+    const t = String(item).trim();
+    if (!t || seen.has(t)) continue;
+    seen.add(t);
+    out.push(t);
+  }
+  return out;
+}
+
+function parseExtractPayload(
+  dnaFields: Record<string, unknown>,
+  source: SourceMode
+): {
+  formFields: Record<string, unknown>;
+  suggestions: OnboardingFieldSuggestions;
+  source: ExtractSource;
+} {
   const flat = { ...dnaFields };
+
+  const logos =
+    source === 'website'
+      ? uniqueStrings(
+          [
+            ...(Array.isArray(flat.suggestedLogos)
+              ? (flat.suggestedLogos as string[])
+              : []),
+            ...(typeof flat.logo === 'string' && flat.logo.trim()
+              ? [flat.logo.trim()]
+              : []),
+          ].filter(Boolean)
+        )
+      : [];
+
+  const hashtags = uniqueHashtags([
+    ...parseHashtagTokens(flat.hashtags),
+    ...(Array.isArray(flat.recommendedHashtags)
+      ? (flat.recommendedHashtags as string[])
+      : []),
+  ]);
+
+  const slogans = uniqueStrings([
+    ...(typeof flat.brandSlogan === 'string' && flat.brandSlogan.trim()
+      ? [flat.brandSlogan.trim()]
+      : []),
+    ...(Array.isArray(flat.recommendedSlogans)
+      ? (flat.recommendedSlogans as string[])
+      : []),
+  ]);
+
+  const suggestions: OnboardingFieldSuggestions = {
+    logos,
+    hashtags,
+    slogans,
+    colors: parseColorSuggestions(flat),
+  };
+
+  delete flat.suggestedLogos;
+  delete flat.suggestedColors;
+  delete flat.logo;
+  delete flat.hashtags;
+  delete flat.brandSlogan;
+  delete flat.recommendedHashtags;
+  delete flat.recommendedSlogans;
+  delete flat.primaryColor;
+  delete flat.secondaryColor;
+  delete flat.accentColor;
 
   if (typeof flat.businesscontact === 'number') {
     flat.businesscontact = String(flat.businesscontact);
   }
 
-  if (
-    Array.isArray(flat.recommendedHashtags) &&
-    !flat.hashtags &&
-    flat.recommendedHashtags.length
-  ) {
-    flat.hashtags = (flat.recommendedHashtags as string[])
-      .map((t) => String(t).replace(/^#+/, '').trim())
-      .filter(Boolean)
-      .join(', ');
-  }
+  return { formFields: flat, suggestions, source };
+}
 
-  return flat;
+function mergeAiCopySuggestions(
+  prev: OnboardingFieldSuggestions,
+  hashtags: string[],
+  slogans: string[]
+): OnboardingFieldSuggestions {
+  return {
+    ...prev,
+    hashtags: uniqueHashtags([...prev.hashtags, ...hashtags]),
+    slogans: uniqueStrings([...prev.slogans, ...slogans]),
+  };
 }
 
 function normalizeHashtagKey(t: string): string {
@@ -240,10 +381,12 @@ export default function OnboardingMenu() {
   const [fetchingBusinessData, setFetchingBusinessData] = useState(false);
   const [loading, setLoading] = useState(false);
   const [suggestLoading, setSuggestLoading] = useState(false);
-  const [copySuggestions, setCopySuggestions] = useState<{
-    hashtags: string[];
-    slogans: string[];
-  } | null>(null);
+  const [fieldSuggestions, setFieldSuggestions] =
+    useState<OnboardingFieldSuggestions>(EMPTY_SUGGESTIONS);
+  const [suggestionSource, setSuggestionSource] = useState<ExtractSource>(null);
+  const [selectedSuggestionKey, setSelectedSuggestionKey] = useState<
+    string | null
+  >(null);
   const formDataRef = useRef(formData);
   const hashtagSuggestStartedRef = useRef(false);
   const router = useRouter();
@@ -260,7 +403,10 @@ export default function OnboardingMenu() {
 
   useEffect(() => {
     const q = questions[step];
-    if (q?.name !== 'hashtags' || hashtagSuggestStartedRef.current) return;
+    const needsAiCopy =
+      (q?.name === 'hashtags' || q?.name === 'brandSlogan') &&
+      !hashtagSuggestStartedRef.current;
+    if (!needsAiCopy) return;
     hashtagSuggestStartedRef.current = true;
     let cancelled = false;
     const fd = formDataRef.current;
@@ -286,7 +432,14 @@ export default function OnboardingMenu() {
         ) {
           const { hashtags, slogans } = res.data;
           if (Array.isArray(hashtags) && Array.isArray(slogans)) {
-            setCopySuggestions({ hashtags, slogans });
+            setFieldSuggestions((prev) =>
+              mergeAiCopySuggestions(
+                prev,
+                hashtags.map((t) => String(t)),
+                slogans.map((s) => String(s))
+              )
+            );
+            if (!suggestionSource) setSuggestionSource('website');
           }
         }
       } catch (error) {
@@ -303,7 +456,7 @@ export default function OnboardingMenu() {
     return () => {
       cancelled = true;
     };
-  }, [step]);
+  }, [step, suggestionSource]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -350,7 +503,10 @@ export default function OnboardingMenu() {
         if (uploadedUrl) dataToSave.logo = uploadedUrl;
       }
       const response = await onBoardUser(dataToSave);
-      if (response.success) router.push('/brand-memory');
+      if (response.success) {
+        useTourState.getState().markOnboardingComplete();
+        router.push('/brand-memory');
+      }
     } catch (error) {
       showErrorToast(
         error instanceof Error ? error.message : 'Failed to onboard user'
@@ -360,7 +516,10 @@ export default function OnboardingMenu() {
     }
   };
 
-  const skipEntirely = () => router.push('/home');
+  const skipEntirely = () => {
+    useTourState.getState().queuePlatformTour();
+    router.push('/home');
+  };
 
   const skipCurrentStep = () => {
     if (step < questions.length - 1) setStep(step + 1);
@@ -380,10 +539,14 @@ export default function OnboardingMenu() {
         const payload = response.data ?? response;
         const dnaFields =
           (payload as { dna?: Record<string, unknown> }).dna ?? payload;
-        setFormData((prev) => ({
-          ...prev,
-          ...mergeDnaIntoForm(dnaFields as Record<string, unknown>),
-        }));
+        const { formFields, suggestions, source } = parseExtractPayload(
+          dnaFields as Record<string, unknown>,
+          'website'
+        );
+        setFieldSuggestions(suggestions);
+        setSuggestionSource(source);
+        setSelectedSuggestionKey(null);
+        setFormData((prev) => ({ ...prev, ...formFields }));
       } catch (error) {
         showErrorToast(
           error instanceof Error
@@ -407,15 +570,18 @@ export default function OnboardingMenu() {
       const payload = envelope.data ?? envelope;
       const dnaFields =
         (payload as { dna?: Record<string, unknown> }).dna ?? payload;
-      const merged = mergeDnaIntoForm(dnaFields as Record<string, unknown>);
-      setFormData((prev) => ({ ...prev, ...merged }));
-      const tags = merged.recommendedHashtags;
-      const slogans = merged.recommendedSlogans;
-      if (Array.isArray(tags) && Array.isArray(slogans) && tags.length && slogans.length) {
-        setCopySuggestions({
-          hashtags: tags.map((t) => String(t)),
-          slogans: slogans.map((s) => String(s)),
-        });
+      const { formFields, suggestions, source } = parseExtractPayload(
+        dnaFields as Record<string, unknown>,
+        'catalog'
+      );
+      setFieldSuggestions(suggestions);
+      setSuggestionSource(source);
+      setSelectedSuggestionKey(null);
+      setFormData((prev) => ({ ...prev, ...formFields }));
+      if (
+        suggestions.hashtags.length > 0 ||
+        suggestions.slogans.length > 0
+      ) {
         hashtagSuggestStartedRef.current = true;
       }
       const apiWarnings = (payload as { warnings?: string[] }).warnings;
@@ -473,135 +639,95 @@ export default function OnboardingMenu() {
     [formData.hashtags]
   );
 
-  const renderHashtagsStep = () => {
-    const tokens = parseHashtagTokens(formData.hashtags);
-    return (
-      <div className="space-y-5">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Suggestions
-            </Label>
-            {suggestLoading && (
-              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Loader2 className="size-3.5 animate-spin" /> Generating…
-              </span>
-            )}
-          </div>
-          {copySuggestions && copySuggestions.hashtags.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {copySuggestions.hashtags.map((tag) => {
-                const key = normalizeHashtagKey(tag);
-                const on = selectedHashtagKeys.has(key);
-                return (
-                  <button
-                    type="button"
-                    key={tag}
-                    onClick={() => toggleHashtagChip(tag)}
-                    className={cn(
-                      'inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-medium transition-all',
-                      on
-                        ? 'border-transparent bg-gradient-primary text-white shadow-sm'
-                        : 'border-border bg-card text-foreground hover:border-primary-blue/40 hover:bg-primary-blue/5 hover:text-primary-blue'
-                    )}
-                  >
-                    {on && <CheckCircle2 className="size-3.5" />}#
-                    {tag.replace(/^#+/, '')}
-                  </button>
-                );
-              })}
-            </div>
-          ) : !suggestLoading ? (
-            <p className="text-sm text-muted-foreground">
-              No suggestions yet — type your own below.
-            </p>
-          ) : null}
-        </div>
+  useEffect(() => {
+    setSelectedSuggestionKey(null);
+  }, [step]);
 
-        <div className="space-y-2">
-          <Label
-            htmlFor="hashtags"
-            className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-          >
-            Your list
-          </Label>
-          <Input
-            id="hashtags"
-            type="text"
-            name="hashtags"
-            value={String(formData.hashtags ?? '')}
-            onChange={handleChange}
-            placeholder="e.g. coffee, mornings, yourbrand"
-            className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
-          />
-          {tokens.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {tokens.length} hashtag{tokens.length === 1 ? '' : 's'} selected
-            </p>
-          )}
-        </div>
-      </div>
-    );
+  const showSuggestionsPanel = useMemo(() => {
+    const s = fieldSuggestions;
+    switch (current.name) {
+      case 'logo':
+        return suggestionSource === 'website' && s.logos.length > 0;
+      case 'hashtags':
+        return s.hashtags.length > 0 || suggestLoading;
+      case 'brandSlogan':
+        return s.slogans.length > 0 || suggestLoading;
+      case 'primaryColor':
+        return fieldSuggestions.colors.primary.length > 0;
+      case 'secondaryColor':
+        return fieldSuggestions.colors.secondary.length > 0;
+      case 'accentColor':
+        return fieldSuggestions.colors.accent.length > 0;
+      default:
+        return false;
+    }
+  }, [current.name, fieldSuggestions, suggestionSource, suggestLoading]);
+
+  const applyLogoSuggestion = (url: string) => {
+    setFormData((prev) => ({ ...prev, logo: url }));
+    setPreview(url);
+    setSelectedSuggestionKey(`logo:${url}`);
   };
 
-  const renderBrandSloganStep = () => (
-    <div className="space-y-5">
-      {copySuggestions && copySuggestions.slogans.length > 0 && (
-        <div className="space-y-3">
-          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            AI suggestions
-          </Label>
-          <div className="flex flex-col gap-2">
-            {copySuggestions.slogans.map((line) => {
-              const active = formData.brandSlogan === line;
-              return (
-                <button
-                  type="button"
-                  key={line}
-                  onClick={() =>
-                    setFormData((prev) => ({ ...prev, brandSlogan: line }))
-                  }
-                  className={cn(
-                    'group flex items-start gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-all',
-                    active
-                      ? 'border-primary-purple/60 bg-primary-purple/5 text-foreground shadow-sm'
-                      : 'border-border bg-card text-foreground hover:border-primary-blue/40 hover:bg-primary-blue/5'
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-full border',
-                      active
-                        ? 'border-primary-purple/60 bg-gradient-primary text-white'
-                        : 'border-border bg-background text-muted-foreground group-hover:border-primary-blue/50'
-                    )}
-                  >
-                    {active && <CheckCircle2 className="size-3.5" />}
-                  </span>
-                  <span className="leading-relaxed">{line}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+  const applyHashtagSuggestion = (tag: string) => {
+    toggleHashtagChip(tag);
+    setSelectedSuggestionKey(`hashtag:${tag.replace(/^#+/, '').trim()}`);
+  };
+
+  const applySloganSuggestion = (line: string) => {
+    setFormData((prev) => ({ ...prev, brandSlogan: line }));
+    setSelectedSuggestionKey(`brandSlogan:${line}`);
+  };
+
+  const applyColorSuggestion = (field: string, hex: string) => {
+    setFormData((prev) => ({ ...prev, [field]: hex }));
+    setSelectedSuggestionKey(`${field}:${hex}`);
+  };
+
+  const renderHashtagsStep = () => (
+    <div className="space-y-2">
+      <Label
+        htmlFor="hashtags"
+        className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+      >
+        Your hashtags
+      </Label>
+      <Input
+        id="hashtags"
+        type="text"
+        name="hashtags"
+        value={String(formData.hashtags ?? '')}
+        onChange={handleChange}
+        placeholder="e.g. coffee, mornings, yourbrand"
+        className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+      />
+      {parseHashtagTokens(formData.hashtags).length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {parseHashtagTokens(formData.hashtags).length} hashtag
+          {parseHashtagTokens(formData.hashtags).length === 1 ? '' : 's'}{' '}
+          selected
+        </p>
       )}
-      <div className="space-y-2">
-        <Label
-          htmlFor="brandSlogan"
-          className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-        >
-          Or write your own
-        </Label>
-        <Input
-          id="brandSlogan"
-          type="text"
-          name="brandSlogan"
-          value={String(formData.brandSlogan ?? '')}
-          onChange={handleChange}
-          placeholder="Your brand slogan or tagline"
-          className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
-        />
-      </div>
+    </div>
+  );
+
+  const renderBrandSloganStep = () => (
+    <div className="space-y-2">
+      <Label
+        htmlFor="brandSlogan"
+        className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+      >
+        Your slogan
+      </Label>
+      <Input
+        id="brandSlogan"
+        type="text"
+        name="brandSlogan"
+        value={String(formData.brandSlogan ?? '')}
+        onChange={handleChange}
+        placeholder="Your brand slogan or tagline"
+        className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+      />
     </div>
   );
 
@@ -831,19 +957,37 @@ export default function OnboardingMenu() {
     }
 
     if (current.type === 'color') {
-      const colorValue = String(formData[current.name] || '#5a41e3');
+      const raw = formData[current.name];
+      const colorValue = typeof raw === 'string' ? raw.trim() : '';
+      const hasColor = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(colorValue);
+      const pickerValue = hasColor
+        ? colorValue.length === 4
+          ? `#${colorValue[1]}${colorValue[1]}${colorValue[2]}${colorValue[2]}${colorValue[3]}${colorValue[3]}`
+          : colorValue
+        : '#6366F1';
+
       return (
         <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-3 shadow-sm">
           <label
             htmlFor={current.name}
-            className="relative size-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border border-border shadow-inner"
-            style={{ backgroundColor: colorValue }}
+            className={cn(
+              'relative size-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border shadow-inner',
+              hasColor
+                ? 'border-border'
+                : 'border-dashed border-muted-foreground/35 bg-muted/40'
+            )}
+            style={hasColor ? { backgroundColor: colorValue } : undefined}
           >
+            {!hasColor && (
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-muted-foreground">
+                Pick
+              </span>
+            )}
             <input
               id={current.name}
               type="color"
               name={current.name}
-              value={colorValue}
+              value={pickerValue}
               onChange={handleChange}
               className="absolute inset-0 size-full cursor-pointer opacity-0"
             />
@@ -857,7 +1001,7 @@ export default function OnboardingMenu() {
               name={current.name}
               value={colorValue}
               onChange={handleChange}
-              placeholder="#000000"
+              placeholder="Select a color or use a suggestion"
               className="h-9 rounded-lg bg-background px-2.5 font-mono text-sm uppercase tracking-wide"
             />
           </div>
@@ -914,7 +1058,12 @@ export default function OnboardingMenu() {
       )}
 
       <div className="relative flex min-h-svh flex-col items-center justify-center px-4 py-10 sm:py-16">
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-6">
+        <div
+          className={cn(
+            'mx-auto flex w-full flex-col gap-6',
+            showSuggestionsPanel ? 'max-w-5xl' : 'max-w-xl'
+          )}
+        >
           <header className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -940,6 +1089,13 @@ export default function OnboardingMenu() {
             </Button>
           </header>
 
+          <div
+            className={cn(
+              'flex flex-col gap-6',
+              showSuggestionsPanel && 'lg:flex-row lg:items-start lg:gap-5'
+            )}
+          >
+            <div className="flex min-w-0 flex-1 flex-col gap-6">
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
               <span>
@@ -1048,6 +1204,28 @@ export default function OnboardingMenu() {
               </button>
             </div>
           </Card>
+            </div>
+
+            {showSuggestionsPanel && (
+              <OnboardingSuggestionsPanel
+                stepName={current.name}
+                sourceLabel={suggestionSource}
+                suggestions={fieldSuggestions}
+                loading={
+                  suggestLoading &&
+                  (current.name === 'hashtags' ||
+                    current.name === 'brandSlogan')
+                }
+                selectedKey={selectedSuggestionKey}
+                onSelectLogo={applyLogoSuggestion}
+                onSelectHashtag={applyHashtagSuggestion}
+                onSelectSlogan={applySloganSuggestion}
+                onSelectColor={applyColorSuggestion}
+                selectedHashtagKeys={selectedHashtagKeys}
+                activeFieldValue={String(formData[current.name] ?? '')}
+              />
+            )}
+          </div>
 
           <p className="text-center text-xs text-muted-foreground">
             Your answers power every AI post we generate for you.

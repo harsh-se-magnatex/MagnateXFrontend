@@ -80,10 +80,12 @@ export const suggestOnboardingBrandCopy = async (
 export const uploadLogo = async (logo: File | string) => {
   const formData = new FormData();
   formData.append('logo', logo);
-  return apiPost<ApiEnvelope<{ url: string }>>(
-    '/api/v1/user/upload-logo',
-    formData
-  );
+  return apiPost<
+    ApiEnvelope<{
+      url: string;
+      colorTemplatesGenerationStarted?: boolean;
+    }>
+  >('/api/v1/user/upload-logo', formData);
 };
 
 export const getProfile = async () => {
@@ -386,7 +388,8 @@ export const getUserCredits = async () => {
 export const getLogoVariants = async (
   count = 3,
   nonce?: number,
-  logo?: string
+  logo?: string,
+  options?: { isRegeneration?: boolean }
 ) => {
   const qNonce = Number.isFinite(nonce as number)
     ? String(nonce)
@@ -403,20 +406,26 @@ export const getLogoVariants = async (
     count,
     nonce: qNonce,
     logo: logo || '',
+    isRegeneration: options?.isRegeneration === true,
   });
 };
 
 export const getSavedLogoVariants = async (count = 10) => {
-  return apiGet<ApiEnvelope<{ variants: string[] }>>(
+  return apiGet<ApiEnvelope<{ variants: string[]; regenerateCount?: number }>>(
     `/api/v1/user/logo-variants/saved?count=${count}`
   );
 };
 
-export const saveLogoVariants = async (variants: string[]) => {
-  return apiPost<ApiEnvelope<{ variants: string[] }>>(
-    '/api/v1/user/logo-variants/save',
-    { variants }
-  );
+export const saveLogoVariants = async (
+  variants: string[],
+  options?: { isRegeneration?: boolean }
+) => {
+  return apiPost<
+    ApiEnvelope<{ variants: string[]; regenerateCount?: number }>
+  >('/api/v1/user/logo-variants/save', {
+    variants,
+    isRegeneration: options?.isRegeneration === true,
+  });
 };
 
 export const setLogoVariantsForImagesPreference = async (

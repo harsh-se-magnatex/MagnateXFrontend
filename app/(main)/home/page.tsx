@@ -21,7 +21,6 @@ import {
   PlatformIcon,
   formatPlatformLabel,
   type PlatformId,
-  type ActivityScheduleState,
 } from '@/components/home/dashboard-ui';
 import {
   Sparkles,
@@ -39,6 +38,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import { useTourState } from '@/src/stores/tourState';
+import { getPageTourRequest } from '@/components/tour/tour-steps';
 import { EmailVerificationPurchaseAlert } from '@/components/shared/EmailVerificationPurchaseAlert';
 import Cookies from 'js-cookie';
 import {
@@ -50,7 +51,9 @@ import {
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import {
   generatedByLabel,
+  getActivityScheduleState,
   getDisplayStatus,
+  isUpcomingScheduledPost,
   type ScheduledPostStatusInput,
 } from '@/lib/scheduled-post-status';
 import { weeklyDeltaFromTrend } from '../_components/AnalyticsComponent/utils/utils_functions';
@@ -59,6 +62,9 @@ const SOCIAL_INTEGRATION_PATH = '/social-media-integration';
 const ANALYTICS_PATH = '/analytics';
 const BILLINGS_PATH = '/settings/billings';
 const UPCOMING_RANGE_MS = 365 * 24 * 60 * 60 * 1000;
+/** Visible activity rows before scroll; list still renders up to 5 items. */
+const ACTIVITY_VISIBLE_ROWS = 3;
+const activityListMaxHeightClass = 'max-h-[14.25rem]';
 
 type SocialAccountRow = {
   platform: string;
@@ -166,19 +172,6 @@ function getActivityDescription(
   }
 }
 
-function getActivityScheduleState(
-  post: ScheduledPostStatusInput
-): ActivityScheduleState {
-  const variant = getDisplayStatus(post).variant;
-  if (variant === 'approved' || variant === 'processing' || variant === 'posted') {
-    return 'scheduled';
-  }
-  if (variant === 'pendingByYou' || variant === 'pendingByAdmin') {
-    return 'pending';
-  }
-  return 'issue';
-}
-
 function warningMessage(w: SocialAccountWarning) {
   if (w.type === 'expired') {
     return 'Connection expired — reconnect to keep posting.';
@@ -191,15 +184,32 @@ function warningMessage(w: SocialAccountWarning) {
   return 'Action may be required for this connection.';
 }
 
-function isUpcomingPost(post: DashboardPost, todayStartMs: number): boolean {
-  if (post.removedByUser === true) return false;
-  const ua = (post.UserApprovalStatus ?? '').toLowerCase();
-  if (ua === 'rejected') return false;
-  const ps = (post.postStatus ?? '').toLowerCase();
-  if (ps === 'posted' || ps === 'failed' || ps === 'removed') return false;
+function isPostScheduledToday(
+  post: DashboardPost,
+  todayStartMs: number,
+  todayEndMs: number
+): boolean {
   const scheduledAt = parseTimestampInput(post.scheduleAt);
   if (!scheduledAt) return false;
-  return scheduledAt.getTime() >= todayStartMs;
+  const t = scheduledAt.getTime();
+  return t >= todayStartMs && t < todayEndMs;
+}
+
+function formatActivityScheduleLabel(
+  scheduleAt: FirestoreTimestamp | undefined,
+  isToday: boolean,
+  fmtTimestamp: (input: TimestampInput, options?: { style?: 'time' | 'date' }) => string
+): string | null {
+  if (!scheduleAt) return null;
+  const time = fmtTimestamp(scheduleAt, { style: 'time' });
+  if (!time || time === '—') return null;
+  if (isToday) return `Today · ${time}`;
+  const date = fmtTimestamp(scheduleAt, { style: 'date' });
+  return `${date} · ${time}`;
+}
+
+function isUpcomingPost(post: DashboardPost): boolean {
+  return isUpcomingScheduledPost(post);
 }
 
 function isPlatformConnected(
@@ -288,7 +298,6 @@ export default function Home() {
   const [userDetail, setUserDetail] = useState<HomePageData | null>(null);
   const [upcomingRangePosts, setUpcomingRangePosts] = useState<DashboardPost[]>([]);
   const [todaysActivityPosts, setTodaysActivityPosts] = useState<DashboardPost[]>([]);
-  const [todayStartMs, setTodayStartMs] = useState(0);
   const [connectedPlatformCount, setConnectedPlatformCount] = useState(0);
   const [growthOverviewPct, setGrowthOverviewPct] = useState<number | null>(null);
   const [command, setCommand] = useState('');
@@ -312,6 +321,16 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (loading || authLoading || billingLoading || !user) return;
+    const { doneTours, requestTour } = useTourState.getState();
+    if (!doneTours['brand-memory'] || doneTours.platform) return;
+    const homeTour = getPageTourRequest('/home');
+    if (homeTour) {
+      requestTour(homeTour);
+    }
+  }, [loading, authLoading, billingLoading, user]);
+
+  useEffect(() => {
     const handleApprovalChange = (e: CustomEvent) => {
       setIsNeedApproval(e.detail);
     };
@@ -332,7 +351,6 @@ export default function Home() {
     setActivityLoading(true);
     setStatsLoading(true);
     const { todayStartMs: startMs, todayEndMs } = computeTodayBounds(userTz);
-    setTodayStartMs(startMs);
 
     const [
       homeOutcome,
@@ -454,25 +472,49 @@ export default function Home() {
   const creditLabel = `${creditRemaining}`;
 
   const upcomingCount = useMemo(() => {
-    if (!todayStartMs) return 0;
-    return upcomingRangePosts.filter((p) => isUpcomingPost(p, todayStartMs))
-      .length;
-  }, [upcomingRangePosts, todayStartMs]);
+    return upcomingRangePosts.filter((p) => isUpcomingPost(p)).length;
+  }, [upcomingRangePosts]);
 
-  const todaysActivityItems = useMemo(() => {
-    return todaysActivityPosts
-      .map((post) => ({
-        key: post.postId ?? `${post.platform}-${post.scheduleAt?._seconds}`,
-        post,
-        description: getActivityDescription(post, fmtTimestamp),
-        scheduleState: getActivityScheduleState(post),
-      }))
+  const activityItems = useMemo(() => {
+    const { todayStartMs: startMs, todayEndMs } = computeTodayBounds(userTz);
+    const byKey = new Map<string, DashboardPost>();
+    for (const post of todaysActivityPosts) {
+      if (post.removedByUser === true) continue;
+      const key = post.postId ?? `${post.platform}-${post.scheduleAt?._seconds}`;
+      byKey.set(key, post);
+    }
+    for (const post of upcomingRangePosts) {
+      if (post.removedByUser === true) continue;
+      if (isPostScheduledToday(post, startMs, todayEndMs)) continue;
+      if (!isUpcomingPost(post)) continue;
+      const key = post.postId ?? `${post.platform}-${post.scheduleAt?._seconds}`;
+      byKey.set(key, post);
+    }
+
+    return [...byKey.values()]
+      .map((post) => {
+        const isToday = isPostScheduledToday(post, startMs, todayEndMs);
+        return {
+          key: post.postId ?? `${post.platform}-${post.scheduleAt?._seconds}`,
+          post,
+          description: getActivityDescription(post, fmtTimestamp),
+          scheduleState: getActivityScheduleState(post),
+          isToday,
+          scheduleLabel: formatActivityScheduleLabel(
+            post.scheduleAt,
+            isToday,
+            fmtTimestamp
+          ),
+        };
+      })
       .sort((a, b) => {
+        if (a.isToday !== b.isToday) return a.isToday ? -1 : 1;
         const sa = a.post.scheduleAt?._seconds ?? 0;
         const sb = b.post.scheduleAt?._seconds ?? 0;
         return sa - sb;
-      });
-  }, [todaysActivityPosts, fmtTimestamp]);
+      })
+      .slice(0, 5);
+  }, [todaysActivityPosts, upcomingRangePosts, fmtTimestamp, userTz]);
 
   const brandVoiceHealth = useMemo(() => {
     const brandOk = userDetail?.brandProfileComplete === true;
@@ -630,7 +672,7 @@ export default function Home() {
           />
           <HomeStatBox
             label="Credits"
-            sublabel="AI credits remaining"
+            sublabel="Total Credits remaining"
             icon={Zap}
             href={BILLINGS_PATH}
             value={statsLoading ? '…' : creditLabel}
@@ -665,17 +707,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Today's activity */}
-      <section className="space-y-3" aria-label="Today's activity">
+      {/* Activity */}
+      <section className="space-y-3" aria-label="Activity">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-foreground">
-            Today&rsquo;s activity
-          </h2>
+          <h2 className="text-lg font-semibold text-foreground">Activity</h2>
         </div>
         <Card className="rounded-2xl border-border overflow-hidden">
           {activityLoading ? (
-            <div className="max-h-80 overflow-y-auto custom-scrollbar p-5 space-y-3">
-              {[0, 1, 2].map((i) => (
+            <div
+              className={cn(
+                activityListMaxHeightClass,
+                'overflow-y-auto custom-scrollbar p-5 space-y-3'
+              )}
+            >
+              {Array.from({ length: ACTIVITY_VISIBLE_ROWS }, (_, i) => i).map((i) => (
                 <div key={i} className="flex items-center gap-3 animate-pulse">
                   <div className="h-9 w-9 rounded-full bg-muted" />
                   <div className="flex-1 space-y-2">
@@ -686,22 +731,26 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          ) : todaysActivityItems.length === 0 ? (
+          ) : activityItems.length === 0 ? (
             <div className="p-5 text-sm text-muted-foreground">
-              No activity scheduled for today.{' '}
+              No activity to show.{' '}
             </div>
           ) : (
             <div
-              className="max-h-80 overflow-y-auto overscroll-y-contain custom-scrollbar divide-y divide-border/40"
+              className={cn(
+                activityListMaxHeightClass,
+                'overflow-y-auto overscroll-y-contain custom-scrollbar divide-y divide-border/40'
+              )}
               role="list"
-              aria-label="Today's scheduled activity"
+              aria-label="Recent activity"
             >
-              {todaysActivityItems.map(({ key, post, description, scheduleState }) => {
+              {activityItems.map(
+                ({ key, post, description, scheduleState, scheduleLabel }) => {
                 return (
                   <div
                     key={key}
                     role="listitem"
-                    className="flex items-center gap-3 p-4 sm:px-5 transition-colors hover:bg-accent/40"
+                    className="flex items-center cursor-default gap-3 p-4 sm:px-5 transition-colors hover:bg-accent/40"
                   >
                     <PlatformIcon platform={post.platform} />
                     <div className="min-w-0 flex-1">
@@ -710,11 +759,10 @@ export default function Home() {
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {formatPlatformLabel(post.platform)}
-                        {post.scheduleAt ? (
+                        {scheduleLabel ? (
                           <>
                             {' '}
-                            ·{' '}
-                            {fmtTimestamp(post.scheduleAt, { style: 'time' })}
+                            · {scheduleLabel}
                           </>
                         ) : null}
                       </p>

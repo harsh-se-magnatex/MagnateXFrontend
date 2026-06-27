@@ -14,13 +14,8 @@ import {
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 
-const VARIANT_COUNT = 20;
-
-function getVariantStyleLabel(index: number, total: number): string {
-  const normalizedIndex = index + 1;
-  if (normalizedIndex <= 10) return 'static';
-  return 'dual';
-}
+const VARIANT_COUNT = 10;
+const MAX_REGENERATIONS = 1;
 
 export default function LogoVariantsPage() {
   const { user, loading } = useAuth();
@@ -29,7 +24,6 @@ export default function LogoVariantsPage() {
   const [rawLogo, setRawLogo] = useState<string>('');
   const [transparentLogo, setTransparentLogo] = useState<string>('');
   const [variants, setVariants] = useState<string[]>([]);
-  const [variantsForSave, setVariantsForSave] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string>('');
@@ -37,6 +31,7 @@ export default function LogoVariantsPage() {
   const [forceFreshVariants, setForceFreshVariants] = useState(false);
   const [autoGenPending, setAutoGenPending] = useState(false);
   const [variantsFeatureOff, setVariantsFeatureOff] = useState(false);
+  const [regenerateCount, setRegenerateCount] = useState(0);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollStopRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -65,45 +60,72 @@ export default function LogoVariantsPage() {
   }, [user]);
 
   const canGenerate = useMemo(() => Boolean(sourceLogo), [sourceLogo]);
+  const canRegenerate =
+    variants.length > 0 && regenerateCount < MAX_REGENERATIONS;
 
-  const generate = async () => {
+  const generate = async (options?: { isRegeneration?: boolean }) => {
     if (!canGenerate) return;
+    if (options?.isRegeneration && !canRegenerate) return;
     try {
       setIsGenerating(true);
       setError('');
       setVariants([]);
-      setVariantsForSave([]);
       setRawLogo('');
       setTransparentLogo('');
-      const response = await getLogoVariants(VARIANT_COUNT, Date.now(), sourceLogo);
-      const next = response?.data?.variants ?? [];
+      const response = await getLogoVariants(
+        VARIANT_COUNT,
+        Date.now(),
+        sourceLogo,
+        { isRegeneration: options?.isRegeneration === true }
+      );
+      const next = (response?.data?.variants ?? []).slice(0, VARIANT_COUNT);
       setRawLogo(String(response?.data?.rawLogo || sourceLogo || ''));
       setTransparentLogo(String(response?.data?.transparentLogo || ''));
       setVariants(next);
-      setVariantsForSave(next);
+      if (next.length) {
+        setIsSaving(true);
+        const saveRes = await saveLogoVariants(next, {
+          isRegeneration: options?.isRegeneration === true,
+        });
+        const saved = (saveRes?.data?.variants ?? []).slice(0, VARIANT_COUNT);
+        if (saved.length) setVariants(saved);
+        const savedCount = Number(saveRes?.data?.regenerateCount ?? 0);
+        if (Number.isFinite(savedCount)) {
+          setRegenerateCount(savedCount);
+        } else if (options?.isRegeneration) {
+          setRegenerateCount((prev) => prev + 1);
+        }
+        toast.success('Variants generated and saved');
+      }
       if (!next.length) {
         setError('No variants returned. Verify backend/comfy configuration.');
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to generate variants.');
+      const apiMessage = (
+        e as { response?: { data?: { message?: string } } }
+      )?.response?.data?.message;
+      setError(apiMessage || (e instanceof Error ? e.message : 'Failed to generate variants.'));
+      if (apiMessage?.toLowerCase().includes('regeneration')) {
+        showErrorToast(apiMessage);
+      }
     } finally {
       setIsGenerating(false);
+      setIsSaving(false);
     }
   };
 
   useEffect(() => {
     if (user && !hasLoadedSaved) {
-      if (forceFreshVariants) {
-        setHasLoadedSaved(true);
-        return;
-      }
       setError('');
       getSavedLogoVariants(VARIANT_COUNT)
         .then((res) => {
-          const urls = res?.data?.variants ?? [];
-          if (urls.length) {
+          const urls = (res?.data?.variants ?? []).slice(0, VARIANT_COUNT);
+          const savedCount = Number(res?.data?.regenerateCount ?? 0);
+          if (Number.isFinite(savedCount)) {
+            setRegenerateCount(savedCount);
+          }
+          if (!forceFreshVariants && urls.length) {
             setVariants(urls);
-            setVariantsForSave([]);
           }
         })
         .catch(() => {
@@ -144,7 +166,11 @@ export default function LogoVariantsPage() {
         setVariantsFeatureOff(false);
 
         const first = await getSavedLogoVariants(VARIANT_COUNT);
-        const urls = first?.data?.variants ?? [];
+        const urls = (first?.data?.variants ?? []).slice(0, VARIANT_COUNT);
+        const savedCount = Number(first?.data?.regenerateCount ?? 0);
+        if (Number.isFinite(savedCount)) {
+          setRegenerateCount(savedCount);
+        }
         if (urls.length) {
           setVariants(urls);
           return;
@@ -156,7 +182,11 @@ export default function LogoVariantsPage() {
           if (cancelled) return;
           try {
             const r = await getSavedLogoVariants(VARIANT_COUNT);
-            const u = r?.data?.variants ?? [];
+            const u = (r?.data?.variants ?? []).slice(0, VARIANT_COUNT);
+            const savedCount = Number(r?.data?.regenerateCount ?? 0);
+            if (Number.isFinite(savedCount)) {
+              setRegenerateCount(savedCount);
+            }
             if (u.length) {
               setVariants(u);
               if (pollTimerRef.current) clearInterval(pollTimerRef.current);
@@ -195,22 +225,6 @@ export default function LogoVariantsPage() {
     };
   }, [user, hasLoadedSaved, variants.length, forceFreshVariants]);
 
-  const handleSaveVariants = async () => {
-    if (!variantsForSave.length) return;
-    try {
-      setIsSaving(true);
-      setError('');
-      const res = await saveLogoVariants(variantsForSave.slice(0, VARIANT_COUNT));
-      const urls = res?.data?.variants ?? [];
-      if (urls.length) setVariants(urls);
-      toast.success('Variants saved successfully');
-    } catch (e: unknown) {
-      showErrorToast(e instanceof Error ? e.message : 'Failed to save variants.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   if (loading) return <PageLoadingState />;
   if (!user) return null;
 
@@ -230,22 +244,31 @@ export default function LogoVariantsPage() {
           >
             Back
           </Link>
-          <button
-            type="button"
-            onClick={generate}
-            disabled={!canGenerate || isGenerating}
-            className="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isGenerating ? 'Generating...' : 'Regenerate'}
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveVariants}
-            disabled={!variantsForSave.length || isSaving}
-            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSaving ? 'Saving...' : 'Save Variants'}
-          </button>
+          {hasLoadedSaved && (
+            <button
+              type="button"
+              onClick={() =>
+                void generate({ isRegeneration: variants.length > 0 })
+              }
+              disabled={
+                !canGenerate ||
+                isGenerating ||
+                isSaving ||
+                (variants.length > 0 && !canRegenerate)
+              }
+              className="inline-flex items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isGenerating
+                ? 'Generating...'
+                : isSaving
+                  ? 'Saving...'
+                  : variants.length > 0
+                    ? canRegenerate
+                      ? 'Regenerate'
+                      : 'Regenerate Used'
+                    : 'Generate'}
+            </button>
+          )}
         </div>
       </header>
 
@@ -257,8 +280,8 @@ export default function LogoVariantsPage() {
       {canGenerate && variantsFeatureOff && !variants.length && !autoGenPending && (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700 mb-4">
           Logo variants are turned off in Template DNA. Turn the switch on there
-          to generate variants automatically, or use Regenerate to preview here
-          without saving.
+          to generate variants automatically, or use Generate here to create and
+          save up to {VARIANT_COUNT} variants.
         </div>
       )}
       {canGenerate && autoGenPending && !variants.length && (
@@ -304,7 +327,9 @@ export default function LogoVariantsPage() {
 
       {!!variants.length && (
         <>
-          <div className="mb-3 text-sm font-semibold text-slate-700">Variants</div>
+          <div className="mb-3 text-sm font-semibold text-slate-700">
+            Variants ({variants.length}/{VARIANT_COUNT})
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {variants.map((variant, index) => (
             <div
@@ -319,12 +344,7 @@ export default function LogoVariantsPage() {
                 />
               </div>
               <div className="border-t border-slate-100 px-3 py-2 text-xs font-medium text-slate-500">
-                <div className="flex items-center justify-between gap-2">
-                  <span>Variant {index + 1}</span>
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-600">
-                    {getVariantStyleLabel(index, variants.length)}
-                  </span>
-                </div>
+                <span>Variant {index + 1}</span>
               </div>
             </div>
           ))}

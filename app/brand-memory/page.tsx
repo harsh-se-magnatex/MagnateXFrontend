@@ -15,6 +15,7 @@ import {
   uploadMemoryLayerBrandPhotos,
   type MemoryLayerAnswerPayload,
 } from '@/src/service/api/userService';
+import { useTourState } from '@/src/stores/tourState';
 
 type Question = {
   id: string;
@@ -47,6 +48,10 @@ function parseMemory(data: unknown): MemoryPayload | null {
 
 export default function BrandMemoryPage() {
   const router = useRouter();
+  const goHomeWithPlatformTour = useCallback(() => {
+    useTourState.getState().queuePlatformTour();
+    router.replace('/home');
+  }, [router]);
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [phase, setPhase] = useState<'qa' | 'photos'>('qa');
@@ -93,6 +98,7 @@ export default function BrandMemoryPage() {
         ml?.status === 'complete' ||
         ml?.status === 'skipped'
       ) {
+        useTourState.getState().queuePlatformTour();
         router.replace('/home');
         return;
       }
@@ -201,6 +207,14 @@ export default function BrandMemoryPage() {
     });
   }, [questions, rowFor]);
 
+  useEffect(() => {
+    if (loading || questions.length === 0) return;
+    const { doneTours, requestTour } = useTourState.getState();
+    if (!doneTours['brand-memory']) {
+      requestTour({ tour: 'brand-memory', startIndex: 0 });
+    }
+  }, [loading, questions.length]);
+
   const skipEntire = useCallback(async () => {
     try {
       setSubmitting(true);
@@ -208,13 +222,13 @@ export default function BrandMemoryPage() {
       if (!isEnvelopeOk(res as { success?: boolean })) {
         throw new Error('Failed to skip');
       }
-      router.replace('/home');
+      goHomeWithPlatformTour();
     } catch (e) {
       showErrorToast(e instanceof Error ? e.message : 'Failed to skip');
     } finally {
       setSubmitting(false);
     }
-  }, [router]);
+  }, [goHomeWithPlatformTour]);
 
   const skipQuestion = useCallback(() => {
     if (!current) return;
@@ -344,13 +358,13 @@ export default function BrandMemoryPage() {
         throw new Error('Failed to save');
       }
       toast.success('Saved');
-      router.replace('/home');
+      goHomeWithPlatformTour();
     } catch (e) {
       showErrorToast(e instanceof Error ? e.message : 'Failed to finish');
     } finally {
       setSubmitting(false);
     }
-  }, [buildAnswers, pendingStaged, questions, router, rowFor]);
+  }, [buildAnswers, goHomeWithPlatformTour, pendingStaged, questions, rowFor]);
 
   const skipPhotos = useCallback(async () => {
     try {
@@ -370,13 +384,13 @@ export default function BrandMemoryPage() {
       if (!isEnvelopeOk(res as { success?: boolean })) {
         throw new Error('Failed to save');
       }
-      router.replace('/home');
+      goHomeWithPlatformTour();
     } catch (e) {
       showErrorToast(e instanceof Error ? e.message : 'Failed');
     } finally {
       setSubmitting(false);
     }
-  }, [buildAnswers, questions, router, rowFor]);
+  }, [buildAnswers, goHomeWithPlatformTour, questions, rowFor]);
 
   const panelClass =
     'max-w-lg w-full max-h-[calc(100dvh-2rem)] flex min-h-0 flex-col overflow-hidden bg-white/5 border border-white/10 rounded-2xl p-6 sm:p-8 text-white shadow-[0_0_40px_rgba(0,209,255,0.15)]';
@@ -402,7 +416,7 @@ export default function BrandMemoryPage() {
                   'px-3 py-1.5 rounded-lg text-sm border transition-colors',
                   selected.includes(opt)
                     ? 'bg-[#6C5CE7]/80 border-[#00D1FF]/80 text-white'
-                    : 'bg-white/5 border-white/10 text-gray-900 hover:bg-white/10'
+                    : 'bg-white cursor-pointer border-white/10 text-gray-200 hover:bg-white/20'
                 )}
               >
                 {opt}
@@ -479,7 +493,7 @@ export default function BrandMemoryPage() {
           <button
             type="button"
             className="mt-4 w-full py-2 rounded-lg bg-linear-to-r from-[#00D1FF] to-[#6C5CE7] text-white"
-            onClick={() => router.replace('/home')}
+            onClick={() => goHomeWithPlatformTour()}
           >
             Continue to home
           </button>
@@ -499,7 +513,7 @@ export default function BrandMemoryPage() {
             type="button"
             disabled={submitting}
             onClick={() => void skipEntire()}
-            className="text-sm text-black/50 hover:text-black/70 shrink-0"
+            className="text-sm text-white hover:text-white/70 shrink-0 cursor-pointer"
           >
             Skip entire setup
           </button>
@@ -508,10 +522,10 @@ export default function BrandMemoryPage() {
         {phase === 'qa' && current && (
           <>
             <div className={cn(photosScrollClass, 'mt-4 space-y-4')}>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-100">
                 Question {qIndex + 1} of {questions.length}
               </p>
-              <p className="text-gray-900 font-medium">{current.prompt}</p>
+              <p className="text-gray-200 font-medium">{current.prompt}</p>
               {questionBody}
             </div>
             <div className={actionBarClass}>

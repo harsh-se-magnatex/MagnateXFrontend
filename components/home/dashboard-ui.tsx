@@ -5,10 +5,14 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  Calendar,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { ActivityScheduleState } from '@/lib/scheduled-post-status';
 import type { ReactNode } from 'react';
+
+export type { ActivityScheduleState };
 
 export type PlatformId = 'facebook' | 'instagram' | 'linkedin';
 
@@ -84,12 +88,30 @@ export function PlatformIcon({
   );
 }
 
-export type ActivityScheduleState = 'scheduled' | 'pending' | 'issue';
-
-export function ActivityStatusIcon({ state }: { state: ActivityScheduleState }) {
-  if (state === 'scheduled') {
+export function ActivityStatusIcon({
+  state,
+}: {
+  state: ActivityScheduleState | null;
+}) {
+  if (state === 'posted') {
     return (
       <CheckCircle2
+        className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400"
+        aria-label="Posted"
+      />
+    );
+  }
+  if (state === 'failed') {
+    return (
+      <AlertCircle
+        className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400"
+        aria-label="Failed"
+      />
+    );
+  }
+  if (state === 'approved') {
+    return (
+      <Calendar
         className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400"
         aria-label="Scheduled"
       />
@@ -98,17 +120,12 @@ export function ActivityStatusIcon({ state }: { state: ActivityScheduleState }) 
   if (state === 'pending') {
     return (
       <Clock
-        className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
+        className="h-5 w-5 shrink-0 text-amber-500 dark:text-amber-400"
         aria-label="Pending"
       />
     );
   }
-  return (
-    <AlertCircle
-      className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400"
-      aria-label="Needs attention"
-    />
-  );
+  return null;
 }
 
 export function HomeStatBox({

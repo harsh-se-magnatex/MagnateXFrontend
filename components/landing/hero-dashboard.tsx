@@ -39,13 +39,13 @@ const ACTIVITY_ITEMS: {
     platform: 'linkedin',
     description: 'AI Engine · Scheduled for 4:00 PM',
     time: '4:00 PM',
-    state: 'scheduled',
+    state: 'approved',
   },
   {
     platform: 'facebook',
     description: 'Festive Post · Scheduled for 6:15 PM',
     time: '6:15 PM',
-    state: 'scheduled',
+    state: 'approved',
   },
 ];
 

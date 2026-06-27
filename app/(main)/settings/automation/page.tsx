@@ -22,6 +22,27 @@ import { toast } from 'sonner';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
+
+const LOGO_CORNER_PREFERENCES = [
+  'top-left',
+  'top-right',
+  'bottom-left',
+  'bottom-right',
+] as const;
+
+function normalizeLogoPreference(raw: string | undefined | null): string {
+  const v = String(raw || '')
+    .toLowerCase()
+    .trim()
+    .replace(/_/g, '-')
+    .replace(/\s+/g, '-');
+  if (v === 'centre' || v === 'center' || v === 'top-center' || v === 'bottom-center') {
+    return 'top-left';
+  }
+  return LOGO_CORNER_PREFERENCES.includes(v as (typeof LOGO_CORNER_PREFERENCES)[number])
+    ? v
+    : 'top-left';
+}
 import {
   editUserPreferences,
   getUserPreferences,
@@ -236,7 +257,7 @@ export default function AutomationPreferencePage() {
     facebook: '',
     linkedin: '',
   });
-  const [logoPreference, setLogoPreference] = useState('center');
+  const [logoPreference, setLogoPreference] = useState('top-left');
   const [emojiUsage, setEmojiUsage] = useState(true);
   const [socialSalesEmailUsage, setSocialSalesEmailUsage] = useState(true);
   const [needApproval, setNeedApproval] = useState(true);
@@ -276,7 +297,7 @@ export default function AutomationPreferencePage() {
             response.data.preferences.useAnalyticsOptimalPostingTime === true
           );
           setLogoPreference(
-            response.data.preferences.logoPreference || 'center'
+            normalizeLogoPreference(response.data.preferences.logoPreference)
           );
 
           const prefs = response.data.preferences;
@@ -573,7 +594,6 @@ export default function AutomationPreferencePage() {
                   <SelectTrigger>
                     <SelectValue placeholder="Select a logo preference" />
                     <SelectContent>
-                      <SelectItem value="center">Center</SelectItem>
                       <SelectItem value="top-left">Top Left</SelectItem>
                       <SelectItem value="top-right">Top Right</SelectItem>
                       <SelectItem value="bottom-left">Bottom Left</SelectItem>
@@ -865,7 +885,7 @@ export default function AutomationPreferencePage() {
                     className={cn(
                       'w-full rounded-lg py-2.5 text-sm font-semibold transition-all duration-200',
                       needApproval === true
-                        ? 'bg-card text-foreground shadow-sm ring-1 ring-border'
+                        ? 'bg-emerald-400/80 text-black/90 shadow-sm ring-1 ring-border'
                         : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
                       isAutoMode && 'opacity-50'
                     )}
@@ -898,9 +918,8 @@ export default function AutomationPreferencePage() {
                     className={cn(
                       'w-full rounded-lg py-2.5 text-sm font-semibold transition-all duration-200',
                       needApproval === false
-                        ? 'bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-600/20'
-                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50',
-                      (isAutoMode || isManualMode) && 'opacity-50'
+                        ? 'bg-emerald-400/80 text-black/90 shadow-sm ring-1 ring-emerald-600/20'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                     )}
                   >
                     Auto Approve
