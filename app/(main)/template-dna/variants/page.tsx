@@ -101,13 +101,8 @@ export default function LogoVariantsPage() {
         setError('No variants returned. Verify backend/comfy configuration.');
       }
     } catch (e: unknown) {
-      const apiMessage = (
-        e as { response?: { data?: { message?: string } } }
-      )?.response?.data?.message;
-      setError(apiMessage || (e instanceof Error ? e.message : 'Failed to generate variants.'));
-      if (apiMessage?.toLowerCase().includes('regeneration')) {
-        showErrorToast(apiMessage);
-      }
+      setError('Failed to generate variants.');
+      showErrorToast('Failed to generate variants.');
     } finally {
       setIsGenerating(false);
       setIsSaving(false);

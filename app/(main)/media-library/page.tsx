@@ -27,6 +27,7 @@ import {
   ImageIcon,
   ImageOff,
   Loader2,
+  Search,
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -50,12 +51,23 @@ import {
   galleryItemToPrefillPost,
 } from '@/lib/gallery-schedule';
 import {
+  hasSchedulableMediaPreview,
+  resolveSchedulableMediaPreview,
+} from '@/lib/post-media-preview';
+import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
+import { CarouselSwipePreview } from '@/components/shared/CarouselSwipePreview';
+import {
   setPostSchedulerPrefill,
   type PostSchedulerPrefillPayload,
 } from '@/lib/post-scheduler-prefill-store';
 import { scheduleCampaignDraftApi } from '@/src/service/api/campaign.service';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { toast } from 'sonner';
+import { GenerationResearchDialog } from '@/components/generation-research-dialog';
+import {
+  hasViewableResearch,
+  mergeGenerationResearch,
+} from '@/lib/generation-research';
 
 const SOURCE_OPTIONS: {
   value: 'all' | GeneratedMediaSource;
@@ -83,20 +95,31 @@ const SOURCE_OPTIONS: {
     description: 'Product advert tool',
   },
   {
+    value: 'videoGeneration',
+    label: 'Video generation',
+    description: 'Standalone video generation',
+  },
+  {
     value: 'eventPosts',
     label: 'Festive post',
     description: 'Event post tool',
-  },
-  {
-    value: 'aiEnginePosts',
-    label: 'AI engine posts',
-    description: 'AI engine post tool',
   },
   {
     value: 'campaignDrafts',
     label: 'Campaign drafts',
     description: 'Drafts generated from create-campaign',
   },
+  {
+    value: 'carouselGeneratedPosts',
+    label: 'Carousels',
+    description: 'Carousel Create tool',
+  },
+  {
+    value: 'aiEnginePosts',
+    label: 'AI engine posts',
+    description: 'AI engine post tool',
+  },
+ 
 ];
 
 /**
@@ -114,6 +137,10 @@ function generatedByForCollection(collection: MediaSource): string | null {
       return generatedByLabel('batch-generation');
     case 'productadvert':
       return generatedByLabel('product-advert');
+    case 'videoGeneration':
+      return 'Video Generation';
+    case 'carouselGeneratedPosts':
+      return generatedByLabel('carousel-engine');
     case 'eventPosts':
       return generatedByLabel('events-post');
     case 'aiEnginePosts':
@@ -145,6 +172,19 @@ function mediaCaptionLabel(caption: unknown): string {
     }
   }
   return String(caption).trim();
+}
+
+function contentTypeDisplayLabel(item: GeneratedMediaLibraryItem): string {
+  const label = item.contentTypeLabel?.trim();
+  if (label) return label;
+  const key = item.contentType?.trim();
+  if (!key) return '';
+  return key
+    .toLowerCase()
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
 }
 
 function DetailRow({
@@ -187,8 +227,34 @@ function MediaDetailModal({
   canSchedule: boolean;
   onPreviewImage: (url: string, alt?: string) => void;
 }) {
-  const url = item.imageUrl;
+  const [researchOpen, setResearchOpen] = useState(false);
+  const mediaPreview = resolveSchedulableMediaPreview({
+    mediaType: item.mediaType,
+    imageUrl: item.imageUrl,
+    videoUrl: item.videoUrl,
+    posterUrl: item.posterUrl,
+  });
+  const carouselSlides = Array.isArray(item.carouselSlides)
+    ? item.carouselSlides
+        .map((s, i) => ({
+          index: s.index ?? i + 1,
+          imageUrl: String(s.imageUrl ?? '').trim(),
+          headline: s.headline ?? null,
+        }))
+        .filter((s) => s.imageUrl)
+    : [];
+  const isCarousel =
+    item.mediaType === 'carousel' ||
+    item.collection === 'carouselGeneratedPosts' ||
+    carouselSlides.length >= 2;
   const generatedBy = generatedByForCollection(item.collection);
+  const contentTypeLabel = contentTypeDisplayLabel(item);
+  const researchDetails = mergeGenerationResearch(item.research, {
+    contentType: item.contentType,
+    contentTypeLabel: item.contentTypeLabel ?? (contentTypeLabel || null),
+    contentAngle: item.research?.contentAngle ?? null,
+  });
+  const showResearch = hasViewableResearch(researchDetails);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -237,28 +303,89 @@ function MediaDetailModal({
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-10 space-y-4 overscroll-contain">
-          {url ? (
+          {isCarousel && carouselSlides.length > 0 ? (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1">
+                Carousel
+                {item.slideCount
+                  ? ` · ${item.slideCount} slides`
+                  : ` · ${carouselSlides.length} slides`}
+              </p>
+              <CarouselSwipePreview
+                slides={carouselSlides}
+                showCaptions
+                onImageClick={onPreviewImage}
+              />
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
+                {canSchedule ? (
+                  <Button
+                    type="button"
+                    className="rounded-lg bg-gradient-primary text-white shadow-lg shadow-primary/20"
+                    onClick={onSchedule}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Schedule post
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : mediaPreview.isVideo && mediaPreview.videoUrl ? (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Video</p>
+              <PostMediaPreview
+                preview={mediaPreview}
+                controls
+                muted={false}
+                videoClassName="w-full max-h-64 rounded-xl bg-black border border-border"
+              />
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
+                <a
+                  href={mediaPreview.videoUrl}
+                  download={`media-library-${item.collection}-${item.id}.mp4`}
+                  className="inline-flex items-center justify-center rounded-lg border border-primary/30 bg-card px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10"
+                >
+                  Download video
+                </a>
+                {canSchedule ? (
+                  <Button
+                    type="button"
+                    className="rounded-lg bg-gradient-primary text-white shadow-lg shadow-primary/20"
+                    onClick={onSchedule}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Schedule post
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : mediaPreview.imageUrl ? (
             <div>
               <p className="text-xs font-medium text-muted-foreground mb-1">Image</p>
               <button
                 type="button"
-                onClick={() => onPreviewImage(url, 'Gallery image')}
+                onClick={() =>
+                  onPreviewImage(mediaPreview.imageUrl as string, 'Gallery image')
+                }
                 className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Open image preview"
               >
-                <img
-                  src={url}
-                  alt=""
-                  className="w-full max-h-64 object-contain rounded-xl bg-muted border border-border transition-transform duration-200 group-hover:scale-[1.01]"
+                <PostMediaPreview
+                  preview={mediaPreview}
+                  imageClassName="w-full max-h-64 object-contain rounded-xl bg-muted border border-border transition-transform duration-200 group-hover:scale-[1.01]"
                 />
               </button>
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
                 <ImagePreviewButton
-                  onClick={() => onPreviewImage(url, 'Gallery image')}
+                  onClick={() =>
+                    onPreviewImage(
+                      mediaPreview.imageUrl as string,
+                      'Gallery image'
+                    )
+                  }
                   className="rounded-lg border border-primary/30 bg-card text-primary hover:bg-primary/10 hover:opacity-100 px-4 py-2"
                 />
                 <DownloadPngButton
-                  url={url}
+                  url={mediaPreview.imageUrl as string}
                   getFilename={() =>
                     `media-library-${item.collection}-${item.id}-${Date.now()}.png`
                   }
@@ -276,7 +403,7 @@ function MediaDetailModal({
               </div>
               <div className="flex w-full justify-end">
                 <a
-                  href={url}
+                  href={mediaPreview.imageUrl ?? '#'}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-primary/20"
@@ -312,6 +439,22 @@ function MediaDetailModal({
           {generatedBy ? (
             <DetailRow label="Generated by" value={generatedBy} />
           ) : null}
+          {showResearch ? (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                Research
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-lg border-primary/30 text-primary hover:bg-primary/10"
+                onClick={() => setResearchOpen(true)}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                View research
+              </Button>
+            </div>
+          ) : null}
           {!item.scheduleAt && item.targetCalendarDate ? (
             <DetailRow
               label="Scheduled date"
@@ -323,6 +466,11 @@ function MediaDetailModal({
           ) : null}
         </div>
       </div>
+      <GenerationResearchDialog
+        open={researchOpen}
+        onClose={() => setResearchOpen(false)}
+        research={researchDetails}
+      />
     </div>,
     document.body
   );
@@ -339,12 +487,17 @@ function isSchedulableCampaignDraft(
   campaignDraftId: string;
   targetCalendarDate: string;
 } {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+    now.getDate()
+  ).padStart(2, '0')}`;
   return (
     item.collection === 'campaignDrafts' &&
     !item.earlierScheduled &&
     !item.scheduledPostId &&
     !!item.campaignDraftId &&
-    !!item.targetCalendarDate
+    !!item.targetCalendarDate &&
+    item.targetCalendarDate >= today
   );
 }
 
@@ -404,15 +557,7 @@ function CampaignDraftScheduleModal({
       onScheduled();
       onClose();
     } catch (err) {
-      const typed = err as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-      showErrorToast(
-        typed?.response?.data?.message ||
-          typed?.message ||
-          'Could not schedule this draft.'
-      );
+      showErrorToast('Could not schedule this draft.');
     } finally {
       setScheduling(false);
     }
@@ -523,8 +668,11 @@ export default function MediaLibraryPage() {
   >(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const imagePreview = useImagePreview();
+  /** Bumped on every fresh `load` so late responses cannot overwrite a newer tab. */
+  const loadGenerationRef = useRef(0);
 
   const load = useCallback(async () => {
+    const generation = ++loadGenerationRef.current;
     setLoading(true);
     setError('');
     setItems([]);
@@ -532,13 +680,17 @@ export default function MediaLibraryPage() {
     setHasMore(false);
     try {
       const data = await getGeneratedMediaLibraryApi({ source });
+      if (generation !== loadGenerationRef.current) return;
       setItems(data?.items ?? []);
       setNextCursor(data?.nextCursor ?? null);
       setHasMore(data?.hasMore ?? false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load your library.');
+      if (generation !== loadGenerationRef.current) return;
+      setError('Could not load your library.');
     } finally {
-      setLoading(false);
+      if (generation === loadGenerationRef.current) {
+        setLoading(false);
+      }
     }
   }, [source]);
 
@@ -548,19 +700,25 @@ export default function MediaLibraryPage() {
 
   const loadMore = useCallback(async () => {
     if (!hasMore || !nextCursor || loadingMore) return;
+    const generation = loadGenerationRef.current;
+    const cursor = nextCursor;
     setLoadingMore(true);
     try {
       const data = await getGeneratedMediaLibraryApi({
         source,
-        cursor: nextCursor,
+        cursor,
       });
+      if (generation !== loadGenerationRef.current) return;
       setItems((prev) => [...prev, ...(data?.items ?? [])]);
       setNextCursor(data?.nextCursor ?? null);
       setHasMore(data?.hasMore ?? false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not load more items.');
+      if (generation !== loadGenerationRef.current) return;
+      setError('Could not load more items.');
     } finally {
-      setLoadingMore(false);
+      if (generation === loadGenerationRef.current) {
+        setLoadingMore(false);
+      }
     }
   }, [source, nextCursor, hasMore, loadingMore]);
 
@@ -608,13 +766,16 @@ export default function MediaLibraryPage() {
 
   const emptyCopy = useMemo(() => {
     if (source === 'all') {
-      return 'Generated images from quick create, batch workflow, and product ads will appear here.';
+      return 'Generated images from quick create, carousels, batch workflow, and product ads will appear here.';
     }
     if (source === 'instant-generation') {
       return 'New quick-create runs save images here automatically. Older runs may not have stored files.';
     }
     if (source === 'batchGeneratedPosts') {
       return 'Batch-generated posts with images show up after the workflow creates scheduled posts.';
+    }
+    if (source === 'carouselGeneratedPosts') {
+      return 'Carousels from Carousel Create appear here until you schedule them.';
     }
     return 'Product advert generations with images are listed here.';
   }, [source]);
@@ -646,7 +807,17 @@ export default function MediaLibraryPage() {
                 variant={active ? 'default' : 'outline'}
                 size="sm"
                 className={cn('rounded-full', active && 'shadow-sm')}
-                onClick={() => setSource(opt.value)}
+                onClick={() => {
+                  if (opt.value === source) return;
+                  loadGenerationRef.current += 1;
+                  setSelectedItem(null);
+                  setItems([]);
+                  setNextCursor(null);
+                  setHasMore(false);
+                  setError('');
+                  setLoading(true);
+                  setSource(opt.value);
+                }}
               >
                 {opt.label}
               </Button>
@@ -680,7 +851,7 @@ export default function MediaLibraryPage() {
         </div>
       ) : null}
 
-      {loading && items.length === 0 ? (
+      {loading ? (
         <PageLoadingState
           className="min-h-[40vh]"
           message="Loading your images…"
@@ -713,22 +884,42 @@ export default function MediaLibraryPage() {
               </Link>
             </Button>
             <Button asChild variant="outline" size="sm">
+              <Link href={WORKSPACE_NAV_HREFS.carouselCreate}>
+                {workspacePageTitle(WORKSPACE_NAV_HREFS.carouselCreate)}
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
               <Link href="/festive-post">Festive post</Link>
             </Button>
           </div>
         </div>
       ) : null}
 
-      {items.length > 0 ? (
+      {!loading && items.length > 0 ? (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((item) => {
             const generatedBy = generatedByForCollection(item.collection);
-            const url = item.imageUrl;
+            const mediaPreview = resolveSchedulableMediaPreview({
+              mediaType: item.mediaType,
+              imageUrl: item.imageUrl,
+              videoUrl: item.videoUrl,
+              posterUrl: item.posterUrl,
+            });
+            const hasMedia = hasSchedulableMediaPreview(mediaPreview);
             const captionLabel = mediaCaptionLabel(item.caption);
+            const contentTypeLabel = contentTypeDisplayLabel(item);
             const canSchedule =
               galleryItemCanSchedule(item) ||
               isSchedulableCampaignDraft(item);
             const whenLabel = formatWhen(item.scheduleAt ?? item.createdAt);
+            const slideCount =
+              item.mediaType === 'carousel' ||
+              item.collection === 'carouselGeneratedPosts'
+                ? item.slideCount ??
+                  (Array.isArray(item.carouselSlides)
+                    ? item.carouselSlides.length
+                    : null)
+                : null;
             return (
               <li
                 key={item.id}
@@ -749,12 +940,11 @@ export default function MediaLibraryPage() {
                 )}
               >
                 <div className="relative mb-3 overflow-hidden rounded-xl border border-border bg-muted aspect-4/3">
-                  {url ? (
-                    <img
-                      src={url}
-                      alt=""
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                      loading="lazy"
+                  {hasMedia ? (
+                    <PostMediaPreview
+                      preview={mediaPreview}
+                      videoClassName="h-full w-full object-cover bg-black"
+                      imageClassName="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     />
                   ) : (
                     <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground">
@@ -765,12 +955,24 @@ export default function MediaLibraryPage() {
                       <span>Preview unavailable</span>
                     </div>
                   )}
-                  {url ? (
+                  {slideCount && slideCount > 1 ? (
+                    <div className="absolute left-2 bottom-2">
+                      <span className="inline-flex items-center rounded-md border border-border bg-card/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm backdrop-blur">
+                        {slideCount} slides
+                      </span>
+                    </div>
+                  ) : null}
+                  {!mediaPreview.isVideo && mediaPreview.imageUrl ? (
                     <div className="absolute bottom-2 right-2">
                       <ImagePreviewButton
                         variant="overlay-icon"
                         stopPropagation
-                        onClick={() => imagePreview.open(url, 'Gallery image')}
+                        onClick={() =>
+                          imagePreview.open(
+                            mediaPreview.imageUrl as string,
+                            'Gallery image'
+                          )
+                        }
                       />
                     </div>
                   ) : null}

@@ -1,5 +1,4 @@
 import axiosClient from '@/lib/axios';
-import type { ActivePlatformJob } from '@/src/types/job';
 
 export type ProductGenerationMode = 'advert_asset' | 'social_full';
 
@@ -14,11 +13,27 @@ export type ProductAdvertPayload = {
   useIndustryResearch?: boolean;
 };
 
-/** 202 envelope returned by `POST /api/v1/ai-engine/product-advert`. */
+export type ProductAdvertPlatformResult = {
+  platform: string;
+  result: Record<string, unknown>;
+};
+
 export type ProductAdvertGenerateResponse = {
-  parentJobId: string;
   generationMode: ProductGenerationMode;
-  jobs: ActivePlatformJob[];
+  platformResults: ProductAdvertPlatformResult[];
+};
+
+export type ProductAdvertVideoGenerateResponse = {
+  videoGenerationDocId: string;
+  platform: string;
+  videoUrl?: string;
+  videoFilePath?: string;
+  posterUrl?: string;
+  posterFilePath?: string;
+  caption?: string | null;
+  aspectRatio?: string;
+  durationSeconds?: number;
+  [key: string]: unknown;
 };
 
 function appendPlatforms(form: FormData, platforms?: string[]) {
@@ -51,5 +66,26 @@ export const generateProductAdvertApi = async ({
     data: ProductAdvertGenerateResponse;
     message?: string;
   }>('/api/v1/ai-engine/product-advert', form);
+  return response.data.data;
+};
+
+export const generateProductAdvertVideoApi = async (args: {
+  platform: string;
+  referencePrompt?: string;
+  firstFrame: File;
+  lastFrame: File;
+}): Promise<ProductAdvertVideoGenerateResponse> => {
+  const form = new FormData();
+  form.append('platform', args.platform);
+  if (args.referencePrompt?.trim()) {
+    form.append('referencePrompt', args.referencePrompt.trim());
+  }
+  form.append('firstFrame', args.firstFrame);
+  form.append('lastFrame', args.lastFrame);
+  const response = await axiosClient.post<{
+    success: boolean;
+    data: ProductAdvertVideoGenerateResponse;
+    message?: string;
+  }>('/api/v1/ai-engine/video-generation', form);
   return response.data.data;
 };

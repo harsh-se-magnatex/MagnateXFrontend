@@ -21,7 +21,9 @@ import { useMemo, useRef, useState } from 'react';
 import { SyncErrorBanner } from './SyncErrorBanner';
 import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
 import { buildReplyQueueGroupsFacebook, GrowthStudioBlock } from './growth-studio';
+import type { PreloadedReplySuggestions } from './growth-studio/_common';
 import { audienceRanked, InsightMetric, Merged, Metrics, PageAnalytics, Post } from '../types';
+import { collectPostImageUrls } from '@/lib/analytics-post-media';
 import { ChartConfig } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
 import {
@@ -60,6 +62,7 @@ export default function FaceBookAnalytics({
   audienceRanked,
   pageAiContext,
   repliedCommentIds,
+  preloadedReplySuggestions,
 }: {
   metrics: Metrics;
   pageAnalytics: PageAnalytics | null;
@@ -73,6 +76,7 @@ export default function FaceBookAnalytics({
   audienceRanked: audienceRanked;
   pageAiContext: Record<string, unknown>;
   repliedCommentIds?: string[];
+  preloadedReplySuggestions?: PreloadedReplySuggestions;
 }) {
   const [focusedMetric, setFocusedMetric] = useState<InsightMetric | null>(
     null
@@ -278,6 +282,7 @@ export default function FaceBookAnalytics({
         platform="facebook"
         replyGroups={replyGroups}
         pageName={pageAnalytics?.pageName}
+        preloadedReplySuggestions={preloadedReplySuggestions}
       />
 
       <section
@@ -449,7 +454,11 @@ export default function FaceBookAnalytics({
 
       <TopPostImageDialog
         post={expandedPost}
-        open={expandedPost !== null && Boolean(expandedPost.mediaUrl)}
+        open={
+          expandedPost !== null &&
+          (collectPostImageUrls(expandedPost).length > 0 ||
+            Boolean(expandedPost.videoUrl?.trim()))
+        }
         onOpenChange={(next) => {
           if (!next) setExpandedPost(null);
         }}

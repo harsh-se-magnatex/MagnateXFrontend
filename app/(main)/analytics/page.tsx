@@ -14,6 +14,7 @@ import {
 } from '@/src/service/api/insights-snapshot.service';
 import { useWhatToPostNextCache } from '@/src/stores/whatToPostNextCache';
 import { useWhereToSpendCache } from '@/src/stores/whereToSpendCache';
+import { useWeeklyVerdictCache } from '@/src/stores/weeklyVerdictCache';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import FaceBookAnalytics from '../_components/AnalyticsComponent/FaceBook';
 import { InstagramAnalyticsView } from '../_components/AnalyticsComponent/Instagram';
@@ -38,6 +39,11 @@ import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { AlertCircle } from 'lucide-react';
 import { useTimestampFormatter } from '@/lib/user-timezone';
+import {
+  countEnabledPlatforms,
+  isPlatformSelectionComplete,
+  PLAN_MAX_SOCIAL,
+} from '@/lib/platform-selection';
 
 function formatRefreshedAgo(iso: string): string {
   const then = new Date(iso).getTime();
@@ -162,22 +168,14 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const selected = billing?.selected;
   const activePlan = billing?.activePlan ?? 'non-subscribed';
-  const selectedCount = Object.values(selected ?? {}).filter(Boolean).length;
-  const PLAN_MAX_SOCIAL: Record<string, number> = {
-    'prime-AI': 1,
-    'prime-Studio': 1,
-    'elite-AI': 2,
-    'elite-Studio': 2,
-    'legacy-AI': 3,
-    'legacy-Studio': 3,
-  };
+  const selectedCount = countEnabledPlatforms(selected);
   const maxPlatforms = PLAN_MAX_SOCIAL[activePlan] ?? 0;
 
   const showSelectionIncompleteNotice =
     !billingLoading &&
+    billing != null &&
     activePlan !== 'non-subscribed' &&
-    maxPlatforms > 0 &&
-    selectedCount < maxPlatforms;
+    !isPlatformSelectionComplete({ activePlan, selected });
 
 
   useEffect(() => {
@@ -203,9 +201,9 @@ export default function AnalyticsPage() {
     (async () => {
       try {
         // Pull the cron-built snapshot first so we can seed the
-        // What-to-post-next + Where-to-spend Zustand caches BEFORE the
-        // per-platform sections mount. Each cache hit skips an OpenAI
-        // call (3 + 3 = 6 saved per page view). syncInsights is
+        // What-to-post-next + Where-to-spend + weekly verdict Zustand caches
+        // BEFORE the per-platform sections mount. Each cache hit skips an OpenAI
+        // call (3 + 3 + 3 = 9 saved per page view). syncInsights is
         // intentionally NOT called here \u2014 it's expensive (Meta /
         // LinkedIn round-trips) and now runs once per 24h via
         // `/cron/sync-analytics` on the API.
@@ -215,12 +213,17 @@ export default function AnalyticsPage() {
             setSnapshot(latest);
             const wtnCache = useWhatToPostNextCache.getState();
             const wtsCache = useWhereToSpendCache.getState();
+            const verdictCache = useWeeklyVerdictCache.getState();
             (['facebook', 'instagram', 'linkedin'] as const).forEach(
               (p) => {
                 const wtn = latest.whatToPostNext[p];
                 if (wtn) wtnCache.set(p, wtn);
                 const wts = latest.whereToSpend[p];
                 if (wts) wtsCache.set(p, wts);
+                const verdict = latest.weeklyVerdict?.[p];
+                if (verdict) {
+                  verdictCache.set(p, verdict.verdict, verdict.source);
+                }
               }
             );
           }
@@ -705,6 +708,7 @@ export default function AnalyticsPage() {
             topPosts={topPosts}
             pageAiContext={fbPageAiContext}
             repliedCommentIds={fbRepliedCommentIds}
+            preloadedReplySuggestions={snapshot?.replySuggestions?.facebook}
           />
         </TabsContent>
 
@@ -717,6 +721,7 @@ export default function AnalyticsPage() {
             onExpandedPostChange={setExpandedIgPost}
             pageAiContext={igPageAiContext}
             repliedCommentIds={igRepliedCommentIds}
+            preloadedReplySuggestions={snapshot?.replySuggestions?.instagram}
           />
         </TabsContent>
 
@@ -739,6 +744,7 @@ export default function AnalyticsPage() {
               placeholder: '',
             })}
             repliedCommentIds={liRepliedCommentIds}
+            preloadedReplySuggestions={snapshot?.replySuggestions?.linkedin}
           />
         </TabsContent>
       </Tabs>

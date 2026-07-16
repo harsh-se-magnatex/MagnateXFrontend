@@ -4,8 +4,10 @@ export const WORKSPACE_NAV_HREFS = {
   quickCreate: '/instant-generation',
   bulkCreate: '/batch-generation',
   productAdvert: '/product-advert',
+  videoGeneration: '/video-generation',
   festivePost: '/festive-post',
   createCampaign: '/create-campaign',
+  carouselCreate: '/create/carousel-generation',
   schedulePost: '/post-scheduler',
   postQueue: '/scheduled-post',
   gallery: '/media-library',
@@ -42,6 +44,12 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.productAdvert),
   },
   {
+    name: 'Video Generation',
+    href: WORKSPACE_NAV_HREFS.videoGeneration,
+    match: (pathname) =>
+      !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.videoGeneration),
+  },
+  {
     name: 'Festive Post',
     href: WORKSPACE_NAV_HREFS.festivePost,
     match: (pathname) =>
@@ -52,6 +60,12 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     href: WORKSPACE_NAV_HREFS.createCampaign,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.createCampaign),
+  },
+  {
+    name: 'Carousel Create',
+    href: WORKSPACE_NAV_HREFS.carouselCreate,
+    match: (pathname) =>
+      !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.carouselCreate),
   },
   {
     name: 'Schedule Post',

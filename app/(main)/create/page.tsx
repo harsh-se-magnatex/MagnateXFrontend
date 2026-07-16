@@ -6,6 +6,7 @@ import {
   CalendarSync,
   Sparkles,
   ArrowRight,
+  Layers,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
@@ -31,6 +32,20 @@ const createFlows = [
     href: WORKSPACE_NAV_HREFS.productAdvert,
     icon: ImagePlus,
     gradient: 'from-amber-500 to-orange-400',
+  },
+  {
+    title: workspacePageTitle(WORKSPACE_NAV_HREFS.videoGeneration),
+    description: 'Upload a photo and generate an 8-second advert video.',
+    href: WORKSPACE_NAV_HREFS.videoGeneration,
+    icon: ImagePlus,
+    gradient: 'from-violet-500 to-indigo-400',
+  },
+  {
+    title: 'Carousel Create',
+    description: 'Generate 2–7 slide portrait carousels with AI storyboarding.',
+    href: WORKSPACE_NAV_HREFS.carouselCreate,
+    icon: Layers,
+    gradient: 'from-cyan-500 to-blue-500',
   },
   {
     title: workspacePageTitle(WORKSPACE_NAV_HREFS.festivePost),

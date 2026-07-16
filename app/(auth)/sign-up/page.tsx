@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { SignupForm } from '@/app/(auth)/_components/sign-upForm';
 
 export const metadata: Metadata = {
@@ -14,9 +15,20 @@ export default function SignUpPage() {
         <div className="absolute inset-0 bg-primary-blue/[0.06]" />
         <div className="absolute bottom-0 left-0 h-[240px] w-[240px] rounded-full bg-primary-purple/8 blur-[72px]" />
         <div className="relative z-10 mx-auto max-w-lg lg:mx-0">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary-blue">
-            SocioGenie
-          </p>
+          <Link
+            href="/"
+            className="group mb-8 inline-flex items-center gap-4"
+            aria-label="SocioGenie home"
+          >
+            <img
+              src="/logo.png"
+              alt="SocioGenie"
+              className="h-20 w-20 shrink-0 rounded-3xl shadow-xl transition-transform duration-300 group-hover:scale-105 sm:h-24 sm:w-24"
+            />
+            <span className="font-[family-name:var(--font-bricolage)] text-3xl font-bold tracking-[-0.03em] text-foreground sm:text-4xl">
+              Socio<span className="bg-gradient-primary-text">Genie</span>
+            </span>
+          </Link>
           <h1 className="mb-4 text-3xl font-bold leading-tight tracking-tight text-foreground xl:text-4xl">
             Automate Your Social Media with AI + Human Review
           </h1>

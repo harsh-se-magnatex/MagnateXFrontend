@@ -121,7 +121,7 @@ export default function SupportAndLegalPage() {
       setContactForm({ name: '', email: '', message: '' });
       toast.success('Message sent successfully.');
     } catch (err: any) {
-      showErrorToast(err.response.data.message || 'Failed to send message.');
+      showErrorToast('Failed to send message.');
     } finally {
       setContactSending(false);
     }
@@ -144,7 +144,7 @@ export default function SupportAndLegalPage() {
       setBugForm({ subject: '', description: '' });
       toast.success('Bug report submitted successfully.');
     } catch (err: any) {
-      showErrorToast(err.response.data.message || 'Failed to submit report.');
+      showErrorToast('Failed to submit report.');
     } finally {
       setBugSending(false);
     }
@@ -167,9 +167,7 @@ export default function SupportAndLegalPage() {
       setRefundForm({ reason: '', details: '' });
       toast.success('Refund request submitted successfully.');
     } catch (err: any) {
-      showErrorToast(
-        err.response?.data?.message || 'Failed to submit refund request.'
-      );
+      showErrorToast('Failed to submit refund request.');
     } finally {
       setRefundSending(false);
     }

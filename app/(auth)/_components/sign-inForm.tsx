@@ -173,10 +173,7 @@ export function SigninForm({
       ) {
         return;
       }
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to recover deleted user account';
+      const message = 'Failed to recover deleted user account';
       showErrorToast(message);
     }
   };
@@ -199,8 +196,7 @@ export function SigninForm({
       ) {
         return;
       }
-      const message =
-        err instanceof Error ? err.message : 'Failed to create new account';
+      const message = 'Failed to create new account';
       showErrorToast(message);
     }
   };

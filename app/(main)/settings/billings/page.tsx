@@ -420,13 +420,13 @@ export default function BillingsPage() {
       const res = await getTransactions();
       const rows = res.data.transactions ?? [];
       const purchaseLike = rows.filter(
-        (r) => r.type === 'purchase' || r.type === 'plan'
+        (r) => r.type === 'purchase' || r.type === 'plan' || r.type === 'credits'
       );
       const sorted =
         purchaseLike.length > 0
           ? purchaseLike
           : rows.filter((r) => r.type !== 'deduction');
-      setBillingHistory(sorted.slice(0, 5));
+      setBillingHistory(sorted.slice(0, sorted.length));
     } catch {
       setBillingHistory([]);
     } finally {
@@ -576,7 +576,7 @@ export default function BillingsPage() {
       window.location.href = data.checkoutUrl;
     } catch (error: any) {
       clickedPurchasePlan.current = null;
-      showErrorToast(error.message || 'Failed to purchase plan');
+      showErrorToast('Failed to purchase plan');
     } finally {
       setPlanPurchaseLoading(false);
     }
@@ -598,9 +598,7 @@ export default function BillingsPage() {
         setPlanSwitchPreview(res.data);
         setPlanSwitchOpen(true);
       } catch (error: unknown) {
-        showErrorToast(
-          error instanceof Error ? error.message : 'Could not preview plan change'
-        );
+        showErrorToast('Could not preview plan change');
       } finally {
         setPlanChoiceBusyId(null);
       }
@@ -626,11 +624,7 @@ export default function BillingsPage() {
       setUpgradeOpen(false);
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Could not schedule plan change'
-      );
+      showErrorToast('Could not schedule plan change');
     } finally {
       setPlanSwitchSubmitting(false);
     }
@@ -643,11 +637,7 @@ export default function BillingsPage() {
       const res = await createCustomerPortalSession();
       window.location.href = res.data.portalUrl;
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Could not open payment portal';
-      showErrorToast(message);
+      showErrorToast('Could not open payment portal');
       setPortalLoading(false);
     }
   };
@@ -673,11 +663,7 @@ export default function BillingsPage() {
       toast.success('Payment method deleted');
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Could not delete payment method';
-      showErrorToast(message);
+      showErrorToast('Could not delete payment method');
     } finally {
       setDeletePaymentMethodLoading(false);
     }
@@ -691,11 +677,7 @@ export default function BillingsPage() {
       toast.success('Scheduled plan change cancelled.');
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Could not cancel scheduled plan change'
-      );
+      showErrorToast('Could not cancel scheduled plan change');
     } finally {
       setCancelScheduledChangeLoading(false);
     }
@@ -715,11 +697,7 @@ export default function BillingsPage() {
       );
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Could not cancel subscription';
-      showErrorToast(message);
+      showErrorToast('Could not cancel subscription');
     } finally {
       setCancelSubscriptionLoading(false);
     }
@@ -733,11 +711,7 @@ export default function BillingsPage() {
       toast.success('Cancellation revoked.');
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Could not revoke cancellation'
-      );
+      showErrorToast('Could not revoke cancellation');
     } finally {
       setRevokeCancellationLoading(false);
     }
@@ -1327,15 +1301,22 @@ export default function BillingsPage() {
               .
             </p>
           ) : (
-            <Table>
+            <Table
+              containerClassName="max-h-80 overflow-y-auto custom-scrollbar -mx-1 px-1"
+              className="border-separate border-spacing-0"
+            >
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-slate-600">Date</TableHead>
-                  <TableHead className="text-slate-600">Description</TableHead>
-                  <TableHead className="text-slate-600 text-right">
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600">
+                    Date
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600">
+                    Description
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right">
                     Amount
                   </TableHead>
-                  <TableHead className="text-slate-600 text-right">
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right">
                     Invoice
                   </TableHead>
                 </TableRow>
@@ -1353,12 +1334,17 @@ export default function BillingsPage() {
                       {txnAmountCell(row)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link
-                        href="/settings/transactions"
-                        className="text-sm font-medium text-indigo-600 hover:underline"
-                      >
-                        View
-                      </Link>
+                      {row.invoiceUrl ? (
+                        <Link
+                          href={row.invoiceUrl}
+                          target="_blank"
+                          className="text-sm font-medium text-indigo-600 hover:underline"
+                        >
+                          View
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-slate-500">Not available</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

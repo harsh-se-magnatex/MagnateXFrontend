@@ -37,7 +37,7 @@ const HOW_IT_WORKS_STEPS = [
   {
     icon: Sparkles,
     title: 'Fill in your brand details',
-    description: 'Onboard your business, upload assets, and build your AI Memory Layer.',
+    description: 'Onboard your business, upload assets, and build your Memory Layer.',
   },
   {
     icon: Bot,

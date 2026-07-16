@@ -162,12 +162,12 @@ export const signInEmailPassword = async (email: string, password: string) => {
     }
     throw error;
   }
-  // if (result && !result?.user.emailVerified) {
-  //   showErrorToast(
-  //     'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
-  //   );
-  //   return result;
-  // }
+  if (result && !result?.user.emailVerified) {
+    showErrorToast(
+      'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
+    );
+    return result;
+  }
   if (!result?.user) {
     throw new Error('Login failed');
   }
@@ -235,9 +235,8 @@ export const forgotPassword = async (email: string, url?: string) => {
       handleCodeInApp: true,
     });
     return { success: true };
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Request failed';
-    return { success: false, message };
+  } catch {
+    return { success: false, message: 'Failed to send reset link.' };
   }
 };
 

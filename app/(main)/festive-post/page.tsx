@@ -1,8 +1,7 @@
 'use client';
 
 import { createAutomatedPost } from '@/src/service/api/social.servce';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useFeatureJob } from '@/src/hooks/useFeatureJob';
+import { useEffect, useMemo, useState } from 'react';
 import {
   useFestivePostState,
   type FestiveEventItem,
@@ -16,6 +15,7 @@ import {
   X,
   CalendarDays,
   Sparkles,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -32,7 +32,6 @@ import { useTimestampFormatter } from '@/lib/user-timezone';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
-import { Progress } from '@/components/ui/progress';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import {
@@ -63,8 +62,6 @@ function firstEnabledPlatform(
 }
 
 export default function AutomatedPostPage() {
-  const submitGuardRef = useRef(false);
-
   // Transient-only UI state.
   const [message, setMessage] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -72,19 +69,6 @@ export default function AutomatedPostPage() {
   const [editDate, setEditDate] = useState('');
   const [editDescription, setEditDescription] = useState('');
   const [editReason, setEditReason] = useState('');
-
-  // Firestore-driven progress for the current run. parentJobId + per-platform
-  // job docs come from `users/{uid}.activeJobs['events-post']`.
-  const featureJob = useFeatureJob('events-post');
-  const {
-    parentJobId: activeParentJobId,
-    jobs: jobMap,
-    overallPct,
-    allDone,
-    isRunning,
-    onGenerated,
-  } = featureJob;
-  const lastMaterializedRef = useRef<string | null>(null);
 
   // Session state: in-memory Zustand, survives SPA navigation within the tab.
   const selected = useFestivePostState((s) => s.selected);
@@ -185,7 +169,6 @@ export default function AutomatedPostPage() {
   const canSubmit =
     selected.length > 0 &&
     !isSubmitting &&
-    !isRunning &&
     !planCreditsLoading &&
     platformSelection.ok &&
     !insufficientCredits;
@@ -206,17 +189,13 @@ export default function AutomatedPostPage() {
 
   const handleToggle = (eventId: string) => toggleSelected(eventId);
 
-  const platformsForRunRef = useRef<SocialPlatform[]>([]);
-
   const handleSubmit = async () => {
     if (isTourDemo) return;
-    if (planCreditsLoading || submitGuardRef.current) return;
-    submitGuardRef.current = true;
+    if (planCreditsLoading || isSubmitting) return;
     const cost = selected.length * CREDIT_PER_EVENT * genPlatforms.length;
     if (cost > userCredits) {
       setMessage('Not enough credits. Please top up your account.');
       setTimeout(() => setMessage(''), 5000);
-      submitGuardRef.current = false;
       return;
     }
     const eventMap = new Map(
@@ -235,94 +214,37 @@ export default function AutomatedPostPage() {
     if (!selectedEvents.length) {
       setMessage('Please select at least one valid event.');
       setTimeout(() => setMessage(''), 5000);
-      submitGuardRef.current = false;
       return;
     }
+    const platformsUsed = [...genPlatforms];
     setIsSubmitting(true);
-    platformsForRunRef.current = [...genPlatforms];
-    lastMaterializedRef.current = null;
     try {
       const response = await createAutomatedPost(selectedEvents, genPlatforms);
-      onGenerated({
-        parentJobId: response.parentJobId,
-        jobs: response.jobs,
-      });
       clearSelected();
+      if (response.successCount > 0) {
+        const platformSummary =
+          platformsUsed.length === 1
+            ? platformLabel(platformsUsed[0])
+            : `${platformsUsed.length} platforms`;
+        toast.success(
+          `Scheduled ${response.successCount} event(s) on ${platformSummary} successfully.`
+        );
+      }
+      if (response.failedCount > 0) {
+        toast.success(
+          `${response.successCount} scheduled, ${response.failedCount} failed.`
+        );
+      }
+      if (response.successCount === 0 && response.failedCount === 0) {
+        toast.success('Festive posts processed.');
+      }
     } catch (error: unknown) {
-      const typedError = error as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-      const errorMessage =
-        typedError?.response?.data?.message ||
-        typedError?.message ||
-        'Failed to schedule automated posts.';
-      showErrorToast(errorMessage);
-      setIsSubmitting(false);
+      showErrorToast('Failed to schedule automated posts.');
     } finally {
-      submitGuardRef.current = false;
+      setIsSubmitting(false);
       setTimeout(() => setMessage(''), 5000);
     }
   };
-
-  // Each per-platform `events-post` job stitches `successCount` + `failedCount`
-  // into `result`. Sum across siblings once everyone's settled to recreate the
-  // legacy toast experience and clear the submit flag.
-  useEffect(() => {
-    if (!allDone || !activeParentJobId) return;
-    if (lastMaterializedRef.current === activeParentJobId) return;
-    lastMaterializedRef.current = activeParentJobId;
-
-    const jobList = Object.values(jobMap);
-    const totals = jobList.reduce(
-      (acc, j) => {
-        const r = (j.result ?? {}) as Record<string, unknown>;
-        return {
-          successCount:
-            acc.successCount +
-            (typeof r.successCount === 'number' ? r.successCount : 0),
-          failedCount:
-            acc.failedCount +
-            (typeof r.failedCount === 'number' ? r.failedCount : 0),
-        };
-      },
-      { successCount: 0, failedCount: 0 }
-    );
-
-    const platformsUsed = platformsForRunRef.current;
-    if (totals.successCount > 0) {
-      const platformSummary =
-        platformsUsed.length === 1
-          ? platformLabel(platformsUsed[0])
-          : `${platformsUsed.length} platforms`;
-      toast.success(
-        `Scheduled ${totals.successCount} event(s) on ${platformSummary} successfully.`
-      );
-    }
-    if (totals.failedCount > 0) {
-      toast.success(
-        `${totals.successCount} scheduled, ${totals.failedCount} failed.`
-      );
-    }
-    if (totals.successCount === 0 && totals.failedCount === 0) {
-      toast.success('Festive posts processed.');
-    }
-    setIsSubmitting(false);
-  }, [allDone, activeParentJobId, jobMap, setIsSubmitting]);
-
-  // Keep the persisted `isSubmitting` flag in sync with Firestore-driven
-  // `isRunning` (e.g. after a refresh mid-run). And — critically — drop it
-  // back to false once `isRunning` flips off, regardless of whether the
-  // materialize effect above ran (which is gated by parentJobId identity).
-  // Without this second branch a stale `activeJobs` slot can leave the
-  // "Scheduling…" / "Generating… 0%" UI stuck on screen forever.
-  useEffect(() => {
-    if (isRunning && !isSubmitting) {
-      setIsSubmitting(true);
-    } else if (!isRunning && isSubmitting) {
-      setIsSubmitting(false);
-    }
-  }, [isRunning, isSubmitting, setIsSubmitting]);
 
   const handleDeleteCustomEvent = (id: string) => {
     removeCustomEvent(id);
@@ -730,36 +652,19 @@ export default function AutomatedPostPage() {
                 disabled={!canSubmit}
                 className="w-full rounded-xl bg-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
               >
-                {isSubmitting
-                  ? 'Scheduling...'
-                  : `Confirm & Schedule${insufficientCredits ? ' (insufficient credits)' : ''}`}
+                {isSubmitting ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    Scheduling...
+                  </span>
+                ) : (
+                  `Confirm & Schedule${insufficientCredits ? ' (insufficient credits)' : ''}`
+                )}
               </button>
-              {(isSubmitting || isRunning) && (
-                <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-medium text-indigo-700">
-                    <span>Generating...</span>
-                    <span>{overallPct}%</span>
-                  </div>
-                  <Progress
-                    value={overallPct}
-                    className="h-1.5 bg-indigo-100 **:data-[slot=progress-indicator]:bg-indigo-500"
-                  />
-                  {Object.values(jobMap).length > 1 && (
-                    <div className="space-y-1 pt-1">
-                      {Object.values(jobMap).map((job) => (
-                        <div
-                          key={job.jobId}
-                          className="flex items-center justify-between text-[11px] text-indigo-700/80"
-                        >
-                          <span className="capitalize">
-                            {job.platform ?? 'unknown'}
-                          </span>
-                          <span>{job.pct ?? 0}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+              {isSubmitting && (
+                <p className="mt-4 text-xs font-medium text-indigo-700">
+                  Generating festive posts…
+                </p>
               )}
             </div>
 

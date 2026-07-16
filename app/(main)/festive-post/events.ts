@@ -11,7 +11,7 @@ export const EVENTS = [
   {
     id: '2',
     name: 'Rath Yatra',
-    date: '2026-07-12',
+    date: '2026-07-16',
     description:
       "Rath Yatra is a major Hindu festival associated with Lord Jagannath's grand chariot procession.",
     reason:

@@ -35,18 +35,6 @@ function getCreatedAtMs(
   return typeof seconds === 'number' ? seconds * 1000 : 0;
 }
 
-function getApiErrorMessage(error: unknown, fallback: string) {
-  if (typeof error !== 'object' || error === null || !('response' in error)) {
-    return fallback;
-  }
-
-  const response = (error as { response?: { data?: { message?: unknown } } })
-    .response;
-  return typeof response?.data?.message === 'string'
-    ? response.data.message
-    : fallback;
-}
-
 export default function AILogoPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -112,9 +100,7 @@ export default function AILogoPage() {
       toast.success('Logo pick is ready.');
       void handleGetAiGeneratedLogos();
     } catch (error: unknown) {
-      showErrorToast(
-        getApiErrorMessage(error, 'Failed to generate AI logo pick.')
-      );
+      showErrorToast('Failed to generate AI logo pick.');
     } finally {
       setGenerating(false);
     }
@@ -139,9 +125,7 @@ export default function AILogoPage() {
       toast.success('Logo saved successfully.');
       router.push('/template-dna');
     } catch (error: unknown) {
-      showErrorToast(
-        getApiErrorMessage(error, 'Failed to save selected logo.')
-      );
+      showErrorToast('Failed to save selected logo.');
     } finally {
       setSaving(false);
     }

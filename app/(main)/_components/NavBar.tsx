@@ -7,10 +7,10 @@ import { cn } from '@/lib/utils';
 import { handleSameHashLinkClick } from '@/lib/scroll-to-hash';
 
 const NAV_ITEMS = [
-  { label: 'How It Works', href: '#how-it-works' },
-  { label: 'Features', href: '#features' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'How It Works', href: '/product#how-it-works' },
+  { label: 'Features', href: '/product#features' },
+  { label: 'Pricing', href: '/product#pricing' },
+  { label: 'FAQ', href: '/product#faq' },
 ] as const;
 
 
@@ -65,8 +65,8 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
               alt="SocioGenie"
               className="h-10 w-10 shrink-0 rounded-xl shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 sm:h-12 sm:w-12"
             />
-            <span className="truncate text-xl font-extrabold tracking-tight bg-gradient-primary-text sm:text-2xl">
-              SocioGenie
+            <span className="truncate font-[family-name:var(--font-bricolage)] text-xl font-bold tracking-[-0.03em] text-foreground sm:text-2xl">
+              Socio<span className="bg-gradient-primary-text">Genie</span>
             </span>
           </Link>
           <div className="hidden md:flex items-center gap-8">

@@ -20,6 +20,7 @@ import {
 import {
   Calendar,
   Clock,
+  Film,
   Image as ImageIcon,
   Send,
   AlertCircle,
@@ -38,11 +39,18 @@ import { scheduleUserPost } from '@/src/service/api/userService';
 import { getTodatDate } from '@/utils/getTodayDate';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
+import {
+  isScheduleTimeInPast,
+  PAST_SCHEDULE_TIME_MESSAGE,
+} from '@/lib/schedule-time-validation';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
+import { normalizePreferredPostingTime } from '@/utils/preferredPostingTime';
 import { useTourDemo } from '@/src/stores/tourState';
+import { CarouselSwipePreview } from '@/components/shared/CarouselSwipePreview';
 import {
-  consumePostSchedulerPrefill,
+  peekPostSchedulerPrefill,
+  clearPostSchedulerPrefill,
   type PostSchedulerPrefillPayload,
   type PostSchedulerPrefillSource,
 } from '@/lib/post-scheduler-prefill-store';
@@ -62,6 +70,11 @@ const ACCEPTED_IMAGE_TYPES = [
   'image/gif',
   'image/webp',
 ];
+const ACCEPTED_VIDEO_TYPES = ['video/mp4'];
+const VIDEO_UPLOAD_PLATFORMS = ['facebook', 'instagram', 'linkedin'] as const;
+const LINKEDIN_MAX_VIDEO_BYTES = 500 * 1024 * 1024;
+const FACEBOOK_MAX_VIDEO_BYTES = 190 * 1024 * 1024;
+const INSTAGRAM_MAX_VIDEO_BYTES = 190 * 1024 * 1024;
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 type SchedulerPlatform = SocialPlatform;
@@ -112,15 +125,17 @@ function formatPlatformLabel(platform: string): string {
   return platform;
 }
 
-function isValidImageFile(file: File): boolean {
-  return ACCEPTED_IMAGE_TYPES.includes(file.type);
+function getUploadMediaType(file: File): 'image' | 'video' | null {
+  if (ACCEPTED_IMAGE_TYPES.includes(file.type)) return 'image';
+  if (ACCEPTED_VIDEO_TYPES.includes(file.type)) return 'video';
+  return null;
 }
 
 export default function PostSchedulePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedMediaFile, setSelectedMediaFile] = useState<File | null>(null);
   const imagePreview = useImagePreview();
   const [prefilledImageUrl, setPrefilledImageUrl] = useState<string>(
     ''
@@ -132,6 +147,19 @@ export default function PostSchedulePage() {
     Array<{
       imageUrl: string;
       imageFilePath: string;
+      mediaType?: 'image' | 'video' | 'carousel';
+      videoUrl?: string;
+      videoFilePath?: string;
+      videoPosterUrl?: string;
+      videoPosterPath?: string;
+      carouselSlides?: Array<{
+        index?: number;
+        imageUrl: string;
+        imageFilePath: string;
+        headline?: string | null;
+        purpose?: string | null;
+        visualType?: string | null;
+      }>;
       message: string;
       platform: SchedulerPlatform;
       source?: PostSchedulerPrefillSource;
@@ -149,8 +177,20 @@ export default function PostSchedulePage() {
   const [imageError, setImageError] = useState<string | null>(null);
   const [postLoading, setPostLoading] = useState(false);
 
-  const hasImage = selectedImage !== null || Boolean(prefilledImageUrl);
-  const hasMessageOnly = !hasImage && message.trim().length > 0;
+  const selectedMediaType = selectedMediaFile
+    ? getUploadMediaType(selectedMediaFile)
+    : null;
+  const singlePrefilledPost = isPrefilledFlow && prefilledPosts.length === 1
+    ? prefilledPosts[0]
+    : null;
+  const prefilledMediaType = singlePrefilledPost?.mediaType;
+  const hasMedia =
+    selectedMediaFile !== null ||
+    Boolean(prefilledImageUrl) ||
+    Boolean(singlePrefilledPost?.videoUrl) ||
+    (singlePrefilledPost?.mediaType === 'carousel' &&
+      (singlePrefilledPost.carouselSlides?.length ?? 0) >= 2);
+  const hasMessageOnly = !hasMedia && message.trim().length > 0;
   const imageAreaDisabled = hasMessageOnly;
   const formattedToday = getTodatDate();
   const { billing, loading: creditsLoading } = useUserPlanCredits();
@@ -164,7 +204,7 @@ export default function PostSchedulePage() {
   const maxScheduleDate = planExpiresAt
     ? fmtTimestamp(planExpiresAt, { format: 'yyyy-MM-dd' })
     : formattedToday;
-  const inputLabel = hasImage ? 'Caption' : 'Message';
+  const inputLabel = hasMedia ? 'Caption' : 'Message';
 
   const hasSelectablePlatforms = useMemo(
     () => !!firstEnabledPlatform(selectedAccounts),
@@ -193,6 +233,22 @@ export default function PostSchedulePage() {
     genPlatforms,
     allowedPlatforms
   );
+  const selectedSinglePlatform =
+    !isPrefilledFlow && genPlatforms.length === 1 ? genPlatforms[0] : null;
+  const supportsVideoUploadSelection =
+    !isPrefilledFlow &&
+    selectedSinglePlatform !== null &&
+    VIDEO_UPLOAD_PLATFORMS.includes(
+      selectedSinglePlatform as (typeof VIDEO_UPLOAD_PLATFORMS)[number]
+    );
+  const acceptsVideoUpload =
+    supportsVideoUploadSelection || genPlatforms.length === 0;
+  const fileInputAccept = acceptsVideoUpload
+    ? [...ACCEPTED_IMAGE_TYPES, ...ACCEPTED_VIDEO_TYPES].join(',')
+    : ACCEPTED_IMAGE_TYPES.join(',');
+  const hasInvalidVideoPlatformSelection =
+    selectedMediaType === 'video' &&
+    (!supportsVideoUploadSelection || isPrefilledFlow);
 
   const schedulePlatforms = useMemo(() => {
     const platforms = isPrefilledFlow
@@ -221,15 +277,31 @@ export default function PostSchedulePage() {
   const preferredTimeForPlatform = useCallback(
     (platform: SchedulerPlatform) => {
       const prefs = billing?.preferences;
-      if (!prefs) return '';
+      if (!prefs) return normalizePreferredPostingTime(undefined);
       const optimalTime = prefs[OPTIMAL_TIME_FIELD[platform]];
       if (prefs.useAnalyticsOptimalPostingTime && optimalTime) {
-        return optimalTime;
+        return normalizePreferredPostingTime(optimalTime, optimalTime);
       }
-      return prefs.preferredTime ?? '';
+      return normalizePreferredPostingTime(prefs.preferredTime);
     },
     [billing?.preferences]
   );
+
+  useEffect(() => {
+    if (!billing?.preferences || schedulePlatforms.length === 0) return;
+    setPlatformSchedules((current) => {
+      let changed = false;
+      const next = { ...current };
+      for (const platform of schedulePlatforms) {
+        const slot = next[platform] ?? { date: '', time: '' };
+        if (slot.time) continue;
+        const time = preferredTimeForPlatform(platform);
+        next[platform] = { ...slot, time };
+        changed = true;
+      }
+      return changed ? next : current;
+    });
+  }, [billing?.preferences, schedulePlatforms, preferredTimeForPlatform]);
 
   useEffect(() => {
     if (isPrefilledFlow || creditsLoading) return;
@@ -263,17 +335,48 @@ export default function PostSchedulePage() {
   const handleFile = useCallback((file: File | null) => {
     setImageError(null);
     if (!file) {
-      setSelectedImage(null);
+      setSelectedMediaFile(null);
       return;
     }
-    if (!isValidImageFile(file)) {
-      setImageError('Please use a valid image (JPEG, PNG, GIF, or WebP).');
+    const mediaType = getUploadMediaType(file);
+    if (!mediaType) {
+      setImageError('Please use a valid image (JPEG, PNG, GIF, WebP) or MP4 video.');
+      return;
+    }
+    if (mediaType === 'video' && !acceptsVideoUpload) {
+      setImageError(
+        'MP4 video uploads are currently supported only for single-platform Facebook, Instagram, or LinkedIn posts.'
+      );
+      return;
+    }
+    if (
+      mediaType === 'video' &&
+      selectedSinglePlatform === 'linkedin' &&
+      file.size > LINKEDIN_MAX_VIDEO_BYTES
+    ) {
+      setImageError('LinkedIn video uploads must be 500MB or smaller.');
+      return;
+    }
+    if (
+      mediaType === 'video' &&
+      selectedSinglePlatform === 'facebook' &&
+      file.size > FACEBOOK_MAX_VIDEO_BYTES
+    ) {
+      setImageError('Facebook video uploads must be 190MB or smaller.');
+      return;
+    }
+    if (
+      mediaType === 'video' &&
+      selectedSinglePlatform === 'instagram' &&
+      file.size > INSTAGRAM_MAX_VIDEO_BYTES
+    ) {
+      setImageError('Instagram video uploads must be 190MB or smaller.');
       return;
     }
     setPrefilledImageUrl('');
     setPrefilledImageFilePath('');
-    setSelectedImage(file);
-  }, []);
+    setSelectedMediaFile(file);
+  }, [acceptsVideoUpload, selectedSinglePlatform]);
 
   const onDrop = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
@@ -309,7 +412,7 @@ export default function PostSchedulePage() {
   };
 
   const clearImage = () => {
-    setSelectedImage(null);
+    setSelectedMediaFile(null);
     setPrefilledImageUrl('');
     setPrefilledImageFilePath('');
     setPrefilledPosts([]);
@@ -322,7 +425,8 @@ export default function PostSchedulePage() {
   // fresh composer instead of the just-submitted post's caption, image,
   // schedule slots, and selected platforms.
   const resetSchedulerForm = () => {
-    setSelectedImage(null);
+    clearPostSchedulerPrefill();
+    setSelectedMediaFile(null);
     setPrefilledImageUrl('');
     setPrefilledImageFilePath('');
     setPrefilledPosts([]);
@@ -335,15 +439,15 @@ export default function PostSchedulePage() {
   };
 
   const previewUrl = useMemo(() => {
-    if (selectedImage) return URL.createObjectURL(selectedImage);
+    if (selectedMediaFile) return URL.createObjectURL(selectedMediaFile);
     return prefilledImageUrl;
-  }, [selectedImage, prefilledImageUrl]);
+  }, [selectedMediaFile, prefilledImageUrl]);
 
   useEffect(() => {
     return () => {
-      if (previewUrl && selectedImage) URL.revokeObjectURL(previewUrl);
+      if (previewUrl && selectedMediaFile) URL.revokeObjectURL(previewUrl);
     };
-  }, [previewUrl, selectedImage]);
+  }, [previewUrl, selectedMediaFile]);
 
   // UTC ISO string sent to the backend. `new Date(naive)` interprets the
   // naive `YYYY-MM-DDTHH:mm` string as the browser's local time, then
@@ -357,6 +461,8 @@ export default function PostSchedulePage() {
 
   const isMultiPrefilledSchedule = isPrefilledFlow && prefilledPosts.length > 1;
   const isSinglePrefilledSchedule = isPrefilledFlow && prefilledPosts.length === 1;
+  /** Gallery / product-advert prefills carry a fixed image — no clearing it. */
+  const canRemoveImage = !isPrefilledFlow;
   const hasValidPlatformTarget = isPrefilledFlow
     ? prefilledPosts.length > 0 &&
     prefilledPosts.every((post) => PLATFORM_ORDER.includes(post.platform))
@@ -364,6 +470,17 @@ export default function PostSchedulePage() {
   const hasCompletePlatformSchedules =
     schedulePlatforms.length > 0 &&
     schedulePlatforms.every((platform) => getScheduledAtIso(platform).length > 0);
+  const hasPastPlatformSchedules =
+    hasCompletePlatformSchedules &&
+    schedulePlatforms.some((platform) => {
+      const slot = platformSchedules[platform];
+      return Boolean(
+        slot?.date && slot?.time && isScheduleTimeInPast(slot.date, slot.time)
+      );
+    });
+  const pastScheduleTimeError = hasPastPlatformSchedules
+    ? PAST_SCHEDULE_TIME_MESSAGE
+    : null;
   const hasAllPlatformCaptions =
     !isMultiPrefilledSchedule ||
     prefilledPosts.some((post) => post.message.trim().length > 0);
@@ -371,9 +488,11 @@ export default function PostSchedulePage() {
     (isPrefilledFlow
       ? hasAllPlatformCaptions || message.trim().length > 0
       : message.trim().length > 0) &&
-    hasImage &&
+    hasMedia &&
     hasValidPlatformTarget &&
     hasCompletePlatformSchedules &&
+    !hasPastPlatformSchedules &&
+    !hasInvalidVideoPlatformSelection &&
     hasSelectablePlatforms &&
     !showSelectAccountsFirst;
 
@@ -384,9 +503,13 @@ export default function PostSchedulePage() {
   useEffect(() => {
     const prefillParam = searchParams.get('prefill');
     const shouldPrefill =
-      prefillParam === 'product-advert' || prefillParam === 'gallery';
+      prefillParam === 'product-advert' ||
+      prefillParam === 'gallery' ||
+      prefillParam === 'carousel';
     if (!shouldPrefill) return;
-    const payload = consumePostSchedulerPrefill() as
+    // Peek (do not clear) so React Strict Mode remounts can re-apply carousel /
+    // video slides. Cleared only after a successful schedule via resetSchedulerForm.
+    const payload = peekPostSchedulerPrefill() as
       | PostSchedulerPrefillPayload
       | null;
     if (!payload) return;
@@ -396,12 +519,48 @@ export default function PostSchedulePage() {
         .map((item) => {
           const rawSource = item?.source;
           const source: PostSchedulerPrefillSource | undefined =
-            rawSource === 'instant-generation' || rawSource === 'productadvert'
+            rawSource === 'instant-generation' ||
+            rawSource === 'productadvert' ||
+            rawSource === 'videoGeneration' ||
+            rawSource === 'carouselGeneratedPosts'
               ? rawSource
               : undefined;
+          const carouselSlides = Array.isArray(item?.carouselSlides)
+            ? item.carouselSlides
+                .map((slide, i) => ({
+                  index:
+                    typeof slide?.index === 'number' ? slide.index : i + 1,
+                  imageUrl: String(slide?.imageUrl ?? '').trim(),
+                  imageFilePath: String(slide?.imageFilePath ?? '').trim(),
+                  headline:
+                    typeof slide?.headline === 'string' ? slide.headline : null,
+                  purpose:
+                    typeof slide?.purpose === 'string' ? slide.purpose : null,
+                  visualType:
+                    typeof slide?.visualType === 'string'
+                      ? slide.visualType
+                      : null,
+                }))
+                .filter((s) => s.imageUrl && s.imageFilePath)
+            : undefined;
           return {
             imageUrl: String(item?.imageUrl ?? '').trim(),
             imageFilePath: String(item?.imageFilePath ?? '').trim(),
+            mediaType:
+              item?.mediaType === 'video' ||
+              item?.mediaType === 'image' ||
+              item?.mediaType === 'carousel'
+                ? item.mediaType
+                : carouselSlides && carouselSlides.length >= 2
+                  ? ('carousel' as const)
+                  : undefined,
+            videoUrl: String(item?.videoUrl ?? '').trim(),
+            videoFilePath: String(item?.videoFilePath ?? '').trim(),
+            videoPosterUrl: String(item?.videoPosterUrl ?? '').trim(),
+            videoPosterPath: String(item?.videoPosterPath ?? '').trim(),
+            ...(carouselSlides && carouselSlides.length >= 2
+              ? { carouselSlides }
+              : {}),
             message: String(item?.message ?? '').trim(),
             platform: String(item?.platform ?? '').toLowerCase() as SchedulerPlatform,
             source,
@@ -409,15 +568,32 @@ export default function PostSchedulePage() {
         })
         .filter(
           (item) =>
-            !!item.imageUrl &&
+            (item.mediaType === 'carousel'
+              ? (item.carouselSlides?.length ?? 0) >= 2
+              : item.mediaType === 'video'
+                ? !!item.videoUrl && !!item.videoFilePath
+                : !!item.imageUrl) &&
             PLATFORM_ORDER.includes(item.platform)
         )
       : [];
     if (parsedPosts.length > 0) {
+      const first = parsedPosts[0];
+      const previewUrl =
+        first.mediaType === 'video'
+          ? first.videoPosterUrl || first.imageUrl || first.videoUrl
+          : first.mediaType === 'carousel'
+            ? first.carouselSlides?.[0]?.imageUrl || first.imageUrl
+            : first.imageUrl;
       setIsPrefilledFlow(true);
       setPrefilledPosts(parsedPosts);
-      setPrefilledImageUrl(parsedPosts[0].imageUrl);
-      setPrefilledImageFilePath(parsedPosts[0].imageFilePath);
+      setPrefilledImageUrl(previewUrl);
+      setPrefilledImageFilePath(
+        first.mediaType === 'video'
+          ? ''
+          : first.mediaType === 'carousel'
+            ? first.carouselSlides?.[0]?.imageFilePath || first.imageFilePath
+            : first.imageFilePath
+      );
       setPrefilledSource(parsedPosts[0].source);
       setMessage(parsedPosts[0].message);
     }
@@ -462,23 +638,65 @@ export default function PostSchedulePage() {
                 `Choose a schedule time for ${formatPlatformLabel(post.platform)}.`
               );
             }
-            const pathReady = post.imageFilePath.trim().length > 0;
-            if (pathReady) {
-              return scheduleUserPost({
-                imageFilePath: post.imageFilePath,
-                imageUrl: post.imageUrl,
-                message: post.message || message,
-                time: scheduledAtIso,
-                platform: post.platform,
-                ...(post.source ? { source: post.source } : {}),
-              });
+            const isVideoPost = post.mediaType === 'video';
+            const isCarouselPost = post.mediaType === 'carousel';
+            const videoFilePath = String(post.videoFilePath ?? '').trim();
+            const videoUrl = String(post.videoUrl ?? '').trim();
+            const carouselSlides = Array.isArray(post.carouselSlides)
+              ? post.carouselSlides.filter(
+                  (s) =>
+                    String(s.imageUrl ?? '').trim() &&
+                    String(s.imageFilePath ?? '').trim()
+                )
+              : [];
+            const pathReady = isCarouselPost
+              ? carouselSlides.length >= 2
+              : isVideoPost
+                ? videoFilePath.length > 0 && videoUrl.length > 0
+                : post.imageFilePath.trim().length > 0;
+            if (isCarouselPost && carouselSlides.length < 2) {
+              throw new Error(
+                'Carousel posts need at least 2 slides with saved image paths.'
+              );
             }
-            const fileFromUrl = await buildFileFromImageUrl(post.imageUrl, 0);
+            if (!pathReady) {
+              throw new Error(
+                isVideoPost
+                  ? 'Video post is missing videoFilePath / videoUrl. Re-open from the gallery or generate again.'
+                  : isCarouselPost
+                    ? 'Carousel posts need at least 2 slides with saved image paths.'
+                    : 'Image post is missing imageFilePath / imageUrl.'
+              );
+            }
             return scheduleUserPost({
-              file: fileFromUrl,
+              ...(isCarouselPost
+                ? {
+                    mediaType: 'carousel' as const,
+                    carouselSlides,
+                    imageFilePath:
+                      carouselSlides[0]?.imageFilePath || post.imageFilePath,
+                    imageUrl: carouselSlides[0]?.imageUrl || post.imageUrl,
+                  }
+                : isVideoPost
+                  ? {
+                      mediaType: 'video' as const,
+                      videoFilePath,
+                      videoUrl,
+                      ...(post.videoPosterPath
+                        ? { videoPosterPath: post.videoPosterPath }
+                        : {}),
+                      ...(post.videoPosterUrl
+                        ? { videoPosterUrl: post.videoPosterUrl }
+                        : {}),
+                    }
+                  : {
+                      imageFilePath: post.imageFilePath,
+                      imageUrl: post.imageUrl,
+                    }),
               message: post.message || message,
               time: scheduledAtIso,
               platform: post.platform,
+              ...(post.source ? { source: post.source } : {}),
             });
           })
         );
@@ -516,9 +734,10 @@ export default function PostSchedulePage() {
               `Choose a schedule time for ${formatPlatformLabel(platformKey)}.`
             );
           }
-          if (selectedImage) {
+          if (selectedMediaFile) {
             return scheduleUserPost({
-              file: selectedImage,
+              file: selectedMediaFile,
+              mediaType: selectedMediaType ?? 'image',
               message,
               time: scheduledAtIso,
               platform: platformKey,
@@ -546,7 +765,7 @@ export default function PostSchedulePage() {
               platform: platformKey,
             });
           }
-          throw new Error('Please attach an image before scheduling.');
+          throw new Error('Please attach media before scheduling.');
         })
       );
       toast.success(
@@ -559,7 +778,7 @@ export default function PostSchedulePage() {
       }
       resetSchedulerForm();
     } catch (error) {
-      showErrorToast(error instanceof Error ? error.message : 'Failed to schedule post');
+      showErrorToast('Failed to schedule post');
     } finally {
       setPostLoading(false);
     }
@@ -635,14 +854,46 @@ export default function PostSchedulePage() {
                         : 'border-slate-200 bg-slate-50/50 hover:border-slate-300 hover:bg-slate-100/50'
                   )}
                 >
-                  {hasImage ? (
+                  {hasMedia ? (
                     <div className="p-4 relative flex justify-center">
                       <div className="relative group rounded-xl overflow-hidden shadow-sm">
-                        <img
-                          src={previewUrl ?? ''}
-                          alt="Post preview"
-                          className="max-h-[300px] object-contain bg-slate-100"
-                        />
+                        {selectedMediaType === 'video' && selectedMediaFile ? (
+                          <video
+                            controls
+                            className="max-h-[300px] object-contain bg-black"
+                            src={previewUrl ?? ''}
+                          />
+                        ) : prefilledMediaType === 'video' &&
+                          singlePrefilledPost?.videoUrl ? (
+                          <video
+                            controls
+                            poster={singlePrefilledPost.videoPosterUrl || prefilledImageUrl}
+                            className="max-h-[300px] object-contain bg-black"
+                            src={singlePrefilledPost.videoUrl}
+                          />
+                        ) : prefilledMediaType === 'carousel' &&
+                          (singlePrefilledPost?.carouselSlides?.length ?? 0) >=
+                            2 ? (
+                          <div className="w-full max-w-sm">
+                            <CarouselSwipePreview
+                              slides={(
+                                singlePrefilledPost?.carouselSlides ?? []
+                              ).map((s) => ({
+                                index: s.index,
+                                imageUrl: s.imageUrl,
+                                headline: s.headline,
+                              }))}
+                              imageClassName="max-h-[300px] object-contain bg-slate-100"
+                              showCaptions
+                            />
+                          </div>
+                        ) : (
+                          <img
+                            src={previewUrl ?? ''}
+                            alt="Post preview"
+                            className="max-h-[300px] object-contain bg-slate-100"
+                          />
+                        )}
                         {isSinglePrefilledSchedule && prefilledPosts[0]?.platform && (
                           <p className="mt-3 text-center">
                             <span className="inline-flex rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">
@@ -650,7 +901,7 @@ export default function PostSchedulePage() {
                             </span>
                           </p>
                         )}
-                        {prefilledImageUrl && !selectedImage ? (
+                        {prefilledImageUrl && !selectedMediaFile ? (
                           <div className="absolute top-2 left-2 z-10">
                             <ImagePreviewButton
                               variant="overlay-icon"
@@ -663,29 +914,31 @@ export default function PostSchedulePage() {
                             />
                           </div>
                         ) : null}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button
-                            type="button"
-                            onClick={clearImage}
-                            disabled={imageAreaDisabled}
-                            className="rounded-full bg-white/90 p-2 text-red-600 shadow-sm hover:scale-110 transition-transform disabled:opacity-50"
-                            aria-label="Remove image"
-                          >
-                            <svg
-                              className="h-5 w-5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
+                        {canRemoveImage ? (
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={clearImage}
+                              disabled={imageAreaDisabled}
+                              className="rounded-full bg-white/90 p-2 text-red-600 shadow-sm hover:scale-110 transition-transform disabled:opacity-50"
+                              aria-label="Remove image"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        </div>
+                              <svg
+                                className="h-5 w-5"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   ) : (
@@ -697,7 +950,7 @@ export default function PostSchedulePage() {
                     >
                       <input
                         type="file"
-                        accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                        accept={fileInputAccept}
                         onChange={onFileInputChange}
                         disabled={imageAreaDisabled}
                         className="sr-only"
@@ -708,7 +961,11 @@ export default function PostSchedulePage() {
                           imageAreaDisabled ? 'opacity-50' : 'text-indigo-500'
                         )}
                       >
-                        <ImageIcon className="h-6 w-6" />
+                        {acceptsVideoUpload ? (
+                          <Film className="h-6 w-6" />
+                        ) : (
+                          <ImageIcon className="h-6 w-6" />
+                        )}
                       </div>
                       <div className="text-center">
                         <span className="text-sm font-medium text-slate-700 block">
@@ -719,7 +976,13 @@ export default function PostSchedulePage() {
                         <span className="text-xs text-slate-500 mt-1 block">
                           {imageAreaDisabled
                             ? "You're creating a text-only post"
-                            : 'SVG, PNG, JPG or GIF (max. 5MB)'}
+                            : acceptsVideoUpload && selectedSinglePlatform === 'facebook'
+                                ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is Facebook-only here.'
+                                : acceptsVideoUpload && selectedSinglePlatform === 'instagram'
+                                  ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is Instagram-only here.'
+                                : acceptsVideoUpload && selectedSinglePlatform === 'linkedin'
+                                  ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is LinkedIn-only here.'
+                                  : 'SVG, PNG, JPG or GIF'}
                         </span>
                       </div>
                     </label>
@@ -749,7 +1012,7 @@ export default function PostSchedulePage() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder={
-                    hasImage
+                    hasMedia
                       ? 'Add a captivating caption...'
                       : 'What do you want to share?'
                   }
@@ -773,17 +1036,26 @@ export default function PostSchedulePage() {
                     className="rounded-xl border border-slate-200 bg-slate-50 p-2"
                   >
                     <div className="relative">
-                      <img
-                        src={post.imageUrl}
-                        alt={formatPlatformLabel(post.platform)}
-                        className="w-full rounded-lg object-contain bg-white border border-slate-100 aspect-square"
-                      />
+                      {post.mediaType === 'video' && post.videoUrl ? (
+                        <video
+                          controls
+                          poster={post.videoPosterUrl || post.imageUrl}
+                          className="w-full rounded-lg border border-slate-100 bg-black aspect-square object-contain"
+                          src={post.videoUrl}
+                        />
+                      ) : (
+                        <img
+                          src={post.imageUrl}
+                          alt={formatPlatformLabel(post.platform)}
+                          className="w-full rounded-lg object-contain bg-white border border-slate-100 aspect-square"
+                        />
+                      )}
                       <div className="absolute top-1.5 right-1.5">
                         <ImagePreviewButton
                           variant="overlay-icon"
                           onClick={() =>
                             imagePreview.open(
-                              post.imageUrl,
+                              post.videoPosterUrl || post.imageUrl,
                               `${formatPlatformLabel(post.platform)} prefilled post`
                             )
                           }
@@ -983,7 +1255,16 @@ export default function PostSchedulePage() {
                 Select a platform to choose a schedule time.
               </p>
             )}
+            {hasInvalidVideoPlatformSelection && (
+              <p className="text-xs text-amber-700">
+                MP4 uploads can only be scheduled as a single-platform Facebook, Instagram, or LinkedIn post.
+              </p>
+            )}
           </div>
+
+          {pastScheduleTimeError && (
+            <p className="text-sm text-red-600">{pastScheduleTimeError}</p>
+          )}
 
           <button
             type="button"

@@ -203,12 +203,8 @@ function SelectFacebookPageModal({
         onOpenChange(false);
         onSuccess();
       }
-    } catch (error: unknown) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'Failed to select Facebook page';
-      showErrorToast(msg);
+    } catch {
+      showErrorToast('Failed to select Facebook page');
     }
   };
 
@@ -287,12 +283,8 @@ function SelectLinkedInPageModal({
         onOpenChange(false);
         onSuccess();
       }
-    } catch (error: unknown) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'Failed to select LinkedIn page';
-      showErrorToast(msg);
+    } catch {
+      showErrorToast('Failed to select LinkedIn page');
     }
   };
 
@@ -425,12 +417,8 @@ export default function AIEnginePage() {
         selected,
       });
       setLocalSelected(selected);
-    } catch (error: unknown) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'Failed to fetch AI Engine Details';
-      showErrorToast(msg);
+    } catch {
+      showErrorToast('Failed to fetch AI Engine Details');
     } finally {
       if (!opts?.silent) setDataLoading(false);
     }
@@ -581,12 +569,8 @@ export default function AIEnginePage() {
       await selectSocialPlatformApi(localSelected);
       setConfirmSelectionOpen(false);
       await getDetails({ silent: true });
-    } catch (error: unknown) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : 'Failed to save platform selection';
-      showErrorToast(msg);
+    } catch {
+      showErrorToast('Failed to save platform selection');
     } finally {
       setSavingSelection(false);
     }

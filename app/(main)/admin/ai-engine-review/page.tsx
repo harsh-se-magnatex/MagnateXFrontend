@@ -35,6 +35,7 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
+import { ImagePreviewButton, ImagePreviewOverlay, useImagePreview } from '@/components/image-preview';
 
 const PLATFORMS: AiEnginePlatform[] = ['instagram', 'facebook', 'linkedin'];
 
@@ -72,6 +73,7 @@ export default function AdminAiEngineReviewPage() {
   // Server-provided upper bound — the picker is clamped to this so admins
   // cannot query future dates (the daily cron has not run for them yet).
   const [maxDate, setMaxDate] = useState<string>('');
+  const [displayDate, setDisplayDate] = useState<string>('');
   const [timezone, setTimezone] = useState<string>('Asia/Kolkata');
   const [rows, setRows] = useState<AiEngineReviewRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -119,15 +121,12 @@ export default function AdminAiEngineReviewPage() {
         setRows(payload.rows);
         setDate(payload.date);
         setTimezone(payload.timezone);
-        setMaxDate(payload.today);
+        setMaxDate(new Date(Date.now() + 86400000).toISOString().split('T')[0]);
+        setDisplayDate(payload.date);
         if (!dateInput) setDateInput(payload.date);
       } catch (err) {
         if (!silent) {
-          showErrorToast(
-            err instanceof Error
-              ? err.message
-              : 'Failed to load AI engine review'
-          );
+          showErrorToast('Failed to load AI engine review');
         }
       } finally {
         if (!isMountedRef.current) return;
@@ -152,13 +151,6 @@ export default function AdminAiEngineReviewPage() {
       e.preventDefault();
       const requested = dateInput.trim();
       if (!requested) return;
-      // Client-side guardrail; the backend rejects future dates too.
-      if (maxDate && requested > maxDate) {
-        showErrorToast(
-          `Future dates are not supported. The latest reviewable date is ${maxDate}.`
-        );
-        return;
-      }
       fetchReview(requested, { initial: false });
     },
     [dateInput, fetchReview, maxDate]
@@ -241,11 +233,7 @@ export default function AdminAiEngineReviewPage() {
             ? { ...prev, cell: previousCell }
             : prev
         );
-        showErrorToast(
-          err instanceof Error
-            ? err.message
-            : 'Failed to trigger AI engine job'
-        );
+        showErrorToast('Failed to trigger AI engine job');
       } finally {
         setPendingActions((prev) => {
           if (!(key in prev)) return prev;
@@ -271,22 +259,18 @@ export default function AdminAiEngineReviewPage() {
 
   const stats = useMemo(() => {
     let scheduled = 0;
-    let running = 0;
     let failed = 0;
     let none = 0;
-    let totalCells = 0;
     for (const row of rows) {
       for (const platform of row.selectedPlatforms) {
         const cell = row.cells[platform];
         if (!cell) continue;
-        totalCells += 1;
         if (cell.state === 'scheduled') scheduled += 1;
-        else if (cell.state === 'running') running += 1;
         else if (cell.state === 'failed') failed += 1;
-        else none += 1;
+        else if (cell.state === 'none' || cell.state === 'running') none += 1;
       }
     }
-    return { scheduled, running, failed, none, totalCells };
+    return { scheduled, failed, none };
   }, [rows]);
 
   if (!user?.admin) return null;
@@ -301,7 +285,7 @@ export default function AdminAiEngineReviewPage() {
           <p className="mt-2 text-sm text-white/60">
             Per-user × per-platform check for the daily AI-engine generation.
             Showing posts scheduled for{' '}
-            <span className="font-semibold text-white">{date || '—'}</span>
+            <span className="font-semibold text-white">{new Date(date).toLocaleDateString().split('/').join('-') || '—'}</span>
             {timezone ? (
               <span className="text-white/40"> ({timezone})</span>
             ) : null}
@@ -361,20 +345,12 @@ export default function AdminAiEngineReviewPage() {
       </form>
 
       {/* Stats strip */}
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        <StatPill label="Eligible cells" value={stats.totalCells} tone="muted" />
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <StatPill
           label="Generated"
           value={stats.scheduled}
           tone="success"
           icon={CheckCircle2}
-        />
-        <StatPill
-          label="Running"
-          value={stats.running}
-          tone="info"
-          icon={Loader2}
-          spinIcon
         />
         <StatPill
           label="Missing"
@@ -452,30 +428,77 @@ export default function AdminAiEngineReviewPage() {
                     {PLATFORMS.map((platform) => {
                       const isSelected =
                         row.selectedPlatforms.includes(platform);
-                      const cell = row.cells[platform];
+                      const cell = row.cells[platform] ?? {
+                        state: 'none' as const,
+                        scheduledPostId: null,
+                        imageUrl: null,
+                        postStatus: null,
+                        preferredTime: null,
+                        optimalFacebookTime: null,
+                        optimalInstagramTime: null,
+                        optimalLinkedinTime: null,
+                        useAnalyticsOptimalPostingTime: null,
+                        UserApprovalStatus: null,
+                        error: null,
+                        startedAt: null,
+                        updatedAt: null,
+                        contentType: null,
+                        contentDescription: null,
+                      };
                       const key = actionKey(row.userId, platform);
                       const pending = pendingActions[key];
                       return (
                         <td key={platform} className="px-4 py-4">
-                          {!isSelected || !cell ? (
-                            <span className="text-xs text-white/30">
-                              — Not selected
-                            </span>
-                          ) : (
-                            <CellView
-                              cell={cell}
-                              pending={pending}
-                              onView={() =>
-                                setPreviewCell({ row, platform, cell })
-                              }
-                              onGenerate={() =>
-                                handleAction(row, platform, 'generate')
-                              }
-                              onRegenerate={() =>
-                                handleAction(row, platform, 'regenerate')
-                              }
-                            />
-                          )}
+                          <div
+                            className={`rounded-xl border-2 p-3 ${
+                              isSelected
+                                ? 'border-emerald-400/80 bg-emerald-500/10'
+                                : 'border-red-400/70 bg-red-500/10'
+                            }`}
+                          >
+                            <div
+                              className={`mb-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                                isSelected
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : 'bg-red-500/20 text-red-300'
+                              }`}
+                            >
+                              {isSelected ? 'Selected' : 'Not selected'}
+                            </div>
+                            {isSelected ? (
+                              <CellView
+                              targetDate={displayDate}
+                                cell={cell}
+                                pending={pending}
+                                onView={() =>
+                                  setPreviewCell({ row, platform, cell })
+                                }
+                                onGenerate={() =>
+                                  handleAction(row, platform, 'generate')
+                                }
+                                onRegenerate={() =>
+                                  handleAction(row, platform, 'regenerate')
+                                }
+                              />
+                            ) : cell.state === 'scheduled' && cell.imageUrl ? (
+                              <CellView
+                                targetDate={displayDate}
+                                cell={cell}
+                                pending={undefined}
+                                onView={() =>
+                                  setPreviewCell({ row, platform, cell })
+                                }
+                                onGenerate={() => undefined}
+                                onRegenerate={() => undefined}
+                                actionsLocked
+                              />
+                            ) : (
+                              <p className="text-xs text-red-200/80">
+                                Platform locked — user has not selected{' '}
+                                {PLATFORM_LABEL[platform]}.
+                              </p>
+                            )}
+                          </div>
                         </td>
                       );
                     })}
@@ -591,20 +614,31 @@ function StateBadge({ state }: { state: AiEngineCellState }) {
 }
 
 function CellView({
+  targetDate,
   cell,
   pending,
   onView,
   onGenerate,
   onRegenerate,
+  actionsLocked = false,
 }: {
+  targetDate: string;
   cell: AiEngineReviewCell;
   pending: ActionKind | undefined;
   onView: () => void;
   onGenerate: () => void;
   onRegenerate: () => void;
+  /** Hide generate/regenerate (platform not selected). */
+  actionsLocked?: boolean;
 }) {
+  const today = new Date();
+  const compareDate = new Date(targetDate);
+  const isToday = compareDate.toISOString().split('T')[0] === today.toISOString().split('T')[0];
+  const isPast = compareDate < today;
   const isLocked =
-    pending !== undefined || (cell.state === 'running' && !pending);
+    actionsLocked ||
+    pending !== undefined ||
+    (cell.state === 'running' && !pending);
   return (
     <div className="flex items-start gap-3">
       <Thumbnail cell={cell} onClick={cell.imageUrl ? onView : undefined} />
@@ -631,7 +665,17 @@ function CellView({
           </div>
         ) : null}
         <div className="flex flex-wrap items-center gap-2">
-          {cell.state === 'scheduled' ? (
+          {actionsLocked ? (
+            cell.state === 'scheduled' ? (
+              <button
+                type="button"
+                onClick={onView}
+                className="rounded-md border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-white/80 hover:bg-white/10 transition"
+              >
+                View
+              </button>
+            ) : null
+          ) : cell.state === 'scheduled' ? (
             <>
               <button
                 type="button"
@@ -640,6 +684,7 @@ function CellView({
               >
                 View
               </button>
+                {isToday || isPast? null  : (
               <button
                 type="button"
                 onClick={onRegenerate}
@@ -653,7 +698,7 @@ function CellView({
                 )}
                 Regenerate
               </button>
-            </>
+                )}</>
           ) : cell.state === 'running' ? (
             <span className="inline-flex items-center gap-1 text-[11px] text-cyan-200/80">
               <Loader2 className="h-3 w-3 animate-spin" />
@@ -731,13 +776,14 @@ function PreviewModal({
 }) {
   const Icon = PLATFORM_ICON[platform];
   const isLocked = pending !== undefined || cell.state === 'running';
+  const imagePreview = useImagePreview();
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#0F162E] text-white shadow-2xl"
+        className="w-full max-w-2xl overflow-hidden overflow-y-auto max-h-[90vh] rounded-2xl border border-white/10 bg-[#0F162E] text-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
@@ -764,11 +810,27 @@ function PreviewModal({
           <div className="relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-black/40">
             {cell.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
+              <div>
+
               <img
                 src={cell.imageUrl}
                 alt="Generated post"
                 className="h-full w-full object-cover"
-              />
+                />
+                  {cell.imageUrl ? (
+                <div className="absolute bottom-2 right-2">
+                  <ImagePreviewButton
+                    variant="overlay-icon"
+                    stopPropagation
+                    onClick={() =>
+                      imagePreview.open(
+                        cell.imageUrl as string
+                      )
+                    }
+                  />
+                </div>
+              ) : null}
+                </div>
             ) : (
               <div className="flex h-full w-full items-center justify-center text-white/40">
                 <ImageIcon className="h-10 w-10" />
@@ -783,6 +845,12 @@ function PreviewModal({
             <KV label="Scheduled post id" value={cell.scheduledPostId} />
             <KV label="Admin status" value={cell.postStatus} />
             <KV label="User approval" value={cell.UserApprovalStatus} />
+            {platform==='facebook' && cell.preferredTime && !cell.optimalFacebookTime ? <KV label="Preferred time" value={cell.preferredTime} /> : null}
+            {platform==='instagram' && cell.preferredTime && !cell.optimalInstagramTime ? <KV label="Preferred time" value={cell.preferredTime} /> : null}
+            {platform==='linkedin' && cell.preferredTime && !cell.optimalLinkedinTime ? <KV label="Preferred time" value={cell.preferredTime} /> : null}
+            {platform==='facebook' && cell.optimalFacebookTime ? <KV label="Optimal Facebook time" value={cell.optimalFacebookTime} /> : null}
+            {platform==='instagram' && cell.optimalInstagramTime ? <KV label="Optimal Instagram time" value={cell.optimalInstagramTime} /> : null}
+            {platform==='linkedin' && cell.optimalLinkedinTime ? <KV label="Optimal Linkedin time" value={cell.optimalLinkedinTime} /> : null}
             <KV label="Content type" value={cell.contentType} />
             <KV
               label="Content description"
@@ -843,6 +911,11 @@ function PreviewModal({
           )}
         </div>
       </div>
+      <ImagePreviewOverlay
+        src={imagePreview.previewUrl}
+        alt={imagePreview.previewAlt}
+        onClose={imagePreview.close}
+      />
     </div>
   );
 }

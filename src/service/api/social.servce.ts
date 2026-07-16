@@ -1,5 +1,4 @@
 import axiosClient from '@/lib/axios';
-import type { ActivePlatformJob } from '@/src/types/job';
 
 export const addSchedulePost = async (
   message: string,
@@ -80,7 +79,7 @@ export const getScheduledPostsInRange = async (params: {
   return response.data;
 };
 
-export type AdminPendingScheduledPostsTab = 'today' | 'past' | 'future';
+export type AdminPendingScheduledPostsTab = 'today' | 'future';
 
 export const getAdminPendingScheduledPosts = async (params: {
   tab: AdminPendingScheduledPostsTab;
@@ -111,10 +110,10 @@ export type AutomatedPostEventPayload = {
   reason: string;
 };
 
-/** 202 envelope returned by `POST /api/v1/automated-post/create-automated-post`. */
+/** Sync response from `POST /api/v1/automated-post/create-automated-post`. */
 export type CreateAutomatedPostResponse = {
-  parentJobId: string;
-  jobs: ActivePlatformJob[];
+  successCount: number;
+  failedCount: number;
   eventCount: number;
 };
 

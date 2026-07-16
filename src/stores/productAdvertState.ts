@@ -28,6 +28,16 @@ export type AdvertResult = {
   logoVariantCount?: number;
   marketingTagline?: string;
   productAdvertDocId?: string | null;
+  videoCaption?: string | null;
+  videoUrl?: string | null;
+  videoFilePath?: string | null;
+  videoPosterUrl?: string | null;
+  videoPosterFilePath?: string | null;
+  videoAspectRatio?: string | null;
+  videoDurationSeconds?: number | null;
+  videoStatus?: 'idle' | 'queued' | 'processing' | 'ready' | 'failed';
+  videoStartFrameUrl?: string | null;
+  videoStartFrameSource?: 'scene' | 'logo-removed' | 'logo-card' | null;
 };
 
 export type AdvertFinalResult = {

@@ -1,5 +1,12 @@
 import type { Metadata } from 'next';
-import { Sora, DM_Sans, Geist_Mono, Geist } from 'next/font/google';
+import {
+  Sora,
+  DM_Sans,
+  Bricolage_Grotesque,
+  Inter,
+  Geist_Mono,
+  Geist,
+} from 'next/font/google';
 import { AnalyticsProvider } from '@/components/AnalyticsProvider';
 import { CookieBanner } from '@/components/CookieBanner';
 import { Toaster } from '@/components/ui/sonner';
@@ -16,6 +23,22 @@ const sora = Sora({
 
 const dmSans = DM_Sans({
   variable: '--font-dm-sans',
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
+});
+
+
+const bricolage = Bricolage_Grotesque({
+  variable: '--font-bricolage',
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
   display: 'swap',
   weight: ['400', '500', '600', '700'],
@@ -86,7 +109,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/logo.png" type="image/png" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#4A8FF6" />
         {/* Explicit tags for Meta crawlers (Sharing Debugger often misses Next metadata alone) */}
@@ -94,7 +116,7 @@ export default function RootLayout({
         <meta property="fb:app_id" content="949135284535930" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased text-foreground min-h-screen relative`}
+        className={`${sora.variable} ${dmSans.variable} ${bricolage.variable} ${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased text-foreground min-h-screen relative`}
       >
         {children}
         <Toaster />

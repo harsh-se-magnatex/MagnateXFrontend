@@ -12,7 +12,6 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
-import { useFeatureJob } from '@/src/hooks/useFeatureJob';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
@@ -42,7 +41,6 @@ import {
   X,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { Progress } from '@/components/ui/progress';
 
 const MAX_MEMORY_LAYER_PDF_BYTES = 50 * 1024 * 1024;
 
@@ -142,20 +140,7 @@ export default function TemplateDnaMemoryLayerPage() {
   const [activeTab, setActiveTab] = useState<'questionnaire' | 'images'>(
     'questionnaire'
   );
-  const memoryLayerJob = useFeatureJob('memory-layer');
-  const {
-    onGenerated: onMemoryLayerJobGenerated,
-    overallPct: memoryLayerJobPct,
-    isRunning: memoryLayerJobRunning,
-    anyFailed: memoryLayerJobFailed,
-  } = memoryLayerJob;
-  const isExtracting =
-    uploadingPdf || uploadingPhotos || memoryLayerJobRunning;
-  const extractProgress = memoryLayerJobRunning
-    ? memoryLayerJobPct
-    : uploadingPdf || uploadingPhotos
-      ? 12
-      : 0;
+  const isExtracting = uploadingPdf || uploadingPhotos;
   const [memoryLayerEnabled, setMemoryLayerEnabled] = useState<
     boolean | undefined
   >(undefined);
@@ -176,7 +161,7 @@ export default function TemplateDnaMemoryLayerPage() {
       }
     } catch (e) {
       setMemoryLayerEnabled(previous);
-      showErrorToast(e instanceof Error ? e.message : 'Update failed');
+      showErrorToast('Update failed');
     } finally {
       setSavingMemoryLayerPref(false);
     }
@@ -195,7 +180,7 @@ export default function TemplateDnaMemoryLayerPage() {
       setMemoryLayerEnabled(res.data.memoryLayerEnabled);
     } catch (e) {
       if (!opts?.silent) {
-        showErrorToast(e instanceof Error ? e.message : 'Load failed');
+        showErrorToast('Load failed');
       }
     } finally {
       if (!opts?.silent) setLoading(false);
@@ -209,24 +194,6 @@ export default function TemplateDnaMemoryLayerPage() {
   useEffect(() => {
     if (user) void load();
   }, [user, load]);
-
-  const memoryLayerWasRunningRef = useRef(false);
-  useEffect(() => {
-    if (memoryLayerJobRunning) {
-      memoryLayerWasRunningRef.current = true;
-      return;
-    }
-    if (!memoryLayerWasRunningRef.current) return;
-    memoryLayerWasRunningRef.current = false;
-    void load({ silent: true });
-    if (memoryLayerJobFailed) {
-      showErrorToast(
-        'Image processing failed. Try again or upload images manually.'
-      );
-    } else {
-      toast.success('Images processed');
-    }
-  }, [memoryLayerJobRunning, memoryLayerJobFailed, load]);
 
   useEffect(() => {
     const photos = memory?.brandPhotos;
@@ -333,7 +300,7 @@ export default function TemplateDnaMemoryLayerPage() {
       await load();
       toast.success('Answers saved');
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'Save failed');
+      showErrorToast('Save failed');
     } finally {
       setSavingAnswers(false);
     }
@@ -356,7 +323,7 @@ export default function TemplateDnaMemoryLayerPage() {
       if (raw) setMemory(parseMemory(raw));
       toast.success('Image description saved');
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'Save failed');
+      showErrorToast('Save failed');
     } finally {
       setSavingDescriptionPath(null);
     }
@@ -378,22 +345,16 @@ export default function TemplateDnaMemoryLayerPage() {
       const data = (up as {
         data?: {
           memoryLayer?: unknown;
-          describeJobId?: string;
-          parentJobId?: string;
+          uploaded?: number;
+          described?: number;
         };
       }).data;
-      if (data?.describeJobId && data?.parentJobId) {
-        onMemoryLayerJobGenerated({
-          parentJobId: data.parentJobId,
-          jobs: [{ jobId: data.describeJobId, platform: 'instagram' }],
-        });
-      }
       revokePendingUrls(pendingImages);
       setPendingImages([]);
       if (data?.memoryLayer) setMemory(parseMemory(data.memoryLayer));
       toast.success('Photos uploaded');
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'Upload failed');
+      showErrorToast('Upload failed');
     } finally {
       setUploadingPhotos(false);
     }
@@ -415,18 +376,13 @@ export default function TemplateDnaMemoryLayerPage() {
         throw new Error('PDF upload failed');
       }
       const data = (res as {
-        data?: { parentJobId?: string; jobId?: string };
+        data?: { memoryLayer?: unknown; sourceDocumentId?: string };
       }).data;
-      if (data?.parentJobId && data?.jobId) {
-        onMemoryLayerJobGenerated({
-          parentJobId: data.parentJobId,
-          jobs: [{ jobId: data.jobId, platform: 'instagram' }],
-        });
-      }
+      if (data?.memoryLayer) setMemory(parseMemory(data.memoryLayer));
       setPendingPdf(null);
       toast.success('PDF uploaded');
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'PDF upload failed');
+      showErrorToast('PDF upload failed');
     } finally {
       setUploadingPdf(false);
     }
@@ -445,7 +401,7 @@ export default function TemplateDnaMemoryLayerPage() {
       setMemory(ml);
       toast.success(force ? 'Fresh questions ready' : 'Questions ready');
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'Generation failed');
+      showErrorToast('Generation failed');
     } finally {
       setGenerating(false);
     }
@@ -463,7 +419,7 @@ export default function TemplateDnaMemoryLayerPage() {
       if (ml) setMemory(ml);
       toast.success('Photo removed');
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'Remove failed');
+      showErrorToast('Remove failed');
     }
   };
 
@@ -915,13 +871,10 @@ export default function TemplateDnaMemoryLayerPage() {
             </div>
 
             {isExtracting && (
-              <div className="mb-6 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3 space-y-2">
-                <p className="text-xs font-medium text-violet-800">Extracting</p>
-                <Progress
-                  value={extractProgress}
-                  className="h-1.5 bg-violet-100 **:data-[slot=progress-indicator]:bg-violet-600"
-                />
-              </div>
+              <p className="mb-6 text-xs font-medium text-violet-800 flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Processing upload…
+              </p>
             )}
 
             <div className="mb-8 rounded-xl border border-dashed border-slate-300 bg-slate-500/80 p-4">

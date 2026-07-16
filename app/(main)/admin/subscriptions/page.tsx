@@ -191,9 +191,7 @@ export default function AdminSubscriptionsPage() {
       );
       setConfirmOpen(false);
     } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error ? error.message : 'Failed to activate subscription'
-      );
+      showErrorToast('Failed to activate subscription');
     } finally {
       setSubmitting(false);
     }

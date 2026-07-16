@@ -6,6 +6,7 @@ import {
   GrowthStudioBlock,
   replyQueueLoadStatsInstagram,
 } from "./growth-studio";
+import type { PreloadedReplySuggestions } from "./growth-studio/_common";
 import { InstagramAnalytics, InstagramPost } from "../types";
 import {
   audienceCounts,
@@ -48,6 +49,7 @@ export function InstagramAnalyticsView({
     onExpandedPostChange,
     pageAiContext,
     repliedCommentIds,
+    preloadedReplySuggestions,
   }: {
     ig: InstagramAnalytics | null;
     posts: InstagramPost[];
@@ -56,6 +58,7 @@ export function InstagramAnalyticsView({
     onExpandedPostChange: (p: InstagramPost | null) => void;
     pageAiContext: Record<string, unknown>;
     repliedCommentIds?: string[];
+    preloadedReplySuggestions?: PreloadedReplySuggestions;
   }) {
     const topMedia = useMemo(
       () =>
@@ -295,6 +298,7 @@ export function InstagramAnalyticsView({
           replyGroups={replyGroups}
           replyLoadStats={replyLoadStats}
           pageName={ig?.username}
+          preloadedReplySuggestions={preloadedReplySuggestions}
         />
 
         {cb ? (

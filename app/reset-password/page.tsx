@@ -87,11 +87,7 @@ function ResetPasswordPageContent() {
       } catch (err: unknown) {
         if (cancelled) return;
         setTone('error');
-        showErrorToast(
-          err instanceof Error
-            ? err.message
-            : 'This reset link is invalid or has expired.'
-        );
+        showErrorToast('This reset link is invalid or has expired.');
       } finally {
         if (!cancelled) setCodeChecked(true);
       }
@@ -128,7 +124,7 @@ function ResetPasswordPageContent() {
           showErrorToast('User with this email not found. Please sign up first.');
           return;
         }
-        showErrorToast(res.message || 'Failed to send reset link.');
+        showErrorToast('Failed to send reset link.');
         return;
       }
       setTone('success');
@@ -141,7 +137,7 @@ function ResetPasswordPageContent() {
         showErrorToast('User not found. Please sign up first.');
         return;
       }
-      showErrorToast(err.message || 'Failed to send reset link.');
+      showErrorToast('Failed to send reset link.');
     } finally {
       setLoading(false);
     }
@@ -173,9 +169,7 @@ function ResetPasswordPageContent() {
       setTimeout(() => router.push('/sign-in'), 900);
     } catch (err: unknown) {
       setTone('error');
-      setMessage(
-          err instanceof Error ? err.message : 'Failed to reset password.'
-        );
+      setMessage('Failed to reset password.');
     } finally {
       setLoading(false);
     }

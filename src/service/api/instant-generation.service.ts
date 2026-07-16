@@ -1,19 +1,18 @@
 import axiosClient from '@/lib/axios';
-import type { ActivePlatformJob } from '@/src/types/job';
 
 export type InstantGenerationPlatform = 'instagram' | 'facebook' | 'linkedin';
 
-/**
- * 202 envelope returned by `POST /api/v1/ai-engine/generate`. The same shape
- * covers both single-date (omit `dates`) and batch (one job per requested
- * date, each carrying its own `date`). Frontend opens `onSnapshot` per `jobId`.
- */
-export type GenerateAiEngineResponse = {
-  parentJobId: string;
-  jobs: ActivePlatformJob[];
+export type BatchDayResult = {
+  date: string | null;
+  success: boolean;
+  error?: string;
+  scheduledPostId?: string;
 };
 
-/** Single-day post — server defaults to tomorrow when `dates` is omitted. */
+export type GenerateAiEngineResponse = {
+  results: BatchDayResult[];
+};
+
 export async function generateInstantPostApi(params: {
   userId: string;
   platform: InstantGenerationPlatform;
@@ -30,7 +29,6 @@ export async function generateInstantPostApi(params: {
   return response.data.data;
 }
 
-/** Multi-day batch — one job per (platform, date). Up to 5 dates. */
 export async function generateInstantPostsBatchApi(params: {
   userId: string;
   platform: InstantGenerationPlatform;
@@ -49,15 +47,6 @@ export async function generateInstantPostsBatchApi(params: {
   return response.data.data;
 }
 
-/**
- * What occupies a "blocked" bulk-create cell.
- *  - `ai-engine`: a previous batch / cron run scheduled a post here. The
- *    row carries `scheduledPostId` + (when `includePostPreview`) `post`.
- *  - `campaign`: a campaign draft or scheduled-campaign post is targeting
- *    this (date, platform). The cell renders darker green with a tooltip
- *    instead of opening a preview.
- *  - `null` / missing: cell is free to select.
- */
 export type AiEngineDateSource = 'ai-engine' | 'campaign';
 
 export type AiEngineDateStatusRow = {
@@ -87,12 +76,16 @@ export async function getAiEngineDateStatusApi(params: {
     success: boolean;
     data: AiEngineDateStatusRow[];
     message?: string;
-  }>('/api/v1/ai-engine/generated-dates', {
-    dates: params.dates,
-    platform: params.platform,
-    includePostPreview: params.includePostPreview ?? false,
-  }, {
-    params: { userId: params.userId },
-  });
+  }>(
+    '/api/v1/ai-engine/generated-dates',
+    {
+      dates: params.dates,
+      platform: params.platform,
+      includePostPreview: params.includePostPreview ?? false,
+    },
+    {
+      params: { userId: params.userId },
+    }
+  );
   return response.data?.data || [];
 }

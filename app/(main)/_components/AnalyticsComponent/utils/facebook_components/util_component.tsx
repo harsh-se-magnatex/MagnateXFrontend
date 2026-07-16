@@ -28,6 +28,13 @@ import {
   useTimestampFormatter,
   type TimestampInput,
 } from '@/lib/user-timezone';
+import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
+import { AnalyticsPostMediaCarousel, AnalyticsPostMediaThumbnail } from '@/components/shared/AnalyticsPostMediaCarousel';
+import { resolveSchedulableMediaPreview } from '@/lib/post-media-preview';
+import {
+  collectPostImageUrls,
+  isMultiImageAnalyticsPost,
+} from '@/lib/analytics-post-media';
 
 export function formatChartTooltipDate(raw: string): string {
   const d = new Date(raw.includes('T') ? raw : `${raw}T12:00:00`);
@@ -337,6 +344,22 @@ export function NudgeDudBadge({
   );
 }
 
+function facebookPostMediaPreview(post: Post) {
+  const imageUrls = collectPostImageUrls(post);
+  const isMulti = isMultiImageAnalyticsPost(post);
+  return resolveSchedulableMediaPreview({
+    mediaType:
+      post.mediaType === 'video' || post.type === 'video'
+        ? 'video'
+        : isMulti
+          ? 'carousel'
+          : 'image',
+    imageUrl: imageUrls[0] ?? post.mediaUrl,
+    videoUrl: post.videoUrl,
+    videoPosterUrl: imageUrls[0] ?? post.mediaUrl,
+  });
+}
+
 export function TopPostCard({
   post,
   rank,
@@ -357,25 +380,46 @@ export function TopPostCard({
   const ellipsis = post.message && post.message.length > 160 ? '…' : '';
   const permalink = post.permalinkUrl?.trim();
   const canOpenDetails = Boolean(onExpandImage) && externalSiteName === 'LinkedIn';
+  const mediaPreview = facebookPostMediaPreview(post);
+  const imageUrls = collectPostImageUrls(post);
+  const isCarousel = isMultiImageAnalyticsPost(post) && imageUrls.length > 1;
+  const hasMedia = imageUrls.length > 0 || Boolean(post.videoUrl?.trim());
 
   return (
     <article className="overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-stretch">
-        {post.mediaUrl ? (
+        {hasMedia ? (
           <button
             type="button"
             onClick={() => onExpandImage?.(post)}
             className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-lg border-0 bg-muted p-0 text-left ring-offset-2 transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-border sm:h-auto sm:w-40"
-            aria-label="Open image in larger view"
+            aria-label={
+              isCarousel
+                ? `Open carousel preview, ${imageUrls.length} images`
+                : mediaPreview.isVideo
+                  ? 'Open video preview'
+                  : 'Open image in larger view'
+            }
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={post.mediaUrl}
-              alt=""
-              className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-            />
+            {isCarousel ? (
+              <AnalyticsPostMediaThumbnail urls={imageUrls} className="h-full w-full" />
+            ) : (
+              <PostMediaPreview
+                preview={mediaPreview}
+                className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                videoClassName="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                imageClassName="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                muted
+                playsInline
+                preload="metadata"
+              />
+            )}
             <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/50 to-transparent py-2 pl-2 text-[10px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
-              View larger
+              {isCarousel
+                ? `View carousel (${imageUrls.length})`
+                : mediaPreview.isVideo
+                  ? 'View video'
+                  : 'View larger'}
             </span>
           </button>
         ) : canOpenDetails ? (
@@ -665,6 +709,10 @@ export function TopPostImageDialog({
     ? fmtTimestamp(post.createdAt as TimestampInput)
     : null;
   const permalink = post.permalinkUrl?.trim();
+  const mediaPreview = facebookPostMediaPreview(post);
+  const imageUrls = collectPostImageUrls(post);
+  const isCarousel = isMultiImageAnalyticsPost(post) && imageUrls.length > 1;
+  const hasMedia = imageUrls.length > 0 || Boolean(post.videoUrl?.trim());
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -673,14 +721,22 @@ export function TopPostImageDialog({
         className="max-h-[90vh] max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden p-0 sm:max-w-2xl lg:max-w-3xl"
       >
         <div className="max-h-[inherit] overflow-y-auto">
-          {post.mediaUrl ? (
+          {hasMedia ? (
             <div className="flex max-h-[min(70vh,720px)] items-center justify-center bg-background/40">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={post.mediaUrl}
-                alt=""
-                className="h-auto max-h-[min(70vh,720px)] w-full object-contain"
-              />
+              {isCarousel ? (
+                <AnalyticsPostMediaCarousel urls={imageUrls} className="w-full" />
+              ) : (
+                <PostMediaPreview
+                  preview={mediaPreview}
+                  className="h-auto max-h-[min(70vh,720px)] w-full object-contain"
+                  videoClassName="h-auto max-h-[min(70vh,720px)] w-full object-contain"
+                  imageClassName="h-auto max-h-[min(70vh,720px)] w-full object-contain"
+                  controls={mediaPreview.isVideo}
+                  muted={!mediaPreview.isVideo}
+                  playsInline
+                  preload="metadata"
+                />
+              )}
             </div>
           ) : (
             <div className="flex min-h-48 items-center justify-center bg-background/40 text-muted-foreground">
@@ -689,10 +745,12 @@ export function TopPostImageDialog({
           )}
           <DialogHeader className="gap-1 border-t border-border p-4 text-left sm:p-5">
             <DialogTitle className="text-base text-foreground">
-              Top post preview
+              {isCarousel ? 'Carousel preview' : 'Top post preview'}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Enlarged post image with full caption and engagement metrics.
+              {isCarousel
+                ? 'Swipeable carousel with full caption and engagement metrics.'
+                : 'Enlarged post image with full caption and engagement metrics.'}
             </DialogDescription>
             {dateLabel ? (
               <p className="text-xs text-muted-foreground">{dateLabel}</p>

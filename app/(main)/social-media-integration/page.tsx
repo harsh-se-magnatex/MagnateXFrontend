@@ -44,17 +44,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
-
-const PLAN_MAX_SOCIAL: Record<string, number> = {
-  'prime-AI': 1,
-  'prime-Studio': 1,
-  'elite-AI': 2,
-  'elite-Studio': 2,
-  'legacy-AI': 3,
-  'legacy-Studio': 3,
-};
+import {
+  countEnabledPlatforms,
+  isMaxPlatformPlan,
+  isPlatformSelectionComplete,
+  PLAN_MAX_SOCIAL,
+} from '@/lib/platform-selection';
 
 type PlatformId = 'instagram' | 'facebook' | 'linkedin';
 
@@ -63,6 +58,8 @@ type SocialAccountPage = {
   pageName: string;
 };
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
+
 type SocialAccountRow = {
   platform: string;
   pageName?: string;
@@ -70,6 +67,8 @@ type SocialAccountRow = {
   availablePages?: SocialAccountPage[];
   selectedPageId?: string;
 };
+
+
 
 const ALL_PLATFORMS: {
   id: PlatformId;
@@ -213,11 +212,9 @@ function SelectPageModal({
         onSuccess();
       }
     } catch (error: unknown) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : `Failed to select ${isFacebook ? 'Facebook' : 'LinkedIn'} page`;
-      showErrorToast(msg);
+      showErrorToast(
+        `Failed to select ${isFacebook ? 'Facebook' : 'LinkedIn'} page`
+      );
     } finally {
       setSubmitting(false);
     }
@@ -308,16 +305,18 @@ export default function ConnectedPlatformsPage() {
 
   /** Platforms the user explicitly selected during onboarding */
   const selectedPlatforms = useMemo(() => {
-    const sel = billing?.selected;
-    if (!sel) return ALL_PLATFORMS;
-    return ALL_PLATFORMS.filter((p) => sel[p.id] === true);
+    const enabled = new Set(
+      (['instagram', 'facebook', 'linkedin'] as const).filter(
+        (id) => billing?.selected?.[id] === true
+      )
+    );
+    return ALL_PLATFORMS.filter((p) => enabled.has(p.id));
   }, [billing?.selected]);
 
-  const selectedCount = useMemo(() => {
-    const sel = billing?.selected;
-    if (!sel) return 0;
-    return ALL_PLATFORMS.filter((p) => sel[p.id] === true).length;
-  }, [billing?.selected]);
+  const selectedCount = useMemo(
+    () => countEnabledPlatforms(billing?.selected),
+    [billing?.selected]
+  );
 
   const connectedCount = useMemo(() => {
     return selectedPlatforms.filter((p) =>
@@ -383,22 +382,20 @@ export default function ConnectedPlatformsPage() {
    */
   const showSelectionIncompleteNotice =
     !billingLoading &&
+    billing != null &&
     activePlan !== 'non-subscribed' &&
-    maxPlatforms > 0 &&
-    selectedCount < maxPlatforms;
+    !isPlatformSelectionComplete({ activePlan, selected: billing.selected });
 
   /**
    * Show if every allowed slot is already connected and they can't add more
-   * without upgrading.
+   * without upgrading. Hide on legacy / 3-slot plans — there is no higher
+   * platform tier to upgrade into.
    */
-  // Both Legacy variants (Studio + AI) already include all 3 platforms,
-  // so they should never see the "Upgrade for more platforms" notice.
   const showPlanLimitNotice =
     !billingLoading &&
     !showSelectionIncompleteNotice &&
     activePlan !== 'non-subscribed' &&
-    activePlan !== 'legacy-auto' &&
-    activePlan !== 'legacy-manual' &&
+    !isMaxPlatformPlan(activePlan) &&
     maxPlatforms > 0 &&
     connectedCount >= maxPlatforms;
 
@@ -511,7 +508,7 @@ export default function ConnectedPlatformsPage() {
         />
       )}
 
-      {billing?.selected !== null && (
+      {billing != null && (
         <div id="platform-list" className={platformListStyle.outer}>
           {billingLoading || !hasLoadedOnce ? (
             <PageLoadingState className="min-h-[40vh]" />

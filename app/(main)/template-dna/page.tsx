@@ -28,6 +28,7 @@ import { scrapeUrl } from '@/src/service/api/scrape';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
+import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
 
 type BusinessProfileForm = {
   businessEmail: string;
@@ -161,6 +162,24 @@ export default function BusinessProfilePage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleWebsiteFieldBlur = (
+    e: React.FocusEvent<HTMLInputElement>
+  ) => {
+    const raw = e.target.value.trim();
+    if (!raw) return;
+    const normalized = normalizeWebsiteUrl(raw);
+    if (normalized !== raw) {
+      setFormData((prev) => ({ ...prev, website: normalized }));
+    }
+  };
+
+  const handleWebsiteFetchBlur = () => {
+    const raw = websiteUrl.trim();
+    if (!raw) return;
+    const normalized = normalizeWebsiteUrl(raw);
+    if (normalized !== raw) setWebsiteUrl(normalized);
+  };
+
   const updatePhone = (countryCode: string, nationalNumber: string) => {
     const cc = digitsOnly(countryCode);
     const nat = digitsOnly(nationalNumber);
@@ -280,6 +299,10 @@ export default function BusinessProfilePage() {
       await updateProfile({
         ...formData,
         logo: finalLogoForVariants,
+        website:
+          typeof formData.website === 'string' && formData.website.trim()
+            ? normalizeWebsiteUrl(formData.website)
+            : formData.website,
       });
       setCommittedHashtagsSaved(
         parseHashtagTokens(formData.hashtags).length > 0
@@ -302,13 +325,16 @@ export default function BusinessProfilePage() {
         toast.message('Analyzing logo colors for image generation…');
       }
     } catch (error: any) {
-      showErrorToast(error.response.data.message || 'Failed to update profile');
+      showErrorToast('Failed to update profile');
     } finally {
       setSaving(false);
     }
   };
 
-  const fetchOnboarding = async (websiteUrl: string) => {
+  const fetchOnboarding = async (rawWebsiteUrl: string) => {
+    const websiteUrl = normalizeWebsiteUrl(rawWebsiteUrl.trim());
+    if (!websiteUrl) return;
+    if (websiteUrl !== rawWebsiteUrl.trim()) setWebsiteUrl(websiteUrl);
     setFetchingBusinessData(true);
     try {
       const response = await scrapeUrl(websiteUrl);
@@ -324,10 +350,8 @@ export default function BusinessProfilePage() {
       if (flat.businesscontact != null) {
         applyStoredPhone(flat.businesscontact);
       }
-    } catch (error: any) {
-      showErrorToast(
-        error.response.data.message || 'Failed to extract business data'
-      );
+    } catch (error: unknown) {
+      showErrorToast('Failed to extract business data');
     } finally {
       setFetchingBusinessData(false);
     }
@@ -365,9 +389,7 @@ export default function BusinessProfilePage() {
           : 'Logo variants are off. AI images will use only your main logo.'
       );
     } catch (error: unknown) {
-      const msg = (error as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message;
-      showErrorToast(msg || 'Could not update variant preference');
+      showErrorToast('Could not update variant preference');
     } finally {
       setVariantsPreferenceLoading(false);
     }
@@ -424,8 +446,10 @@ export default function BusinessProfilePage() {
                 <div className="sm:flex-row sm:gap-2 space-y-2 sm:space-y-0 flex flex-col">
                   <input
                     type="text"
+                    value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
-                    placeholder="Enter your website URL"
+                    onBlur={handleWebsiteFetchBlur}
+                    placeholder="example.com or https://example.com"
                     className={inputBase}
                   />
                   <button
@@ -553,11 +577,12 @@ export default function BusinessProfilePage() {
                       <input
                         id="website"
                         name="website"
-                        type="url"
+                        type="text"
                         value={formData.website}
                         onChange={handleChange}
+                        onBlur={handleWebsiteFieldBlur}
                         className={inputBase}
-                        placeholder="https://example.com"
+                        placeholder="example.com or https://example.com"
                       />
                     </div>
                     <div>

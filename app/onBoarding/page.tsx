@@ -35,6 +35,7 @@ import {
   uploadLogo,
 } from '@/src/service/api/userService';
 import { showErrorToast } from '@/lib/show-error-toast';
+import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
 import { useTourState } from '@/src/stores/tourState';
 import {
   OnboardingSuggestionsPanel,
@@ -68,7 +69,7 @@ const questions: Question[] = [
     label: 'Get started',
     description:
       "Paste your website URL or upload a catalog PDF — we'll try to fill in the rest of the form for you.",
-    placeholder: 'https://yourbrand.com',
+    placeholder: 'yourbrand.com or https://yourbrand.com',
     type: 'text',
     icon: Globe,
   },
@@ -445,9 +446,7 @@ export default function OnboardingMenu() {
       } catch (error) {
         hashtagSuggestStartedRef.current = false;
         showErrorToast(
-          error instanceof Error
-            ? error.message
-            : 'Could not load AI suggestions — you can still type your own.'
+          'Could not load AI suggestions — you can still type your own.'
         );
       } finally {
         if (!cancelled) setSuggestLoading(false);
@@ -478,6 +477,15 @@ export default function OnboardingMenu() {
     }
   };
 
+  const handleWebsiteBlur = () => {
+    const raw = String(formData.website ?? '').trim();
+    if (!raw) return;
+    const normalized = normalizeWebsiteUrl(raw);
+    if (normalized !== raw) {
+      setFormData((prev) => ({ ...prev, website: normalized }));
+    }
+  };
+
   const toggleHashtagChip = (tag: string) => {
     const clean = tag.replace(/^#+/, '').trim();
     if (!clean) return;
@@ -494,6 +502,9 @@ export default function OnboardingMenu() {
   const handleNext = async () => {
     if (step < questions.length - 1) return setStep(step + 1);
     const dataToSave = { ...formData };
+    if (typeof dataToSave.website === 'string' && dataToSave.website.trim()) {
+      dataToSave.website = normalizeWebsiteUrl(dataToSave.website);
+    }
     try {
       setLoading(true);
       if (formData.logo instanceof File || typeof formData.logo === 'string') {
@@ -508,9 +519,7 @@ export default function OnboardingMenu() {
         router.push('/brand-memory');
       }
     } catch (error) {
-      showErrorToast(
-        error instanceof Error ? error.message : 'Failed to onboard user'
-      );
+      showErrorToast('Failed to onboard user');
     } finally {
       setLoading(false);
     }
@@ -528,8 +537,11 @@ export default function OnboardingMenu() {
 
   const fetchOnboarding = async (mode: SourceMode) => {
     if (mode === 'website') {
-      const url = String(formData.website ?? '').trim();
+      const url = normalizeWebsiteUrl(String(formData.website ?? '').trim());
       if (!url) return;
+      if (url !== String(formData.website ?? '').trim()) {
+        setFormData((prev) => ({ ...prev, website: url }));
+      }
       setFetchingBusinessData(true);
       try {
         const response = await scrapeUrl(url) as {
@@ -548,11 +560,7 @@ export default function OnboardingMenu() {
         setSelectedSuggestionKey(null);
         setFormData((prev) => ({ ...prev, ...formFields }));
       } catch (error) {
-        showErrorToast(
-          error instanceof Error
-            ? error.message
-            : 'Failed to extract business data'
-        );
+        showErrorToast('Failed to extract business data');
       } finally {
         setFetchingBusinessData(false);
       }
@@ -589,11 +597,7 @@ export default function OnboardingMenu() {
         console.warn('[onboarding] catalog extract warnings:', apiWarnings);
       }
     } catch (error) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to extract business data from catalog'
-      );
+      showErrorToast('Failed to extract business data from catalog');
       throw error;
     } finally {
       setFetchingBusinessData(false);
@@ -612,8 +616,13 @@ export default function OnboardingMenu() {
           return;
         }
       } else {
-        const url = String(formData.website ?? '').trim();
-        if (url) void fetchOnboarding('website');
+        const url = normalizeWebsiteUrl(String(formData.website ?? '').trim());
+        if (url) {
+          if (url !== String(formData.website ?? '').trim()) {
+            setFormData((prev) => ({ ...prev, website: url }));
+          }
+          void fetchOnboarding('website');
+        }
       }
     }
     if (step < questions.length - 1) setStep(step + 1);
@@ -774,6 +783,7 @@ export default function OnboardingMenu() {
               name={current.name}
               value={String(formData[current.name] ?? '')}
               onChange={handleChange}
+              onBlur={handleWebsiteBlur}
               placeholder={current.placeholder}
               className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
             />

@@ -131,21 +131,54 @@ export const getSupportMessages = async () => {
 /** Gallery / generation pipeline that produced this image. Backend uses
  *  this to set `GeneratedBy` on the scheduled-post doc so the scheduled-post
  *  list shows the correct pipeline tag (e.g. "Instant" vs "Product advert"). */
-export type ScheduleUserPostSource = 'instant-generation' | 'productadvert';
+export type ScheduleUserPostSource =
+  | 'instant-generation'
+  | 'productadvert'
+  | 'videoGeneration'
+  | 'carouselGeneratedPosts';
+
+export type ScheduleUserPostCarouselSlide = {
+  index?: number;
+  imageFilePath: string;
+  imageUrl: string;
+  headline?: string | null;
+  purpose?: string | null;
+  visualType?: string | null;
+};
 
 /** Library / generated media: server already has Firebase path + preview URL. */
 export type ScheduleUserPostFromLibrary = {
-  imageFilePath: string;
-  imageUrl: string;
   message: string;
   time: string;
   platform: string;
   source?: ScheduleUserPostSource;
-};
+} & (
+  | {
+      mediaType?: 'image';
+      imageFilePath: string;
+      imageUrl: string;
+    }
+  | {
+      mediaType: 'video';
+      videoFilePath: string;
+      videoUrl: string;
+      videoPosterPath?: string;
+      videoPosterUrl?: string;
+      imageFilePath?: string;
+      imageUrl?: string;
+    }
+  | {
+      mediaType: 'carousel';
+      carouselSlides: ScheduleUserPostCarouselSlide[];
+      imageFilePath?: string;
+      imageUrl?: string;
+    }
+);
 
 /** Local image: multipart field `file` (matches backend `upload.single('file')`). */
 export type ScheduleUserPostFromFile = {
   file: File;
+  mediaType?: 'image' | 'video';
   message: string;
   time: string;
   platform: string;
@@ -157,9 +190,12 @@ export type ScheduleUserPostInput =
 
 export const scheduleUserPost = async (params: ScheduleUserPostInput) => {
   if ('file' in params) {
-    const { file, message, time, platform } = params;
+    const { file, mediaType, message, time, platform } = params;
     const formData = new FormData();
     formData.append('file', file);
+    if (mediaType) {
+      formData.append('mediaType', mediaType);
+    }
     formData.append('message', message);
     formData.append('time', time);
     formData.append('platform', platform);
@@ -168,12 +204,43 @@ export const scheduleUserPost = async (params: ScheduleUserPostInput) => {
       formData
     );
   }
-  const { imageFilePath, imageUrl, message, time, platform, source } = params;
+  const {
+    message,
+    time,
+    platform,
+    source,
+    ...media
+  } = params;
+  const body =
+    media.mediaType === 'carousel'
+      ? {
+          mediaType: 'carousel' as const,
+          carouselSlides: media.carouselSlides,
+          ...(media.imageFilePath ? { imageFilePath: media.imageFilePath } : {}),
+          ...(media.imageUrl ? { imageUrl: media.imageUrl } : {}),
+        }
+      : media.mediaType === 'video'
+        ? {
+            mediaType: 'video' as const,
+            videoFilePath: media.videoFilePath,
+            videoUrl: media.videoUrl,
+            ...(media.videoPosterPath
+              ? { videoPosterPath: media.videoPosterPath }
+              : {}),
+            ...(media.videoPosterUrl
+              ? { videoPosterUrl: media.videoPosterUrl }
+              : {}),
+            ...(media.imageFilePath ? { imageFilePath: media.imageFilePath } : {}),
+            ...(media.imageUrl ? { imageUrl: media.imageUrl } : {}),
+          }
+        : {
+            imageFilePath: media.imageFilePath,
+            imageUrl: media.imageUrl,
+          };
   return apiPost<ApiEnvelope>(
     '/api/v1/user/schedule-user-post',
     {
-      imageFilePath,
-      imageUrl,
+      ...body,
       message,
       time,
       platform,
@@ -303,9 +370,9 @@ export const createNewAccount = async (
 
 export type ScheduledPostUserActionResult = {
   message: string;
-  jobId?: string;
-  parentJobId?: string;
+  scheduledPostId?: string;
   platform?: string;
+  result?: Record<string, unknown>;
 };
 
 export const performActionByUserOnScheduledPost = async (
@@ -524,10 +591,9 @@ export const uploadMemoryLayerBrandPhotos = async (
     );
     formData.append('descriptions', JSON.stringify(aligned));
   }
-  return apiPost<ApiEnvelope<{ memoryLayer: unknown; uploaded: number; describeJobId?: string; parentJobId?: string }>>(
-    '/api/v1/user/memory-layer/brand-photos',
-    formData
-  );
+  return apiPost<
+    ApiEnvelope<{ memoryLayer: unknown; uploaded: number; described?: number }>
+  >('/api/v1/user/memory-layer/brand-photos', formData);
 };
 
 export const putMemoryLayerBrandPhotoDescription = async (
@@ -557,9 +623,9 @@ export const uploadMemoryLayerSourcePdf = async (file: File) => {
   formData.append('pdf', file);
   return apiPost<
     ApiEnvelope<{
-      parentJobId: string;
-      jobId: string;
       sourceDocumentId: string;
+      memoryLayer: unknown;
+      imagesAdded?: number;
     }>
   >('/api/v1/user/memory-layer/source-pdf', formData);
 };

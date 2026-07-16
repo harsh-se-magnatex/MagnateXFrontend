@@ -63,7 +63,7 @@ export function WhereToSpendSection({
         if (cancelled) return;
         setState({
           status: 'error',
-          error: err instanceof Error ? err.message : 'Something went wrong',
+          error: 'Something went wrong',
         });
       });
     return () => {

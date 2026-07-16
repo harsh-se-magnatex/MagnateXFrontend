@@ -233,6 +233,8 @@ export function generatedByLabel(value: string | undefined): string | null {
       return 'Festive Post';
     case 'product-advert':
       return 'Product advert';
+    case 'video-generation':
+      return 'Video Generation';
     case 'scheduler':
       return 'Schedule Post';
     case 'instant-generation':
@@ -241,6 +243,10 @@ export function generatedByLabel(value: string | undefined): string | null {
       return 'Bulk Create';
     case 'quick-create':
       return 'Quick Create';
+    case 'carousel-engine':
+    case 'carousel':
+    case 'carousel-create':
+      return 'Carousel Create';
     default:
       return trimmed;
   }

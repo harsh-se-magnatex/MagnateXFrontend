@@ -3,27 +3,25 @@
 import { RepliesWaitingCard } from './RepliesWaitingCard';
 import { WhatToPostNextSection } from './WhatToPostNextSection';
 import { WhereToSpendSection } from './WhereToSpendSection';
-import type { GrowthStudioPlatform } from './_common';
-import type {
-  ReplyQueueGroup,
-  ReplyQueueLoadStats,
-} from './replyQueue';
+import { MonthlyBudgetAllocationSection } from './MonthlyBudgetAllocationSection';
+import { type GrowthStudioPlatform, type PreloadedReplySuggestions } from './_common';
+import { ReplyQueueGroup, ReplyQueueLoadStats } from './replyQueue';
 
 /**
  * Growth Studio shell for one platform tab.
  *
- * Renders the three cards/sections in the order defined by the analytics
- * refresh:
+ * Renders the cards/sections in the order defined by the analytics refresh:
  *   1. Replies waiting (B2)
  *   2. What to post next (A1)
  *   3. Where to spend (A2)
+ *   4. Monthly budget split (last 5 posts)
  *
  * The first-hour seeding nudge was removed as part of the analytics
  * page refinement — those checklists are no longer surfaced here.
  *
  * B2 requires post-level context (comment lists) that's already loaded
  * by the parent platform view, so the caller threads it through here.
- * A1 and A2 fetch their own data via their dedicated endpoints and only
+ * A1/A2/budget fetch their own data via dedicated endpoints and only
  * need `platform`.
  */
 export function GrowthStudioBlock({
@@ -31,6 +29,7 @@ export function GrowthStudioBlock({
   replyGroups,
   replyLoadStats,
   pageName,
+  preloadedReplySuggestions,
   className,
 }: {
   platform: GrowthStudioPlatform;
@@ -43,6 +42,8 @@ export function GrowthStudioBlock({
    */
   replyLoadStats?: ReplyQueueLoadStats;
   pageName?: string;
+  /** Cron-built reply drafts keyed by comment id. */
+  preloadedReplySuggestions?: PreloadedReplySuggestions;
   className?: string;
 }) {
   return (
@@ -57,9 +58,11 @@ export function GrowthStudioBlock({
         groups={replyGroups}
         loadStats={replyLoadStats}
         pageName={pageName}
+        preloadedReplySuggestions={preloadedReplySuggestions}
       />
       <WhatToPostNextSection platform={platform} />
       <WhereToSpendSection platform={platform} />
+      <MonthlyBudgetAllocationSection platform={platform} />
     </section>
   );
 }

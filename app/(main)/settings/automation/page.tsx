@@ -64,6 +64,10 @@ import {
 } from '@/lib/user-timezone';
 import { UpgradeGate } from '@/components/shared/UpgradeGate';
 import { useUserPlanCredits } from '../../_components/UserPlanCreditsProvider';
+import {
+  DEFAULT_PREFERRED_POSTING_TIME,
+  normalizePreferredPostingTime,
+} from '@/utils/preferredPostingTime';
 
 const inputBase =
   'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all';
@@ -94,7 +98,7 @@ const FacebookOptions = [
     id: 'facebook-short',
     value: 'short',
     platform: 'facebook',
-    description: 'upto 10 words',
+    description: 'upto 15 words',
   },
   {
     id: 'facebook-medium',
@@ -127,7 +131,7 @@ const LinkedInOptions = [
     id: 'linkedin-long',
     value: 'long',
     platform: 'linkedin',
-    description: '200-300 words',
+    description: '150-250 words',
   },
 ];
 
@@ -240,17 +244,11 @@ export default function AutomationPreferencePage() {
   const fmtTimestamp = useTimestampFormatter();
   const { billing, loading: billingLoading } = useUserPlanCredits();
   /**
-   * Mode-mode plans force Auto Approve (Need_Approval=false). The Manual
-   * Review tab is locked behind an `<UpgradeGate>` and any stale `true`
-   * value gets normalised here so the segmented control never highlights
-   * the disabled side mid-render.
-   *
-   * Manual-mode plans are the mirror image: Auto Approve is locked behind
-   * an `<UpgradeGate>`, and `Need_Approval` is force-normalised to `true`
-   * so a user who downgraded from auto with the flag still `false` lands
-   * back on the correct side of the toggle immediately on mount.
+   * AI plans default to Auto Approve at purchase; users may switch to Manual
+   * Review here. Studio (manual-mode) plans always use Manual Review — Auto
+   * Approve is locked behind `<UpgradeGate>` and stale `false` values are
+   * normalised back to `true` on mount.
    */
-  const isAutoMode = billing?.mode === 'auto';
   const isManualMode = billing?.mode === 'manual';
   const [captionObject, setCaptionObject] = useState({
     instagram: '',
@@ -262,7 +260,7 @@ export default function AutomationPreferencePage() {
   const [socialSalesEmailUsage, setSocialSalesEmailUsage] = useState(true);
   const [needApproval, setNeedApproval] = useState(true);
   const [timeZone, setTimeZone] = useState('');
-  const [preferredTime, setPreferredTime] = useState('');
+  const [preferredTime, setPreferredTime] = useState(DEFAULT_PREFERRED_POSTING_TIME);
   const [useAnalyticsOptimalPostingTime, setUseAnalyticsOptimalPostingTime] =
     useState(false);
   const [platformOptimal, setPlatformOptimal] = useState<
@@ -292,7 +290,11 @@ export default function AutomationPreferencePage() {
           );
           setNeedApproval(response.data.preferences.Need_Approval ?? true);
           setTimeZone(response.data.preferences.TimeZone || userTimeZone);
-          setPreferredTime(response.data.preferences.preferredTime || '');
+          setPreferredTime(
+            normalizePreferredPostingTime(
+              response.data.preferences.preferredTime
+            )
+          );
           setUseAnalyticsOptimalPostingTime(
             response.data.preferences.useAnalyticsOptimalPostingTime === true
           );
@@ -327,19 +329,7 @@ export default function AutomationPreferencePage() {
     if (!loading && !user) router.replace('/sign-in');
   }, [loading, user, router]);
 
-  // Auto-mode plans cannot use Manual Review. If the local state still says
-  // `true` (e.g. user previously toggled it before upgrading), flip it back
-  // visually so the segmented control doesn't render the disabled side as
-  // active. The server-side flag is also force-reset at fulfillment time.
-  useEffect(() => {
-    if (isAutoMode && needApproval) {
-      setNeedApproval(false);
-    }
-  }, [isAutoMode, needApproval]);
-
-  // Manual-mode plans cannot use Auto Approve. Mirror of the auto-mode
-  // normaliser above: flip `needApproval` back to `true` if a stale `false`
-  // value carried over from a previous auto subscription.
+  // Studio plans cannot use Auto Approve — flip stale `false` back to `true`.
   useEffect(() => {
     if (isManualMode && !needApproval) {
       setNeedApproval(true);
@@ -431,9 +421,7 @@ export default function AutomationPreferencePage() {
           ...prev,
           [platform]: { ...prev[platform], refreshing: false },
         }));
-        showErrorToast(
-          err instanceof Error ? err.message : 'Failed to refresh optimal time'
-        );
+        showErrorToast('Failed to refresh optimal time');
       }
     },
     []
@@ -467,17 +455,13 @@ export default function AutomationPreferencePage() {
         currentCaptionObject,
         currentApproval,
         curentTimeZone,
-        currentPreferredTime,
+        normalizePreferredPostingTime(currentPreferredTime),
         currentUseAnalyticsOptimalPostingTime
       );
       // Per-platform optimal-time fields update live via the Firestore
       // subscription above, no need to re-fetch here.
     } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to update preferences'
-      );
+      showErrorToast('Failed to update preferences');
     }
   };
 
@@ -860,23 +844,17 @@ export default function AutomationPreferencePage() {
                 be published.
               </p>
               <div className="flex rounded-xl bg-muted p-1 border border-border">
-                <UpgradeGate
-                  gated={isAutoMode}
-                  tooltip="Upgrade to manual mode"
-                  className="flex-1"
-                >
+                <span className="inline-flex flex-1">
                   <button
                     type="button"
-                    disabled={isAutoMode}
                     onClick={() => {
-                      if (isAutoMode) return;
-                      const newValue = !needApproval;
-                      setNeedApproval(newValue);
+                      if (needApproval) return;
+                      setNeedApproval(true);
                       handleSubmit(
                         logoPreference,
                         emojiUsage,
                         socialSalesEmailUsage,
-                        newValue,
+                        true,
                         timeZone,
                         captionObject,
                         preferredTime
@@ -886,30 +864,28 @@ export default function AutomationPreferencePage() {
                       'w-full rounded-lg py-2.5 text-sm font-semibold transition-all duration-200',
                       needApproval === true
                         ? 'bg-emerald-400/80 text-black/90 shadow-sm ring-1 ring-border'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
-                      isAutoMode && 'opacity-50'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                     )}
                   >
                     Manual Review
                   </button>
-                </UpgradeGate>
+                </span>
                 <UpgradeGate
                   gated={isManualMode}
-                  tooltip="Upgrade to automatic mode"
+                  tooltip="Upgrade to an AI plan to use Auto Approve"
                   className="flex-1"
                 >
                   <button
                     type="button"
                     disabled={isManualMode}
                     onClick={() => {
-                      if (isAutoMode || isManualMode) return;
-                      const newValue = !needApproval;
-                      setNeedApproval(newValue);
+                      if (isManualMode) return;
+                      setNeedApproval(false);
                       handleSubmit(
                         logoPreference,
                         emojiUsage,
                         socialSalesEmailUsage,
-                        newValue,
+                        false,
                         timeZone,
                         captionObject,
                         preferredTime

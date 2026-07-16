@@ -21,6 +21,12 @@ import {
   useUserTimezone,
   type TimestampInput,
 } from '@/lib/user-timezone';
+import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
+import {
+  hasSchedulableMediaPreview,
+  resolveSchedulableMediaPreview,
+} from '@/lib/post-media-preview';
+import { ImagePreviewButton, ImagePreviewOverlay, useImagePreview } from '@/components/image-preview';
 
 type FirestoreTimestamp = {
   _seconds: number;
@@ -29,7 +35,7 @@ type FirestoreTimestamp = {
 
 type MonitoringDateTab = AdminPendingScheduledPostsTab;
 
-const TABS: readonly MonitoringDateTab[] = ['today', 'past', 'future'];
+const TABS: readonly MonitoringDateTab[] = ['today', 'future'];
 
 export type PendingScheduledPost = {
   postId: string;
@@ -38,7 +44,10 @@ export type PendingScheduledPost = {
   userEmail: string;
   businessDNA: string;
   message: string;
+  mediaType?: 'image' | 'video' | string | null;
   imageUrl: string | null;
+  videoUrl?: string | null;
+  videoPosterUrl?: string | null;
   scheduleAt: FirestoreTimestamp;
   platform: string;
   postStatus: string;
@@ -69,14 +78,13 @@ const initialTabState = (): TabState => ({
 
 const initialTabsState = (): Record<MonitoringDateTab, TabState> => ({
   today: initialTabState(),
-  past: initialTabState(),
   future: initialTabState(),
 });
 
 /**
  * Computes "today" boundaries in the user's preferred timezone, returned as
  * UTC epoch ms — what the backend uses to filter `scheduleAt`. Doing this
- * once at mount keeps the today/past/future buckets stable while the page is
+ * once at mount keeps the today/future buckets stable while the page is
  * open (refresh after midnight to re-bucket).
  */
 function computeTodayBounds(tz: string): {
@@ -159,7 +167,6 @@ export default function MonitoringPage() {
   const tabsStateRef = useRef(tabsState);
   const fetchingTabRef = useRef<Record<MonitoringDateTab, boolean>>({
     today: false,
-    past: false,
     future: false,
   });
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -318,11 +325,10 @@ export default function MonitoringPage() {
                     key={tab}
                     type="button"
                     onClick={() => setDateTab(tab)}
-                    className={`rounded-lg px-4 py-2 text-xs font-semibold capitalize transition-all ${
-                      dateTab === tab
+                    className={`rounded-lg px-4 py-2 text-xs font-semibold capitalize transition-all ${dateTab === tab
                         ? 'bg-white text-zinc-900 shadow-sm'
                         : 'text-zinc-500 hover:text-zinc-800'
-                    }`}
+                      }`}
                   >
                     {tab} ({tCount}
                     {tHasMore ? '+' : ''})
@@ -394,15 +400,24 @@ export default function MonitoringPage() {
                   };
                   const cardInner = (
                     <div className="flex flex-col sm:flex-row gap-4 p-4">
-                      {post.imageUrl && (
-                        <div className="sm:w-32 shrink-0">
-                          <img
-                            src={post.imageUrl}
-                            alt=""
-                            className="w-full h-24 object-cover rounded-lg bg-zinc-100 dark:bg-zinc-800"
-                          />
-                        </div>
-                      )}
+                      {(() => {
+                        const mediaPreview =
+                          resolveSchedulableMediaPreview(post);
+                        if (!hasSchedulableMediaPreview(mediaPreview)) {
+                          return null;
+                        }
+                        return (
+                          <div className="sm:w-32 shrink-0">
+                            <PostMediaPreview
+                              preview={mediaPreview}
+                              className="w-full h-24 object-cover rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                              videoClassName="w-full h-24 object-cover rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                              controls={false}
+                              muted
+                            />
+                          </div>
+                        );
+                      })()}
                       <div className="min-w-0 flex-1 space-y-2">
                         <p className="text-sm text-zinc-700  line-clamp-2">
                           {post.message || 'No message'}
@@ -518,7 +533,12 @@ function DetailModal({
 }) {
   const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
-
+  const mediaPreview = resolveSchedulableMediaPreview(post);
+  const hasMedia = hasSchedulableMediaPreview(mediaPreview);
+  const openUrl = mediaPreview.isVideo
+    ? mediaPreview.videoUrl
+    : mediaPreview.imageUrl;
+  const imagePreview = useImagePreview();
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
@@ -560,24 +580,43 @@ function DetailModal({
           </button>
         </div>
         <div className="p-4 space-y-4">
-          {post.imageUrl && (
+          {hasMedia && openUrl ? (
             <div className="">
-              <p className="text-xs font-medium text-zinc-500 mb-1">Image</p>
-              <img
-                src={post.imageUrl}
-                alt="Post"
-                className="w-full max-h-64 object-contain rounded-lg bg-zinc-100 "
+              <p className="text-xs font-medium text-zinc-500 mb-1">
+                {mediaPreview.isVideo ? 'Video' : 'Image'}
+              </p>
+              <div className="relative">
+              <PostMediaPreview
+                preview={mediaPreview}
+                className="w-full max-h-64 object-contain rounded-lg bg-zinc-100"
+                videoClassName="w-full max-h-64 object-contain rounded-lg bg-zinc-100"
+                controls={mediaPreview.isVideo}
+                muted={false}
               />
+              {!mediaPreview.isVideo && mediaPreview.imageUrl ? (
+                <div className="absolute bottom-2 right-2">
+                  <ImagePreviewButton
+                    variant="overlay-icon"
+                    stopPropagation
+                    onClick={() =>
+                      imagePreview.open(
+                        mediaPreview.imageUrl as string
+                      )
+                    }
+                  />
+                </div>
+              ) : null}
+              </div>
               <div className="flex w-full justify-end">
                 <button className="bg-primary-blue flex mt-2 p-2 rounded-md text-white items-center gap-x-2">
-                  <a href={post.imageUrl} target="_blank">
+                  <a href={openUrl} target="_blank" rel="noreferrer">
                     Open in New Tab
                   </a>
                   <ExternalLink className="w-4 h-4" />
                 </button>
               </div>
             </div>
-          )}
+          ) : null}
           <DetailRow label="Caption / Message" value={post.message || '—'} />
           <DetailRow label="User name" value={post.userName || '—'} />
           <DetailRow label="Email" value={post.userEmail || '—'} />
@@ -605,6 +644,11 @@ function DetailModal({
           </div>
         </div>
       </div>
+      <ImagePreviewOverlay
+        src={imagePreview.previewUrl}
+        alt={imagePreview.previewAlt}
+        onClose={imagePreview.close}
+      />
     </div>
   );
 }
@@ -622,9 +666,8 @@ function DetailRow({
     <div>
       <p className="text-xs font-medium text-zinc-500  mb-0.5">{label}</p>
       <p
-        className={`text-sm text-zinc-800 ${
-          long ? 'whitespace-pre-wrap wrap-break-word' : ''
-        }`}
+        className={`text-sm text-zinc-800 ${long ? 'whitespace-pre-wrap wrap-break-word' : ''
+          }`}
       >
         {value}
       </p>

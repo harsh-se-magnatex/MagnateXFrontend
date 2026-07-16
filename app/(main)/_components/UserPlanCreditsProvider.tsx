@@ -11,7 +11,6 @@ import {
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
-import type { ActiveJobs } from '@/src/types/job';
 
 export type UserPlanCredits = {
   planCredits: number;
@@ -50,11 +49,6 @@ export type UserPlanCredits = {
     linkedin: boolean;
   };
   usesSplitCreditPools: boolean;
-  /**
-   * In-flight generation jobs, keyed by feature type. Written by the API after
-   * `createJobDoc` and cleared by the worker once every sibling settles.
-   */
-  activeJobs: ActiveJobs;
 };
 
 export type UserPlanCreditsContextValue = {
@@ -82,6 +76,20 @@ export const UserPlanCreditsContext =
 
 function numField(v: unknown): number {
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
+function parseSelectedPlatforms(
+  raw: unknown
+): NonNullable<UserPlanCredits['selected']> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { facebook: false, instagram: false, linkedin: false };
+  }
+  const s = raw as Record<string, unknown>;
+  return {
+    facebook: s.facebook === true,
+    instagram: s.instagram === true,
+    linkedin: s.linkedin === true,
+  };
 }
 
 function parseBilling(
@@ -125,18 +133,7 @@ function parseBilling(
       { Need_Approval: false },
     subscription:
       typeof data.subscription === 'string' ? data.subscription : undefined,
-    selected:
-      typeof data.selected === 'object'
-        ? (data.selected as {
-          facebook: boolean;
-          instagram: boolean;
-          linkedin: boolean;
-        })
-        : { facebook: false, instagram: false, linkedin: false },
-    activeJobs:
-      data.activeJobs && typeof data.activeJobs === 'object'
-        ? (data.activeJobs as ActiveJobs)
-        : {},
+    selected: parseSelectedPlatforms(data.selected),
   };
 }
 

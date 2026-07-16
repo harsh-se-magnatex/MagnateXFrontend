@@ -23,21 +23,18 @@ const TAGLINE =
   'Sociogenie is an AI-powered social media management system for small businesses — combining automated content generation with human review and publishing across Instagram, Facebook, and LinkedIn.';
 
 const PRODUCT_LINKS = [
-  { label: 'How It Works', href: '/#how-it-works' },
-  { label: 'Features', href: '/#features' },
-  { label: 'Pricing', href: '/pricing' },
-  { label: 'FAQ', href: '/#faq' },
+  { label: 'How It Works', href: '/product#how-it-works' },
+  { label: 'Features', href: '/product#features' },
+  { label: 'Pricing', href: '/product#pricing' },
+  { label: 'FAQ', href: '/product#faq' },
 ] as const;
 
 const COMPARE_LINKS = [
- 
-  {label:"vs Scheduling Tools", href:"/#compare"},
-  { label: 'vs Agencies', href: '/#compare' },
-  { label: 'vs Freelancers', href: '/#compare' },
+  { label: 'Product overview', href: '/product' },
 ] as const;
 
 const COMPANY_LINKS = [
-  { label: 'About', href: '/#about' },
+  { label: 'Experience', href: '/' },
   { label: 'Contact', href: '/settings/support-legal' },
 ] as const;
 

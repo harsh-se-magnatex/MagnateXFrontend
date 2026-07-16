@@ -12,6 +12,12 @@ import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
+import {
+  hasSchedulableMediaPreview,
+  resolveSchedulableMediaPreview,
+} from '@/lib/post-media-preview';
+import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
+import { CarouselSwipePreview } from '@/components/shared/CarouselSwipePreview';
 import { useRouter } from 'next/navigation';
 import {
   useCallback,
@@ -33,6 +39,7 @@ import {
   ExternalLink,
   LayoutGrid,
   Loader2,
+  Search,
   Sparkles,
 } from 'lucide-react';
 import {
@@ -59,6 +66,11 @@ import {
 import { cn } from '@/lib/utils';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { DownloadPngButton } from '@/components/download-png-button';
+import { GenerationResearchDialog } from '@/components/generation-research-dialog';
+import {
+  hasViewableResearch,
+  parseGenerationResearchFromProof,
+} from '@/lib/generation-research';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -69,7 +81,6 @@ import {
   canScheduledPostRegenerate,
   willScheduledPostRegenChargeCredits,
 } from '@/lib/scheduled-post-regenerate';
-import { useScheduledPostRegenJob, parseRegenJobFromResponse } from '@/src/hooks/useScheduledPostRegenJob';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import {
   useTimestampFormatter,
@@ -93,6 +104,18 @@ export type ScheduledPost = {
   generationProof?: unknown;
   UserApprovalStatus: string;
   imageUrl: string | null;
+  mediaType?: 'image' | 'video' | 'carousel';
+  videoUrl?: string | null;
+  videoPosterUrl?: string | null;
+  slideCount?: number | null;
+  carouselSlides?: Array<{
+    index?: number;
+    imageUrl?: string | null;
+    imageFilePath?: string | null;
+    headline?: string | null;
+    purpose?: string | null;
+    visualType?: string | null;
+  }> | null;
   scheduleAt: FirestoreTimestamp;
   platform: string;
   removedByUser: boolean;
@@ -247,6 +270,7 @@ function DetailModal({
   onPreviewImage: (url: string, alt?: string) => void;
   isRegenerating: boolean;
 }) {
+  const [researchOpen, setResearchOpen] = useState(false);
   const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
   const showRegenerate =
@@ -255,6 +279,21 @@ function DetailModal({
   const showPostActions = isUpcomingPost(post);
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
+  const research = parseGenerationResearchFromProof(post.generationProof);
+  const showResearch = hasViewableResearch(research);
+  const mediaPreview = resolveSchedulableMediaPreview(post);
+  const hasMedia = hasSchedulableMediaPreview(mediaPreview);
+  const carouselSlides = Array.isArray(post.carouselSlides)
+    ? post.carouselSlides
+        .map((s, i) => ({
+          index: s.index ?? i + 1,
+          imageUrl: String(s.imageUrl ?? '').trim(),
+          headline: s.headline ?? null,
+        }))
+        .filter((s) => s.imageUrl)
+    : [];
+  const isCarousel =
+    post.mediaType === 'carousel' || carouselSlides.length >= 2;
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
@@ -294,25 +333,70 @@ function DetailModal({
           </button>
         </div>
         <div className="p-4 space-y-4">
-          {post.imageUrl && (
+          {isCarousel && carouselSlides.length > 0 ? (
             <div>
-              <p className="text-xs font-medium text-slate-500 mb-1">Image</p>
+              <p className="text-xs font-medium text-slate-500 mb-1">
+                Carousel
+                {post.slideCount
+                  ? ` · ${post.slideCount} slides`
+                  : ` · ${carouselSlides.length} slides`}
+              </p>
               <div className="relative overflow-hidden rounded-xl">
-                <button
-                  type="button"
-                  disabled={isRegenerating}
-                  onClick={() =>
-                    onPreviewImage(post.imageUrl as string, 'Scheduled post image')
+                <CarouselSwipePreview
+                  slides={carouselSlides}
+                  showCaptions
+                  onImageClick={
+                    isRegenerating ? undefined : onPreviewImage
                   }
-                  className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6] disabled:cursor-not-allowed"
-                  aria-label="Open image preview"
-                >
-                  <img
-                    src={post.imageUrl}
-                    alt="Post"
-                    className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
+                />
+                {isRegenerating ? (
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/75 backdrop-blur-sm"
+                    aria-live="polite"
+                  >
+                    <Loader2
+                      className="h-8 w-8 animate-spin text-[#4A8FF6]"
+                      aria-hidden
+                    />
+                    <span className="text-sm font-semibold uppercase tracking-wide text-slate-700">
+                      Regenerating…
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : hasMedia ? (
+            <div>
+              <p className="text-xs font-medium text-slate-500 mb-1">
+                {mediaPreview.isVideo ? 'Video' : 'Image'}
+              </p>
+              <div className="relative overflow-hidden rounded-xl">
+                {mediaPreview.isVideo ? (
+                  <PostMediaPreview
+                    preview={mediaPreview}
+                    controls
+                    muted={false}
+                    videoClassName="w-full max-h-64 object-contain rounded-xl bg-black border border-slate-200"
                   />
-                </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isRegenerating}
+                    onClick={() =>
+                      onPreviewImage(
+                        mediaPreview.imageUrl as string,
+                        'Scheduled post image'
+                      )
+                    }
+                    className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6] disabled:cursor-not-allowed"
+                    aria-label="Open image preview"
+                  >
+                    <PostMediaPreview
+                      preview={mediaPreview}
+                      imageClassName="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
+                    />
+                  </button>
+                )}
                 {isRegenerating ? (
                   <div
                     className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/75 backdrop-blur-sm"
@@ -331,25 +415,37 @@ function DetailModal({
               {!isRegenerating ? (
                 <>
                   <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                    <ImagePreviewButton
-                      onClick={() =>
-                        onPreviewImage(
-                          post.imageUrl as string,
-                          'Scheduled post image'
-                        )
-                      }
-                      className="w-full sm:w-auto rounded-full px-6 bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100"
-                    />
-                    <DownloadPngButton
-                      url={post.imageUrl}
-                      getFilename={() =>
-                        `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
-                      }
-                    />
+                    {!mediaPreview.isVideo && mediaPreview.imageUrl ? (
+                      <ImagePreviewButton
+                        onClick={() =>
+                          onPreviewImage(
+                            mediaPreview.imageUrl as string,
+                            'Scheduled post image'
+                          )
+                        }
+                        className="w-full sm:w-auto rounded-full px-6 bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100"
+                      />
+                    ) : null}
+                    {mediaPreview.isVideo && mediaPreview.videoUrl ? (
+                      <a
+                        href={mediaPreview.videoUrl}
+                        download={`scheduled-${post.platform ?? 'post'}-${Date.now()}.mp4`}
+                        className="inline-flex items-center justify-center rounded-full px-6 py-2 text-sm font-medium bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10"
+                      >
+                        Download video
+                      </a>
+                    ) : (
+                      <DownloadPngButton
+                        url={mediaPreview.imageUrl as string}
+                        getFilename={() =>
+                          `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
+                        }
+                      />
+                    )}
                   </div>
                   <div className="flex w-full justify-end">
                     <a
-                      href={post.imageUrl}
+                      href={mediaPreview.isVideo ? mediaPreview.videoUrl ?? '#' : mediaPreview.imageUrl ?? '#'}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-[#4A8FF6]/20"
@@ -361,12 +457,12 @@ function DetailModal({
                 </>
               ) : (
                 <p className="mt-3 text-xs text-slate-500">
-                  Regeneration in progress — new image and caption will appear when
+                  Regeneration in progress — new media and caption will appear when
                   ready.
                 </p>
               )}
             </div>
-          )}
+          ) : null}
           <DetailRow label="Caption / Message" value={post.message || '—'} long />
           <DetailRow label="Schedule at" value={scheduleAt} />
           <DetailRow label="Created at" value={createdAt} />
@@ -382,7 +478,7 @@ function DetailModal({
               {status.label}
             </span>
             {status.variant === 'failed' ? (
-              <p className="mt-2 whitespace-pre-wrap break-words rounded-lg border border-red-100 bg-red-50/60 p-2 text-xs text-red-700">
+              <p className="mt-2 whitespace-pre-wrap break-words rounded-lg border border-red-100 bg-red-500/20 p-2 text-xs text-red-700">
                 <span className="font-semibold">Reason: </span>
                 {status.reason ?? 'No failure reason recorded.'}
               </p>
@@ -391,6 +487,19 @@ function DetailModal({
           <DetailRow label="Platform" value={post.platform ?? '—'} />
           {generatedBy ? (
             <DetailRow label="Generated by" value={generatedBy} />
+          ) : null}
+          {showResearch ? (
+            <div>
+              <p className="text-xs font-medium text-slate-500 mb-2">Research</p>
+              <button
+                type="button"
+                onClick={() => setResearchOpen(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-[#4A8FF6]/30 bg-[#4A8FF6]/5 px-3 py-2 text-sm font-medium text-[#1e40af] hover:bg-[#4A8FF6]/10 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/40"
+              >
+                <Search className="h-4 w-4" aria-hidden />
+                View research
+              </button>
+            </div>
           ) : null}
           {showPostActions ? (
             <div className="pt-4 border-t border-slate-200">
@@ -407,6 +516,11 @@ function DetailModal({
           ) : null}
         </div>
       </div>
+      <GenerationResearchDialog
+        open={researchOpen}
+        onClose={() => setResearchOpen(false)}
+        research={research}
+      />
     </div>
   );
 }
@@ -459,6 +573,13 @@ function ScheduledPostCard({
   const showPostActions = isUpcomingPost(post);
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
+  const mediaPreview = resolveSchedulableMediaPreview(post);
+  const hasMedia = hasSchedulableMediaPreview(mediaPreview);
+  const slideCount =
+    post.mediaType === 'carousel'
+      ? post.slideCount ??
+        (Array.isArray(post.carouselSlides) ? post.carouselSlides.length : null)
+      : null;
   return (
     <div
       ref={cardRef}
@@ -483,24 +604,34 @@ function ScheduledPostCard({
       )}
     >
       <div className="relative mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 aspect-4/3">
-        {post.imageUrl ? (
-          <img
-            src={post.imageUrl}
-            alt=""
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        {hasMedia ? (
+          <PostMediaPreview
+            preview={mediaPreview}
+            videoClassName="h-full w-full object-cover bg-black"
+            imageClassName="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
         ) : (
           <div className="flex h-full min-h-[140px] items-center justify-center text-sm text-slate-500">
-            No image
+            No media
           </div>
         )}
-        {post.imageUrl && !isRegenerating ? (
+        {slideCount && slideCount > 1 ? (
+          <div className="absolute left-2 bottom-2">
+            <span className="inline-flex items-center rounded-md border border-slate-200 bg-white/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 shadow-sm backdrop-blur">
+              {slideCount} slides
+            </span>
+          </div>
+        ) : null}
+        {!mediaPreview.isVideo && mediaPreview.imageUrl && !isRegenerating ? (
           <div className="absolute bottom-2 right-2">
             <ImagePreviewButton
               variant="overlay-icon"
               stopPropagation
               onClick={() =>
-                onPreviewImage(post.imageUrl as string, 'Scheduled post image')
+                onPreviewImage(
+                  mediaPreview.imageUrl as string,
+                  'Scheduled post image'
+                )
               }
             />
           </div>
@@ -562,7 +693,7 @@ function ScheduledPostCard({
 
       {status.reason ? (
         <p
-          className="mt-2 line-clamp-2 rounded-md border border-red-100 bg-red-50/60 px-2 py-1 text-[11px] leading-snug text-red-700"
+          className="mt-2 line-clamp-2 rounded-md border border-red-100 bg-red-500/20 px-2 py-1 text-[11px] leading-snug text-red-700"
           title={status.reason}
         >
           <span className="font-semibold">Reason: </span>
@@ -664,6 +795,8 @@ function CalendarEventChip({
 }) {
   const status = getDisplayStatus(post);
   const caption = (post.message || 'No caption').trim();
+  const mediaPreview = resolveSchedulableMediaPreview(post);
+  const hasMedia = hasSchedulableMediaPreview(mediaPreview);
   const isMd = size === 'md';
   return (
     <button
@@ -681,18 +814,17 @@ function CalendarEventChip({
         statusBadgeClasses(status.variant)
       )}
     >
-      {post.imageUrl ? (
+      {hasMedia ? (
         <span
           className={cn(
             'relative shrink-0 overflow-hidden rounded ring-1 ring-border/60',
             isMd ? 'h-10 w-10' : 'h-7 w-7'
           )}
         >
-          <img
-            src={post.imageUrl}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover"
+          <PostMediaPreview
+            preview={mediaPreview}
+            videoClassName="h-full w-full object-cover bg-black"
+            imageClassName="h-full w-full object-cover"
           />
           {isRegenerating ? (
             <span className="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-[1px]">
@@ -1226,11 +1358,7 @@ export default function SchedulePostPage() {
       // very first page errors out (so we don't leave a stale skeleton).
       console.error('[fetchScheduledPosts] failed', error);
       if (isFirstPage) setScheduledPosts([]);
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : 'Failed to load scheduled posts';
-      showErrorToast(message);
+      showErrorToast('Failed to load scheduled posts');
       // Stop driving the intersection-observer pagination into the same
       // failing query. The tab-change effect resets this back to `true`
       // synchronously, so switching tabs still triggers a fresh fetch.
@@ -1329,25 +1457,30 @@ export default function SchedulePostPage() {
     prevViewModeRef.current = viewMode;
   }, [viewMode]);
 
-  const onRegenSettledRef = useRef<() => Promise<void>>(async () => {});
-  onRegenSettledRef.current = async () => {
-    await silentRefreshScheduledPosts();
-    const { fromMs, toMs } = calendarVisibleRange(calendarMode, calendarCursor);
-    const currentKey = `${fromMs}_${toMs}`;
-    setCalendarRangeCache((prev) => {
-      if (!prev.has(currentKey)) return prev;
-      const next = new Map(prev);
-      next.delete(currentKey);
+  const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(
+    () => new Set()
+  );
+
+  const markRegenerating = useCallback((postId: string) => {
+    let accepted = false;
+    setRegeneratingPostIds((prev) => {
+      if (prev.has(postId)) return prev;
+      accepted = true;
+      const next = new Set(prev);
+      next.add(postId);
       return next;
     });
-  };
+    return accepted;
+  }, []);
 
-  const {
-    regeneratingPostIds,
-    markRegenerating,
-    attachRegenJob,
-    cancelRegeneration,
-  } = useScheduledPostRegenJob(onRegenSettledRef);
+  const cancelRegeneration = useCallback((postId: string) => {
+    setRegeneratingPostIds((prev) => {
+      if (!prev.has(postId)) return prev;
+      const next = new Set(prev);
+      next.delete(postId);
+      return next;
+    });
+  }, []);
 
   const handlePostAction = useCallback(
     async (post: ScheduledPost, action: 'regenerate' | 'remove') => {
@@ -1419,18 +1552,27 @@ export default function SchedulePostPage() {
             return next;
           });
         } else {
-          markRegenerating(postId);
-          const response = await performActionByUserOnScheduledPost(
-            postId,
-            'regenerate',
-            platform
-          );
-          const job = parseRegenJobFromResponse(response.data);
-          if (job) {
-            attachRegenJob(postId, job);
-          } else {
+          if (!markRegenerating(postId)) return;
+          try {
+            await performActionByUserOnScheduledPost(
+              postId,
+              'regenerate',
+              platform
+            );
+            await silentRefreshScheduledPosts();
+            const { fromMs, toMs } = calendarVisibleRange(
+              calendarMode,
+              calendarCursor
+            );
+            const currentKey = `${fromMs}_${toMs}`;
+            setCalendarRangeCache((prev) => {
+              if (!prev.has(currentKey)) return prev;
+              const next = new Map(prev);
+              next.delete(currentKey);
+              return next;
+            });
+          } finally {
             cancelRegeneration(postId);
-            showErrorToast('Regeneration started but job tracking failed');
           }
         }
       } catch {
@@ -1457,7 +1599,6 @@ export default function SchedulePostPage() {
       calendarMode,
       calendarCursor,
       markRegenerating,
-      attachRegenJob,
       cancelRegeneration,
     ]
   );
@@ -1569,6 +1710,8 @@ export default function SchedulePostPage() {
       updated.regenratedCount ?? updated.regeneratedCount ?? 0;
     if (
       updated.imageUrl !== selectedPost.imageUrl ||
+      updated.videoUrl !== selectedPost.videoUrl ||
+      updated.mediaType !== selectedPost.mediaType ||
       updated.message !== selectedPost.message ||
       nextCount !== prevCount
     ) {
@@ -1625,11 +1768,7 @@ export default function SchedulePostPage() {
       } catch (error) {
         if (!cancelled) {
           console.error('[calendar range fetch] failed', error);
-          const message =
-            error instanceof Error && error.message
-              ? error.message
-              : 'Failed to load calendar posts';
-          showErrorToast(message);
+          showErrorToast('Failed to load calendar posts');
           // Cache the empty result so we don't refire the same failing
           // request on every re-render — the user can navigate to another
           // month and come back to retry.

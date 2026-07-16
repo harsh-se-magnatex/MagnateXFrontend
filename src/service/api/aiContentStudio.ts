@@ -1,6 +1,5 @@
 import axiosClient from '@/lib/axios';
 import { apiPost } from '@/lib/api-client';
-import type { ActivePlatformJob, Platform } from '@/src/types/job';
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -8,12 +7,6 @@ type ApiEnvelope<T> = {
   message: string;
   data: T;
 };
-
-/**
- * Legacy synchronous result shape (used by the page to render finished
- * content). Reconstructed on the client from `jobs/{jobId}.result` snapshots —
- * see `instant-generation/page.tsx`.
- */
 
 export type StudioRenderedImage = {
   platform: string;
@@ -26,37 +19,130 @@ export type StudioRenderedImage = {
 };
 
 export type StudioGenerateResult = {
-  contentDescription: string;
+  contentDescription?: string;
   contentType?: string;
   instantGenerationDocId?: string | null;
-  /** Set when the server inferred a brief from the reference image (image-only flow). */
   inferredImageContext: string | null;
   renderedImages: StudioRenderedImage[];
 };
 
-/**
- * 202 envelope returned by `POST /api/v1/ai-content-studio/generate`. The
- * frontend uses `parentJobId` + `jobs[]` to open Firestore `onSnapshot`
- * listeners (see `useFeatureJob`).
- */
-export type GenerateJobsResponse = {
-  parentJobId: string;
-  jobs: ActivePlatformJob[];
-};
-
 export async function generateAiContentStudio(params: {
   prompt: string;
-  platforms: Platform[];
+  platforms: string[];
   image?: File | null;
-}): Promise<GenerateJobsResponse> {
+}): Promise<StudioGenerateResult> {
   const form = new FormData();
   form.append('platforms', JSON.stringify(params.platforms));
   form.append('prompt', params.prompt);
   if (params.image) form.append('image', params.image);
 
-  const res = await axiosClient.post<ApiEnvelope<GenerateJobsResponse>>(
+  const res = await axiosClient.post<ApiEnvelope<StudioGenerateResult>>(
     '/api/v1/ai-content-studio/generate',
     form
+  );
+  return res.data.data;
+}
+
+export type StudioVideoEditResult = {
+  platform: string;
+  videoUrl: string;
+  videoFilePath: string;
+  caption: string;
+  omniPrompt?: string | null;
+  aspectRatio?: string | null;
+  instantGenerationDocId?: string | null;
+  generatedAt?: string | null;
+};
+
+export const VIDEO_EDIT_TOOLS = [
+  {
+    id: 'enhance',
+    label: 'Enhance My Video',
+    tier: 'safe' as const,
+    description: 'Same clip — stabilize, grade, lighting, clarity.',
+  },
+  {
+    id: 'convert_reel',
+    label: 'Convert to Reel',
+    tier: 'safe' as const,
+    description: 'Vertical reframe + polish for Reels/Shorts.',
+  },
+  {
+    id: 'replace_background',
+    label: 'Replace Background',
+    tier: 'creative' as const,
+    description: 'Change the environment; keep you identical.',
+  },
+  {
+    id: 'add_product',
+    label: 'Add Your Product',
+    tier: 'creative' as const,
+    description: 'Place your product naturally in the scene.',
+  },
+] as const;
+
+export type VideoEditToolId = (typeof VIDEO_EDIT_TOOLS)[number]['id'];
+
+export const VIDEO_EDIT_INTENTS = [
+  { id: 'professional', label: 'Professional' },
+  { id: 'luxury', label: 'Luxury' },
+  { id: 'cinematic', label: 'Cinematic' },
+  { id: 'energetic_social', label: 'Energetic Social' },
+  { id: 'warm_friendly', label: 'Warm & Friendly' },
+] as const;
+
+export type VideoEditIntentId = (typeof VIDEO_EDIT_INTENTS)[number]['id'];
+
+export const VIDEO_EDIT_SCENE_PRESETS = [
+  { id: 'modern_office', label: 'Modern office' },
+  { id: 'outdoor_storefront', label: 'Outdoor storefront' },
+  { id: 'studio_backdrop', label: 'Studio backdrop' },
+  { id: 'premium_interior', label: 'Premium interior' },
+] as const;
+
+export type VideoEditScenePresetId =
+  (typeof VIDEO_EDIT_SCENE_PRESETS)[number]['id'];
+
+export const VIDEO_EDIT_PLACEMENT_PRESETS = [
+  { id: 'in_hand', label: 'In hand' },
+  { id: 'on_surface', label: 'On a surface' },
+  { id: 'held_to_camera', label: 'Held to camera' },
+] as const;
+
+export type VideoEditPlacementPresetId =
+  (typeof VIDEO_EDIT_PLACEMENT_PRESETS)[number]['id'];
+
+export async function editVideoAiContentStudio(params: {
+  prompt: string;
+  platforms: string[];
+  video: File;
+  editTool?: VideoEditToolId | string;
+  editIntent?: VideoEditIntentId | string;
+  scenePreset?: VideoEditScenePresetId | string | null;
+  placementPreset?: VideoEditPlacementPresetId | string | null;
+  productImages?: File[];
+}): Promise<StudioVideoEditResult> {
+  const form = new FormData();
+  form.append('platforms', JSON.stringify(params.platforms));
+  form.append('prompt', params.prompt);
+  form.append('editTool', params.editTool || 'enhance');
+  form.append('editIntent', params.editIntent || 'professional');
+  if (params.scenePreset) form.append('scenePreset', params.scenePreset);
+  if (params.placementPreset) {
+    form.append('placementPreset', params.placementPreset);
+  }
+  form.append('video', params.video);
+  for (const img of (params.productImages ?? []).slice(0, 3)) {
+    form.append('productImage', img);
+  }
+
+  const res = await axiosClient.post<ApiEnvelope<StudioVideoEditResult>>(
+    '/api/v1/ai-content-studio/edit-video',
+    form,
+    {
+      // Omni edit can take several minutes
+      timeout: 35 * 60 * 1000,
+    }
   );
   return res.data.data;
 }

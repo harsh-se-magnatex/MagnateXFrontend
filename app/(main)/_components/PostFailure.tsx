@@ -79,21 +79,12 @@ export function PostFailureAlerts() {
                     </span>
                   </div>
                   <h3 className="text-sm font-semibold text-zinc-900">
-                    {stripBakedDate(notification.message)} on{' '}
+                    {stripBakedDate(notification.message.split(' on ')[0])} on{' '}
                     {fmtTimestamp(notification.failedAt)}
                   </h3>
                   <p className="text-sm text-zinc-600">{notification.errors.join(', ')}</p>
                 </div>
-
-                <div className="flex shrink-0 items-center gap-3">
-                  <Link
-                    href={`/scheduled-post`}
-                    className="text-sm font-medium text-red-600 hover:text-red-700 hover:underline"
-                  >
-                    View Post
-                  </Link>
                 </div>
-              </div>
             </NotificationListItem>
             );
           })}
