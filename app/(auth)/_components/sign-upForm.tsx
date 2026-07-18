@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getAdditionalUserInfo, updateProfile } from 'firebase/auth';
@@ -37,6 +37,11 @@ export function SignupForm({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [usePhone, setUsePhone] = useState(false);
+
+  useEffect(() => {
+    const fromQuery = new URLSearchParams(window.location.search).get('email');
+    if (fromQuery?.trim()) setEmail(fromQuery.trim());
+  }, []);
 
   const busy = loading || oauthLoading;
 

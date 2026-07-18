@@ -18,7 +18,6 @@ import {
 } from 'firebase/auth';
 import {
   checkEmailExistsinDeletedUsers,
-  checkEmailRegistered,
   checkPhoneExistsInDeletedUsers,
   linkProvider,
   loginUser,
@@ -100,25 +99,57 @@ export const signInWithGoogle = async (
   }
 };
 
+function noAccountError(): Error & { code: string } {
+  const err = new Error(
+    'No account found. Please sign up first.'
+  ) as Error & { code: string };
+  err.code = 'auth/user-not-found';
+  return err;
+}
+
 /**
- * Client `fetchSignInMethodsForEmail` is empty when email enumeration
- * protection is on. Prefer Admin-backed providers from the API.
+ * Same behavior as the old `fetchSignInMethodsForEmail` path, but works when
+ * Firebase email-enumeration protection is enabled (client methods are always []).
+ * Uses a direct fetch so the axios 401 interceptor cannot interrupt auth pages.
  */
-async function resolveSignInMethods(email: string): Promise<string[]> {
-  try {
-    const res = await checkEmailRegistered(email);
-    if (res.data?.registered && Array.isArray(res.data.providers)) {
-      return res.data.providers;
+async function lookupEmailAuth(email: string): Promise<{
+  registered: boolean | null;
+  providers: string[];
+}> {
+  const base = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '');
+  if (base) {
+    try {
+      const res = await fetch(`${base}/api/v1/user/check-email-registered`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const json = (await res.json()) as ApiEnvelope<{
+          registered?: boolean;
+          providers?: string[];
+        }>;
+        return {
+          registered: !!json.data?.registered,
+          providers: Array.isArray(json.data?.providers)
+            ? json.data.providers
+            : [],
+        };
+      }
+    } catch {
+      /* fall through to client Firebase API (works in local/dev) */
     }
-    if (res.data?.registered === false) return [];
-  } catch {
-    /* fall through to client API */
   }
 
   try {
-    return await fetchSignInMethodsForEmail(auth, email);
+    const providers = await fetchSignInMethodsForEmail(auth, email);
+    return {
+      registered: providers.length > 0 ? true : null,
+      providers,
+    };
   } catch {
-    return [];
+    return { registered: null, providers: [] };
   }
 }
 
@@ -127,18 +158,10 @@ export const createUserEmailPassword = async (
   password: string
 ) => {
   try {
-    const methods = await resolveSignInMethods(email);
+    const { providers } = await lookupEmailAuth(email);
 
-    if (methods.length > 0 && !methods.includes('password')) {
-      return await handleProviderMerge(email, password, methods);
-    }
-
-    if (methods.includes('password')) {
-      const already = new Error(
-        'That email is already registered. Try signing in instead.'
-      ) as Error & { code: string };
-      already.code = 'auth/email-already-in-use';
-      throw already;
+    if (providers.length > 0 && !providers.includes('password')) {
+      return await handleProviderMerge(email, password, providers);
     }
 
     const res = await checkEmailExistsinDeletedUsers(email);
@@ -159,18 +182,25 @@ export const createUserEmailPassword = async (
 
 export const signInEmailPassword = async (email: string, password: string) => {
   let result: UserCredential | null = null;
-  const methods = await resolveSignInMethods(email);
+  const { registered, providers } = await lookupEmailAuth(email);
 
-  // Google-only (or other non-password) account → link password after Google.
-  if (methods.length > 0 && !methods.includes('password')) {
-    const merged = await handleProviderMerge(email, password, methods);
-    void trackLogin('password');
-    return {
-      user: merged.user,
-      result: merged,
-      showRecoveryPopup: false,
-      deletedDocId: '',
-    };
+  // Unknown email → same as old auth/user-not-found → sign-up page
+  if (registered === false) {
+    const deleted = await checkEmailExistsinDeletedUsers(email);
+    if (deleted.data?.exists && deleted.data?.deletedDocId) {
+      return {
+        user: null,
+        result: null,
+        showRecoveryPopup: true,
+        deletedDocId: deleted.data.deletedDocId,
+      };
+    }
+    throw noAccountError();
+  }
+
+  // Old path: Google-only account → popup + link password, then password sign-in
+  if (providers.length > 0 && !providers.includes('password')) {
+    await handleProviderMerge(email, password, providers);
   }
 
   try {
@@ -180,8 +210,6 @@ export const signInEmailPassword = async (email: string, password: string) => {
       error && typeof error === 'object' && 'code' in error
         ? String((error as { code: unknown }).code)
         : '';
-    // Email enumeration protection maps unknown users to invalid-credential
-    // instead of user-not-found — resolve via backend Admin lookup.
     if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
       const res = await checkEmailExistsinDeletedUsers(email);
       if (res.data?.exists && res.data?.deletedDocId) {
@@ -193,31 +221,27 @@ export const signInEmailPassword = async (email: string, password: string) => {
         };
       }
 
-      // Re-check providers in case the pre-check was stale/empty.
-      const latestMethods = await resolveSignInMethods(email);
-      if (latestMethods.length === 0) {
-        const notFound = new Error(
-          'No account found. Please sign up first.'
-        ) as Error & { code: string };
-        notFound.code = 'auth/user-not-found';
-        throw notFound;
+      // Fallback when pre-check could not run (e.g. API not deployed yet)
+      if (registered !== true) {
+        throw noAccountError();
       }
-      if (!latestMethods.includes('password')) {
-        const merged = await handleProviderMerge(
-          email,
-          password,
-          latestMethods
-        );
-        void trackLogin('password');
-        return {
-          user: merged.user,
-          result: merged,
-          showRecoveryPopup: false,
-          deletedDocId: '',
-        };
+
+      const again = await lookupEmailAuth(email);
+      if (again.registered === false) {
+        throw noAccountError();
       }
+      if (
+        again.providers.length > 0 &&
+        !again.providers.includes('password')
+      ) {
+        await handleProviderMerge(email, password, again.providers);
+        result = await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        throw error;
+      }
+    } else {
+      throw error;
     }
-    throw error;
   }
   if (result && !result?.user.emailVerified) {
     showErrorToast(
