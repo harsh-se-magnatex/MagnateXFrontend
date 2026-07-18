@@ -98,7 +98,10 @@ export function SignupForm({
       } else {
         localStorage.setItem('isNewUser', 'false');
       }
-      if(!userCredential.user.emailVerified){
+      if (!userCredential.user.emailVerified) {
+        toast.success(
+          'Account created. Verify your email, then sign in to continue.'
+        );
         router.push('/sign-in');
         return;
       }

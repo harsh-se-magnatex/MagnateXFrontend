@@ -171,6 +171,17 @@ export const createUserEmailPassword = async (
       );
     }
     const result = await createUserWithEmailAndPassword(auth, email, password);
+
+    if (!result.user.emailVerified) {
+      await sendEmailVerification(result.user, {
+        url: appContinueUrl('/sign-in'),
+        handleCodeInApp: true,
+      });
+      toast.info(
+        'Email verification sent. Please check your inbox (and spam folder).'
+      );
+    }
+
     const idToken = await result.user.getIdToken(true);
     await loginUser(idToken, 'signup', 'password');
     void trackSignUp('password');
@@ -244,9 +255,19 @@ export const signInEmailPassword = async (email: string, password: string) => {
     }
   }
   if (result && !result?.user.emailVerified) {
-    showErrorToast(
-      'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
-    );
+    try {
+      await sendEmailVerification(result.user, {
+        url: appContinueUrl('/sign-in'),
+        handleCodeInApp: true,
+      });
+      toast.info(
+        'Email not verified. We sent a new verification link — check your inbox (and spam folder).'
+      );
+    } catch {
+      showErrorToast(
+        'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
+      );
+    }
     return result;
   }
   if (!result?.user) {
@@ -311,17 +332,34 @@ export const signOutUser = async () => {
   }
 };
 
+/** Continue URL for Firebase emails — must be an absolute https URL with a real domain. */
+export function appContinueUrl(path = '/'): string {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  const fromEnv = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+  if (fromEnv && /^https?:\/\//i.test(fromEnv)) {
+    return `${fromEnv}${normalized}`;
+  }
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}${normalized}`;
+  }
+  throw new Error(
+    'NEXT_PUBLIC_APP_URL is missing. Set it to your app origin (e.g. https://test.sociogenie.ai).'
+  );
+}
+
 export const forgotPassword = async (email: string, url?: string) => {
   try {
-    console.log('email', email);
-    console.log('url', url);
+    const continueUrl =
+      url && /^https?:\/\//i.test(url) ? url : appContinueUrl('/reset-password');
     await sendPasswordResetEmail(auth, email, {
-      url: url ? url : `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+      url: continueUrl,
       handleCodeInApp: true,
     });
     return { success: true };
-  } catch {
-    return { success: false, message: 'Failed to send reset link.' };
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : 'Failed to send reset link.';
+    return { success: false, message };
   }
 };
 

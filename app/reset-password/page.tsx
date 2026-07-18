@@ -117,7 +117,7 @@ function ResetPasswordPageContent() {
     }
     setLoading(true);
     try {
-      const res = await forgotPassword(trimmed,`${process.env.NEXT_PUBLIC_APP_URL}/sign-in`);
+      const res = await forgotPassword(trimmed);
       if (!res.success) {
         setTone('error');
         if(res.message!.startsWith("Firebase: Error (auth/user-not-found).")){

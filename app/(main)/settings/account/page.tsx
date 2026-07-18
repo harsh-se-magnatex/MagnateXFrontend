@@ -172,10 +172,7 @@ export default function AccountSettingsPage() {
 
     setSaving(true);
     try {
-      const res = await forgotPassword(
-        resetEmail.trim(),
-        `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`
-      );
+      const res = await forgotPassword(resetEmail.trim());
       if (!res.success) {
         setPasswordMessageTone('error');
         setPasswordMessage('Failed to change password.');
