@@ -288,9 +288,13 @@ const handleProviderMerge = async (
     const emailCredential = EmailAuthProvider.credential(email, password);
     await linkWithCredential(googleResult.user, emailCredential);
 
-    const idToken = await googleResult.user.getIdToken(true);
+    // Backend marks Auth + Firestore emailVerified=true (Google already verified).
+    let idToken = await googleResult.user.getIdToken(true);
     await loginUser(idToken, 'signin', '');
     await linkProvider(idToken, 'password');
+
+    await googleResult.user.reload();
+    idToken = await googleResult.user.getIdToken(true);
 
     toast.success('Email & Google accounts merged!');
     return googleResult;
