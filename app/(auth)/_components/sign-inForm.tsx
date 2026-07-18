@@ -151,7 +151,11 @@ export function SigninForm({
       const code = extractFirebaseAuthCode(err);
       const message = getFirebaseAuthErrorMessage(err);
       showErrorToast(message);
-      if (code === 'auth/user-not-found') {
+      if (
+        code === 'auth/user-not-found' ||
+        (err instanceof Error &&
+          err.message.includes('No account found. Please sign up first.'))
+      ) {
         router.push('/sign-up');
       }
     } finally {

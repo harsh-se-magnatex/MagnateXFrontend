@@ -25,7 +25,7 @@ const FIREBASE_AUTH_USER_MESSAGES: Record<string, string> = {
     'That email is already registered. Try signing in instead.',
   'auth/weak-password': 'Please choose a stronger password.',
   'auth/invalid-credential':
-    'Sign-in failed. Check your details and try again, or use another sign-in method.',
+    'Incorrect email or password. Please try again.',
   'auth/invalid-verification-code':
     'That code is incorrect or expired. Request a new code and try again.',
   'auth/invalid-verification-id':

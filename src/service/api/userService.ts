@@ -43,6 +43,12 @@ export const checkEmailExistsinDeletedUsers = async (email: string) => {
   );
 };
 
+export const checkEmailRegistered = async (email: string) => {
+  return apiPost<
+    ApiEnvelope<{ registered: boolean; providers: string[] }>
+  >('/api/v1/user/check-email-registered', { email });
+};
+
 /** Same endpoint as email check; body uses `phoneNumber` (E.164, e.g. +919876543210). */
 export const checkPhoneExistsInDeletedUsers = async (phoneNumber: string) => {
   return apiPost<ApiEnvelope<{ exists: boolean; deletedDocId?: string }>>(

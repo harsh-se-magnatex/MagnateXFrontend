@@ -18,6 +18,7 @@ import {
 } from 'firebase/auth';
 import {
   checkEmailExistsinDeletedUsers,
+  checkEmailRegistered,
   checkPhoneExistsInDeletedUsers,
   linkProvider,
   loginUser,
@@ -99,15 +100,45 @@ export const signInWithGoogle = async (
   }
 };
 
+/**
+ * Client `fetchSignInMethodsForEmail` is empty when email enumeration
+ * protection is on. Prefer Admin-backed providers from the API.
+ */
+async function resolveSignInMethods(email: string): Promise<string[]> {
+  try {
+    const res = await checkEmailRegistered(email);
+    if (res.data?.registered && Array.isArray(res.data.providers)) {
+      return res.data.providers;
+    }
+    if (res.data?.registered === false) return [];
+  } catch {
+    /* fall through to client API */
+  }
+
+  try {
+    return await fetchSignInMethodsForEmail(auth, email);
+  } catch {
+    return [];
+  }
+}
+
 export const createUserEmailPassword = async (
   email: string,
   password: string
 ) => {
   try {
-    const methods = await fetchSignInMethodsForEmail(auth, email);
+    const methods = await resolveSignInMethods(email);
 
     if (methods.length > 0 && !methods.includes('password')) {
       return await handleProviderMerge(email, password, methods);
+    }
+
+    if (methods.includes('password')) {
+      const already = new Error(
+        'That email is already registered. Try signing in instead.'
+      ) as Error & { code: string };
+      already.code = 'auth/email-already-in-use';
+      throw already;
     }
 
     const res = await checkEmailExistsinDeletedUsers(email);
@@ -117,15 +148,6 @@ export const createUserEmailPassword = async (
       );
     }
     const result = await createUserWithEmailAndPassword(auth, email, password);
-    // if (!result.user.emailVerified) {
-    //   await sendEmailVerification(result.user, {
-    //     url: `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
-    //     handleCodeInApp: true,
-    //   });
-    //   toast.info(
-    //     'Email verification sent. Please check your inbox (and spam folder).'
-    //   );
-    // }
     const idToken = await result.user.getIdToken(true);
     await loginUser(idToken, 'signup', 'password');
     void trackSignUp('password');
@@ -137,11 +159,20 @@ export const createUserEmailPassword = async (
 
 export const signInEmailPassword = async (email: string, password: string) => {
   let result: UserCredential | null = null;
-  const methods = await fetchSignInMethodsForEmail(auth, email);
+  const methods = await resolveSignInMethods(email);
 
+  // Google-only (or other non-password) account → link password after Google.
   if (methods.length > 0 && !methods.includes('password')) {
-    await handleProviderMerge(email, password, methods);
+    const merged = await handleProviderMerge(email, password, methods);
+    void trackLogin('password');
+    return {
+      user: merged.user,
+      result: merged,
+      showRecoveryPopup: false,
+      deletedDocId: '',
+    };
   }
+
   try {
     result = await signInWithEmailAndPassword(auth, email, password);
   } catch (error: unknown) {
@@ -149,7 +180,9 @@ export const signInEmailPassword = async (email: string, password: string) => {
       error && typeof error === 'object' && 'code' in error
         ? String((error as { code: unknown }).code)
         : '';
-    if (code === 'auth/user-not-found') {
+    // Email enumeration protection maps unknown users to invalid-credential
+    // instead of user-not-found — resolve via backend Admin lookup.
+    if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
       const res = await checkEmailExistsinDeletedUsers(email);
       if (res.data?.exists && res.data?.deletedDocId) {
         return {
@@ -157,6 +190,30 @@ export const signInEmailPassword = async (email: string, password: string) => {
           result: null,
           showRecoveryPopup: true,
           deletedDocId: res.data.deletedDocId,
+        };
+      }
+
+      // Re-check providers in case the pre-check was stale/empty.
+      const latestMethods = await resolveSignInMethods(email);
+      if (latestMethods.length === 0) {
+        const notFound = new Error(
+          'No account found. Please sign up first.'
+        ) as Error & { code: string };
+        notFound.code = 'auth/user-not-found';
+        throw notFound;
+      }
+      if (!latestMethods.includes('password')) {
+        const merged = await handleProviderMerge(
+          email,
+          password,
+          latestMethods
+        );
+        void trackLogin('password');
+        return {
+          user: merged.user,
+          result: merged,
+          showRecoveryPopup: false,
+          deletedDocId: '',
         };
       }
     }
