@@ -3,12 +3,10 @@
 import { useEffect, useState } from "react";
 import axiosClient from "@/lib/axios";
 import { useUser } from "./useUser";
-import { useRouter } from "next/navigation";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { setUser } = useUser();
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -16,13 +14,14 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         const res = await axiosClient.get("/api/v1/user/auth/me");
         setUser(res.data.user);
         setLoading(false);
-      } catch (error) {
-        router.push("/sign-in");
+      } catch {
+        // 401 interceptor clears the session cookie and sends the user to
+        // /sign-in once — do not also router.push here (redirect loop).
       }
     };
 
     checkSession();
-  }, [router, setUser]);
+  }, [setUser]);
 
   if (loading) return null;
 
