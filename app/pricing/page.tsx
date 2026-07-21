@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import { Footer } from '@/components/shared/Footer';
 import { AppGradientBackground } from '@/components/shared/AppGradientBackground';
 import {
@@ -13,6 +14,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { ArrowRight, Dot } from 'lucide-react';
+import { useServerSession } from '@/hooks/useServerSession';
 import {
   CREDIT_TOPUP_PACKS,
   PLAN_ELITE_TRIAL_HERO_LINE,
@@ -85,6 +87,7 @@ export default function PricingPage() {
    *  counts differ between the two within the same tier. */
   const [planMode, setPlanMode] = useState<PlanMode>('AI');
   const visiblePlans = pricingPlansForMode(planMode);
+  const signedIn = useServerSession() === true;
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -147,22 +150,37 @@ export default function PricingPage() {
             ))}
           </div>
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/sign-in"
-              className="rounded-xl px-5 py-2.5 text-sm font-semibold text-foreground/70 transition-all hover:text-foreground hover:bg-accent/80 duration-200"
-            >
-              Login
-            </Link>
-            <Link
-              href="/sign-up"
-              className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-primary px-6 py-2.5 text-sm font-bold text-white overflow-hidden transition-all hover:shadow-xl hover:shadow-primary-blue/25 active:scale-95 duration-300"
-            >
-              <span className="relative z-10 flex items-center">
-                Get Started Free
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 duration-200" />
-              </span>
-              <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
-            </Link>
+            {signedIn ? (
+              <Link
+                href="/home"
+                className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-primary px-6 py-2.5 text-sm font-bold text-white overflow-hidden transition-all hover:shadow-xl hover:shadow-primary-blue/25 active:scale-95 duration-300"
+              >
+                <span className="relative z-10 flex items-center">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 duration-200" />
+                </span>
+                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
+              </Link>
+            ) : (
+              <>
+                <GuestAuthLink
+                  href="/sign-in"
+                  className="rounded-xl px-5 py-2.5 text-sm font-semibold text-foreground/70 transition-all hover:text-foreground hover:bg-accent/80 duration-200"
+                >
+                  Login
+                </GuestAuthLink>
+                <GuestAuthLink
+                  href="/sign-up"
+                  className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-primary px-6 py-2.5 text-sm font-bold text-white overflow-hidden transition-all hover:shadow-xl hover:shadow-primary-blue/25 active:scale-95 duration-300"
+                >
+                  <span className="relative z-10 flex items-center">
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 duration-200" />
+                  </span>
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
+                </GuestAuthLink>
+              </>
+            )}
           </div>
           <button
             type="button"
@@ -224,23 +242,38 @@ export default function PricingPage() {
               <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Account
               </p>
-              <Link
-                href="/sign-in"
-                className="rounded-xl border border-border/60 bg-card/50 px-4 py-3 text-center text-base font-semibold text-foreground transition-colors hover:bg-accent/80"
-                onClick={closeMobileNav}
-              >
-                Login
-              </Link>
-              <Link
-                href="/sign-up"
-                className="group relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-primary px-4 py-3.5 text-base font-bold text-white transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
-                onClick={closeMobileNav}
-              >
-                <span className="relative z-10 flex items-center">
-                  Get Started Free
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 duration-200" />
-                </span>
-              </Link>
+              {signedIn ? (
+                <Link
+                  href="/home"
+                  className="group relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-primary px-4 py-3.5 text-base font-bold text-white transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
+                  onClick={closeMobileNav}
+                >
+                  <span className="relative z-10 flex items-center">
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 duration-200" />
+                  </span>
+                </Link>
+              ) : (
+                <>
+                  <GuestAuthLink
+                    href="/sign-in"
+                    className="rounded-xl border border-border/60 bg-card/50 px-4 py-3 text-center text-base font-semibold text-foreground transition-colors hover:bg-accent/80"
+                    onClick={closeMobileNav}
+                  >
+                    Login
+                  </GuestAuthLink>
+                  <GuestAuthLink
+                    href="/sign-up"
+                    className="group relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-primary px-4 py-3.5 text-base font-bold text-white transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
+                    onClick={closeMobileNav}
+                  >
+                    <span className="relative z-10 flex items-center">
+                      Get Started Free
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 duration-200" />
+                    </span>
+                  </GuestAuthLink>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -421,7 +454,7 @@ export default function PricingPage() {
                         Coming soon
                       </div>
                     ) : (
-                      <Link
+                      <GuestAuthLink
                         href="/sign-up"
                         className={cn(
                           'flex flex-col items-center justify-center gap-0.5 w-full rounded-xl py-3.5 text-center transition-all relative overflow-hidden',
@@ -448,7 +481,7 @@ export default function PricingPage() {
                           </span>
                         ) : null}
                         <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full transition-transform duration-700 group-hover:translate-x-full" />
-                      </Link>
+                      </GuestAuthLink>
                     )}
                   </div>
                 </motion.div>
@@ -615,7 +648,7 @@ export default function PricingPage() {
             className="mx-auto max-w-3xl text-center"
           >
             <motion.div variants={fadeIn}>
-              <Link
+              <GuestAuthLink
                 href="/sign-up"
                 className="group inline-flex items-center justify-center rounded-2xl bg-gradient-primary px-10 py-4 text-base font-bold text-white transition-all hover:shadow-2xl hover:shadow-primary-blue/30 active:scale-[0.98] duration-300"
               >
@@ -624,7 +657,7 @@ export default function PricingPage() {
                   {/* &amp; claim {PRICING_PLANS[1].name} */}
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1 duration-200" />
                 </span>
-              </Link>
+              </GuestAuthLink>
               <p className="mt-4 text-sm text-muted-foreground font-(--font-dm-sans)">
                 Elite free for 10 days · Purchase after sign-in
               </p>

@@ -8,6 +8,7 @@ import { generateCarousel, type CarouselSlideResult } from '@/src/service/api/ca
 import { useUserPlanCredits } from '@/app/(main)/_components/UserPlanCreditsProvider';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import {
   workspaceInputClass,
   workspacePageDescriptionClass,
@@ -147,7 +148,7 @@ export default function CarouselGenerationPage() {
 
   if (!user) return null;
 
-  if (billing?.activePlan === 'non-subscribed') {
+  if (isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
   }
 

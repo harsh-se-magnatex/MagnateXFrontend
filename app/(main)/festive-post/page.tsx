@@ -34,6 +34,7 @@ import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import {
   allPlatformsSelectionLabel,
   areAllEnabledSelected,
@@ -297,32 +298,10 @@ export default function AutomatedPostPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+  if (!isTourDemo && isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
   }
-  
-  if (
-    !isTourDemo &&
-    new Date(formattedPlanExpiresAt).getTime() < new Date().getTime()
-  ) {
-    return (
-      <div className="animate-in fade-in duration-500 pb-20 flex flex-col items-center justify-center h-screen">
-        <h1 className="text-3xl font-bold tracking-tight  text-slate-900">
-          <p className="text-center">You are not eligible for this feature.</p>
-          <p className="text-center">
-            Please subscribe to a plan to use this feature.
-          </p>
-        </h1>
-        <p className="mt-2 text-base text-slate-500 max-w-2xl">
-          You can subscribe to a plan{' '}
-          <Link href="/settings/billings" className="underline text-indigo-600">
-            here
-          </Link>
-          .
-        </p>
-      </div>
-    );
-  }
+
   return (
     <div className="mx-auto animate-in fade-in duration-500 pb-20">
       <header className="mb-8 w-full flex flex-col md:flex-row md:items-start justify-between gap-6">

@@ -2,6 +2,7 @@
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import Link from 'next/link';
 import {
   WORKSPACE_NAV_HREFS,
@@ -418,7 +419,7 @@ export default function ConnectedPlatformsPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (activePlan === 'non-subscribed') {
+  if (isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
   }
 

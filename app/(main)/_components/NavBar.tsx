@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { handleSameHashLinkClick } from '@/lib/scroll-to-hash';
+import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
+import { useServerSession } from '@/hooks/useServerSession';
 
 const NAV_ITEMS = [
   { label: 'How It Works', href: '/product#how-it-works' },
@@ -26,6 +28,8 @@ type NavBarProps = {
 
 export default function NavBar({ isAuthRender = false }: NavBarProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const hasSession = useServerSession();
+  const signedIn = hasSession === true;
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -85,22 +89,28 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
             })}
           </div>
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/sign-in"
-              className="rounded-xl px-5 py-2.5 text-sm font-semibold text-foreground/70 transition-all hover:text-foreground hover:bg-accent/80 duration-200"
-            >
-              Login
-            </Link>
-            <Link
-              href="/sign-up"
-              className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-primary px-6 py-2.5 text-sm font-bold text-white overflow-hidden transition-all hover:shadow-xl hover:shadow-primary-blue/25 active:scale-95 duration-300"
-            >
-              <span className="relative z-10 flex items-center">
-                Get Started Free
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 duration-200" />
-              </span>
-              <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
-            </Link>
+           
+              <>
+                <GuestAuthLink
+                  href={signedIn ? '/home' : '/sign-in'}
+                  className="rounded-xl px-5 py-2.5 text-sm font-semibold text-foreground/70 transition-all hover:text-foreground hover:bg-accent/80 duration-200"
+                  onClick={closeMobileNav}
+                >
+                  Login
+                </GuestAuthLink>
+                <GuestAuthLink
+                  href={signedIn ? '/home' : '/sign-up'}
+                  className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-primary px-6 py-2.5 text-sm font-bold text-white overflow-hidden transition-all hover:shadow-xl hover:shadow-primary-blue/25 active:scale-95 duration-300"
+                  onClick={closeMobileNav}
+                >
+                  <span className="relative z-10 flex items-center">
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 duration-200" />
+                  </span>
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
+                </GuestAuthLink>
+              </>
+            
           </div>
           <button
             type="button"
@@ -168,24 +178,40 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
               <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Account
               </p>
-              <Link
-                href="/sign-in"
-                className="rounded-xl border border-border/60 bg-card/50 px-4 py-3 text-center text-base font-semibold text-foreground transition-colors hover:bg-accent/80"
-                onClick={closeMobileNav}
-              >
-                Login
-              </Link>
-              <Link
-                href="/sign-up"
-                className="group relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-primary px-4 py-3.5 text-base font-bold text-white transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
-                onClick={closeMobileNav}
-              >
-                <span className="relative z-10 flex items-center">
-                  Sign up free
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </span>
-                <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
-              </Link>
+              {signedIn ? (
+                <Link
+                  href="/home"
+                  className="group relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-primary px-4 py-3.5 text-base font-bold text-white transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
+                  onClick={closeMobileNav}
+                >
+                  <span className="relative z-10 flex items-center">
+                    Go to Dashboard
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </span>
+                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+                </Link>
+              ) : (
+                <>
+                  <GuestAuthLink
+                    href="/sign-in"
+                    className="rounded-xl border border-border/60 bg-card/50 px-4 py-3 text-center text-base font-semibold text-foreground transition-colors hover:bg-accent/80"
+                    onClick={closeMobileNav}
+                  >
+                    Login
+                  </GuestAuthLink>
+                  <GuestAuthLink
+                    href="/sign-up"
+                    className="group relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-primary px-4 py-3.5 text-base font-bold text-white transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
+                    onClick={closeMobileNav}
+                  >
+                    <span className="relative z-10 flex items-center">
+                      Sign up free
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+                  </GuestAuthLink>
+                </>
+              )}
             </div>
           </div>
         </div>

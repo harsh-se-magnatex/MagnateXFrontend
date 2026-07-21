@@ -4,6 +4,7 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import { calloutOpacity, pageScroll01 } from '@/lib/landing-scroll';
 
 type Callout = {
@@ -198,10 +199,10 @@ export function LandingScrollCallouts() {
               automatically.
             </p>
             <div className="landing-cta-actions mt-6 sm:mt-8">
-              <Link href="/sign-up" className="landing-btn-primary group">
+              <GuestAuthLink href="/sign-up" className="landing-btn-primary group">
                 Start Free — 10-Day Elite Trial
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              </GuestAuthLink>
               <Link href="/product" className="landing-btn-secondary">
                 Explore features
               </Link>

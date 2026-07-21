@@ -30,6 +30,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { scrapeUrl, extractCatalogPdf } from '@/src/service/api/scrape';
 import {
+  getUserAIenginePageContext,
   onBoardUser,
   suggestOnboardingBrandCopy,
   uploadLogo,
@@ -42,6 +43,7 @@ import {
   type OnboardingFieldSuggestions,
   type OnboardingColorSuggestions,
 } from '@/components/onboarding/OnboardingSuggestionsPanel';
+import { OnboardingAiLogoSection } from '@/components/onboarding/OnboardingAiLogoSection';
 
 type QuestionType =
   | 'text'
@@ -116,8 +118,9 @@ const questions: Question[] = [
   },
   {
     name: 'logo',
-    label: 'Upload your logo',
-    description: 'Upload manually — website logos appear as suggestions on the right.',
+    label: 'Add your logo',
+    description:
+      'Upload a file, pick a website suggestion, or generate one with AI (2 free generations).',
     type: 'file',
     icon: ImageIcon,
   },
@@ -403,6 +406,23 @@ export default function OnboardingMenu() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const status = await getUserAIenginePageContext();
+        if (!cancelled && status?.data?.onBoarded === true) {
+          router.replace('/home');
+        }
+      } catch {
+        // stay on onboarding if status check fails
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  useEffect(() => {
     const q = questions[step];
     const needsAiCopy =
       (q?.name === 'hashtags' || q?.name === 'brandSlogan') &&
@@ -507,8 +527,19 @@ export default function OnboardingMenu() {
     }
     try {
       setLoading(true);
+
+      // Guard before any writes — already-onboarded users must not save logo/profile.
+      const status = await getUserAIenginePageContext();
+      if (status?.data?.onBoarded === true) {
+        showErrorToast('You already completed onboarding.');
+        router.replace('/home');
+        return;
+      }
+
       if (formData.logo instanceof File || typeof formData.logo === 'string') {
-        const uploadRes = await uploadLogo(formData.logo);
+        const uploadRes = await uploadLogo(formData.logo, {
+          context: 'onboarding',
+        });
         const uploadedUrl = (uploadRes as { data?: { url?: string } })?.data
           ?.url;
         if (uploadedUrl) dataToSave.logo = uploadedUrl;
@@ -676,6 +707,12 @@ export default function OnboardingMenu() {
     setFormData((prev) => ({ ...prev, logo: url }));
     setPreview(url);
     setSelectedSuggestionKey(`logo:${url}`);
+  };
+
+  const applyAiGeneratedLogo = (args: { url: string; preview: string }) => {
+    setFormData((prev) => ({ ...prev, logo: args.url }));
+    setPreview(args.preview);
+    setSelectedSuggestionKey(`logo:${args.url}`);
   };
 
   const applyHashtagSuggestion = (tag: string) => {
@@ -917,6 +954,11 @@ export default function OnboardingMenu() {
       const logoSrc =
         preview ||
         (typeof formData.logo === 'string' ? formData.logo : undefined);
+      const selectedLogoUrl =
+        typeof formData.logo === 'string' ? formData.logo : null;
+      const businessName = String(formData.businessName ?? '').trim();
+      const industry = String(formData.industry ?? '').trim();
+
       return (
         <div className="space-y-3">
           <label
@@ -962,6 +1004,14 @@ export default function OnboardingMenu() {
               className="sr-only"
             />
           </label>
+
+          <OnboardingAiLogoSection
+            businessName={businessName}
+            industry={industry}
+            selectedUrl={selectedLogoUrl}
+            onSelect={applyAiGeneratedLogo}
+            hasExistingLogo={Boolean(hasLogo)}
+          />
         </div>
       );
     }

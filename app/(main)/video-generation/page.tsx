@@ -28,6 +28,7 @@ import {
 } from '@/lib/post-scheduler-prefill-store';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import {
   listEnabledPlatforms,
   validateGenerationPlatformSelection,
@@ -418,28 +419,8 @@ export default function VideoGenerationPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (billing?.activePlan === 'non-subscribed') {
+  if (isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
-  }
-
-  if (new Date(formattedPlanExpiresAt).getTime() < new Date().getTime()) {
-    return (
-      <div className="animate-in fade-in duration-500 pb-20 flex flex-col items-center justify-center h-screen">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          <p className="text-center">You are not eligible for this feature.</p>
-          <p className="text-center">
-            Please subscribe to a plan to use this feature.
-          </p>
-        </h1>
-        <p className="mt-2 text-base text-slate-500 max-w-2xl">
-          You can subscribe to a plan{' '}
-          <Link href="/settings/billings" className="underline text-indigo-600">
-            here
-          </Link>
-          .
-        </p>
-      </div>
-    );
   }
 
   return (

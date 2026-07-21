@@ -243,6 +243,9 @@ export function generatedByLabel(value: string | undefined): string | null {
       return 'Bulk Create';
     case 'quick-create':
       return 'Quick Create';
+    case 'campaign':
+    case 'create-campaign':
+      return 'Campaign';
     case 'carousel-engine':
     case 'carousel':
     case 'carousel-create':

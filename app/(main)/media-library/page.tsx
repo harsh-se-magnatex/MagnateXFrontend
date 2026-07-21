@@ -40,6 +40,7 @@ import {
 } from '@/src/service/api/generated-media-library.service';
 import { Button } from '@/components/ui/button';
 import { DownloadPngButton } from '@/components/download-png-button';
+import { SharePostButton } from '@/components/share-post-button';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -389,6 +390,14 @@ function MediaDetailModal({
                   getFilename={() =>
                     `media-library-${item.collection}-${item.id}-${Date.now()}.png`
                   }
+                />
+                <SharePostButton
+                  imageUrl={mediaPreview.imageUrl}
+                  caption={mediaCaptionLabel(item.caption)}
+                  getFilename={() =>
+                    `media-library-${item.collection}-${item.id}-${Date.now()}.png`
+                  }
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-60"
                 />
                 {canSchedule ? (
                   <Button

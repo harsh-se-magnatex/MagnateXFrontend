@@ -2,6 +2,7 @@
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -475,7 +476,7 @@ export default function AutomationPreferencePage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (billing?.activePlan === 'non-subscribed') {
+  if (isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
   }
 

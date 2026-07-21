@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-/** Full-page gate shown when `activePlan === 'non-subscribed'`. */
+/** Full-page gate when the user has no active plan (unsubscribed or expired). */
 export function NonSubscribedFeatureBlock() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center animate-in fade-in duration-500 pb-20 px-4 text-center">

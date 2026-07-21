@@ -1,12 +1,12 @@
 'use client';
 
-import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import {
   planButtonDisplayName,
   pricingPlansForMode,
   type PlanMode,
 } from '@/lib/landing-pricing';
+import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import { Dot } from 'lucide-react';
 import { useState } from 'react';
 
@@ -93,7 +93,7 @@ export function LandingPricingCards() {
               ))}
             </ul>
             <div className="mt-6 pt-2">
-              <Link
+              <GuestAuthLink
                 href="/sign-up"
                 className={cn(
                   'flex w-full items-center justify-center rounded-xl py-3.5 text-sm font-bold transition-all',
@@ -103,7 +103,7 @@ export function LandingPricingCards() {
                 )}
               >
                 Start {planButtonDisplayName(p.name)}
-              </Link>
+              </GuestAuthLink>
             </div>
           </article>
         ))}

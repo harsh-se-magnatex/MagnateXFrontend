@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import NavBar from './(main)/_components/NavBar';
+import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import { Landing3DBackground } from '@/components/landing/landing-3d-background';
 import { LandingScrollCallouts } from '@/components/landing/landing-scroll-callouts';
 import '@/components/landing/landing-3d.css';
@@ -73,10 +74,10 @@ export default function Home() {
               variants={fadeIn}
               className="mt-10 flex flex-wrap items-center justify-center gap-4"
             >
-              <Link href="/sign-up" className="landing-btn-primary group">
+              <GuestAuthLink href="/sign-up" className="landing-btn-primary group">
                 Start Free — 10-Day Elite Trial
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              </GuestAuthLink>
               <Link href="/product" className="landing-btn-secondary">
                 See how it works
               </Link>

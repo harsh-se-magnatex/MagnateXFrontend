@@ -83,9 +83,13 @@ export const suggestOnboardingBrandCopy = async (
   );
 };
 
-export const uploadLogo = async (logo: File | string) => {
+export const uploadLogo = async (
+  logo: File | string,
+  options?: { context?: 'onboarding' }
+) => {
   const formData = new FormData();
   formData.append('logo', logo);
+  if (options?.context) formData.append('context', options.context);
   return apiPost<
     ApiEnvelope<{
       url: string;
@@ -514,15 +518,32 @@ export const setLogoVariantsForImagesPreference = async (
   });
 };
 
-export const generateAiLogoPicks = async (requirements = '', count = 1) => {
+export type GenerateAiLogoOptions = {
+  context?: 'onboarding';
+  businessName?: string;
+  industry?: string;
+};
+
+export const generateAiLogoPicks = async (
+  requirements = '',
+  count = 1,
+  options?: GenerateAiLogoOptions
+) => {
   return apiPost<
     ApiEnvelope<{
       picks: string[];
+      urls?: string[];
       generatedAt: string;
+      remaining?: number;
     }>
   >('/api/v1/user/ai-logo/generate', {
     requirements,
     count,
+    ...(options?.context ? { context: options.context } : {}),
+    ...(options?.businessName
+      ? { businessName: options.businessName }
+      : {}),
+    ...(options?.industry ? { industry: options.industry } : {}),
   });
 };
 

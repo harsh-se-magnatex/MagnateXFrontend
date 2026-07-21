@@ -6,6 +6,7 @@ import {
   BarChart3,
   Brain,
   CalendarCheck2,
+  CalendarRange,
   CalendarSync,
   ChevronsUpDown,
   ClipboardClock,
@@ -45,11 +46,10 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { usePathname } from 'next/navigation';
-import { WORKSPACE_NAV, type WorkspaceNavHref } from '@/lib/workspace-nav';
+import { WORKSPACE_NAV, CONTENT_PLAN_NAV_ITEM, type WorkspaceNavHref } from '@/lib/workspace-nav';
 import { useTourState } from '@/src/stores/tourState';
 import { getPageTourRequest } from '@/components/tour/tour-steps';
 import { useAuth } from '@/hooks/useAuth';
@@ -96,6 +96,7 @@ const workspaceNavIcons: Record<WorkspaceNavHref, typeof Brain> = {
   '/create/carousel-generation': LayoutGrid,
   '/post-scheduler': CalendarCheck2,
   '/scheduled-post': ClipboardClock,
+  '/content-plan': CalendarRange,
   '/media-library': Images,
   '/social-media-integration': Share2,
   '/analytics': BarChart3,
@@ -128,15 +129,37 @@ export function AppSidebar({
   isAccountFrozen: boolean;
 }) {
   const pathname = usePathname();
-  const workspaceItems = isAccountFrozen
-    ? workspaceNav.filter((item) => item.href === '/social-media-integration')
-    : workspaceNav;
+  const { billing } = useUserPlanCredits();
+  const workspaceItems = (() => {
+    if (isAccountFrozen) {
+      return workspaceNav.filter(
+        (item) => item.href === '/social-media-integration'
+      );
+    }
+    const items = [...workspaceNav];
+    // Content Plan is auto-mode only — append from users/{uid}.mode via
+    // UserPlanCreditsProvider (not a separate auto-mode API gate).
+    if (billing?.mode === 'auto') {
+      const postQueueIdx = items.findIndex(
+        (item) => item.href === '/scheduled-post'
+      );
+      const contentPlanItem = {
+        ...CONTENT_PLAN_NAV_ITEM,
+        icon: workspaceNavIcons[CONTENT_PLAN_NAV_ITEM.href],
+      };
+      if (postQueueIdx >= 0) {
+        items.splice(postQueueIdx + 1, 0, contentPlanItem);
+      } else {
+        items.push(contentPlanItem);
+      }
+    }
+    return items;
+  })();
   const settingsChildItems = isAccountFrozen
     ? settingsNavItems.filter((child) => child.href === '/settings/billings')
     : settingsNavItems;
   const { isMobile, setOpenMobile } = useSidebar();
   const { user, accountName, loading: authLoading } = useAuth();
-  const { billing } = useUserPlanCredits();
 
   const displayName =
     (accountName ?? user?.displayName ?? user?.email ?? 'Account').trim();
@@ -234,6 +257,24 @@ export function AppSidebar({
                         Approval
                       </span>
                     </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
+            {!isAccountFrozen && pageTourRequest && (
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <button
+                      type="button"
+                      onClick={startPageTour}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    >
+                      <Sparkles className="h-4 w-4 shrink-0 text-sidebar-foreground/80" />
+                      <span className="text-sidebar-foreground">
+                        Take this page tour
+                      </span>
+                    </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -414,15 +455,6 @@ export function AppSidebar({
                 );
               })}
             </DropdownMenuGroup>
-            {!isAccountFrozen && pageTourRequest && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={startPageTour}>
-                  <Sparkles className="h-4 w-4" />
-                  <span>Take this page tour</span>
-                </DropdownMenuItem>
-              </>
-            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarFooter>

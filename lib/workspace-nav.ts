@@ -10,6 +10,7 @@ export const WORKSPACE_NAV_HREFS = {
   carouselCreate: '/create/carousel-generation',
   schedulePost: '/post-scheduler',
   postQueue: '/scheduled-post',
+  contentPlan: '/content-plan',
   gallery: '/media-library',
   linkedProfiles: '/social-media-integration',
   analytics: '/analytics',
@@ -101,7 +102,17 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
   },
 ];
 
+/** Auto-mode only — appended in the sidebar from `UserPlanCreditsProvider`. */
+export const CONTENT_PLAN_NAV_ITEM: WorkspaceNavItem = {
+  name: 'Content Plan',
+  href: WORKSPACE_NAV_HREFS.contentPlan,
+  match: (pathname) =>
+    !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.contentPlan),
+};
+
 export function workspacePageTitle(href: WorkspaceNavHref): string {
-  const item = WORKSPACE_NAV.find((entry) => entry.href === href);
+  const item =
+    WORKSPACE_NAV.find((entry) => entry.href === href) ??
+    (href === WORKSPACE_NAV_HREFS.contentPlan ? CONTENT_PLAN_NAV_ITEM : null);
   return item?.name ?? href;
 }

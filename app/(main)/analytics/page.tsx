@@ -2,6 +2,7 @@
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import {
   getInsightsFaceBook,
@@ -627,7 +628,7 @@ export default function AnalyticsPage() {
     return <PageLoadingState />;
   }
 
-  if (activePlan === 'non-subscribed') {
+  if (isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
   }
 

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import { Footer } from '@/components/shared/Footer';
 import { AppGradientBackground } from '@/components/shared/AppGradientBackground';
 import {
@@ -184,13 +185,13 @@ export function ProductPageContent() {
               variants={fadeIn}
               className="mt-8 flex flex-wrap justify-center gap-3"
             >
-              <Link
+              <GuestAuthLink
                 href="/sign-up"
                 className="group inline-flex items-center rounded-xl bg-gradient-primary px-7 py-3.5 text-sm font-bold text-white transition-all hover:shadow-xl hover:shadow-primary-purple/25 active:scale-[0.98]"
               >
                 Get Started Free
                 <Rocket className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              </GuestAuthLink>
               <Link
                 href="/"
                 className="group inline-flex items-center rounded-xl border border-border/80 bg-transparent px-7 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
@@ -360,13 +361,13 @@ export function ProductPageContent() {
               Ready to automate your social media?
             </motion.h2>
             <motion.div variants={fadeIn} className="mt-8">
-              <Link
+              <GuestAuthLink
                 href="/sign-up"
                 className="group inline-flex items-center rounded-xl bg-gradient-primary px-10 py-4 text-base font-bold text-white transition-all hover:shadow-xl hover:shadow-primary-purple/25 active:scale-[0.98]"
               >
                 Get Started Free
                 <Rocket className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              </GuestAuthLink>
             </motion.div>
           </motion.div>
         </section>

@@ -66,6 +66,7 @@ import {
 import { cn } from '@/lib/utils';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { DownloadPngButton } from '@/components/download-png-button';
+import { SharePostButton } from '@/components/share-post-button';
 import { GenerationResearchDialog } from '@/components/generation-research-dialog';
 import {
   hasViewableResearch,
@@ -435,12 +436,23 @@ function DetailModal({
                         Download video
                       </a>
                     ) : (
-                      <DownloadPngButton
-                        url={mediaPreview.imageUrl as string}
-                        getFilename={() =>
-                          `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
-                        }
-                      />
+                      <>
+                        <DownloadPngButton
+                          url={mediaPreview.imageUrl as string}
+                          getFilename={() =>
+                            `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
+                          }
+                        />
+                        {mediaPreview.imageUrl ? (
+                          <SharePostButton
+                            imageUrl={mediaPreview.imageUrl}
+                            caption={post.message}
+                            getFilename={() =>
+                              `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
+                            }
+                          />
+                        ) : null}
+                      </>
                     )}
                   </div>
                   <div className="flex w-full justify-end">

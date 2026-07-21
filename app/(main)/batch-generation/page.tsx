@@ -2,9 +2,11 @@
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import { useAuth } from '@/src/hooks/useAuth';
 import Link from 'next/link';
 import { DownloadPngButton } from '@/components/download-png-button';
+import { SharePostButton } from '@/components/share-post-button';
 import { useRouter } from 'next/navigation';
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarCheck2, CreditCard, Expand, Loader2, Sparkles } from 'lucide-react';
@@ -275,31 +277,8 @@ export default function BatchGenerationPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+  if (!isTourDemo && isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
-  }
-
-  if (
-    !isTourDemo &&
-    new Date(formattedPlanExpiresAt).getTime() < new Date().getTime()
-  ) {
-    return (
-      <div className="animate-in fade-in duration-500 pb-20 flex flex-col items-center justify-center h-screen">
-        <h1 className="text-3xl font-bold tracking-tight  text-slate-900">
-          <p className="text-center">You are not eligible for this feature.</p>
-          <p className="text-center">
-            Please subscribe to a plan to use this feature.
-          </p>
-        </h1>
-        <p className="mt-2 text-base text-slate-500 max-w-2xl">
-          You can subscribe to a plan{' '}
-          <Link href="/settings/billings" className="underline text-indigo-600">
-            here
-          </Link>
-          .
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -441,7 +420,7 @@ function BatchGenerationPageBody(props: BatchGenerationPageBodyProps) {
     );
   }
 
-  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+  if (!isTourDemo && isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
   }
 
@@ -1066,6 +1045,14 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
                           getFilename={() =>
                             `batch-${platform}-${activePreviewRow.date}-${Date.now()}.png`
                           }
+                        />
+                        <SharePostButton
+                          imageUrl={activePreviewRow.post.imageUrl}
+                          caption={activePreviewRow.post.message}
+                          getFilename={() =>
+                            `batch-${platform}-${activePreviewRow.date}-${Date.now()}.png`
+                          }
+                          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition disabled:opacity-60"
                         />
                       </div>
                     ) : null}
