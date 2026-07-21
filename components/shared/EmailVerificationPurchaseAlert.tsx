@@ -18,13 +18,17 @@ type Props = {
 export function EmailVerificationPurchaseAlert({ user, className }: Props) {
   if (!needsEmailVerificationForPurchase(user)) return null;
 
+  const hasEmail = Boolean(user.email?.trim());
+
   return (
     <Alert
       variant="default"
       className={className ?? 'rounded-2xl border-amber-500/30 bg-amber-500/5'}
     >
       <Mail className="size-5 text-amber-600 dark:text-amber-500" />
-      <AlertTitle className="text-foreground">Verify your email</AlertTitle>
+      <AlertTitle className="text-foreground">
+        {hasEmail ? 'Verify your email' : 'Add a verified email'}
+      </AlertTitle>
       <AlertDescription className="mt-2 space-y-3 text-foreground/90">
         <p>{EMAIL_VERIFICATION_PURCHASE_MESSAGE}</p>
         <Button

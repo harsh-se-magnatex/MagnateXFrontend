@@ -84,8 +84,10 @@ import {
 import { EmailVerificationPurchaseAlert } from '@/components/shared/EmailVerificationPurchaseAlert';
 import {
   EMAIL_VERIFICATION_PURCHASE_MESSAGE,
+  TOP_UP_REQUIRES_PLAN_MESSAGE,
   needsEmailVerificationForPurchase,
 } from '@/lib/email-verification-for-purchase';
+import { isPlanInactive } from '@/lib/plan-access';
 
 /** Tier ladder shown left-to-right in the upgrade dialog. Studio/AI mode
  *  is chosen via a separate toggle; this controls only the tier order. */
@@ -540,13 +542,18 @@ export default function BillingsPage() {
   }, [plans, upgradeMode]);
 
   const emailVerificationRequired = needsEmailVerificationForPurchase(user);
+  const topUpRequiresPlan = isPlanInactive(billing);
 
   const handleCreditPackPurchase = async (creditPackId: string) => {
     if (!user) return;
-    // if (emailVerificationRequired) {
-    //   showErrorToast(EMAIL_VERIFICATION_PURCHASE_MESSAGE);
-    //   return;
-    // }
+    if (emailVerificationRequired) {
+      showErrorToast(EMAIL_VERIFICATION_PURCHASE_MESSAGE);
+      return;
+    }
+    if (topUpRequiresPlan) {
+      showErrorToast(TOP_UP_REQUIRES_PLAN_MESSAGE);
+      return;
+    }
     if (clickedTopUp.current === creditPackId) return;
     try {
       setTopUpLoading(true);
@@ -1148,14 +1155,25 @@ export default function BillingsPage() {
                 </p>
               </div>
             </div>
-            <Button
-              type="button"
-              className="rounded-xl shrink-0 self-start"
-              onClick={() => setTopUpOpen(true)}
-              disabled={billing?.activePlan === 'non-subscribed'}
-            >
-              Top up credits
-            </Button>
+            <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0 self-start">
+              <Button
+                type="button"
+                className="rounded-xl"
+                onClick={() => setTopUpOpen(true)}
+                disabled={topUpRequiresPlan || emailVerificationRequired}
+              >
+                Top up credits
+              </Button>
+              {topUpRequiresPlan ? (
+                <p className="text-xs text-amber-800 max-w-[16rem] sm:text-right">
+                  {TOP_UP_REQUIRES_PLAN_MESSAGE}
+                </p>
+              ) : emailVerificationRequired ? (
+                <p className="text-xs text-amber-800 max-w-[16rem] sm:text-right">
+                  {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+                </p>
+              ) : null}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 overflow-hidden divide-y divide-border/60">
@@ -1489,56 +1507,70 @@ export default function BillingsPage() {
                       </div>
                     )}
                     {!isActive && (
-                      <Button
-                        variant="outline"
-                        className="h-auto w-full flex-col gap-0.5 rounded-xl py-3"
-                        disabled={
-                          planPurchaseLoading ||
-                          planChoiceBusyId === plan.id
-                        }
-                        onClick={() =>
-                          void initiatePlanChoice(
-                            plan.id,
-                            landingPlan.name
-                          )
-                        }
-                      >
-                        {planChoiceBusyId === plan.id ? (
-                          <>
-                            <Loader2
-                              className="h-4 w-4 shrink-0 animate-spin"
-                              aria-hidden
-                            />
-                            Preparing preview…
-                          </>
-                        ) : planPurchaseLoading &&
-                          clickedPurchasePlan.current === plan.id ? (
-                          <>
-                            <Loader2
-                              className="h-4 w-4 shrink-0 animate-spin"
-                              aria-hidden
-                            />
-                            Opening checkout…
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-sm font-semibold leading-tight">
-                              Start {planButtonDisplayName(landingPlan.name)}
-                            </span>
-                            {landingPlan.trialOffer ? (
-                              <span className="text-[11px] font-medium leading-tight text-emerald-600">
-                                {landingPlan.trialOffer}
+                      <div className="space-y-2">
+                        <Button
+                          variant="outline"
+                          className="h-auto w-full flex-col gap-0.5 rounded-xl py-3"
+                          disabled={
+                            emailVerificationRequired ||
+                            planPurchaseLoading ||
+                            planChoiceBusyId === plan.id
+                          }
+                          onClick={() =>
+                            void initiatePlanChoice(
+                              plan.id,
+                              landingPlan.name
+                            )
+                          }
+                        >
+                          {planChoiceBusyId === plan.id ? (
+                            <>
+                              <Loader2
+                                className="h-4 w-4 shrink-0 animate-spin"
+                                aria-hidden
+                              />
+                              Preparing preview…
+                            </>
+                          ) : planPurchaseLoading &&
+                            clickedPurchasePlan.current === plan.id ? (
+                            <>
+                              <Loader2
+                                className="h-4 w-4 shrink-0 animate-spin"
+                                aria-hidden
+                              />
+                              Opening checkout…
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm font-semibold leading-tight">
+                                Start {planButtonDisplayName(landingPlan.name)}
                               </span>
-                            ) : null}
-                          </>
-                        )}
-                      </Button>
+                              {landingPlan.trialOffer ? (
+                                <span className="text-[11px] font-medium leading-tight text-emerald-600">
+                                  {landingPlan.trialOffer}
+                                </span>
+                              ) : null}
+                            </>
+                          )}
+                        </Button>
+                        {emailVerificationRequired ? (
+                          <p className="text-[11px] leading-snug text-amber-800 text-center">
+                            {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+                          </p>
+                        ) : null}
+                      </div>
                     )}
                   </div>
                 </div>
               );
             })}
           </div>
+
+          {emailVerificationRequired ? (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-medium text-amber-900">
+              {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+            </p>
+          ) : null}
 
           <p className="text-center text-xs text-slate-500 pt-2">
             {canChangePlanViaSubscription ? (
@@ -1835,9 +1867,15 @@ export default function BillingsPage() {
                 Credits are used for product ads, instant posts, festive
                 campaigns, and regenerations. Valid for 30 days from purchase.
               </p>
-              {/* <p className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                Credits require an active subscription to use.
-              </p> */}
+              {topUpRequiresPlan ? (
+                <p className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                  {TOP_UP_REQUIRES_PLAN_MESSAGE}
+                </p>
+              ) : emailVerificationRequired ? (
+                <p className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                  {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+                </p>
+              ) : null}
             </DialogDescription>
           </DialogHeader>
 
@@ -1862,19 +1900,35 @@ export default function BillingsPage() {
                       {pack.credits} credits
                     </p>
                   </div>
-                  <Button
-                    className="w-full rounded-xl mt-auto"
-                    onClick={() => {
-                      setSelectedCreditPack(pack);
-                      void handleCreditPackPurchase(pack.id);
-                    }}
-                  >
-                    {topUpLoading && selectedCreditPack?.id === pack.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      'Purchase'
-                    )}
-                  </Button>
+                  <div className="mt-auto space-y-2">
+                    <Button
+                      className="w-full rounded-xl"
+                      disabled={
+                        topUpRequiresPlan ||
+                        emailVerificationRequired ||
+                        topUpLoading
+                      }
+                      onClick={() => {
+                        setSelectedCreditPack(pack);
+                        void handleCreditPackPurchase(pack.id);
+                      }}
+                    >
+                      {topUpLoading && selectedCreditPack?.id === pack.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Purchase'
+                      )}
+                    </Button>
+                    {topUpRequiresPlan ? (
+                      <p className="text-[11px] leading-snug text-amber-800 text-center">
+                        {TOP_UP_REQUIRES_PLAN_MESSAGE}
+                      </p>
+                    ) : emailVerificationRequired ? (
+                      <p className="text-[11px] leading-snug text-amber-800 text-center">
+                        {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               ))}
           </div>
