@@ -7,7 +7,7 @@ import { ChatSheet } from './ChatSheet';
 
 /**
  * Hide the widget on routes that already feel like full-screen flows or
- * where the bot can't help (admin tools, onboarding, the brand memory
+ * where the bot can't help (admin tools, onboarding, the Business Data
  * guided Q&A, the sign-in screen). Anywhere else we render both the
  * floating launcher and the slide-out sheet.
  */

@@ -59,11 +59,11 @@ const ONBOARDING_STEPS: TourStep[] = [
     side: 'bottom',
     title: "What's next",
     description:
-      "When the counter hits the end, we'll take you to your Memory Layer to fine-tune your brand voice with a few questions and reference photos.",
+      "When the counter hits the end, we'll take you to your Business Data to fine-tune your brand voice with a few questions and reference photos.",
   },
 ];
 
-/** Tour B — brand-memory / memory layer (1 step, single page).
+/** Tour B — brand-memory / Business Data (1 step, single page).
  *  Originally 2 steps; collapsed because the photo-upload area only renders
  *  in the second phase of the form, so a single welcome step is cleaner. */
 const BRAND_MEMORY_STEPS: TourStep[] = [
@@ -245,7 +245,7 @@ const PLATFORM_STEPS: TourStep[] = [
     side: 'bottom',
     title: 'Quick jumps up top',
     description:
-      'From any page: Home for the dashboard, AI Engine to tune prompts, Brand DNA to edit everything you set up in onboarding and the memory layer, Contact Us for support — and the sign-out button on the right.',
+      'From any page: Home for the dashboard, AI Engine to tune prompts, Brand DNA to edit everything you set up in onboarding and Business Data, Contact Us for support — and the sign-out button on the right.',
   },
   // 8l. Final CTA
   FINAL_STEP,

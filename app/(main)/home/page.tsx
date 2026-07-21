@@ -323,7 +323,7 @@ export default function Home() {
     if (loading || authLoading || billingLoading || !user) return;
     const { doneTours, requestTour } = useTourState.getState();
     if (!doneTours['brand-memory'] || doneTours.platform) return;
-    // First visit after onboarding / memory layer — full cross-page walkthrough.
+    // First visit after onboarding / Business Data — full cross-page walkthrough.
     requestTour({ tour: 'platform', startIndex: 0 });
   }, [loading, authLoading, billingLoading, user]);
 

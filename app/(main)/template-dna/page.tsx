@@ -895,22 +895,22 @@ export default function BusinessProfilePage() {
                 <Sparkles className="w-5 h-5" />
               </div>
               <h2 className="text-lg font-bold text-slate-900">
-                Memory Layer
+                Business Data
               </h2>
             </div>
 
             <p className="text-sm text-slate-500 leading-relaxed mb-6">
-                Manage your memory layer with questionnaire answers and brand reference images for auto generated content.
+                Manage your business data with questionnaire answers and brand reference images for auto generated content.
             </p>
 
             <nav className="flex flex-col gap-3">
               <Link
-                href="/template-dna/memoryLayer"
+                href="/template-dna/business-data"
                 className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-0.5 shadow-sm hover:shadow-violet-500/15"
               >
                 <div className="flex items-center justify-between relative z-10">
                   <span className="font-semibold text-slate-800 transition-colors group-hover:text-slate-900">
-                    Memory layer
+                    Business Data
                   </span>
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-tr from-violet-600 to-indigo-500 text-white shadow-sm transition-transform group-hover:scale-110">
                     <Brain className="w-4 h-4" />

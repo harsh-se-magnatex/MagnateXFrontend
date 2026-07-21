@@ -116,7 +116,7 @@ export default function BrandMemoryPage() {
     try {
       const res = await getMemoryLayer();
       if (!isEnvelopeOk(res as { success?: boolean })) {
-        throw new Error('Failed to load brand memory');
+        throw new Error('Failed to load Business Data');
       }
       const raw = (
         res as { data?: { memoryLayer?: unknown } }

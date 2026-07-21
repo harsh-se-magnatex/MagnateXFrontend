@@ -218,7 +218,7 @@ export default function CarouselGenerationPage() {
             onChange={(e) => setUseMemoryLayer(e.target.checked)}
             disabled={isGenerating}
           />
-          Use brand photos from Memory Layer when relevant
+          Use brand photos from Business Data when relevant
         </label>
 
         <div className="space-y-2">

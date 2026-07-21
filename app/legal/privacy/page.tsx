@@ -92,7 +92,7 @@ export default function PrivacyPolicyPage() {
             Library or Brand DNA.
           </li>
           <li>
-            <strong>AI Memory Layer data:</strong> answers about brand
+            <strong>Business Data:</strong> answers about brand
             personality, communication tone, target audience, marketing
             direction, preferred style, and positioning.
           </li>
@@ -201,7 +201,7 @@ export default function PrivacyPolicyPage() {
         <h2>5. AI Processing &amp; Automated Decision-Making</h2>
         <p>
           SocioGenie is an AI-powered platform. To deliver core features (Brand
-          DNA analysis, AI Memory Layer, AI Engine, Bulk Create, Quick Create,
+          DNA analysis, Business Data, AI Engine, Bulk Create, Quick Create,
           Product Advert Generator, Festival Post Generator, Chatbot
           Assistant), we send relevant content and brand data to enterprise AI
           providers acting as our processors / sub-processors:
@@ -339,7 +339,7 @@ export default function PrivacyPolicyPage() {
           </li>
           <li>
             <strong>After account deletion:</strong> We delete or anonymise
-            account data, brand assets, AI Memory Layer content, generated
+            account data, brand assets, Business Data content, generated
             posts, and connected-account tokens within{' '}
             <strong>30 days</strong> of confirmed deletion, except where
             retention is required by law (see below).
