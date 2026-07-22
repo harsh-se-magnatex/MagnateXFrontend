@@ -17,6 +17,12 @@ let accountsCache: CachedAccounts | null = null;
 let accountsInflight: Promise<SocialAccountShareFields[]> | null = null;
 const ACCOUNTS_TTL_MS = 60_000;
 
+const PLATFORM_ORDER: ShareSocialPlatform[] = [
+  'facebook',
+  'instagram',
+  'linkedin',
+];
+
 export function normalizeSharePlatform(
   raw: unknown
 ): ShareSocialPlatform | null {
@@ -60,17 +66,29 @@ export function buildBusinessSocialProfileUrl(
   return id ? `https://linkedin.com/${id}` : null;
 }
 
-/** Append the business social URL to caption text for share / copy. */
+/** Append one or more business social URLs to caption text for share / copy. */
+export function appendSocialProfileLinks(
+  caption: string | null | undefined,
+  profileUrls: Array<string | null | undefined>
+): string {
+  const text = String(caption ?? '').trim();
+  const urls = profileUrls
+    .map((u) => String(u ?? '').trim())
+    .filter(Boolean)
+    .filter((url, index, all) => all.indexOf(url) === index)
+    .filter((url) => !text.includes(url));
+
+  if (!urls.length) return text;
+  if (!text) return urls.join('\n');
+  return `${text}\n\n${urls.join('\n')}`;
+}
+
+/** @deprecated Prefer appendSocialProfileLinks for multi-account share text. */
 export function appendSocialProfileLink(
   caption: string | null | undefined,
   profileUrl: string | null | undefined
 ): string {
-  const text = String(caption ?? '').trim();
-  const url = String(profileUrl ?? '').trim();
-  if (!url) return text;
-  if (!text) return url;
-  if (text.includes(url)) return text;
-  return `${text}\n\n${url}`;
+  return appendSocialProfileLinks(caption, [profileUrl]);
 }
 
 async function loadSocialAccounts(): Promise<SocialAccountShareFields[]> {
@@ -97,6 +115,35 @@ async function loadSocialAccounts(): Promise<SocialAccountShareFields[]> {
   })();
 
   return accountsInflight;
+}
+
+/**
+ * Resolve public URLs for every connected business page/account.
+ * Optional `preferredPlatformRaw` puts that platform's link first when present.
+ */
+export async function resolveAllConnectedBusinessSocialProfileUrls(
+  preferredPlatformRaw?: string | null
+): Promise<string[]> {
+  const accounts = await loadSocialAccounts();
+  const byPlatform = new Map<ShareSocialPlatform, SocialAccountShareFields>();
+  for (const account of accounts) {
+    const platform = normalizeSharePlatform(account.platform);
+    if (!platform) continue;
+    byPlatform.set(platform, account);
+  }
+
+  const preferred = normalizeSharePlatform(preferredPlatformRaw);
+  const ordered: ShareSocialPlatform[] = preferred
+    ? [preferred, ...PLATFORM_ORDER.filter((p) => p !== preferred)]
+    : [...PLATFORM_ORDER];
+
+  const urls: string[] = [];
+  for (const platform of ordered) {
+    const account = byPlatform.get(platform);
+    const url = buildBusinessSocialProfileUrl(platform, account);
+    if (url) urls.push(url);
+  }
+  return urls;
 }
 
 /** Resolve the selected business page URL for a post platform (if connected). */

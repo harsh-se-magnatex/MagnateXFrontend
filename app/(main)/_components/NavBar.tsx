@@ -11,6 +11,7 @@ import { useServerSession } from '@/hooks/useServerSession';
 const NAV_ITEMS = [
   { label: 'How It Works', href: '/product#how-it-works' },
   { label: 'Features', href: '/product#features' },
+  { label: 'How It Looks', href: '/how-it-looks' },
   { label: 'Pricing', href: '/product#pricing' },
   { label: 'FAQ', href: '/product#faq' },
 ] as const;

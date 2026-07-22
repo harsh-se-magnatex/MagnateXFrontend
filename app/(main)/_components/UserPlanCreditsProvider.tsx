@@ -48,6 +48,9 @@ export type UserPlanCredits = {
     instagram: boolean;
     linkedin: boolean;
   };
+  /** After first platform save in a billing period; cleared on cap-change renew. */
+  selectedPlatformsLocked?: boolean;
+  campaignSeedPendingPlatformConfirm?: boolean;
   usesSplitCreditPools: boolean;
 };
 
@@ -134,6 +137,9 @@ function parseBilling(
     subscription:
       typeof data.subscription === 'string' ? data.subscription : undefined,
     selected: parseSelectedPlatforms(data.selected),
+    selectedPlatformsLocked: data.selectedPlatformsLocked === true,
+    campaignSeedPendingPlatformConfirm:
+      data.campaignSeedPendingPlatformConfirm === true,
   };
 }
 

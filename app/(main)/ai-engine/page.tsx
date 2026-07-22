@@ -84,6 +84,8 @@ type UserData = {
   linkedinConnected?: boolean;
   instagramUserId?: string | null;
   selected: SelectedPlatforms;
+  selectedPlatformsLocked?: boolean;
+  campaignSeedPendingPlatformConfirm?: boolean;
 };
 
 type StepId =
@@ -372,6 +374,8 @@ export default function AIEnginePage() {
     linkedinConnected: false,
     instagramUserId: null,
     selected: { facebook: false, instagram: false, linkedin: false },
+    selectedPlatformsLocked: false,
+    campaignSeedPendingPlatformConfirm: false,
   });
   const [dataLoading, setDataLoading] = React.useState(true);
   const [currentStep, setCurrentStep] = React.useState(0);
@@ -415,6 +419,9 @@ export default function AIEnginePage() {
           raw.linkedinConnected ?? raw.availableLinkedInPages?.length > 0,
         instagramUserId: raw.instagramUserId ?? null,
         selected,
+        selectedPlatformsLocked: raw.selectedPlatformsLocked === true,
+        campaignSeedPendingPlatformConfirm:
+          raw.campaignSeedPendingPlatformConfirm === true,
       });
       setLocalSelected(selected);
     } catch {
@@ -543,13 +550,19 @@ export default function AIEnginePage() {
     [localSelected, data.selected]
   );
 
+  const platformsLocked =
+    data.selectedPlatformsLocked === true &&
+    data.campaignSeedPendingPlatformConfirm !== true;
+
   const canSaveSelection =
     maxAllowed > 0 &&
     localSelectedCount >= 1 &&
     localSelectedCount <= maxAllowed &&
-    !selectionUnchanged;
+    !selectionUnchanged &&
+    !platformsLocked;
 
   const togglePlatform = (key: keyof SelectedPlatforms) => {
+    if (platformsLocked) return;
     setLocalSelected((prev) => {
       const next = { ...prev };
       if (prev[key]) {
@@ -569,8 +582,26 @@ export default function AIEnginePage() {
       await selectSocialPlatformApi(localSelected);
       setConfirmSelectionOpen(false);
       await getDetails({ silent: true });
-    } catch {
-      showErrorToast('Failed to save platform selection');
+    } catch (err: unknown) {
+      const status =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { status?: number; data?: { message?: string } } })
+              .response?.status
+          : undefined;
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : undefined;
+      if (status === 409) {
+        showErrorToast(
+          message ||
+            'Platforms are locked for this billing period.'
+        );
+        await getDetails({ silent: true });
+      } else {
+        showErrorToast(message || 'Failed to save platform selection');
+      }
     } finally {
       setSavingSelection(false);
     }
@@ -849,9 +880,16 @@ export default function AIEnginePage() {
                   <span className="font-semibold text-foreground">
                     {maxAllowed}
                   </span>{' '}
-                  platform{maxAllowed !== 1 ? 's' : ''}. You can change this
-                  selection anytime within your plan limit.
+                  platform{maxAllowed !== 1 ? 's' : ''}.
+                  {platformsLocked
+                    ? ' Platforms are locked for this billing period.'
+                    : ' Once saved, platforms stay locked until a plan change that alters your platform limit.'}
                 </p>
+                {platformsLocked && (
+                  <p className="text-sm text-amber-600">
+                    Platforms locked for this billing period.
+                  </p>
+                )}
                 {maxAllowed === 0 && (
                   <p className="text-sm text-amber-600">
                     Subscribe to a plan from the Subscription step to select
@@ -864,7 +902,8 @@ export default function AIEnginePage() {
                     const isOn = localSelected[opt.key];
                     const Icon = opt.icon;
                     const disabledToggle =
-                      !isOn && localSelectedCount >= maxAllowed;
+                      platformsLocked ||
+                      (!isOn && localSelectedCount >= maxAllowed);
                     return (
                       <button
                         key={opt.key}
@@ -913,16 +952,18 @@ export default function AIEnginePage() {
 
                 <Button
                   className="w-full"
-                  disabled={!canSaveSelection || savingSelection}
+                  disabled={!canSaveSelection || savingSelection || platformsLocked}
                   onClick={() => setConfirmSelectionOpen(true)}
                 >
-                  Save selection
+                  {platformsLocked ? 'Selection locked' : 'Save selection'}
                 </Button>
 
                 {isStepComplete('selectSocial', data, skipped) && (
                   <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
                     <CheckCircle className="h-4 w-4 shrink-0" />
-                    Platforms selected.
+                    {platformsLocked
+                      ? 'Platforms selected and locked.'
+                      : 'Platforms selected.'}
                   </p>
                 )}
               </div>

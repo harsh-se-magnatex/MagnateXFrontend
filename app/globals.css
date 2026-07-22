@@ -482,6 +482,8 @@
   color: #38bdf8;
 }
 
+.app-shell .bg-blue-50,
+.app-shell .bg-blue-50\/90,
 .app-shell .bg-blue-50\/60 {
   background-color: color-mix(in srgb, #3b82f6 14%, transparent);
 }
@@ -491,6 +493,7 @@
   border-color: color-mix(in srgb, #3b82f6 35%, transparent);
 }
 
+.app-shell .text-blue-900,
 .app-shell .text-blue-700,
 .app-shell .text-blue-800 {
   color: #60a5fa;

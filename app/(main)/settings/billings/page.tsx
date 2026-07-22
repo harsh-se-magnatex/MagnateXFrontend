@@ -1434,10 +1434,10 @@ export default function BillingsPage() {
           className="sm:max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl"
         >
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">
+            <DialogTitle className="text-lg sm:text-xl text-foreground">
               Unlock more platforms and content
             </DialogTitle>
-            <DialogDescription className="text-slate-600 text-left space-y-2">
+            <DialogDescription className="text-muted-foreground text-left space-y-2">
               {billing?.activePlan === 'non-subscribed' ? (
                 <span>
                   You do not have an active subscription yet. Choose a plan to
@@ -1518,31 +1518,31 @@ export default function BillingsPage() {
                       {landingPlan.badge}
                     </span>
                   ) : null}
-                  <h3 className="font-semibold text-slate-900 text-center mt-1">
+                  <h3 className="font-semibold text-foreground text-center mt-1">
                     {landingPlan.name}
                   </h3>
-                  <p className="text-sm text-slate-500 text-center mt-1 leading-snug">
+                  <p className="text-sm text-muted-foreground text-center mt-1 leading-snug">
                    {landingPlan.mode === 'AI' ? 'Auto Plan' : 'Manual Plan'}
                   </p>
                   <div className="mt-1 mb-4 text-center">
-                    <p className="text-sm font-semibold text-slate-700">
+                    <p className="text-sm font-semibold text-foreground">
                       {formatUsd(displayPrice)}/mo
                     </p>
                     {landingPlan.trialOffer ? (
-                      <p className="mt-1 text-xs font-semibold text-emerald-600">
+                      <p className="mt-1 text-xs font-semibold text-emerald-500">
                         {landingPlan.trialOffer}
                       </p>
                     ) : null}
                   </div>
                   {isActive ? (
-                    <p className="text-sm text-slate-800 text-center space-y-3">
+                    <p className="text-sm text-foreground text-center space-y-3">
                       Active
                     </p>
                   ) : null}
-                  <ul className="text-xs text-slate-600 space-y-2 flex flex-col justify-end flex-1">
+                  <ul className="text-xs text-muted-foreground space-y-2 flex flex-col justify-end flex-1">
                     {(meta?.bullets ?? landingPlan.lines.map((line) => line.text)).map((b, i) => (
                       <li key={i} className="flex gap-2">
-                        <span className="text-indigo-500 shrink-0">·</span>
+                        <span className="text-primary shrink-0">·</span>
                         <span>{b}</span>
                       </li>
                     ))}
@@ -1597,11 +1597,11 @@ export default function BillingsPage() {
                             </>
                           ) : (
                             <>
-                              <span className="text-sm font-semibold leading-tight">
+                              <span className="text-sm font-semibold leading-tight text-foreground">
                                 Start {planButtonDisplayName(landingPlan.name)}
                               </span>
                               {landingPlan.trialOffer ? (
-                                <span className="text-[11px] font-medium leading-tight text-emerald-600">
+                                <span className="text-[11px] font-medium leading-tight text-emerald-500">
                                   {landingPlan.trialOffer}
                                 </span>
                               ) : null}
@@ -1627,7 +1627,7 @@ export default function BillingsPage() {
             </p>
           ) : null}
 
-          <p className="text-center text-xs text-slate-500 pt-2">
+          <p className="text-center text-xs text-muted-foreground pt-2">
             {canChangePlanViaSubscription ? (
               <>
                 Plan switches apply on your next billing date. You keep your

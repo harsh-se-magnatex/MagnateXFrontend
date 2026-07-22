@@ -144,21 +144,31 @@ function GeneratedRow({ item }: { item: ContentPlanGeneratedItem }) {
 
 function UpcomingRow({ item }: { item: ContentPlanUpcomingItem }) {
   const isFestival = item.kind === 'festival';
+  const isEmpty = item.kind === 'empty';
   return (
     <div
       className={cn(
-        'flex items-start gap-2 rounded-lg border px-3 py-2.5 text-xs',
+        'flex flex-col gap-1 rounded-lg border px-3 py-2.5 text-xs',
         isFestival
           ? 'border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200'
-          : 'border-dashed border-primary/40 bg-primary/10 text-foreground'
+          : isEmpty
+            ? 'border-dashed border-border bg-muted/40 text-muted-foreground'
+            : 'border-dashed border-primary/40 bg-primary/10 text-foreground'
       )}
     >
-      {isFestival ? (
-        <PartyPopper className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
-      ) : (
-        <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-      )}
-      <span className="font-medium leading-snug">{item.label}</span>
+      <div className="flex items-start gap-2">
+        {isFestival ? (
+          <PartyPopper className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
+        ) : (
+          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+        )}
+        <span className="font-medium leading-snug">{item.label}</span>
+      </div>
+      {item.note ? (
+        <p className="pl-5 text-[11px] leading-snug text-muted-foreground">
+          {item.note}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -234,7 +244,6 @@ export default function ContentPlanPage() {
   const { user, loading: authLoading } = useAuth();
   const { billing, loading: creditsLoading } = useUserPlanCredits();
   const [days, setDays] = useState<ContentPlanDay[]>([]);
-  const [platforms, setPlatforms] = useState<ContentPlanPlatform[]>([]);
   const [range, setRange] = useState<{ from: string; to: string } | null>(
     null
   );
@@ -243,13 +252,41 @@ export default function ContentPlanPage() {
 
   const isAuto = billing?.mode === 'auto';
 
+  /** Live selection from the user doc (UserPlanCreditsProvider snapshot). */
+  const selectedPlatforms = useMemo((): ContentPlanPlatform[] => {
+    const selected = billing?.selected;
+    if (!selected) return [];
+    const order: ContentPlanPlatform[] = [
+      'facebook',
+      'instagram',
+      'linkedin',
+    ];
+    return order.filter((p) => selected[p] === true);
+  }, [billing?.selected]);
+
+  /** Content Plan always follows live `selected`, not a stale calendar list. */
+  const platforms = selectedPlatforms;
+
+  const visibleDays = useMemo(() => {
+    if (platforms.length === 0) return [];
+    return days.map((day) => {
+      const byPlatform: ContentPlanDay['byPlatform'] = {};
+      for (const platform of platforms) {
+        byPlatform[platform] = day.byPlatform[platform] ?? {
+          generated: [],
+          upcoming: [],
+        };
+      }
+      return { ...day, byPlatform };
+    });
+  }, [days, platforms]);
+
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const data = await getContentPlanApi();
       setDays(data.days);
-      setPlatforms(data.platforms);
       setRange({ from: data.from, to: data.to });
     } catch (err) {
       const message =
@@ -280,6 +317,8 @@ export default function ContentPlanPage() {
       return;
     }
     void load();
+    // Platform filter is client-side (visibleDays); do not re-fetch on
+    // selection changes — that was storming GET /content-plan + reconcile.
   }, [authLoading, creditsLoading, user, isAuto, load]);
 
   if (authLoading || creditsLoading) {
@@ -371,7 +410,7 @@ export default function ContentPlanPage() {
 
       {!loading && !error && platforms.length > 0 ? (
         <div className="space-y-4">
-          {days.map((day) => (
+          {visibleDays.map((day) => (
             <DayCard key={day.date} day={day} />
           ))}
         </div>

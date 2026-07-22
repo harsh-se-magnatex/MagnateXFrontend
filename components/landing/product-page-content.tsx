@@ -23,6 +23,7 @@ import {
   ImageIcon,
   PartyPopper,
   Bolt,
+  Eye,
 } from 'lucide-react';
 import NavBar from '@/app/(main)/_components/NavBar';
 import { HowItWorksFlow } from '@/components/landing/workflow-pipeline';
@@ -274,6 +275,42 @@ export function ProductPageContent() {
                 </motion.li>
               ))}
             </ul>
+          </motion.div>
+        </section>
+
+        <section
+          id="social-preview"
+          aria-labelledby="social-preview-heading"
+          className="scroll-mt-24 border-t border-border/40 bg-card/20 px-6 py-10 sm:py-14"
+        >
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-48px' }}
+            variants={stagger}
+            className="mx-auto max-w-3xl text-center"
+          >
+            <motion.div variants={fadeIn}>
+              <SectionEyebrow>Preview</SectionEyebrow>
+              <h2
+                id="social-preview-heading"
+                className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl"
+              >
+                How will your social media look?
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-base leading-relaxed text-muted-foreground">
+                Step into full Instagram, Facebook, and LinkedIn-style previews to see
+                how your brand could appear with Sociogenie.
+              </p>
+              <Link
+                href="/how-it-looks"
+                className="group mt-8 inline-flex items-center rounded-xl bg-gradient-primary px-8 py-3.5 text-sm font-bold text-white transition-all hover:shadow-xl hover:shadow-primary-purple/25 active:scale-[0.98]"
+              >
+                <Eye className="mr-2 h-4 w-4" />
+                Open live preview
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </motion.div>
           </motion.div>
         </section>
 

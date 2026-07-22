@@ -23,8 +23,16 @@ export type ContentPlanGeneratedItem = {
 };
 
 export type ContentPlanUpcomingItem = {
-  kind: 'festival' | 'ai-engine';
+  kind:
+    | 'festival'
+    | 'ai-engine'
+    | 'quick-create'
+    | 'campaign'
+    | 'video-generation'
+    | 'carousel'
+    | 'empty';
   label: string;
+  note?: string;
 };
 
 export type ContentPlanDay = {
