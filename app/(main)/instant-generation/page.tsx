@@ -1525,6 +1525,7 @@ export default function AIContentPage() {
                         <SharePostButton
                           imageUrl={asset.imageUrl}
                           caption={asset.caption}
+                          platform={asset.platform}
                           getFilename={() =>
                             `instant-${asset.platform}-${Date.now()}.png`
                           }
@@ -1602,6 +1603,7 @@ export default function AIContentPage() {
                           <SharePostButton
                             imageUrl={asset.imageUrl}
                             caption={asset.caption}
+                            platform={asset.platform}
                             getFilename={() =>
                               `instant-${asset.platform}-${Date.now()}.png`
                             }
@@ -1803,6 +1805,7 @@ export default function AIContentPage() {
                       <SharePostButton
                         imageUrl={activeRenderedImage.imageUrl}
                         caption={activeRenderedImage.caption}
+                        platform={activeRenderedImage.platform}
                         getFilename={() =>
                           `instant-${activeRenderedImage.platform}-${Date.now()}.png`
                         }

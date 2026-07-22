@@ -38,9 +38,18 @@ import {
   RefreshCw,
   Sparkles,
   Trash2,
+  TriangleAlert,
   X,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const MAX_MEMORY_LAYER_PDF_BYTES = 50 * 1024 * 1024;
 
@@ -144,23 +153,51 @@ export default function TemplateDnaMemoryLayerPage() {
   const [memoryLayerEnabled, setMemoryLayerEnabled] = useState<
     boolean | undefined
   >(undefined);
+  const [memoryLayerStrict, setMemoryLayerStrict] = useState<
+    boolean | undefined
+  >(undefined);
   const [savingMemoryLayerPref, setSavingMemoryLayerPref] = useState(false);
   const questions = memory?.questions ?? [];
 
   const memoryLayerPrefReady =
-    !loading && memoryLayerEnabled !== undefined;
+    !loading &&
+    memoryLayerEnabled !== undefined &&
+    memoryLayerStrict !== undefined;
+
+  const brandPhotoCount = memory?.brandPhotos?.length ?? 0;
+  const showStrictPhotoWarning =
+    Boolean(memoryLayerEnabled) &&
+    Boolean(memoryLayerStrict) &&
+    brandPhotoCount < 10;
 
   const handleMemoryLayerToggle = async (enabled: boolean) => {
     const previous = memoryLayerEnabled;
     setMemoryLayerEnabled(enabled);
     setSavingMemoryLayerPref(true);
     try {
-      const res = await toggleMemoryLayerPreference(enabled);
+      const res = await toggleMemoryLayerPreference({ enabled });
       if (!isOk(res as { success?: boolean })) {
         throw new Error('Could not update Business Data preference');
       }
     } catch (e) {
       setMemoryLayerEnabled(previous);
+      showErrorToast('Update failed');
+    } finally {
+      setSavingMemoryLayerPref(false);
+    }
+  };
+
+  const handleMemoryLayerStrictChange = async (strict: boolean) => {
+    const previous = memoryLayerStrict;
+    setMemoryLayerStrict(strict);
+    setSavingMemoryLayerPref(true);
+    try {
+      const res = await toggleMemoryLayerPreference({ strict });
+      if (!isOk(res as { success?: boolean })) {
+        throw new Error('Could not update Business Data preference');
+      }
+    } catch (e) {
+      setMemoryLayerStrict(previous);
       showErrorToast('Update failed');
     } finally {
       setSavingMemoryLayerPref(false);
@@ -178,6 +215,7 @@ export default function TemplateDnaMemoryLayerPage() {
         ?.memoryLayer;
       setMemory(parseMemory(raw));
       setMemoryLayerEnabled(res.data.memoryLayerEnabled);
+      setMemoryLayerStrict(res.data.memoryLayerStrict !== false);
     } catch (e) {
       if (!opts?.silent) {
         showErrorToast('Load failed');
@@ -842,6 +880,57 @@ export default function TemplateDnaMemoryLayerPage() {
                     />
                   </div>
                 </div>
+
+                {memoryLayerEnabled ? (
+                  <div className="mt-5 flex flex-col gap-3 border-t border-border/60 pt-5 sm:flex-row sm:items-end sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-slate-900">
+                        Brand photo usage
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600 leading-relaxed max-w-xl">
+                        Strict mode always uses a Memory Layer photo. Non-strict
+                        randomly mixes Memory Layer runs with generations that
+                        skip brand photos.
+                      </p>
+                    </div>
+                    <Select
+                      value={memoryLayerStrict ? 'strict' : 'non-strict'}
+                      disabled={
+                        !memoryLayerPrefReady || savingMemoryLayerPref
+                      }
+                      onValueChange={(v) =>
+                        void handleMemoryLayerStrictChange(v === 'strict')
+                      }
+                    >
+                      <SelectTrigger
+                        className="w-full sm:w-[240px]"
+                        aria-label="Brand photo usage mode"
+                      >
+                        <SelectValue placeholder="Select mode" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="strict">
+                          Strictly use Memory Layer
+                        </SelectItem>
+                        <SelectItem value="non-strict">
+                          Not strictly use
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ) : null}
+
+                {showStrictPhotoWarning ? (
+                  <Alert className="mt-5 border-amber-200 bg-amber-50 text-amber-950">
+                    <TriangleAlert className="text-amber-600" aria-hidden />
+                    <AlertTitle>Few product photos</AlertTitle>
+                    <AlertDescription className="text-amber-900/80">
+                      You have fewer than 10 product photos. Turn off Strictly
+                      use Memory Layer so generation can also run without brand
+                      photos and avoid repeating the same images too often.
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
               </section>
             )}
             <div className="flex flex-wrap items-start justify-between gap-4 mb-6 pb-4 border-b border-slate-100">

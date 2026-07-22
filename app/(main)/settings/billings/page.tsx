@@ -524,6 +524,34 @@ export default function BillingsPage() {
   const subscriptionStatus = formatTitleCase(subscriptionSummary?.status);
   const billingFrequencyDisplay = formatBillingFrequency(subscriptionSummary);
 
+  /** Prime/Elite auto: show platform reminder only within 2 days of renewal. */
+  const showRenewalPlatformReminder = useMemo(() => {
+    if (billing?.mode !== 'auto') return false;
+    if (!subscriptionSummary?.nextBillingDate) return false;
+    if (subscriptionSummary.scheduledPlanChange) return false;
+    if (subscriptionSummary.cancelAtNextBillingDate) return false;
+
+    const planKey = normalizePlanKey(
+      subscriptionSummary.planName ?? billing?.activePlan ?? ''
+    );
+    const isPrimeOrElite =
+      planKey.startsWith('prime-') || planKey.startsWith('elite-');
+    if (!isPrimeOrElite) return false;
+
+    const renewAt = new Date(subscriptionSummary.nextBillingDate).getTime();
+    if (!Number.isFinite(renewAt)) return false;
+    const msUntilRenew = renewAt - Date.now();
+    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+    return msUntilRenew >= 0 && msUntilRenew <= twoDaysMs;
+  }, [
+    billing?.mode,
+    billing?.activePlan,
+    subscriptionSummary?.nextBillingDate,
+    subscriptionSummary?.scheduledPlanChange,
+    subscriptionSummary?.cancelAtNextBillingDate,
+    subscriptionSummary?.planName,
+  ]);
+
   const planComparisonRows = useMemo(() => {
     const modeDisplay = planModeToDisplay(upgradeMode);
     return PLAN_COMPARISON_ORDER.map((tierKey) => {
@@ -853,22 +881,30 @@ export default function BillingsPage() {
                         <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-800">
                           Scheduled plan change
                         </p>
-                        <p className="font-semibold text-slate-900">
+                        <p className="font-semibold text-foreground">
                           Then:{' '}
                           {subscriptionSummary.scheduledPlanChange.planLabel}
                         </p>
-                        <p className="text-slate-600 leading-relaxed">
+                        <p className="text-muted-foreground leading-relaxed">
                           Starts on{' '}
-                          <span className="font-medium text-slate-900">
+                          <span className="font-medium text-foreground">
                             {formatIsoDateTime(
                               subscriptionSummary.scheduledPlanChange.effectiveAt
                             )}
                           </span>
                           . Until then you keep your current plan and limits.
+                          {billing?.mode === 'auto' ? (
+                            <>
+                              {' '}
+                              After the change takes effect, you will need to
+                              confirm your social platforms so we can create your
+                              new auto campaign for the correct accounts.
+                            </>
+                          ) : null}
                         </p>
                         {(subscriptionSummary.scheduledPlanChange?.addons
                           ?.length ?? 0) > 0 ? (
-                          <ul className="text-xs text-slate-600 list-disc pl-4 space-y-0.5">
+                          <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
                             {subscriptionSummary.scheduledPlanChange?.addons?.map(
                               (a) => (
                                 <li key={a.addonId}>
@@ -882,7 +918,7 @@ export default function BillingsPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="shrink-0 rounded-xl border-rose-200 bg-white text-rose-800 hover:bg-rose-50"
+                        className="shrink-0 rounded-xl border-rose-400/60 bg-transparent text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
                         disabled={
                           cancelScheduledChangeLoading ||
                           !!subscriptionSummary.cancelAtNextBillingDate
@@ -899,6 +935,25 @@ export default function BillingsPage() {
                         ) : null}
                         Cancel scheduled change
                       </Button>
+                    </div>
+                  ) : null}
+                  {showRenewalPlatformReminder ? (
+                    <div
+                      className="mt-5 rounded-2xl border border-amber-500/35 bg-amber-950/55 px-4 py-4 text-sm text-amber-100 ring-1 ring-amber-500/20"
+                      role="status"
+                    >
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-amber-300">
+                        Before your next renewal
+                      </p>
+                      <p className="mt-2 leading-relaxed text-amber-100/90">
+                        Your plan renews on{' '}
+                        <span className="font-semibold text-amber-50">
+                          {formatTxnDate(subscriptionSummary.nextBillingDate)}
+                        </span>
+                        . Please confirm your social platforms are the ones you
+                        want before then. A new auto campaign will be created for
+                        the platforms selected at renewal.
+                      </p>
                     </div>
                   ) : null}
                 </>
@@ -942,22 +997,22 @@ export default function BillingsPage() {
           </div>
           {subscriptionSummary?.cancelAtNextBillingDate ? (
             <div
-              className="mt-6 flex gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 px-4 py-4 sm:px-5"
+              className="mt-6 flex gap-3 rounded-2xl border border-emerald-500/35 bg-emerald-950/55 px-4 py-4 text-emerald-100 ring-1 ring-emerald-500/20 sm:px-5"
               role="status"
               aria-live="polite"
             >
-              <div className="mt-0.5 shrink-0 text-emerald-700" aria-hidden>
+              <div className="mt-0.5 shrink-0 text-emerald-400" aria-hidden>
                 <Info className="h-5 w-5" />
               </div>
               <div className="min-w-0 space-y-1 text-sm">
-                <p className="font-semibold text-emerald-950">
+                <p className="font-semibold text-emerald-50">
                   Cancellation is scheduled — you&apos;re all set
                 </p>
-                <p className="text-emerald-900/90 leading-relaxed">
+                <p className="leading-relaxed text-emerald-100/90">
                   This is saved as a &ldquo;cancel at end of billing period&rdquo;
                   on your payment provider — same as when you confirm in their
                   billing flow. You keep full access until{' '}
-                  <span className="font-semibold text-emerald-950">
+                  <span className="font-semibold text-emerald-50">
                     {formatTxnDate(subscriptionSummary.nextBillingDate)}
                   </span>
                   , and you will not be charged again for this plan after that

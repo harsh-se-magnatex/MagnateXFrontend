@@ -361,7 +361,9 @@
 .app-shell .bg-indigo-50\/20,
 .app-shell .bg-indigo-50\/30,
 .app-shell .bg-indigo-50\/50,
-.app-shell .bg-indigo-50\/60 {
+.app-shell .bg-indigo-50\/60,
+.app-shell .bg-indigo-50\/70,
+.app-shell .bg-indigo-50\/90 {
   background-color: color-mix(in srgb, var(--primary-blue) 14%, transparent);
 }
 
@@ -378,7 +380,8 @@
 
 .app-shell .text-indigo-600,
 .app-shell .text-indigo-700,
-.app-shell .text-indigo-700\/80 {
+.app-shell .text-indigo-700\/80,
+.app-shell .text-indigo-800 {
   color: #a5b4fc;
 }
 
@@ -430,6 +433,8 @@
 
 /* Status / accent tints (amber, emerald, sky, blue, pink) */
 .app-shell .bg-amber-50,
+.app-shell .bg-amber-50\/70,
+.app-shell .bg-amber-50\/90,
 .app-shell .hover\:bg-amber-100:hover {
   background-color: color-mix(in srgb, #f59e0b 14%, transparent);
 }
@@ -444,6 +449,8 @@
 }
 
 .app-shell .bg-emerald-50,
+.app-shell .bg-emerald-50\/60,
+.app-shell .bg-emerald-50\/90,
 .app-shell .hover\:bg-emerald-100:hover {
   background-color: color-mix(in srgb, #10b981 14%, transparent);
 }

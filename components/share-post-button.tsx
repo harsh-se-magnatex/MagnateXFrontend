@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { Loader2, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import {
+  appendSocialProfileLink,
+  resolveBusinessSocialProfileUrl,
+} from '@/lib/business-social-profile-url';
 import { downloadImageAsFile } from '@/lib/download-image';
 import { shareGeneratedPost } from '@/lib/share-generated-post';
 import { showErrorToast } from '@/lib/show-error-toast';
@@ -23,6 +27,11 @@ const defaultClassName =
 type SharePostButtonProps = {
   imageUrl: string;
   caption?: string | null;
+  /**
+   * Post platform (`facebook` / `instagram` / `linkedin`).
+   * Used to append the selected business page/account URL to shared text.
+   */
+  platform?: string | null;
   /** Resolved on click so timestamps stay unique. */
   getFilename?: () => string;
   className?: string;
@@ -32,6 +41,7 @@ type SharePostButtonProps = {
 export function SharePostButton({
   imageUrl,
   caption,
+  platform,
   getFilename,
   className = defaultClassName,
   label = 'Share',
@@ -40,17 +50,28 @@ export function SharePostButton({
   const [fallbackOpen, setFallbackOpen] = useState(false);
   const [copyBusy, setCopyBusy] = useState(false);
   const [downloadBusy, setDownloadBusy] = useState(false);
+  const [shareText, setShareText] = useState(() =>
+    String(caption ?? '').trim()
+  );
 
-  const resolvedCaption = String(caption ?? '').trim();
   const hasImage = Boolean(String(imageUrl ?? '').trim());
+
+  async function buildShareText(): Promise<string> {
+    const base = String(caption ?? '').trim();
+    const profileUrl = await resolveBusinessSocialProfileUrl(platform);
+    const next = appendSocialProfileLink(base, profileUrl);
+    setShareText(next);
+    return next;
+  }
 
   async function handleShare() {
     if (!hasImage || busy) return;
     setBusy(true);
     try {
+      const text = await buildShareText();
       const result = await shareGeneratedPost({
         imageUrl,
-        caption: resolvedCaption,
+        caption: text,
         filename: getFilename?.(),
       });
 
@@ -74,13 +95,14 @@ export function SharePostButton({
   }
 
   async function handleCopyCaption() {
-    if (!resolvedCaption) {
-      showErrorToast('No caption available to copy.');
-      return;
-    }
     setCopyBusy(true);
     try {
-      await navigator.clipboard.writeText(resolvedCaption);
+      const text = shareText.trim() || (await buildShareText());
+      if (!text) {
+        showErrorToast('No caption available to copy.');
+        return;
+      }
+      await navigator.clipboard.writeText(text);
       toast.success('Caption copied');
     } catch {
       showErrorToast('Could not copy caption.');
@@ -131,8 +153,9 @@ export function SharePostButton({
           <DialogHeader>
             <DialogTitle>Sharing is not supported in this browser</DialogTitle>
             <DialogDescription>
-              Use the options below to share manually — copy the caption and
-              download the image, then attach them in WhatsApp or another app.
+              Use the options below to share manually — copy the caption
+              (includes your business page link when available) and download the
+              image, then attach them in WhatsApp or another app.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:justify-stretch">
@@ -140,7 +163,7 @@ export function SharePostButton({
               type="button"
               variant="outline"
               className="w-full sm:flex-1"
-              disabled={!resolvedCaption || copyBusy}
+              disabled={copyBusy}
               onClick={() => void handleCopyCaption()}
             >
               {copyBusy ? 'Copying…' : 'Copy Caption'}

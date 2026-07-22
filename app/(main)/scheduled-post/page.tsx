@@ -447,6 +447,7 @@ function DetailModal({
                           <SharePostButton
                             imageUrl={mediaPreview.imageUrl}
                             caption={post.message}
+                            platform={post.platform}
                             getFilename={() =>
                               `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
                             }

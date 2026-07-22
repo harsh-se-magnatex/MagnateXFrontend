@@ -583,9 +583,13 @@ export const generateMemoryLayerQuestions = async (opts?: {
 };
 
 export const getMemoryLayer = async () => {
-  return apiGet<ApiEnvelope<{ memoryLayer: unknown, memoryLayerEnabled: boolean }>>(
-    '/api/v1/user/memory-layer'
-  );
+  return apiGet<
+    ApiEnvelope<{
+      memoryLayer: unknown;
+      memoryLayerEnabled: boolean;
+      memoryLayerStrict: boolean;
+    }>
+  >('/api/v1/user/memory-layer');
 };
 
 export const putMemoryLayer = async (body: {
@@ -657,9 +661,14 @@ export const uploadMemoryLayerSourcePdf = async (file: File) => {
   >('/api/v1/user/memory-layer/source-pdf', formData);
 };
 
-export const toggleMemoryLayerPreference = async (enabled: boolean) => {
-  return apiPut<ApiEnvelope>(
-    '/api/v1/user/toggle-memory-layer-preference',
-    { enabled }
-  );
+export const toggleMemoryLayerPreference = async (opts: {
+  enabled?: boolean;
+  strict?: boolean;
+}) => {
+  return apiPut<
+    ApiEnvelope<{
+      memoryLayerEnabled?: boolean;
+      memoryLayerStrict?: boolean;
+    }>
+  >('/api/v1/user/toggle-memory-layer-preference', opts);
 };

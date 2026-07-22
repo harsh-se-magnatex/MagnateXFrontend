@@ -394,6 +394,7 @@ function MediaDetailModal({
                 <SharePostButton
                   imageUrl={mediaPreview.imageUrl}
                   caption={mediaCaptionLabel(item.caption)}
+                  platform={item.platform}
                   getFilename={() =>
                     `media-library-${item.collection}-${item.id}-${Date.now()}.png`
                   }

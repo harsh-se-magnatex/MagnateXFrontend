@@ -746,6 +746,7 @@ export default function ProductAdvertPage() {
                     <SharePostButton
                       imageUrl={item.imageUrl}
                       caption={buildAdvertCaption(item)}
+                      platform={item.platform}
                       getFilename={() =>
                         `advert-${item.platform}-${Date.now()}.png`
                       }

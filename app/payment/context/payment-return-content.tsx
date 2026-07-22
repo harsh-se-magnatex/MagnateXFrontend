@@ -190,17 +190,17 @@ export function PaymentReturnContent() {
     return (
       <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
         <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute -top-[10%] right-[-4%] h-[min(460px,80vw)] w-[min(460px,80vw)] rounded-full bg-rose-400/14 blur-[100px] dark:bg-rose-500/12" />
-          <div className="absolute -bottom-[12%] left-[-8%] h-[min(340px,72vw)] w-[min(340px,72vw)] rounded-full bg-red-500/10 blur-[95px] dark:bg-red-500/8" />
+          <div className="absolute -top-[10%] right-[-4%] h-[min(460px,80vw)] w-[min(460px,80vw)] rounded-full bg-rose-500/12 blur-[100px]" />
+          <div className="absolute -bottom-[12%] left-[-8%] h-[min(340px,72vw)] w-[min(340px,72vw)] rounded-full bg-red-500/8 blur-[95px]" />
         </div>
 
         <div className="relative w-full max-w-lg animate-in fade-in zoom-in-95 duration-500">
-          <div className="glass-card rounded-3xl border border-rose-200/70 bg-white/90 p-8 shadow-lg shadow-rose-500/5 dark:border-rose-500/25 dark:bg-card/95 sm:p-10">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 ring-1 ring-rose-100 dark:bg-rose-950/50 dark:text-rose-400 dark:ring-rose-500/35">
+          <div className="glass-card rounded-3xl border border-rose-500/25 bg-card/95 p-8 shadow-lg shadow-rose-500/5 sm:p-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-950/50 text-rose-400 ring-1 ring-rose-500/35">
               <XCircle className="h-9 w-9" aria-hidden />
             </div>
 
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-rose-900 sm:text-3xl dark:text-rose-100">
+            <h1 className="text-center text-2xl font-extrabold tracking-tight text-rose-100 sm:text-3xl">
               Payment didn&apos;t go through
             </h1>
             <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground font-(--font-dm-sans)">
@@ -210,7 +210,7 @@ export function PaymentReturnContent() {
             </p>
 
             {hasDetails ? (
-              <dl className="mt-6 space-y-3 rounded-2xl border border-rose-100/90 bg-rose-50/35 p-4 text-sm dark:border-rose-500/25 dark:bg-rose-950/25 font-(--font-dm-sans)">
+              <dl className="mt-6 space-y-3 rounded-2xl border border-rose-500/25 bg-rose-950/25 p-4 text-sm font-(--font-dm-sans)">
                 {email ? (
                   <div className="flex gap-3">
                     <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
@@ -229,7 +229,7 @@ export function PaymentReturnContent() {
                       <span>Status</span>
                     </dt>
                     <dd>
-                      <span className="inline-flex items-center rounded-full bg-rose-600/15 px-2.5 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-500/25 dark:text-rose-200">
+                      <span className="inline-flex items-center rounded-full bg-rose-500/25 px-2.5 py-0.5 text-xs font-semibold text-rose-200">
                         {formatLabelStatus(status)}
                       </span>
                     </dd>
@@ -278,17 +278,17 @@ export function PaymentReturnContent() {
     return (
       <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
         <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-amber-400/12 blur-[100px] dark:bg-amber-500/10" />
-          <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-orange-400/10 blur-[90px] dark:bg-orange-500/8" />
+          <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[100px]" />
+          <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-orange-500/8 blur-[90px]" />
         </div>
 
         <div className="relative w-full max-w-lg animate-in fade-in zoom-in-95 duration-500">
-          <div className="glass-card rounded-3xl border border-amber-200/70 bg-white/90 p-8 shadow-lg shadow-amber-500/5 dark:border-amber-500/25 dark:bg-card/95 sm:p-10">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-500/30">
+          <div className="glass-card rounded-3xl border border-amber-500/25 bg-card/95 p-8 shadow-lg shadow-amber-500/5 sm:p-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-950/40 text-amber-400 ring-1 ring-amber-500/30">
               <Clock className="h-9 w-9" aria-hidden />
             </div>
 
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-950 sm:text-3xl dark:text-amber-100">
+            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-100 sm:text-3xl">
               Payment link expired
             </h1>
             <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground font-(--font-dm-sans)">
@@ -298,7 +298,7 @@ export function PaymentReturnContent() {
             </p>
 
             {hasDetails ? (
-              <dl className="mt-6 space-y-3 rounded-2xl border border-amber-100/90 bg-amber-50/40 p-4 text-sm dark:border-amber-500/20 dark:bg-amber-950/20 font-(--font-dm-sans)">
+              <dl className="mt-6 space-y-3 rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4 text-sm font-(--font-dm-sans)">
                 {email ? (
                   <div className="flex gap-3">
                     <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
@@ -317,7 +317,7 @@ export function PaymentReturnContent() {
                       <span>Status</span>
                     </dt>
                     <dd>
-                      <span className="inline-flex items-center rounded-full bg-amber-600/15 px-2.5 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-500/25 dark:text-amber-200">
+                      <span className="inline-flex items-center rounded-full bg-amber-500/25 px-2.5 py-0.5 text-xs font-semibold text-amber-200">
                         {formatLabelStatus(status)}
                       </span>
                     </dd>
@@ -366,17 +366,17 @@ export function PaymentReturnContent() {
     return (
       <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
         <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-amber-400/14 blur-[100px] dark:bg-amber-500/10" />
-          <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-orange-400/10 blur-[90px] dark:bg-orange-500/8" />
+          <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[100px]" />
+          <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-orange-500/8 blur-[90px]" />
         </div>
 
         <div className="relative w-full max-w-lg animate-in fade-in zoom-in-95 duration-500">
-          <div className="glass-card rounded-3xl border border-amber-200/70 bg-white/90 p-8 shadow-lg shadow-amber-500/5 dark:border-amber-500/25 dark:bg-card/95 sm:p-10">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-500/30">
+          <div className="glass-card rounded-3xl border border-amber-500/25 bg-card/95 p-8 shadow-lg shadow-amber-500/5 sm:p-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-950/40 text-amber-400 ring-1 ring-amber-500/30">
               <AlertTriangle className="h-9 w-9" aria-hidden />
             </div>
 
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-950 sm:text-3xl dark:text-amber-100">
+            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-100 sm:text-3xl">
               Checkout link wasn&apos;t finalized
             </h1>
             <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground font-(--font-dm-sans)">
@@ -388,7 +388,7 @@ export function PaymentReturnContent() {
             </p>
 
             {hasDetails ? (
-              <dl className="mt-6 space-y-3 rounded-2xl border border-amber-100/90 bg-amber-50/40 p-4 text-sm dark:border-amber-500/20 dark:bg-amber-950/20 font-(--font-dm-sans)">
+              <dl className="mt-6 space-y-3 rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4 text-sm font-(--font-dm-sans)">
                 {email ? (
                   <div className="flex gap-3">
                     <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
@@ -407,7 +407,7 @@ export function PaymentReturnContent() {
                       <span>Status</span>
                     </dt>
                     <dd>
-                      <span className="inline-flex items-center rounded-full bg-amber-600/15 px-2.5 py-0.5 text-xs font-semibold text-amber-900 dark:bg-amber-500/25 dark:text-amber-200">
+                      <span className="inline-flex items-center rounded-full bg-amber-500/25 px-2.5 py-0.5 text-xs font-semibold text-amber-200">
                         {formatLabelStatus(status)}
                       </span>
                     </dd>
@@ -493,28 +493,28 @@ export function PaymentReturnContent() {
 
   const cardRing =
     isErrorUi || isTimeoutUi
-      ? "border-amber-200/70 shadow-amber-500/5 dark:border-amber-500/25"
+      ? "border-amber-500/25 shadow-amber-500/5"
       : isBusyUi || isNeedsAuthUi
-        ? "border-indigo-200/55 shadow-indigo-500/5 dark:border-indigo-500/25"
-        : "border-emerald-200/60 shadow-emerald-500/5 dark:border-emerald-500/20";
+        ? "border-indigo-500/25 shadow-indigo-500/5"
+        : "border-emerald-500/20 shadow-emerald-500/5";
 
   const iconWrap =
     isErrorUi || isTimeoutUi
-      ? "bg-amber-50 text-amber-600 ring-amber-100 dark:bg-amber-950/40 dark:text-amber-400 dark:ring-amber-500/30"
+      ? "bg-amber-950/40 text-amber-400 ring-amber-500/30"
       : isBusyUi || isNeedsAuthUi
-        ? "bg-indigo-50 text-indigo-600 ring-indigo-100 dark:bg-indigo-950/40 dark:text-indigo-400 dark:ring-indigo-500/25"
-        : "bg-emerald-50 text-emerald-600 ring-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-500/30";
+        ? "bg-indigo-950/40 text-indigo-400 ring-indigo-500/25"
+        : "bg-emerald-950/40 text-emerald-400 ring-emerald-500/30";
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-emerald-400/15 blur-[100px] dark:bg-emerald-500/10" />
-        <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-teal-400/12 blur-[90px] dark:bg-teal-500/8" />
+        <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-[100px]" />
+        <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-teal-500/8 blur-[90px]" />
       </div>
 
       <div className="relative w-full max-w-lg animate-in fade-in zoom-in-95 duration-500">
         <div
-          className={`glass-card rounded-3xl border bg-white/90 p-8 shadow-lg dark:bg-card/95 sm:p-10 ${cardRing}`}
+          className={`glass-card rounded-3xl border bg-card/95 p-8 shadow-lg sm:p-10 ${cardRing}`}
         >
           <div
             className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl ring-1 ${iconWrap}`}
@@ -529,32 +529,26 @@ export function PaymentReturnContent() {
           </div>
 
           {isErrorUi ? (
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-950 sm:text-3xl dark:text-amber-100">
+            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-100 sm:text-3xl">
               Couldn&apos;t verify from this page
             </h1>
           ) : isTimeoutUi ? (
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-950 sm:text-3xl dark:text-amber-100">
+            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-100 sm:text-3xl">
               Still confirming
             </h1>
           ) : isNeedsAuthUi ? (
             <h1 className="text-center text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <span className="text-indigo-700 dark:text-indigo-400">
-                Login
-              </span>{" "}
+              <span className="text-indigo-400">Login</span>{" "}
               <span className="bg-gradient-primary-text">to finish</span>
             </h1>
           ) : isBusyUi ? (
             <h1 className="text-center text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <span className="text-indigo-700 dark:text-indigo-400">
-                Confirming
-              </span>{" "}
+              <span className="text-indigo-400">Confirming</span>{" "}
               <span className="bg-gradient-primary-text">payment</span>
             </h1>
           ) : (
             <h1 className="text-center text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <span className="text-emerald-700 dark:text-emerald-400">
-                Payment
-              </span>{" "}
+              <span className="text-emerald-400">Payment</span>{" "}
               <span className="bg-gradient-primary-text">successful</span>
             </h1>
           )}
@@ -564,7 +558,7 @@ export function PaymentReturnContent() {
           {showSpinner ? (
             <div className="mt-4 flex justify-center">
               <Loader2
-                className={`size-8 animate-spin ${isBusyUi ? "text-indigo-600 dark:text-indigo-400" : "text-emerald-600 dark:text-emerald-400"}`}
+                className={`size-8 animate-spin ${isBusyUi ? "text-indigo-400" : "text-emerald-400"}`}
                 aria-hidden
               />
               <span className="sr-only">Confirming payment</span>
@@ -599,8 +593,8 @@ export function PaymentReturnContent() {
             <dl
               className={`mt-6 space-y-3 rounded-2xl border p-4 text-sm font-(--font-dm-sans) ${
                 isErrorUi || isTimeoutUi
-                  ? "border-amber-100/90 bg-amber-50/40 dark:border-amber-500/20 dark:bg-amber-950/20"
-                  : "border-emerald-100/80 bg-emerald-50/40 dark:border-emerald-500/20 dark:bg-emerald-950/20"
+                  ? "border-amber-500/20 bg-amber-950/20"
+                  : "border-emerald-500/20 bg-emerald-950/20"
               }`}
             >
               {email ? (
@@ -624,8 +618,8 @@ export function PaymentReturnContent() {
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                         isErrorUi || isTimeoutUi
-                          ? "bg-amber-600/15 text-amber-900 dark:bg-amber-500/25 dark:text-amber-200"
-                          : "bg-emerald-600/15 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300"
+                          ? "bg-amber-500/25 text-amber-200"
+                          : "bg-emerald-500/20 text-emerald-300"
                       }`}
                     >
                       {formatLabelStatus(status)}

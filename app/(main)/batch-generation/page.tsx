@@ -1049,6 +1049,7 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
                         <SharePostButton
                           imageUrl={activePreviewRow.post.imageUrl}
                           caption={activePreviewRow.post.message}
+                          platform={platform}
                           getFilename={() =>
                             `batch-${platform}-${activePreviewRow.date}-${Date.now()}.png`
                           }
