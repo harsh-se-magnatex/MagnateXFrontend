@@ -5,8 +5,8 @@ import { Loader2, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
-  appendSocialProfileLinks,
-  resolveAllConnectedBusinessSocialProfileUrls,
+  appendSocialProfileLink,
+  resolveBusinessSocialProfileUrl,
 } from '@/lib/business-social-profile-url';
 import { downloadImageAsFile } from '@/lib/download-image';
 import { shareGeneratedPost } from '@/lib/share-generated-post';
@@ -29,7 +29,7 @@ type SharePostButtonProps = {
   caption?: string | null;
   /**
    * Post platform (`facebook` / `instagram` / `linkedin`).
-   * Used to order that platform's link first among all connected accounts.
+   * Used to append the selected business page/account URL to shared text.
    */
   platform?: string | null;
   /** Resolved on click so timestamps stay unique. */
@@ -58,9 +58,8 @@ export function SharePostButton({
 
   async function buildShareText(): Promise<string> {
     const base = String(caption ?? '').trim();
-    const profileUrls =
-      await resolveAllConnectedBusinessSocialProfileUrls(platform);
-    const next = appendSocialProfileLinks(base, profileUrls);
+    const profileUrl = await resolveBusinessSocialProfileUrl(platform);
+    const next = appendSocialProfileLink(base, profileUrl);
     setShareText(next);
     return next;
   }
@@ -155,8 +154,8 @@ export function SharePostButton({
             <DialogTitle>Sharing is not supported in this browser</DialogTitle>
             <DialogDescription>
               Use the options below to share manually — copy the caption
-              (includes links for all connected business accounts when available)
-              and download the image, then attach them in WhatsApp or another app.
+              (includes your business page link when available) and download the
+              image, then attach them in WhatsApp or another app.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:justify-stretch">
