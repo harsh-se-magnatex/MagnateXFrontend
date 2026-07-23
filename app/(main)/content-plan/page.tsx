@@ -3,13 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
-import {
-  CalendarRange,
-  Loader2,
-  PartyPopper,
-  Sparkles,
-  Share2,
-} from 'lucide-react';
+import { CalendarRange, Loader2, Share2 } from 'lucide-react';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
@@ -29,6 +23,12 @@ const PLATFORM_LABEL: Record<ContentPlanPlatform, string> = {
   linkedin: 'LinkedIn',
 };
 
+const PLATFORM_SHORT: Record<ContentPlanPlatform, string> = {
+  facebook: 'FB',
+  instagram: 'IG',
+  linkedin: 'LI',
+};
+
 function kindLabel(kind: ContentPlanGeneratedKind | string): string {
   switch (kind) {
     case 'campaign':
@@ -40,25 +40,28 @@ function kindLabel(kind: ContentPlanGeneratedKind | string): string {
     case 'quick-create':
       return 'Quick Create';
     case 'product-advert':
-      return 'Product Advert';
+      return 'Product Ad';
     case 'video-generation':
-      return 'Video Generation';
+      return 'Video';
     case 'carousel':
       return 'Carousel';
     case 'festive':
-      return 'Festive';
+    case 'festival':
+      return 'Festival';
+    case 'empty':
+      return '—';
     default:
       if (typeof kind === 'string' && kind.toLowerCase().includes('campaign')) {
         return 'Campaign';
       }
-      return 'Generated';
+      return 'Planned';
   }
 }
 
 function statusLabel(status: ContentPlanGeneratedItem['status']): string {
   switch (status) {
     case 'draft':
-      return 'Will schedule';
+      return 'Draft';
     case 'queued':
       return 'Generating';
     case 'scheduled':
@@ -68,177 +71,232 @@ function statusLabel(status: ContentPlanGeneratedItem['status']): string {
   }
 }
 
-function kindBadgeClass(kind: ContentPlanGeneratedKind): string {
+function cellToneClass(kind: string): string {
   switch (kind) {
     case 'campaign':
-      return 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30 dark:text-emerald-300';
+      return 'bg-emerald-500/25 text-emerald-700 dark:text-emerald-300';
+    case 'festival':
     case 'festive':
-      return 'bg-amber-500/15 text-amber-800 border-amber-500/30 dark:text-amber-300';
+      return 'bg-amber-500/30 text-amber-700 dark:text-amber-300';
     case 'quick-create':
-      return 'bg-sky-500/15 text-sky-800 border-sky-500/30 dark:text-sky-300';
+      return 'bg-sky-500/25 text-sky-500 dark:text-sky-400';
     case 'product-advert':
-      return 'bg-violet-500/15 text-violet-800 border-violet-500/30 dark:text-violet-300';
+      return 'bg-fuchsia-500/25 text-fuchsia-700 dark:text-fuchsia-300';
     case 'video-generation':
-      return 'bg-cyan-500/15 text-cyan-800 border-cyan-500/30 dark:text-cyan-300';
+      return 'bg-cyan-500/25 text-cyan-500 dark:text-cyan-400';
     case 'carousel':
-      return 'bg-teal-500/15 text-teal-800 border-teal-500/30 dark:text-teal-300';
+      return 'bg-teal-500/25 text-teal-500 dark:text-teal-400';
     case 'bulk-create':
     case 'ai-engine':
-      return 'bg-primary/15 text-primary border-primary/30';
+      return 'bg-indigo-500/25 text-indigo-700 dark:text-indigo-300';
+    case 'empty':
+      return 'bg-muted/50 text-foreground';
     default:
-      return 'bg-muted text-muted-foreground border-border';
+      return 'bg-orange-500/20 text-orange-700 dark:text-orange-300';
   }
 }
 
-function GeneratedRow({ item }: { item: ContentPlanGeneratedItem }) {
-  const href = item.scheduledPostId
-    ? '/scheduled-post'
-    : item.draftId
-      ? '/create-campaign'
-      : null;
-  const body = (
-    <div className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2.5">
-      <div className="min-w-0 space-y-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span
+type CellEntry = {
+  kind: string;
+  label: string;
+  status?: string;
+  note?: string;
+  href?: string | null;
+  source: 'generated' | 'upcoming';
+};
+
+function entriesForSlot(args: {
+  generated: ContentPlanGeneratedItem[];
+  upcoming: ContentPlanUpcomingItem[];
+}): CellEntry[] {
+  const generated: CellEntry[] = args.generated.map((item) => ({
+    kind: item.kind,
+    label: kindLabel(item.kind),
+    status: statusLabel(item.status),
+    note: item.title?.trim() || item.captionPreview?.trim() || undefined,
+    href: item.scheduledPostId
+      ? '/scheduled-post'
+      : item.draftId
+        ? '/create-campaign'
+        : null,
+    source: 'generated',
+  }));
+
+  if (generated.length > 0) return generated;
+
+  return args.upcoming.map((item) => ({
+    kind: item.kind,
+    label: kindLabel(item.kind),
+    note: item.note?.trim() || undefined,
+    href: null,
+    source: 'upcoming',
+  }));
+}
+
+function formatDateParts(isoDate: string): { weekday: string; day: string } {
+  try {
+    const d = parseISO(`${isoDate}T12:00:00`);
+    return {
+      weekday: format(d, 'EEE'),
+      day: format(d, 'MMM d'),
+    };
+  } catch {
+    return { weekday: '', day: isoDate };
+  }
+}
+
+function PlatformCell({ entries }: { entries: CellEntry[] }) {
+  if (entries.length === 0) {
+    return (
+      <div className="flex h-full min-h-[3.25rem] items-center justify-center px-2 py-2 text-[11px] text-muted-foreground/70">
+        —
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-full min-h-[3.25rem] flex-col gap-1 px-1.5 py-1.5">
+      {entries.map((entry, idx) => {
+        const body = (
+          <div
             className={cn(
-              'inline-flex rounded-md border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
-              kindBadgeClass(item.kind)
+              'cursor-help rounded-md px-1.5 py-1 text-left leading-tight transition hover:brightness-110 hover:ring-2 hover:ring-white/50',
+              cellToneClass(entry.kind),
+              entry.href && 'hover:ring-primary/60'
             )}
+            title={[entry.label, entry.status, entry.note]
+              .filter(Boolean)
+              .join(' · ')}
           >
-            {kindLabel(item.kind)}
-          </span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-            {statusLabel(item.status)}
-          </span>
-        </div>
-        {item.title ? (
-          <p className="text-sm font-medium text-foreground">{item.title}</p>
-        ) : item.kind === 'campaign' ? (
-          <p className="text-sm font-medium text-foreground">Campaign post</p>
-        ) : item.kind === 'video-generation' ? (
-          <p className="text-sm font-medium text-foreground">Video post</p>
-        ) : item.kind === 'carousel' ? (
-          <p className="text-sm font-medium text-foreground">Carousel post</p>
-        ) : null}
-        {item.captionPreview ? (
-          <p className="line-clamp-2 text-xs text-muted-foreground">
-            {item.captionPreview}
-          </p>
-        ) : null}
-      </div>
-      {href ? (
-        <span className="shrink-0 text-[11px] font-semibold text-primary">
-          View →
-        </span>
-      ) : null}
-    </div>
-  );
-  if (!href) return body;
-  return (
-    <Link href={href} className="block transition hover:opacity-90">
-      {body}
-    </Link>
-  );
-}
+            <div className="text-[11px] font-bold tracking-tight">
+              {entry.label}
+            </div>
+            {entry.status ? (
+              <div className="text-[10px] font-medium opacity-90">{entry.status}</div>
+            ) : entry.source === 'upcoming' && entry.kind !== 'empty' ? (
+              <div className="text-[10px] font-medium opacity-90">Planned</div>
+            ) : null}
+          </div>
+        );
 
-function UpcomingRow({ item }: { item: ContentPlanUpcomingItem }) {
-  const isFestival = item.kind === 'festival';
-  const isEmpty = item.kind === 'empty';
-  return (
-    <div
-      className={cn(
-        'flex flex-col gap-1 rounded-lg border px-3 py-2.5 text-xs',
-        isFestival
-          ? 'border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-200'
-          : isEmpty
-            ? 'border-dashed border-border bg-muted/40 text-muted-foreground'
-            : 'border-dashed border-primary/40 bg-primary/10 text-foreground'
-      )}
-    >
-      <div className="flex items-start gap-2">
-        {isFestival ? (
-          <PartyPopper className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-300" />
-        ) : (
-          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-        )}
-        <span className="font-medium leading-snug">{item.label}</span>
-      </div>
-      {item.note ? (
-        <p className="pl-5 text-[11px] leading-snug text-muted-foreground">
-          {item.note}
-        </p>
-      ) : null}
+        if (!entry.href) {
+          return <div key={`${entry.kind}-${idx}`}>{body}</div>;
+        }
+        return (
+          <Link key={`${entry.kind}-${idx}`} href={entry.href} className="block">
+            {body}
+          </Link>
+        );
+      })}
     </div>
   );
 }
 
-function DayCard({ day }: { day: ContentPlanDay }) {
-  const dateLabel = useMemo(() => {
-    try {
-      return format(parseISO(`${day.date}T12:00:00`), 'EEE, MMM d, yyyy');
-    } catch {
-      return day.date;
-    }
-  }, [day.date]);
-
-  const platforms = Object.keys(day.byPlatform) as ContentPlanPlatform[];
-
+function ContentPlanSheet({
+  days,
+  platforms,
+}: {
+  days: ContentPlanDay[];
+  platforms: ContentPlanPlatform[];
+}) {
   return (
-    <article className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-      <header className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-base font-semibold text-foreground">{dateLabel}</h2>
-        {day.festivals.length > 0 ? (
-          <p className="text-[11px] font-medium text-amber-700 dark:text-amber-300">
-            {day.festivals.map((f) => f.name).join(' · ')}
-          </p>
-        ) : null}
-      </header>
-      <div className="space-y-4">
-        {platforms.map((platform) => {
-          const slot = day.byPlatform[platform];
-          if (!slot) return null;
-          return (
-            <section key={platform} className="space-y-2">
-              <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                {PLATFORM_LABEL[platform]}
-              </h3>
-              {slot.generated.length > 0 ? (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Already set
-                  </p>
-                  {slot.generated.map((item, idx) => (
-                    <GeneratedRow
-                      key={`${item.kind}-${item.draftId ?? item.scheduledPostId ?? idx}`}
-                      item={item}
-                    />
-                  ))}
-                </div>
-              ) : null}
-              {slot.upcoming.length > 0 ? (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Coming from auto
-                  </p>
-                  {slot.upcoming.map((item, idx) => (
-                    <UpcomingRow
-                      key={`${item.kind}-${idx}-${item.label}`}
-                      item={item}
-                    />
-                  ))}
-                </div>
-              ) : null}
-              {slot.generated.length === 0 && slot.upcoming.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Nothing planned.</p>
-              ) : null}
-            </section>
-          );
-        })}
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[36rem] border-collapse text-sm">
+          <thead>
+            <tr className="bg-muted/60">
+              <th
+                scope="col"
+                className="sticky left-0 z-20 w-[7.5rem] border-b border-r border-border bg-muted/95 px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground backdrop-blur-sm"
+              >
+                Date
+              </th>
+              {platforms.map((platform) => (
+                <th
+                  key={platform}
+                  scope="col"
+                  className="border-b border-r border-border px-2 py-2.5 text-center text-[11px] font-bold uppercase tracking-wider text-muted-foreground last:border-r-0"
+                >
+                  <span className="hidden sm:inline">
+                    {PLATFORM_LABEL[platform]}
+                  </span>
+                  <span className="sm:hidden">{PLATFORM_SHORT[platform]}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {days.map((day, rowIdx) => {
+              const { weekday, day: dayLabel } = formatDateParts(day.date);
+              const festivalNames = day.festivals.map((f) => f.name).join(' · ');
+              const zebra = rowIdx % 2 === 1;
+
+              return (
+                <tr
+                  key={day.date}
+                  className={cn(
+                    'align-top transition-colors hover:bg-accent/40',
+                    zebra && 'bg-muted/20'
+                  )}
+                >
+                  <th
+                    scope="row"
+                    className={cn(
+                      'sticky left-0 z-10 border-b border-r border-border px-3 py-2 text-left font-normal backdrop-blur-sm',
+                      zebra ? 'bg-muted/90' : 'bg-card/95'
+                    )}
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {weekday}
+                      </span>
+                      <span className="text-[13px] font-semibold text-foreground">
+                        {dayLabel}
+                      </span>
+                      {festivalNames ? (
+                        <span
+                          className="mt-0.5 line-clamp-2 text-[10px] font-medium text-amber-700 dark:text-amber-300"
+                          title={festivalNames}
+                        >
+                          {festivalNames}
+                        </span>
+                      ) : null}
+                    </div>
+                  </th>
+                  {platforms.map((platform) => {
+                    const slot = day.byPlatform[platform] ?? {
+                      generated: [],
+                      upcoming: [],
+                    };
+                    const entries = entriesForSlot(slot);
+                    return (
+                      <td
+                        key={platform}
+                        className="border-b border-r border-border last:border-r-0"
+                      >
+                        <PlatformCell entries={entries} />
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-    </article>
+    </div>
   );
 }
+
+const LEGEND: Array<{ kind: string; label: string }> = [
+  { kind: 'campaign', label: 'Campaign' },
+  { kind: 'ai-engine', label: 'AI Engine' },
+  { kind: 'quick-create', label: 'Quick Create' },
+  { kind: 'video-generation', label: 'Video' },
+  { kind: 'carousel', label: 'Carousel' },
+  { kind: 'festival', label: 'Festival' },
+  { kind: 'empty', label: 'Empty' },
+];
 
 export default function ContentPlanPage() {
   const { user, loading: authLoading } = useAuth();
@@ -252,7 +310,6 @@ export default function ContentPlanPage() {
 
   const isAuto = billing?.mode === 'auto';
 
-  /** Live selection from the user doc (UserPlanCreditsProvider snapshot). */
   const selectedPlatforms = useMemo((): ContentPlanPlatform[] => {
     const selected = billing?.selected;
     if (!selected) return [];
@@ -264,7 +321,6 @@ export default function ContentPlanPage() {
     return order.filter((p) => selected[p] === true);
   }, [billing?.selected]);
 
-  /** Content Plan always follows live `selected`, not a stale calendar list. */
   const platforms = selectedPlatforms;
 
   const visibleDays = useMemo(() => {
@@ -317,8 +373,6 @@ export default function ContentPlanPage() {
       return;
     }
     void load();
-    // Platform filter is client-side (visibleDays); do not re-fetch on
-    // selection changes — that was storming GET /content-plan + reconcile.
   }, [authLoading, creditsLoading, user, isAuto, load]);
 
   if (authLoading || creditsLoading) {
@@ -347,7 +401,7 @@ export default function ContentPlanPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-8 sm:px-6">
+    <div className="mx-auto max-w-6xl space-y-5 px-4 py-8 sm:px-6">
       <header className="space-y-2">
         <div className="flex items-center gap-2 text-primary">
           <CalendarRange className="h-5 w-5" />
@@ -358,20 +412,19 @@ export default function ContentPlanPage() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Content Plan
         </h1>
-        <p className="max-w-xl text-sm text-muted-foreground">
-          What is already set for each day, and what auto-mode will still
-          generate (festive posts always run when the calendar has a festival;
-          AI fills empty days).
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          Spreadsheet view of your auto calendar — rows are days, columns are
+          platforms. Colored cells show what is already set or still planned.
         </p>
         {range?.from && range?.to ? (
           <p className="text-xs text-muted-foreground">
-            Showing {range.from} → {range.to}
+            {range.from} → {range.to}
           </p>
         ) : null}
       </header>
 
       {platforms.length === 0 && !loading ? (
-        <div className="rounded-2xl border border-border bg-card px-5 py-8 text-center">
+        <div className="border border-border bg-card px-5 py-8 text-center">
           <Share2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
           <p className="text-sm font-medium text-foreground">
             Connect a platform to see your plan
@@ -396,7 +449,7 @@ export default function ContentPlanPage() {
       ) : null}
 
       {error ? (
-        <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
           <button
             type="button"
@@ -409,10 +462,27 @@ export default function ContentPlanPage() {
       ) : null}
 
       {!loading && !error && platforms.length > 0 ? (
-        <div className="space-y-4">
-          {visibleDays.map((day) => (
-            <DayCard key={day.date} day={day} />
-          ))}
+        <div className="space-y-3">
+          <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            Tip: hover over a cell to see full details.
+          </p>
+          <ContentPlanSheet days={visibleDays} platforms={platforms} />
+          <div className="flex flex-wrap items-center gap-2 px-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Legend
+            </span>
+            {LEGEND.map((item) => (
+              <span
+                key={item.kind}
+                className={cn(
+                  'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold',
+                  cellToneClass(item.kind)
+                )}
+              >
+                {item.label}
+              </span>
+            ))}
+          </div>
         </div>
       ) : null}
     </div>
