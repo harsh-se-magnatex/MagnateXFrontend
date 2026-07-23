@@ -160,7 +160,7 @@ function PlatformCell({ entries }: { entries: CellEntry[] }) {
         const body = (
           <div
             className={cn(
-              'cursor-help rounded-md px-1.5 py-1 text-left leading-tight transition hover:brightness-110 hover:ring-2 hover:ring-white/50',
+              'cursor-default rounded-md px-1.5 py-1 text-left leading-tight transition hover:brightness-110 hover:ring-2 hover:ring-white/50',
               cellToneClass(entry.kind),
               entry.href && 'hover:ring-primary/60'
             )}
@@ -463,10 +463,6 @@ export default function ContentPlanPage() {
 
       {!loading && !error && platforms.length > 0 ? (
         <div className="space-y-3">
-          <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-            Tip: hover over a cell to see full details.
-          </p>
-          <ContentPlanSheet days={visibleDays} platforms={platforms} />
           <div className="flex flex-wrap items-center gap-2 px-0.5">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Legend
@@ -483,6 +479,10 @@ export default function ContentPlanPage() {
               </span>
             ))}
           </div>
+          <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            Tip: hover over a cell to see full details.
+          </p>
+          <ContentPlanSheet days={visibleDays} platforms={platforms} />
         </div>
       ) : null}
     </div>
