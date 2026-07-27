@@ -182,7 +182,9 @@ function PlatformCell({
     );
   }
 
-  const showForceRun = entries.some((e) => canForceRunKind(e.kind));
+  const showForceRun =
+    entries.every((e) => e.source === 'upcoming') &&
+    entries.some((e) => canForceRunKind(e.kind));
   const cellKey = `${date}::${platform}`;
   const isRunning = forceRunKey === cellKey;
 
@@ -578,9 +580,10 @@ export default function ContentPlanPage() {
             ))}
           </div>
           <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-            Tip: hover over a cell for details. Use Force Run on Content Studio,
-            AI Engine, Video, or Carousel cells to queue that day now (not
-            available on campaign posts).
+            Tip: hover over a cell for details. Force Run appears only on
+            planned Content Studio, AI Engine, Video, or Carousel cells — it
+            hides after Force Run or when content is already queued/generated
+            (not available on campaign posts).
           </p>
           <ContentPlanSheet
             days={visibleDays}

@@ -1370,8 +1370,9 @@ export default function BillingsPage() {
             <li>· Product Ads: 4 credits</li>
             <li>· Campaign post: 3 credits per day</li>
             <li>· Content Studio: 2 credits</li>
-            <li>· Content Studio: 2 credits</li>
             <li>· Event Studio: 2 credits</li>
+            <li>· Carousel: 3 credits per slide</li>
+            <li>· Video Generation: 15 credits (manual only)</li>
             <li>· Regeneration: 1 credit (First regen free)</li>
           </ul>
         </section>

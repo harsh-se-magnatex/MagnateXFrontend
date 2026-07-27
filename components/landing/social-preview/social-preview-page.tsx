@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import NavBar from '@/app/(main)/_components/NavBar';
@@ -12,6 +12,7 @@ import { InstagramPageMockup } from '@/components/landing/social-preview/instagr
 import { FacebookPageMockup } from '@/components/landing/social-preview/facebook-page-mockup';
 import { LinkedInPageMockup } from '@/components/landing/social-preview/linkedin-page-mockup';
 import type { PreviewPlatform } from '@/components/landing/social-preview/constants';
+import { getShowcasePostsForPlatform } from '@/components/landing/social-preview/showcase-data';
 
 const fadeIn = {
   hidden: { opacity: 0, y: 24 },
@@ -39,6 +40,17 @@ function PreviewDisclaimer() {
 
 export function SocialPreviewPage() {
   const [platform, setPlatform] = useState<PreviewPlatform>('instagram');
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+
+  const posts = useMemo(
+    () => getShowcasePostsForPlatform(platform),
+    [platform]
+  );
+
+  const handlePlatformChange = (next: PreviewPlatform) => {
+    setPlatform(next);
+    setSelectedPostId(null);
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden font-(--font-sora) selection:bg-primary-blue/20">
@@ -61,20 +73,42 @@ export function SocialPreviewPage() {
               <span className="bg-gradient-primary-text">social media</span> look?
             </h1>
             <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Switch between Instagram, Facebook, and LinkedIn to see how your brand
-              could appear with Sociogenie-generated content.
+              Switch between Instagram, Facebook, and LinkedIn, browse the profile grid,
+              and open any post to see how Sociogenie-generated content could appear once
+              published.
             </p>
           </motion.div>
 
           <motion.div variants={fadeIn} className="mt-10">
-            <PlatformSwitcher active={platform} onChange={setPlatform} />
+            <PlatformSwitcher active={platform} onChange={handlePlatformChange} />
           </motion.div>
 
           <motion.div variants={fadeIn} className="mt-8">
-            <PreviewDeviceFrame platform={platform} nestedScroll={platform === 'instagram'}>
-              {platform === 'instagram' && <InstagramPageMockup />}
-              {platform === 'facebook' && <FacebookPageMockup />}
-              {platform === 'linkedin' && <LinkedInPageMockup />}
+            <PreviewDeviceFrame platform={platform} nestedScroll>
+              {platform === 'instagram' && (
+                <InstagramPageMockup
+                  posts={posts}
+                  selectedPostId={selectedPostId}
+                  onSelectPost={setSelectedPostId}
+                  onClosePost={() => setSelectedPostId(null)}
+                />
+              )}
+              {platform === 'facebook' && (
+                <FacebookPageMockup
+                  posts={posts}
+                  selectedPostId={selectedPostId}
+                  onSelectPost={setSelectedPostId}
+                  onClosePost={() => setSelectedPostId(null)}
+                />
+              )}
+              {platform === 'linkedin' && (
+                <LinkedInPageMockup
+                  posts={posts}
+                  selectedPostId={selectedPostId}
+                  onSelectPost={setSelectedPostId}
+                  onClosePost={() => setSelectedPostId(null)}
+                />
+              )}
             </PreviewDeviceFrame>
           </motion.div>
 

@@ -31,7 +31,7 @@ import {
   type PostSchedulerPrefillPost,
 } from '@/lib/post-scheduler-prefill-store';
 
-const CREDIT_PER_SLIDE = 2;
+const CREDIT_PER_SLIDE = 3;
 
 function platformLabel(platform: SocialPlatform): string {
   if (platform === 'instagram') return 'Instagram';

@@ -35,8 +35,8 @@ export function PreviewDeviceFrame({
       <div
         className={
           nestedScroll
-            ? 'h-[min(72vh,820px)] overflow-hidden bg-neutral-50'
-            : 'max-h-[min(72vh,820px)] overflow-y-auto bg-neutral-50'
+            ? 'h-[min(92vh,1100px)] overflow-hidden bg-neutral-50'
+            : 'max-h-[min(92vh,1100px)] overflow-y-auto bg-neutral-50'
         }
       >
         {children}

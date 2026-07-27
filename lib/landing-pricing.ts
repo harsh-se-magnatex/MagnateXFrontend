@@ -49,12 +49,12 @@ export function planButtonDisplayName(raw: string): string {
 //   AI engine (manual trigger): 2   Festive: 2   Regen: 1
 
 const PRICE_BY_PLAN_ID: Record<PlanId, string> = {
-  'prime-Studio': '$14.99',
-  'prime-AI': '$22.99',
-  'elite-Studio': '$24.99',
-  'elite-AI': '$37.99',
-  'legacy-Studio': '$34.99',
-  'legacy-AI': '$52.99',
+  'prime-Studio': '$24.99',
+  'prime-AI': '$38.99',
+  'elite-Studio': '$41.99',
+  'elite-AI': '$63.99',
+  'legacy-Studio': '$59.99',
+  'legacy-AI': '$88.99',
 };
 
 const CREDITS_BY_PLAN_ID: Record<PlanId, number> = {
@@ -96,6 +96,8 @@ const SUBTITLE_BY_PLAN_ID: Record<PlanId, string> = {
  *   product adverts = floor(credits / 4)
  *   quick + festive = floor(credits / 2)
  *   campaign days   = floor(credits / 3)
+ *   carousel posts  = floor(credits / 15)  // typical 5 slides × 3
+ *   video generation = floor(credits / 15) // manual Veo only
  */
 function buildFeatureLines(id: PlanId): PricingLine[] {
   const tier = id.split('-')[0] as PlanTier;
@@ -105,8 +107,8 @@ function buildFeatureLines(id: PlanId): PricingLine[] {
   const quickPosts = Math.floor(credits / 2);
   const festivePosts = Math.floor(credits / 2);
   const campaignPosts = Math.floor(credits / 3);
-  const carouselPosts = Math.floor(credits / 3);
-  const videoPosts = Math.floor(credits / 3);
+  const carouselPosts = Math.floor(credits / 15);
+  const videoPosts = Math.floor(credits / 15);
   const lines: PricingLine[] = [];
 
   lines.push({ text: PLATFORMS_BY_TIER[tier] });

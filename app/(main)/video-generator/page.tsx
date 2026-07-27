@@ -36,6 +36,10 @@ import {
 } from '@/lib/platform-selection';
 import { cn } from '@/lib/utils';
 import { MediaLibraryImagePickerDialog } from '@/components/shared/MediaLibraryImagePickerDialog';
+import {
+  detectVideoFramePreviewMode,
+  type VideoFramePreviewMode,
+} from '@/lib/video-frame-preview';
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 type SocialPlatform = (typeof PLATFORM_ORDER)[number];
@@ -49,6 +53,8 @@ type FrameSlot = {
   file: File | null;
   kind: FrameKind | null;
   isLogoFromDb: boolean;
+  /** Matches backend logo-card vs hero-photo framing for the 9:16/16:9 preview. */
+  previewMode: VideoFramePreviewMode;
 };
 
 type VideoGenerationResult = {
@@ -67,7 +73,27 @@ const EMPTY_FRAME: FrameSlot = {
   file: null,
   kind: null,
   isLogoFromDb: false,
+  previewMode: 'hero-photo',
 };
+
+function frameUsesLogoCardPreview(frame: FrameSlot): boolean {
+  return frame.kind === 'logo' || frame.previewMode === 'logo-card';
+}
+
+function frameSlotSubtitle(
+  frame: FrameSlot,
+  slot: 'first' | 'last'
+): string {
+  if (frameUsesLogoCardPreview(frame)) {
+    if (frame.isLogoFromDb) return 'Brand logo (from profile)';
+    if (frame.kind === 'gallery') return 'Logo (from Media Library)';
+    if (frame.kind === 'upload') return 'Logo (upload)';
+    return 'Brand logo';
+  }
+  if (frame.kind === 'gallery') return 'From Media Library';
+  if (slot === 'last' && frame.kind === 'upload') return 'Scene image (upload)';
+  return 'Scene image';
+}
 
 function platformLabel(platform: SocialPlatform): string {
   if (platform === 'instagram') return 'Instagram';
@@ -126,7 +152,7 @@ function FrameCard({
   onPickFromGallery?: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const isLogoCard = frame.kind === 'logo';
+  const isLogoCard = frameUsesLogoCardPreview(frame);
 
   return (
     <div
@@ -167,8 +193,12 @@ function FrameCard({
             src={frame.previewUrl}
             alt={title}
             className={cn(
-              'max-h-full max-w-full object-contain',
-              isLogoCard ? 'p-6' : 'h-full w-full object-cover'
+              'object-contain',
+              // Logo-card: match Veo centered mark (~38% height, not full-bleed).
+              // Hero/product: contain the full still — never object-cover on 9:16.
+              isLogoCard
+                ? 'max-h-[38%] max-w-[70%]'
+                : 'h-auto w-auto max-h-full max-w-full'
             )}
           />
         </div>
@@ -298,7 +328,7 @@ export default function VideoGenerationPage() {
     Boolean(lastFrame.previewUrl) &&
     (hasUploadedSceneFile || hasGalleryFrame);
 
-  const perPlatformCost = 4;
+  const perPlatformCost = 15;
   const creditOk =
     userCredits !== undefined && userCredits >= perPlatformCost;
   const insufficientCredits =
@@ -329,6 +359,7 @@ export default function VideoGenerationPage() {
             file: null,
             kind: 'logo',
             isLogoFromDb: true,
+            previewMode: 'logo-card',
           });
         }
       } catch {
@@ -359,6 +390,19 @@ export default function VideoGenerationPage() {
     setResult(null);
   }, []);
 
+  const applyDetectedPreviewMode = useCallback(
+    async (target: 'first' | 'last', previewUrl: string) => {
+      const previewMode = await detectVideoFramePreviewMode(previewUrl);
+      const patch = (prev: FrameSlot): FrameSlot => {
+        if (prev.previewUrl !== previewUrl) return prev;
+        return { ...prev, previewMode };
+      };
+      if (target === 'first') setFirstFrame(patch);
+      else setLastFrame(patch);
+    },
+    []
+  );
+
   const setGalleryFrame = useCallback(
     (target: 'first' | 'last', imageUrl: string) => {
       const url = imageUrl.trim();
@@ -368,6 +412,7 @@ export default function VideoGenerationPage() {
         file: null,
         kind: 'gallery',
         isLogoFromDb: false,
+        previewMode: 'hero-photo',
       };
       if (target === 'first') {
         setFirstFrame((prev) => {
@@ -381,8 +426,9 @@ export default function VideoGenerationPage() {
         });
       }
       resetRun();
+      void applyDetectedPreviewMode(target, url);
     },
-    [resetRun]
+    [applyDetectedPreviewMode, resetRun]
   );
 
   const setUploadFrame = useCallback(
@@ -393,6 +439,7 @@ export default function VideoGenerationPage() {
         file,
         kind: 'upload',
         isLogoFromDb: false,
+        previewMode: 'hero-photo',
       };
       if (target === 'first') {
         setFirstFrame((prev) => {
@@ -406,8 +453,9 @@ export default function VideoGenerationPage() {
         });
       }
       resetRun();
+      void applyDetectedPreviewMode(target, previewUrl);
     },
-    [resetRun]
+    [applyDetectedPreviewMode, resetRun]
   );
 
   const clearFrame = useCallback(
@@ -616,15 +664,7 @@ export default function VideoGenerationPage() {
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
               <FrameCard
                 title="First frame"
-                subtitle={
-                  firstFrame.kind === 'logo'
-                    ? firstFrame.isLogoFromDb
-                      ? 'Brand logo (from profile)'
-                      : 'Brand logo'
-                    : firstFrame.kind === 'gallery'
-                      ? 'From Media Library'
-                      : 'Scene image'
-                }
+                subtitle={frameSlotSubtitle(firstFrame, 'first')}
                 frame={firstFrame}
                 previewAspectClass={framePreviewAspect}
                 isPortraitPreview={isPortraitPreview}
@@ -647,13 +687,7 @@ export default function VideoGenerationPage() {
 
               <FrameCard
                 title="Last frame"
-                subtitle={
-                  lastFrame.kind === 'logo'
-                    ? 'Brand logo'
-                    : lastFrame.kind === 'gallery'
-                      ? 'From Media Library'
-                      : 'Scene image (upload)'
-                }
+                subtitle={frameSlotSubtitle(lastFrame, 'last')}
                 frame={lastFrame}
                 previewAspectClass={framePreviewAspect}
                 isPortraitPreview={isPortraitPreview}

@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import {
   Heart,
   MessageCircle,
@@ -15,12 +14,21 @@ import {
   Tag,
 } from 'lucide-react';
 import { PlatformIcon } from '@/components/home/dashboard-ui';
+import { SHOWCASE_BRAND } from '@/components/landing/social-preview/showcase-data';
+import type { ShowcasePost } from '@/components/landing/social-preview/showcase-data';
 import {
-  BRAND_HANDLE,
-  BRAND_NAME,
-  PREVIEW_IMAGE,
-  SAMPLE_CAPTION,
-} from '@/components/landing/social-preview/constants';
+  getPostEngagement,
+} from '@/components/landing/social-preview/showcase-data';
+import { ShowcaseMedia } from '@/components/landing/social-preview/showcase-media';
+import { ShowcaseProfileGrid } from '@/components/landing/social-preview/showcase-grid';
+import { ShowcasePostDetail } from '@/components/landing/social-preview/showcase-post-detail';
+
+type InstagramPageMockupProps = {
+  posts: ShowcasePost[];
+  selectedPostId: string | null;
+  onSelectPost: (postId: string) => void;
+  onClosePost: () => void;
+};
 
 function MockAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const sizeClass =
@@ -33,27 +41,42 @@ function MockAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   );
 }
 
-function InstagramPost({ sponsored = false }: { sponsored?: boolean }) {
+function InstagramFeedPost({
+  post,
+  sponsored = false,
+  onOpen,
+}: {
+  post: ShowcasePost;
+  sponsored?: boolean;
+  onOpen: () => void;
+}) {
+  const { likes } = getPostEngagement(post);
   return (
     <article className="border-b border-neutral-200 bg-white last:border-b-0">
       <div className="flex items-center gap-2 px-2.5 py-2 sm:gap-3 sm:px-3 sm:py-2.5">
         <MockAvatar size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[12px] font-semibold text-neutral-900 sm:text-[13px]">
-            {BRAND_HANDLE}
+            {SHOWCASE_BRAND.handle}
           </p>
-          {sponsored && <p className="text-[10px] text-neutral-500 sm:text-[11px]">Sponsored</p>}
+          {sponsored && (
+            <p className="text-[10px] text-neutral-500 sm:text-[11px]">Sponsored</p>
+          )}
         </div>
       </div>
-      <div className="relative aspect-square w-full bg-neutral-100">
-        <Image
-          src={PREVIEW_IMAGE}
-          alt="Sample Instagram post"
-          fill
-          className="object-cover"
+      <button
+        type="button"
+        onClick={onOpen}
+        className="relative block aspect-square w-full bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-purple"
+        aria-label="Open post from feed"
+      >
+        <ShowcaseMedia
+          post={post}
+          playVideo={false}
+          interactive={false}
           sizes="(max-width: 768px) 50vw, 360px"
         />
-      </div>
+      </button>
       <div className="px-2.5 py-2 sm:px-3 sm:py-2.5">
         <div className="flex items-center justify-between text-neutral-800">
           <div className="flex items-center gap-3 sm:gap-4">
@@ -64,19 +87,26 @@ function InstagramPost({ sponsored = false }: { sponsored?: boolean }) {
           <Bookmark className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.75} />
         </div>
         <p className="mt-1.5 text-[12px] font-semibold text-neutral-900 sm:mt-2 sm:text-[13px]">
-          1,248 likes
+          {likes.toLocaleString()} likes
         </p>
-        <p className="mt-1 text-[12px] leading-snug text-neutral-800 sm:text-[13px]">
-          <span className="font-semibold">{BRAND_HANDLE} </span>
-          {SAMPLE_CAPTION}
+        <p className="mt-1 line-clamp-3 text-[12px] leading-snug text-neutral-800 sm:text-[13px]">
+          <span className="font-semibold">{SHOWCASE_BRAND.handle} </span>
+          {post.caption}
         </p>
       </div>
     </article>
   );
 }
 
-function InstagramFeedColumn() {
+function InstagramFeedColumn({
+  posts,
+  onSelectPost,
+}: {
+  posts: ShowcasePost[];
+  onSelectPost: (postId: string) => void;
+}) {
   const stories = Array.from({ length: 6 }, (_, i) => i);
+  const feedPosts = posts.slice(0, 4);
 
   return (
     <section className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-neutral-200 bg-white">
@@ -100,17 +130,26 @@ function InstagramFeedColumn() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <InstagramPost sponsored />
-        <InstagramPost />
-        <InstagramPost />
+        {feedPosts.map((post, i) => (
+          <InstagramFeedPost
+            key={post.id}
+            post={post}
+            sponsored={i === 0}
+            onOpen={() => onSelectPost(post.id)}
+          />
+        ))}
       </div>
     </section>
   );
 }
 
-function InstagramProfileColumn() {
-  const gridItems = Array.from({ length: 9 }, (_, i) => i);
-
+function InstagramProfileColumn({
+  posts,
+  onSelectPost,
+}: {
+  posts: ShowcasePost[];
+  onSelectPost: (postId: string) => void;
+}) {
   return (
     <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-white">
       <div className="shrink-0 border-b border-neutral-200 bg-neutral-50 px-3 py-2">
@@ -125,24 +164,32 @@ function InstagramProfileColumn() {
             <MockAvatar size="lg" />
             <div className="grid flex-1 grid-cols-3 gap-1 text-center sm:gap-3">
               <div>
-                <p className="text-sm font-semibold text-neutral-900 sm:text-base">24</p>
+                <p className="text-sm font-semibold text-neutral-900 sm:text-base">
+                  {posts.length}
+                </p>
                 <p className="text-[10px] text-neutral-500 sm:text-xs">posts</p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-neutral-900 sm:text-base">1.2K</p>
+                <p className="text-sm font-semibold text-neutral-900 sm:text-base">
+                  {SHOWCASE_BRAND.followersLabel}
+                </p>
                 <p className="text-[10px] text-neutral-500 sm:text-xs">followers</p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-neutral-900 sm:text-base">186</p>
+                <p className="text-sm font-semibold text-neutral-900 sm:text-base">
+                  {SHOWCASE_BRAND.followingLabel}
+                </p>
                 <p className="text-[10px] text-neutral-500 sm:text-xs">following</p>
               </div>
             </div>
           </div>
 
           <div className="mt-2 sm:mt-3">
-            <p className="text-xs font-semibold text-neutral-900 sm:text-sm">{BRAND_NAME}</p>
+            <p className="text-xs font-semibold text-neutral-900 sm:text-sm">
+              {SHOWCASE_BRAND.name}
+            </p>
             <p className="mt-0.5 text-[10px] leading-relaxed text-neutral-600 sm:text-xs">
-              Premium eyewear cases · Design meets durability
+              {SHOWCASE_BRAND.tagline}
             </p>
           </div>
         </div>
@@ -156,27 +203,20 @@ function InstagramProfileColumn() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-0.5 bg-neutral-100">
-          {gridItems.map((item) => (
-            <div key={item} className="relative aspect-square bg-neutral-200">
-              <Image
-                src={PREVIEW_IMAGE}
-                alt={`Sample grid post ${item + 1}`}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 16vw, 120px"
-              />
-            </div>
-          ))}
-        </div>
+        <ShowcaseProfileGrid posts={posts} onSelect={onSelectPost} />
       </div>
     </section>
   );
 }
 
-export function InstagramPageMockup() {
+export function InstagramPageMockup({
+  posts,
+  selectedPostId,
+  onSelectPost,
+  onClosePost,
+}: InstagramPageMockupProps) {
   return (
-    <div className="mx-auto flex h-full w-full max-w-4xl flex-col bg-white">
+    <div className="relative mx-auto flex h-full w-full max-w-4xl flex-col bg-white">
       <header className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-4 py-3">
         <div className="flex items-center gap-2">
           <PlatformIcon platform="instagram" className="h-7 w-7" />
@@ -189,8 +229,8 @@ export function InstagramPageMockup() {
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-2">
-        <InstagramFeedColumn />
-        <InstagramProfileColumn />
+        <InstagramFeedColumn posts={posts} onSelectPost={onSelectPost} />
+        <InstagramProfileColumn posts={posts} onSelectPost={onSelectPost} />
       </div>
 
       <nav
@@ -205,6 +245,14 @@ export function InstagramPageMockup() {
           <User className="h-6 w-6" strokeWidth={1.75} />
         </div>
       </nav>
+
+      <ShowcasePostDetail
+        platform="instagram"
+        posts={posts}
+        selectedPostId={selectedPostId}
+        onClose={onClosePost}
+        onSelect={onSelectPost}
+      />
     </div>
   );
 }
