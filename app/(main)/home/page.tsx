@@ -56,9 +56,13 @@ import {
   type ScheduledPostStatusInput,
 } from '@/lib/scheduled-post-status';
 import { weeklyDeltaFromTrend } from '../_components/AnalyticsComponent/utils/utils_functions';
+import {
+  WORKSPACE_NAV_HREFS,
+  workspacePageTitle,
+} from '@/lib/workspace-nav';
 
-const SOCIAL_INTEGRATION_PATH = '/social-media-integration';
-const ANALYTICS_PATH = '/analytics';
+const SOCIAL_INTEGRATION_PATH = WORKSPACE_NAV_HREFS.linkedProfiles;
+const ANALYTICS_PATH = WORKSPACE_NAV_HREFS.analytics;
 const BILLINGS_PATH = '/settings/billings';
 const UPCOMING_RANGE_MS = 365 * 24 * 60 * 60 * 1000;
 /** Visible activity rows before scroll; list still renders up to 5 items. */
@@ -104,16 +108,12 @@ type HomePageData = {
 
 const QUICK_SUGGESTIONS = [
   {
-    label: 'Content Studio',
-    href: '/instant-generation',
+    label: workspacePageTitle(WORKSPACE_NAV_HREFS.quickCreate),
+    href: WORKSPACE_NAV_HREFS.quickCreate,
   },
   {
-    label: 'Bulk Creator',
-    href: '/batch-generation',
-  },
-  {
-    label: 'Schedule this campaign',
-    href: '/post-scheduler',
+    label: workspacePageTitle(WORKSPACE_NAV_HREFS.schedulePost),
+    href: WORKSPACE_NAV_HREFS.schedulePost,
   },
 ] as const;
 
@@ -544,7 +544,9 @@ export default function Home() {
   const submitCommand = () => {
     const q = command.trim();
     if (!q) return;
-    router.push(`/instant-generation?prompt=${encodeURIComponent(q)}`);
+    router.push(
+      `${WORKSPACE_NAV_HREFS.quickCreate}?prompt=${encodeURIComponent(q)}`
+    );
   };
 
   function timeGreeting(): string {
@@ -603,7 +605,7 @@ export default function Home() {
                 className="mt-1 rounded-lg bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500"
               >
                 <Link href={SOCIAL_INTEGRATION_PATH}>
-                  Manage social accounts
+                  {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                   <ChevronRight className="ml-1 size-4" />
                 </Link>
               </Button>

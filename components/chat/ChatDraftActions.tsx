@@ -11,6 +11,7 @@ import {
   type AssistantPrefillKind,
 } from '@/lib/assistant-prefill-store';
 import type { AssistantToolResult } from '@/src/service/api/assistant.service';
+import { WORKSPACE_NAV_HREFS } from '@/lib/workspace-nav';
 
 interface ChatDraftActionsProps {
   result: AssistantToolResult;
@@ -36,23 +37,23 @@ function summariseDraft(result: AssistantToolResult): DraftSummary | null {
       return {
         prefillKind: 'draft_quick',
         label: 'Open in Content Studio',
-        ctaDeepLink: link || '/instant-generation',
+        ctaDeepLink: link || WORKSPACE_NAV_HREFS.quickCreate,
         promptText: prompt,
       };
     case 'draft_advert':
       return {
         prefillKind: 'draft_advert',
         label: 'Open in Product Ads',
-        ctaDeepLink: link || '/product-advert',
+        ctaDeepLink: link || WORKSPACE_NAV_HREFS.productAdvert,
         promptText: prompt,
       };
     case 'festival_info':
-      // No prefill — Bulk Creator and Holiday & Festival Posts don't accept user prompts.
+      // No prefill — Event Studio doesn't accept user prompts.
       // We just deep-link to the page so the user can pick an event there.
       return {
         prefillKind: null,
-        label: 'Open Holiday & Festival Posts',
-        ctaDeepLink: link || '/festive-post',
+        label: 'Open Event Studio',
+        ctaDeepLink: link || WORKSPACE_NAV_HREFS.festivePost,
       };
     default:
       return null;

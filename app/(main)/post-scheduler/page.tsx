@@ -1075,10 +1075,10 @@ export default function PostSchedulePage() {
                       settings, then come back here to schedule posts.
                     </p>
                     <Link
-                      href="/social-media-integration"
+                      href={WORKSPACE_NAV_HREFS.linkedProfiles}
                       className="mt-2 inline-block text-sm font-semibold text-amber-950 underline underline-offset-2 hover:text-amber-900"
                     >
-                      Open social setup
+                      {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                     </Link>
                   </div>
                 ) : (

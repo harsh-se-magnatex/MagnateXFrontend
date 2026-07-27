@@ -128,7 +128,7 @@ const PLAN_MONTHLY_CREDITS_FALLBACK: Record<string, number> = {
 
 /** Tab labels match the public pricing page (Studio vs AI). */
 const PLAN_MODE_TAB: Record<PlanModeDisplay, { label: string; sublabel: string }> = {
-  AI: { label: 'AI', sublabel: 'Daily automated posts' },
+  AI: { label: 'AI', sublabel: 'Personalized AI' },
   Studio: { label: 'Studio', sublabel: 'You create every post' },
 };
 
@@ -801,7 +801,7 @@ export default function BillingsPage() {
           Billing &amp; subscription
         </h1>
         <p className="mt-2 text-sm text-slate-500 max-w-2xl">
-          Manage your plan, credits, and billing activity. Daily automated posts continue on their own schedule; credits cover on-demand actions only.
+          Manage your plan, credits, and billing activity. Personalized AI continues on its own schedule; credits cover on-demand actions only.
         </p>
       </div>
 
@@ -1370,8 +1370,8 @@ export default function BillingsPage() {
             <li>· Product Ads: 4 credits</li>
             <li>· Campaign post: 3 credits per day</li>
             <li>· Content Studio: 2 credits</li>
-            <li>· Bulk Creator (Studio Plans): 2 credits</li>
-            <li>· Holiday & Festival Posts: 2 credits</li>
+            <li>· Content Studio: 2 credits</li>
+            <li>· Event Studio: 2 credits</li>
             <li>· Regeneration: 1 credit (First regen free)</li>
           </ul>
         </section>
@@ -1565,11 +1565,6 @@ export default function BillingsPage() {
                     <p className="text-sm font-semibold text-foreground">
                       {formatUsd(displayPrice)}/mo
                     </p>
-                    {landingPlan.trialOffer ? (
-                      <p className="mt-1 text-xs font-semibold text-emerald-500">
-                        {landingPlan.trialOffer}
-                      </p>
-                    ) : null}
                   </div>
                   {isActive ? (
                     <p className="text-sm text-foreground text-center space-y-3">
@@ -1637,11 +1632,6 @@ export default function BillingsPage() {
                               <span className="text-sm font-semibold leading-tight text-foreground">
                                 Start {planButtonDisplayName(landingPlan.name)}
                               </span>
-                              {landingPlan.trialOffer ? (
-                                <span className="text-[11px] font-medium leading-tight text-emerald-500">
-                                  {landingPlan.trialOffer}
-                                </span>
-                              ) : null}
                             </>
                           )}
                         </Button>

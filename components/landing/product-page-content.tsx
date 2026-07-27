@@ -97,7 +97,7 @@ const LANDING_FAQ_ITEMS = [
   {
     question: 'What happens to unused credits?',
     answer:
-      'Credits are valid for 30 days. Your daily automated posts run independently — they continue regardless of your credit balance.',
+      'Credits are valid for 30 days. Personalized AI runs independently — it continues regardless of your credit balance.',
   },
   {
     question: 'Can I pause or cancel my subscription?',
@@ -331,7 +331,7 @@ export function ProductPageContent() {
                 Simple, transparent pricing
               </h2>
               <p className="mt-4 font-(--font-dm-sans) text-muted-foreground">
-                Start with 10 days of Elite free. No contracts — cancel anytime.
+                Start with a plan that fits your team. No contracts — cancel anytime.
               </p>
             </motion.div>
             <motion.div variants={fadeIn} className="mt-10">

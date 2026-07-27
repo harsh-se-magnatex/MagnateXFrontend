@@ -17,7 +17,6 @@ import { ArrowRight, Dot } from 'lucide-react';
 import { useServerSession } from '@/hooks/useServerSession';
 import {
   CREDIT_TOPUP_PACKS,
-  PLAN_ELITE_TRIAL_HERO_LINE,
   pricingPlansForMode,
   planButtonDisplayName,
   type PlanMode,
@@ -45,7 +44,7 @@ const BILLING_FAQ_ITEMS = [
   {
     question: 'What happens to unused credits?',
     answer:
-      'Credits expire at the end of your current allowance period. Daily automated posts run on their own schedule. Active Plan is must needed for credit Usage',
+      'Credits expire at the end of your current allowance period. Personalized AI runs on its own schedule. Active Plan is must needed for credit Usage',
   },
 ] as const;
 
@@ -53,8 +52,7 @@ const CREDIT_ACTIONS = [
   { label: 'Product Ads', credits: '4 credits' },
   { label: 'Campaign post', credits: '3 credits / day' },
   { label: 'Content Studio', credits: '2 credits' },
-  { label: 'Bulk Creator (Studio Plans)', credits: '2 credits' },
-  { label: 'Holiday & Festival Posts', credits: '2 credits' },
+  { label: 'Event Studio', credits: '2 credits' },
   { label: 'Regeneration', credits: '1 credit (First regen free)' },
 ] as const;
 
@@ -298,7 +296,7 @@ export default function PricingPage() {
               variants={fadeIn}
               className="mx-auto mb-6 max-w-2xl text-center text-sm text-muted-foreground sm:text-base font-(--font-dm-sans) text-pretty"
             >
-              Pricing for our plans and credit packs. {PLAN_ELITE_TRIAL_HERO_LINE}
+              Pricing for our plans and credit packs. No contracts — cancel anytime.
             </motion.p>
 
             {/* Mode toggle: Studio (you curate) vs AI (daily auto-posting).
@@ -316,7 +314,7 @@ export default function PricingPage() {
                 const sublabel =
                   mode === 'Studio'
                     ? 'You create every post'
-                    : 'Daily automated posts';
+                    : 'Personalized AI';
                 return (
                   <button
                     key={mode}
@@ -405,11 +403,6 @@ export default function PricingPage() {
                         </span>
                       ) : null}
                     </div>
-                    {p.trialOffer ? (
-                      <p className="mt-2 font-(--font-dm-sans) text-sm font-semibold text-emerald-600">
-                        {p.trialOffer}
-                      </p>
-                    ) : null}
                   </div>
                   <ul className="space-y-2.5 text-sm text-muted-foreground font-(--font-dm-sans)">
                     {p.lines.map((line) => (
@@ -469,18 +462,6 @@ export default function PricingPage() {
                         <span className="relative z-10 text-sm font-bold leading-tight">
                           Start {planButtonDisplayName(p.name)}
                         </span>
-                        {p.trialOffer ? (
-                          <span
-                            className={cn(
-                              'relative z-10 text-[11px] font-semibold leading-tight',
-                              p.highlighted || p.discountLabel
-                                ? 'text-white/85'
-                                : 'text-foreground/70'
-                            )}
-                          >
-                            {p.trialOffer}
-                          </span>
-                        ) : null}
                         <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full transition-transform duration-700 group-hover:translate-x-full" />
                       </GuestAuthLink>
                     )}
@@ -596,7 +577,7 @@ export default function PricingPage() {
               className="text-muted-foreground font-(--font-dm-sans) text-sm sm:text-base leading-relaxed max-w-2xl"
             >
               Sign up, then subscribe to Elite from Billing — our most popular
-              plan, free for 10 days with full access before your first charge.
+              plan for teams scaling content with AI or Studio mode.
             </motion.p>
           </motion.div>
         </section>
@@ -660,7 +641,7 @@ export default function PricingPage() {
                 </span>
               </GuestAuthLink>
               <p className="mt-4 text-sm text-muted-foreground font-(--font-dm-sans)">
-                Elite free for 10 days · Purchase after sign-in
+                Choose a plan after sign-in · Cancel anytime
               </p>
             </motion.div>
           </motion.div>

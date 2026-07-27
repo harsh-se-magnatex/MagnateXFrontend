@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { Trash2 } from 'lucide-react';
 import { LegalDocument, LegalPage } from '../_components/legal-page';
+import {
+  WORKSPACE_NAV_HREFS,
+  workspacePageTitle,
+} from '@/lib/workspace-nav';
 
 export default function FacebookDataDeletionInstructionPage() {
   return (
@@ -56,7 +60,9 @@ export default function FacebookDataDeletionInstructionPage() {
           </li>
           <li>
             Open{' '}
-            <Link href="/social-media-integration">Social Media Integration</Link>
+            <Link href={WORKSPACE_NAV_HREFS.linkedProfiles}>
+              {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
+            </Link>
           </li>
           <li>
             Find your connected Facebook account and choose{' '}

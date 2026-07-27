@@ -27,8 +27,10 @@ import { cn } from '@/lib/utils';
 const LOGO_CORNER_PREFERENCES = [
   'top-left',
   'top-right',
+  'top-center',
   'bottom-left',
   'bottom-right',
+  'bottom-center',
 ] as const;
 
 function normalizeLogoPreference(raw: string | undefined | null): string {
@@ -37,9 +39,6 @@ function normalizeLogoPreference(raw: string | undefined | null): string {
     .trim()
     .replace(/_/g, '-')
     .replace(/\s+/g, '-');
-  if (v === 'centre' || v === 'center' || v === 'top-center' || v === 'bottom-center') {
-    return 'top-left';
-  }
   return LOGO_CORNER_PREFERENCES.includes(v as (typeof LOGO_CORNER_PREFERENCES)[number])
     ? v
     : 'top-left';
@@ -580,8 +579,10 @@ export default function AutomationPreferencePage() {
                     <SelectValue placeholder="Select a logo preference" />
                     <SelectContent>
                       <SelectItem value="top-left">Top Left</SelectItem>
+                      <SelectItem value="top-center">Top Center</SelectItem>
                       <SelectItem value="top-right">Top Right</SelectItem>
                       <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                      <SelectItem value="bottom-center">Bottom Center</SelectItem>
                       <SelectItem value="bottom-right">Bottom Right</SelectItem>
                     </SelectContent>
                   </SelectTrigger>

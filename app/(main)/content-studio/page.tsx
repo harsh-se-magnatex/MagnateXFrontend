@@ -101,11 +101,11 @@ const ACCEPTED_IMAGE_TYPES = [
 
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+// const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const VIDEO_EDIT_CREDIT_COST = 4;
-const ACCEPTED_TYPES=ACCEPTED_IMAGE_TYPES.concat(ACCEPTED_VIDEO_TYPES);
-
+// const ACCEPTED_TYPES=ACCEPTED_IMAGE_TYPES.concat(ACCEPTED_VIDEO_TYPES);
+const ACCEPTED_TYPES=ACCEPTED_IMAGE_TYPES;
 type CreateMode = 'image' | 'video';
 
 async function compressToWebP(file: File, maxBytes: number): Promise<File> {
@@ -800,7 +800,7 @@ export default function AIContentPage() {
       ],
     };
     setPostSchedulerPrefill(payload);
-    router.push('/post-scheduler?prefill=gallery');
+    router.push(`${WORKSPACE_NAV_HREFS.schedulePost}?prefill=gallery`);
   };
 
   const handleSchedule = async () => {
@@ -878,8 +878,7 @@ export default function AIContentPage() {
             {workspacePageTitle(WORKSPACE_NAV_HREFS.quickCreate)}
           </h1>
           <p className={workspacePageDescriptionClass}>
-            Create image posts, or upload a video and let Omni edit it for your
-            business.
+            Create image posts.
           </p>
         </div>
         <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3">
@@ -1224,7 +1223,7 @@ export default function AIContentPage() {
                         Click to upload or drag &amp; drop
                       </span>
                       <span className="text-xs text-slate-500 mt-0.5 block">
-                        JPEG, PNG, GIF, WebP or MP4
+                        JPEG, PNG, GIF, WebP.
                       </span>
                     </div>
                   </label>
@@ -1307,10 +1306,10 @@ export default function AIContentPage() {
                 then come back here to generate posts.
               </p>
               <Link
-                href="/social-media-integration"
+                href={WORKSPACE_NAV_HREFS.linkedProfiles}
                 className="mt-2 inline-block text-sm font-semibold text-amber-950 underline underline-offset-2 hover:text-amber-900"
               >
-                Open social setup
+                {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
               </Link>
             </div>
           ) : (

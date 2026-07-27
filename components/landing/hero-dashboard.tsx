@@ -43,7 +43,7 @@ const ACTIVITY_ITEMS: {
   },
   {
     platform: 'facebook',
-    description: 'Holiday & Festival Posts · Scheduled for 6:15 PM',
+    description: 'Event Studio · Scheduled for 6:15 PM',
     time: '6:15 PM',
     state: 'approved',
   },

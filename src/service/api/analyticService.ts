@@ -210,10 +210,7 @@ export const getWhereToSpend = async (platform: WhereToSpendPlatform) => {
 
 export type WhatToPostNextPlatform = WhereToSpendPlatform;
 
-export type PostBriefKind =
-  | 'recreate-winner'
-  | 'plug-a-gap'
-  | 'try-a-new-format';
+export type PostBriefKind = 'recreate-winner' | 'plug-a-gap';
 
 export type PostSuggestedFormat =
   | 'carousel'

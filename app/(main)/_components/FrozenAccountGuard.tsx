@@ -6,7 +6,9 @@ import { useUserPlanCredits } from './UserPlanCreditsProvider';
 
 const REDIRECT_WHEN_FROZEN = '/settings/billings';
 
-/** Billing page + linked social accounts — only routes accessible when account is frozen. */
+import { WORKSPACE_NAV_HREFS } from '@/lib/workspace-nav';
+
+/** Billing page + connected accounts — only routes accessible when account is frozen. */
 export function isPathAllowedWhenFrozen(pathname: string): boolean {
   if (
     pathname === '/settings/billings' ||
@@ -14,10 +16,8 @@ export function isPathAllowedWhenFrozen(pathname: string): boolean {
   ) {
     return true;
   }
-  if (
-    pathname === '/social-media-integration' ||
-    pathname.startsWith('/social-media-integration/')
-  ) {
+  const linked = WORKSPACE_NAV_HREFS.linkedProfiles;
+  if (pathname === linked || pathname.startsWith(`${linked}/`)) {
     return true;
   }
   return false;

@@ -200,7 +200,7 @@ export function LandingScrollCallouts() {
             </p>
             <div className="landing-cta-actions mt-6 sm:mt-8">
               <GuestAuthLink href="/sign-up" className="landing-btn-primary group">
-                Start Free — 10-Day Elite Trial
+                Get started
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </GuestAuthLink>
               <Link href="/product" className="landing-btn-secondary">

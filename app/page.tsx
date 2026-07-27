@@ -75,7 +75,7 @@ export default function Home() {
               className="mt-10 flex flex-wrap items-center justify-center gap-4"
             >
               <GuestAuthLink href="/sign-up" className="landing-btn-primary group">
-                Start Free — 10-Day Elite Trial
+                Get started
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </GuestAuthLink>
               <Link href="/product" className="landing-btn-secondary">
@@ -87,7 +87,7 @@ export default function Home() {
               variants={fadeIn}
               className="landing-body mt-6 text-sm text-white/45"
             >
-              No credit card · Setup in under 10 minutes · Human-reviewed before publishing
+              Setup in under 10 minutes · Human-reviewed before publishing · Cancel anytime
             </motion.p>
           </motion.div>
 

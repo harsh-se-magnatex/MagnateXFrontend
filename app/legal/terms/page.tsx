@@ -20,7 +20,7 @@ export default function TermsOfServicePage() {
           <strong>we</strong>”, “<strong>our</strong>”, “<strong>us</strong>”).
         </p>
         <p>
-          By creating an account, starting a free trial, purchasing a
+          By creating an account, purchasing a
           subscription or credits, or otherwise accessing or using
           <a href="https://www.sociogenie.ai"> www.sociogenie.ai</a> or the
           SocioGenie platform (collectively, the “<strong>Services</strong>”),
@@ -76,8 +76,8 @@ export default function TermsOfServicePage() {
           optional human quality review, publishing infrastructure, and
           analytics. Core capabilities include onboarding and Brand DNA setup,
           the Business Data, the Media Library, social-account integrations,
-          configurable automation preferences, the AI Engine, Bulk Creator,
-          Content Studio, Product Ads, Holiday & Festival Posts, the
+          configurable automation preferences, the AI Engine,
+          Content Studio, Product Ads, Event Studio, the
           User/Managed Approval Workflow, automated scheduling
           and publishing, analytics &amp; insights, the AI Chatbot Assistant,
           and the subscription &amp; credit system.
@@ -128,7 +128,7 @@ export default function TermsOfServicePage() {
           </li>
         </ul>
 
-        <h2>5. Subscription Plans, Free Trial &amp; Credits</h2>
+        <h2>5. Subscription Plans &amp; Credits</h2>
 
         <h3>5.1 Subscription plans</h3>
         <p>SocioGenie is currently offered in the following plans:</p>
@@ -150,19 +150,7 @@ export default function TermsOfServicePage() {
           time. Changes will take effect on your next renewal.
         </p>
 
-        <h3>5.2 Free trial</h3>
-        <p>
-          New eligible Users may activate a{' '}
-          <strong>10-day free trial of the Elite plan</strong> upon providing a
-          valid payment method. If you do not cancel the trial before it ends,
-          your payment method will be automatically charged for the Elite plan
-          and your subscription will continue until cancelled. The free trial
-          is limited to one per user and may be withdrawn or modified at any
-          time. We may revoke trial access for misuse, fraud, or violation of
-          these Terms.
-        </p>
-
-        <h3>5.3 Top-Up Credits</h3>
+        <h3>5.2 Top-Up Credits</h3>
         <p>
           You may purchase additional <strong>Top-Up Credits</strong> on top of
           your subscription:
@@ -200,7 +188,7 @@ export default function TermsOfServicePage() {
           </li>
         </ul>
 
-        <h3>5.4 Auto-renewal &amp; cancellation</h3>
+        <h3>5.3 Auto-renewal &amp; cancellation</h3>
         <p>
           Subscriptions <strong>renew automatically</strong> at the end of each
           billing cycle at the then-current price, charged to your saved

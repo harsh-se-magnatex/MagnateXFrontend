@@ -379,7 +379,7 @@ export default function ProductAdvertPage() {
     };
 
     setPostSchedulerPrefill(prefillPayload);
-    router.push('/post-scheduler?prefill=product-advert');
+    router.push(`${WORKSPACE_NAV_HREFS.schedulePost}?prefill=product-advert`);
     // Form state (prompt, platforms, generated result, etc.) is intentionally
     // preserved here so the user can navigate back from /post-scheduler
     // without losing their work. The state is reset by /post-scheduler after
@@ -570,10 +570,10 @@ export default function ProductAdvertPage() {
                 then come back here to generate posts.
               </p>
               <Link
-                href="/social-media-integration"
+                href={WORKSPACE_NAV_HREFS.linkedProfiles}
                 className="mt-2 inline-block text-sm font-semibold text-amber-950 underline underline-offset-2 hover:text-amber-900"
               >
-                Open social setup
+                {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
               </Link>
             </div>
           ) : (

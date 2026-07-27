@@ -237,7 +237,7 @@ export default function AutomatedPostPage() {
         );
       }
       if (response.successCount === 0 && response.failedCount === 0) {
-        toast.success('Festive posts processed.');
+        toast.success('Event Studio posts processed.');
       }
     } catch (error: unknown) {
       showErrorToast('Failed to schedule automated posts.');
@@ -536,10 +536,10 @@ export default function AutomatedPostPage() {
                       settings, then come back here to schedule posts.
                     </p>
                     <Link
-                      href="/social-media-integration"
+                      href={WORKSPACE_NAV_HREFS.linkedProfiles}
                       className="mt-2 inline-block text-sm font-semibold text-amber-950 underline underline-offset-2 hover:text-amber-900"
                     >
-                      Open social setup
+                      {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                     </Link>
                   </div>
                 ) : (
@@ -642,17 +642,17 @@ export default function AutomatedPostPage() {
               </button>
               {isSubmitting && (
                 <p className="mt-4 text-xs font-medium text-indigo-700">
-                  Generating festive posts…
+                  Generating Event Studio posts…
                 </p>
               )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
               <Link
-                href="/media-library"
+                href={WORKSPACE_NAV_HREFS.gallery}
                 className="w-full text-center py-3 rounded-full bg-cyan-600 text-white font-semibold hover:opacity-90 transition"
               >
-                Download PNGs (Media Library)
+                {workspacePageTitle(WORKSPACE_NAV_HREFS.gallery)}
               </Link>
             </div>
           </section>

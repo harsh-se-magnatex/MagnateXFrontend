@@ -24,21 +24,12 @@ export type PricingPlan = {
   period: string;
   highlighted?: boolean;
   badge?: string;
-  /** Elite-only trial callout (e.g. near price or CTA). */
-  trialOffer?: string;
   /** Prime & Legacy currently show "Coming soon" on the public landing if true. */
   comingSoon?: boolean;
   lines: PricingLine[];
 };
 
 export const PLAN_MOST_POPULAR_BADGE = 'Most popular';
-
-/** Elite 10-day trial — shown on plan cards (pricing + billing). */
-export const PLAN_ELITE_TRIAL_OFFER = 'Free for 10 days';
-export const PLAN_ELITE_TRIAL_DETAIL =
-  'Available free for 10 days with full plan access — you are not charged until the trial ends.';
-export const PLAN_ELITE_TRIAL_HERO_LINE =
-  'Elite is available free for 10 days with full plan access — you are not charged until the trial ends.';
 
 /** Title-case plan name for buttons (e.g. PRIME → Prime, elite → Elite). */
 export function planButtonDisplayName(raw: string): string {
@@ -114,13 +105,15 @@ function buildFeatureLines(id: PlanId): PricingLine[] {
   const quickPosts = Math.floor(credits / 2);
   const festivePosts = Math.floor(credits / 2);
   const campaignPosts = Math.floor(credits / 3);
+  const carouselPosts = Math.floor(credits / 3);
+  const videoPosts = Math.floor(credits / 3);
   const lines: PricingLine[] = [];
 
   lines.push({ text: PLATFORMS_BY_TIER[tier] });
-  if (mode === 'AI') lines.push({ text: 'Daily automated posts' });
-  lines.push({ text: 'Human-reviewed content' });
+  if (mode === 'AI') lines.push({ text: 'Your personalized AI which manages your entire social media presence' });
+  if (mode === 'AI') lines.push({ text: 'Human-reviewed content' });
   lines.push({
-    text: `${credits} credits/month \u2014 up to ${quickPosts} quick create OR ${festivePosts} festive OR ${campaignPosts} campaign posts OR ${productAdverts} product advert posts`,
+    text: `${credits} credits/month \u2014 up to ${quickPosts} Content Studio posts OR ${festivePosts} Event Studio posts OR ${campaignPosts} Campaign posts OR ${productAdverts} Product Ads posts OR ${carouselPosts} Carousel posts OR ${videoPosts} Video Generation`,
   });
   lines.push({ text: 'AI-powered analytics & recommendations' });
   return lines;
@@ -139,7 +132,6 @@ function buildPlan(id: PlanId): PricingPlan {
     period: '/month',
     highlighted: tier === 'elite',
     badge: tier === 'elite' ? PLAN_MOST_POPULAR_BADGE : undefined,
-    trialOffer: tier === 'elite' ? PLAN_ELITE_TRIAL_OFFER : undefined,
     comingSoon: false,
     lines: buildFeatureLines(id),
   };

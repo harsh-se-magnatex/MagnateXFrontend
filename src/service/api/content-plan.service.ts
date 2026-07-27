@@ -64,3 +64,23 @@ export async function getContentPlanApi(): Promise<ContentPlanResponse> {
   }>('/api/v1/user/content-plan');
   return response.data.data;
 }
+
+export type ContentPlanForceRunResult = {
+  date: string;
+  platform: ContentPlanPlatform;
+  calendarKind: string;
+  enqueuedCount: number;
+  outcomes: Array<{ kind: string; reason?: string }>;
+};
+
+export async function forceRunContentPlanApi(args: {
+  date: string;
+  platform: ContentPlanPlatform;
+}): Promise<ContentPlanForceRunResult> {
+  const response = await axiosClient.post<{
+    success: boolean;
+    data: ContentPlanForceRunResult;
+    message?: string;
+  }>('/api/v1/user/content-plan/force-run', args);
+  return response.data.data;
+}

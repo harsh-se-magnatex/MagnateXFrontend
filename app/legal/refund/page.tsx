@@ -46,27 +46,9 @@ export default function RefundPolicyPage() {
           us.
         </p>
 
-        <h2>3. Free Trial</h2>
-        <p>
-          Eligible new Users may activate a{' '}
-          <strong>10-day free trial of the Elite plan</strong> by providing a
-          valid payment method. You will <strong>not</strong> be charged during
-          the trial period. If you do not cancel before the trial ends, your
-          payment method will be automatically charged the full Elite
-          subscription fee and your subscription will begin.
-        </p>
-        <p>
-          To avoid being charged, you must cancel before the end of the 10-day
-          trial from your account settings. We do not provide refunds for
-          forgetting to cancel before the trial ends. As a courtesy, if you
-          notify us within <strong>48 hours</strong> of the initial charge and
-          have not consumed any AI Credits or published any posts during the
-          paid period, we may at our discretion issue a one-time refund.
-        </p>
+        <h2>3. Subscription Plans</h2>
 
-        <h2>4. Subscription Plans</h2>
-
-        <h3>4.1 Monthly subscriptions</h3>
+        <h3>3.1 Monthly subscriptions</h3>
         <p>
           Monthly subscriptions (<strong>Prime</strong> at USD 24.99,{' '}
           <strong>Elite</strong> at USD 39.99, and <strong>Legacy</strong> at
@@ -76,7 +58,7 @@ export default function RefundPolicyPage() {
           until the end of the current paid cycle.
         </p>
 
-        <h3>4.2 Plan upgrades and downgrades</h3>
+        <h3>3.2 Plan upgrades and downgrades</h3>
         <p>
           Upgrades take effect immediately and are billed on a pro-rated
           basis. Downgrades take effect at the start of the next billing
@@ -84,7 +66,7 @@ export default function RefundPolicyPage() {
           tier.
         </p>
 
-        <h2>5. Credits</h2>
+        <h2>4. Credits</h2>
         <p>
           <strong>All Credits — Base Credits and Top-Up Credits — are strictly
           non-refundable, non-transferable, and have no cash value.</strong>{' '}
@@ -107,25 +89,25 @@ export default function RefundPolicyPage() {
         </ul>
         <p>
           The only exception is where Credits were deducted in error due to a
-          verified technical failure on our side (see Section 6.2). In such
+          verified technical failure on our side (see Section 5.2). In such
           cases, we re-credit the affected Credits to your Account; we do not
           refund cash.
         </p>
 
-        <h2>6. Eligible Refund Scenarios</h2>
+        <h2>5. Eligible Refund Scenarios</h2>
         <p>
           Refunds may be considered, at our sole discretion, in the following
           limited scenarios:
         </p>
 
-        <h3>6.1 Duplicate or accidental charges</h3>
+        <h3>5.1 Duplicate or accidental charges</h3>
         <p>
           If you are charged more than once for the same subscription period
           or the same Top-Up Credit purchase due to a billing error, we will
           refund the duplicate amount in full upon verification.
         </p>
 
-        <h3>6.2 Verified technical failure</h3>
+        <h3>5.2 Verified technical failure</h3>
         <p>
           If you paid for the Services but were unable to use them for a
           material period due to a reproducible defect or outage attributable
@@ -136,7 +118,7 @@ export default function RefundPolicyPage() {
           Credits or extend your subscription period.
         </p>
 
-        <h3>6.3 Unauthorised or fraudulent charge</h3>
+        <h3>5.3 Unauthorised or fraudulent charge</h3>
         <p>
           If a transaction was made on your Account without your authorisation,
           contact us at{' '}
@@ -146,7 +128,7 @@ export default function RefundPolicyPage() {
           partner Dodo), we will refund verified unauthorised charges.
         </p>
 
-        <h3>6.4 Statutory rights</h3>
+        <h3>5.4 Statutory rights</h3>
         <p>
           Where applicable law (for example, mandatory consumer-protection
           rules in your country of residence) grants you a right to a refund
@@ -154,7 +136,7 @@ export default function RefundPolicyPage() {
           Policy.
         </p>
 
-        <h2>7. Non-Refundable Scenarios</h2>
+        <h2>6. Non-Refundable Scenarios</h2>
         <p>
           By way of example and not limitation, refunds will not be issued
           for:
@@ -191,7 +173,7 @@ export default function RefundPolicyPage() {
           </li>
         </ul>
 
-        <h2>8. How to Request a Refund</h2>
+        <h2>7. How to Request a Refund</h2>
         <p>
           To request a refund, please email{' '}
           <a href="mailto:founder@magnatex.co">founder@magnatex.co</a> from the
@@ -213,7 +195,7 @@ export default function RefundPolicyPage() {
           request additional information to verify the claim.
         </p>
 
-        <h2>9. Refund Processing &amp; Timelines</h2>
+        <h2>8. Refund Processing &amp; Timelines</h2>
         <ul>
           <li>
             Approved refunds are issued by <strong>Dodo Payments</strong> to
@@ -233,7 +215,7 @@ export default function RefundPolicyPage() {
           </li>
         </ul>
 
-        <h2>10. Chargebacks</h2>
+        <h2>9. Chargebacks</h2>
         <p>
           If you believe a charge is incorrect, please contact us first at{' '}
           <a href="mailto:founder@magnatex.co">founder@magnatex.co</a> before
@@ -255,7 +237,7 @@ export default function RefundPolicyPage() {
           <li>a permanent ban from future use of the Services.</li>
         </ul>
 
-        <h2>11. Cancellations</h2>
+        <h2>10. Cancellations</h2>
         <p>
           You may cancel your subscription at any time from your account
           settings or by emailing{' '}
@@ -266,7 +248,7 @@ export default function RefundPolicyPage() {
           paid billing cycle.
         </p>
 
-        <h2>12. Changes to This Policy</h2>
+        <h2>11. Changes to This Policy</h2>
         <p>
           We may update this Refund Policy from time to time. The updated
           version takes effect when posted, and the “Last updated” date at the
@@ -276,7 +258,7 @@ export default function RefundPolicyPage() {
           on the date the original charge was made.
         </p>
 
-        <h2>13. Contact</h2>
+        <h2>12. Contact</h2>
         <ul>
           <li>
             <strong>Refunds &amp; billing disputes:</strong>{' '}

@@ -12,7 +12,6 @@ import { CookieBanner } from '@/components/CookieBanner';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
-
 const sora = Sora({
   variable: '--font-sora',
   subsets: ['latin'],

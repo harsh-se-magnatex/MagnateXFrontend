@@ -9,7 +9,7 @@ const PROTECTED = [
   '/support',
   '/onBoarding',
   '/profile',
-  '/social-media-integration',
+  '/connected-accounts',
   '/automated-post',
   '/schedule-post',
   '/approval',

@@ -25,7 +25,7 @@ export function LandingPricingCards() {
           const selected = planMode === mode;
           const label = mode === 'Studio' ? 'Studio' : 'AI';
           const sublabel =
-            mode === 'Studio' ? 'You create every post' : 'Daily automated posts';
+            mode === 'Studio' ? 'You create every post' : 'Personalized AI';
           return (
             <button
               key={mode}
@@ -78,11 +78,6 @@ export function LandingPricingCards() {
                   <span className="text-muted-foreground">{p.period}</span>
                 ) : null}
               </div>
-              {p.trialOffer ? (
-                <p className="mt-2 font-(--font-dm-sans) text-sm font-semibold text-emerald-400">
-                  {p.trialOffer}
-                </p>
-              ) : null}
             </div>
             <ul className="flex-1 space-y-3 font-(--font-dm-sans) text-sm text-muted-foreground">
               {p.lines.map((line) => (

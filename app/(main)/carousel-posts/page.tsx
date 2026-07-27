@@ -19,11 +19,12 @@ import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { CarouselSwipePreview } from '@/components/shared/CarouselSwipePreview';
 import {
+  PLATFORM_ORDER,
   listEnabledPlatforms,
   type SocialPlatform,
 } from '@/lib/platform-selection';
 import Link from 'next/link';
-import { WORKSPACE_NAV_HREFS } from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import {
   setPostSchedulerPrefill,
   type PostSchedulerPrefillPayload,
@@ -31,6 +32,19 @@ import {
 } from '@/lib/post-scheduler-prefill-store';
 
 const CREDIT_PER_SLIDE = 2;
+
+function platformLabel(platform: SocialPlatform): string {
+  if (platform === 'instagram') return 'Instagram';
+  if (platform === 'facebook') return 'Facebook';
+  return 'LinkedIn';
+}
+
+function firstEnabledPlatform(
+  accounts: Partial<Record<SocialPlatform, boolean>> | null | undefined
+): SocialPlatform | undefined {
+  if (!accounts) return undefined;
+  return PLATFORM_ORDER.find((p) => accounts[p] === true);
+}
 
 export default function CarouselGenerationPage() {
   const router = useRouter();
@@ -47,10 +61,20 @@ export default function CarouselGenerationPage() {
   const [slides, setSlides] = useState<CarouselSlideResult[]>([]);
   const [caption, setCaption] = useState('');
 
+  const selectedAccounts = billing?.selected;
+
   const enabledPlatforms = useMemo(
-    () => listEnabledPlatforms(billing?.selected),
-    [billing?.selected]
+    () => listEnabledPlatforms(selectedAccounts),
+    [selectedAccounts]
   );
+
+  const hasSelectablePlatforms = useMemo(
+    () => !!firstEnabledPlatform(selectedAccounts),
+    [selectedAccounts]
+  );
+
+  const showSelectAccountsFirst =
+    !billingLoading && billing != null && !hasSelectablePlatforms;
 
   const promptParam = searchParams.get('prompt');
   useEffect(() => {
@@ -65,6 +89,15 @@ export default function CarouselGenerationPage() {
       setPlatform(p);
     }
   }, [platformParam]);
+
+  useEffect(() => {
+    if (billingLoading) return;
+    const enabled = listEnabledPlatforms(selectedAccounts);
+    if (enabled.length === 0) return;
+    if (!enabled.includes(platform)) {
+      setPlatform(enabled[0]);
+    }
+  }, [billingLoading, selectedAccounts, platform]);
 
   const isDone = slides.length >= 2;
   const creditCost = slideCount * CREDIT_PER_SLIDE;
@@ -179,20 +212,50 @@ export default function CarouselGenerationPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Platform</label>
-            <select
-              className={workspaceInputClass}
-              value={platform}
-              onChange={(e) => setPlatform(e.target.value as SocialPlatform)}
-              disabled={isGenerating}
-            >
-              {(['instagram', 'facebook', 'linkedin'] as const).map((p) => (
-                <option key={p} value={p} disabled={!enabledPlatforms.includes(p)}>
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
-                  {!enabledPlatforms.includes(p) ? ' (not connected)' : ''}
-                </option>
-              ))}
-            </select>
+            <span className="text-sm font-medium block">Platform</span>
+            {showSelectAccountsFirst ? (
+              <div
+                role="status"
+                className="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950"
+              >
+                <p className="font-medium">Select your accounts first</p>
+                <p className="mt-1 text-amber-900/90">
+                  Choose which platforms you use in onboarding or social
+                  settings, then come back here to generate carousels.
+                </p>
+                <Link
+                  href={WORKSPACE_NAV_HREFS.linkedProfiles}
+                  className="mt-2 inline-block text-sm font-semibold text-amber-950 underline underline-offset-2 hover:text-amber-900"
+                >
+                  {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-4 sm:gap-6">
+                  {enabledPlatforms.map((p) => (
+                    <label
+                      key={p}
+                      htmlFor={`carousel-platform-${p}`}
+                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-800"
+                    >
+                      <input
+                        id={`carousel-platform-${p}`}
+                        type="checkbox"
+                        checked={platform === p}
+                        disabled={isGenerating}
+                        onChange={() => setPlatform(p)}
+                        className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/30"
+                      />
+                      <span>{platformLabel(p)}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  Carousel size and caption follow this platform&apos;s format.
+                </p>
+              </>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -242,7 +305,7 @@ export default function CarouselGenerationPage() {
         <Button
           type="button"
           className="w-full"
-          disabled={isGenerating}
+          disabled={isGenerating || showSelectAccountsFirst}
           onClick={() => void handleGenerate()}
         >
           <Sparkles className="h-4 w-4 mr-2" />
@@ -281,7 +344,9 @@ export default function CarouselGenerationPage() {
                 Continue to Post Scheduler
               </Button>
               <Button type="button" variant="outline" asChild className="flex-1">
-                <Link href={WORKSPACE_NAV_HREFS.gallery}>View in Media Library</Link>
+                <Link href={WORKSPACE_NAV_HREFS.gallery}>
+                  {workspacePageTitle(WORKSPACE_NAV_HREFS.gallery)}
+                </Link>
               </Button>
             </div>
           ) : null}

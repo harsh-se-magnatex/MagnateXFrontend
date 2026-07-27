@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
-import { CalendarRange, Loader2, Share2 } from 'lucide-react';
+import { CalendarRange, Loader2, Play, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import {
+  forceRunContentPlanApi,
   getContentPlanApi,
   type ContentPlanDay,
   type ContentPlanGeneratedItem,
@@ -16,6 +18,10 @@ import {
   type ContentPlanUpcomingItem,
 } from '@/src/service/api/content-plan.service';
 import { cn } from '@/lib/utils';
+import {
+  WORKSPACE_NAV_HREFS,
+  workspacePageTitle,
+} from '@/lib/workspace-nav';
 
 const PLATFORM_LABEL: Record<ContentPlanPlatform, string> = {
   facebook: 'Facebook',
@@ -36,7 +42,7 @@ function kindLabel(kind: ContentPlanGeneratedKind | string): string {
     case 'ai-engine':
       return 'AI Engine';
     case 'bulk-create':
-      return 'Bulk Creator';
+      return 'Automated posts';
     case 'quick-create':
       return 'Content Studio';
     case 'product-advert':
@@ -47,7 +53,7 @@ function kindLabel(kind: ContentPlanGeneratedKind | string): string {
       return 'Carousel Posts';
     case 'festive':
     case 'festival':
-      return 'Holiday & Festival Posts';
+      return 'Event Studio';
     case 'empty':
       return '—';
     default:
@@ -105,6 +111,16 @@ type CellEntry = {
   source: 'generated' | 'upcoming';
 };
 
+/** Kinds that Force Run can enqueue (never campaign). */
+function canForceRunKind(kind: string): boolean {
+  return (
+    kind === 'ai-engine' ||
+    kind === 'quick-create' ||
+    kind === 'video-generation' ||
+    kind === 'carousel'
+  );
+}
+
 function entriesForSlot(args: {
   generated: ContentPlanGeneratedItem[];
   upcoming: ContentPlanUpcomingItem[];
@@ -115,9 +131,9 @@ function entriesForSlot(args: {
     status: statusLabel(item.status),
     note: item.title?.trim() || item.captionPreview?.trim() || undefined,
     href: item.scheduledPostId
-      ? '/scheduled-post'
+      ? WORKSPACE_NAV_HREFS.postQueue
       : item.draftId
-        ? '/create-campaign'
+        ? WORKSPACE_NAV_HREFS.createCampaign
         : null,
     source: 'generated',
   }));
@@ -145,7 +161,19 @@ function formatDateParts(isoDate: string): { weekday: string; day: string } {
   }
 }
 
-function PlatformCell({ entries }: { entries: CellEntry[] }) {
+function PlatformCell({
+  date,
+  platform,
+  entries,
+  forceRunKey,
+  onForceRun,
+}: {
+  date: string;
+  platform: ContentPlanPlatform;
+  entries: CellEntry[];
+  forceRunKey: string | null;
+  onForceRun: (date: string, platform: ContentPlanPlatform) => void;
+}) {
   if (entries.length === 0) {
     return (
       <div className="flex h-full min-h-[3.25rem] items-center justify-center px-2 py-2 text-[11px] text-muted-foreground/70">
@@ -153,6 +181,10 @@ function PlatformCell({ entries }: { entries: CellEntry[] }) {
       </div>
     );
   }
+
+  const showForceRun = entries.some((e) => canForceRunKind(e.kind));
+  const cellKey = `${date}::${platform}`;
+  const isRunning = forceRunKey === cellKey;
 
   return (
     <div className="flex h-full min-h-[3.25rem] flex-col gap-1 px-1.5 py-1.5">
@@ -176,6 +208,14 @@ function PlatformCell({ entries }: { entries: CellEntry[] }) {
             ) : entry.source === 'upcoming' && entry.kind !== 'empty' ? (
               <div className="text-[10px] font-medium opacity-90">Planned</div>
             ) : null}
+            {entry.note ? (
+              <div
+                className="mt-0.5 line-clamp-3 text-[10px] font-medium leading-snug opacity-85"
+                title={entry.note}
+              >
+                {entry.note}
+              </div>
+            ) : null}
           </div>
         );
 
@@ -188,6 +228,23 @@ function PlatformCell({ entries }: { entries: CellEntry[] }) {
           </Link>
         );
       })}
+      {showForceRun ? (
+        <button
+          type="button"
+          disabled={Boolean(forceRunKey)}
+          onClick={() => onForceRun(date, platform)}
+          className={cn(
+            'inline-flex items-center justify-center gap-1 rounded-md border border-border/80 bg-background/80 px-1.5 py-1 text-[10px] font-semibold text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60'
+          )}
+        >
+          {isRunning ? (
+            <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+          ) : (
+            <Play className="h-3 w-3" aria-hidden />
+          )}
+          {isRunning ? 'Running…' : 'Force Run'}
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -195,9 +252,13 @@ function PlatformCell({ entries }: { entries: CellEntry[] }) {
 function ContentPlanSheet({
   days,
   platforms,
+  forceRunKey,
+  onForceRun,
 }: {
   days: ContentPlanDay[];
   platforms: ContentPlanPlatform[];
+  forceRunKey: string | null;
+  onForceRun: (date: string, platform: ContentPlanPlatform) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
@@ -274,7 +335,13 @@ function ContentPlanSheet({
                         key={platform}
                         className="border-b border-r border-border last:border-r-0"
                       >
-                        <PlatformCell entries={entries} />
+                        <PlatformCell
+                          date={day.date}
+                          platform={platform}
+                          entries={entries}
+                          forceRunKey={forceRunKey}
+                          onForceRun={onForceRun}
+                        />
                       </td>
                     );
                   })}
@@ -294,7 +361,7 @@ const LEGEND: Array<{ kind: string; label: string }> = [
   { kind: 'quick-create', label: 'Content Studio' },
   { kind: 'video-generation', label: 'Video Generator' },
   { kind: 'carousel', label: 'Carousel Posts' },
-  { kind: 'festival', label: 'Holiday & Festival Posts' },
+  { kind: 'festival', label: 'Event Studio' },
   { kind: 'empty', label: 'Empty' },
 ];
 
@@ -307,6 +374,7 @@ export default function ContentPlanPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [forceRunKey, setForceRunKey] = useState<string | null>(null);
 
   const isAuto = billing?.mode === 'auto';
 
@@ -364,6 +432,36 @@ export default function ContentPlanPage() {
       setLoading(false);
     }
   }, []);
+
+  const handleForceRun = useCallback(
+    async (date: string, platform: ContentPlanPlatform) => {
+      const key = `${date}::${platform}`;
+      setForceRunKey(key);
+      try {
+        await forceRunContentPlanApi({ date, platform });
+        toast.success(`Queued generation for ${platform} on ${date}`);
+        await load();
+      } catch (err) {
+        const message =
+          err &&
+          typeof err === 'object' &&
+          'response' in err &&
+          (err as { response?: { data?: { message?: string } } }).response?.data
+            ?.message
+            ? String(
+                (err as { response?: { data?: { message?: string } } }).response
+                  ?.data?.message
+              )
+            : err instanceof Error
+              ? err.message
+              : 'Force Run failed';
+        toast.error(message);
+      } finally {
+        setForceRunKey(null);
+      }
+    },
+    [load]
+  );
 
   useEffect(() => {
     if (authLoading || creditsLoading) return;
@@ -433,10 +531,10 @@ export default function ContentPlanPage() {
             Auto-mode only schedules for platforms you have selected.
           </p>
           <Link
-            href="/social-media-integration"
+            href={WORKSPACE_NAV_HREFS.linkedProfiles}
             className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
           >
-            Connected Accounts
+            {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
           </Link>
         </div>
       ) : null}
@@ -480,9 +578,16 @@ export default function ContentPlanPage() {
             ))}
           </div>
           <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-            Tip: hover over a cell to see full details.
+            Tip: hover over a cell for details. Use Force Run on Content Studio,
+            AI Engine, Video, or Carousel cells to queue that day now (not
+            available on campaign posts).
           </p>
-          <ContentPlanSheet days={visibleDays} platforms={platforms} />
+          <ContentPlanSheet
+            days={visibleDays}
+            platforms={platforms}
+            forceRunKey={forceRunKey}
+            onForceRun={handleForceRun}
+          />
         </div>
       ) : null}
     </div>

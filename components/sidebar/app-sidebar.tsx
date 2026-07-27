@@ -49,7 +49,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { usePathname } from 'next/navigation';
-import { WORKSPACE_NAV, CONTENT_PLAN_NAV_ITEM, type WorkspaceNavHref } from '@/lib/workspace-nav';
+import { WORKSPACE_NAV, CONTENT_PLAN_NAV_ITEM, WORKSPACE_NAV_HREFS, type WorkspaceNavHref } from '@/lib/workspace-nav';
 import { useTourState } from '@/src/stores/tourState';
 import { getPageTourRequest } from '@/components/tour/tour-steps';
 import { useAuth } from '@/hooks/useAuth';
@@ -87,19 +87,18 @@ function formatActivePlanLabel(activePlan: string | null | undefined): string {
 }
 
 const workspaceNavIcons: Record<WorkspaceNavHref, typeof Brain> = {
-  '/instant-generation': Brain,
-  '/batch-generation': CloudLightning,
-  '/product-advert': ImagePlus,
-  '/video-generation': Video,
-  '/festive-post': CalendarSync,
-  '/create-campaign': Sparkles,
-  '/create/carousel-generation': LayoutGrid,
-  '/post-scheduler': CalendarCheck2,
-  '/scheduled-post': ClipboardClock,
-  '/content-plan': CalendarRange,
-  '/media-library': Images,
-  '/social-media-integration': Share2,
-  '/analytics': BarChart3,
+  [WORKSPACE_NAV_HREFS.quickCreate]: Brain,
+  [WORKSPACE_NAV_HREFS.productAdvert]: ImagePlus,
+  [WORKSPACE_NAV_HREFS.videoGeneration]: Video,
+  [WORKSPACE_NAV_HREFS.festivePost]: CalendarSync,
+  [WORKSPACE_NAV_HREFS.createCampaign]: Sparkles,
+  [WORKSPACE_NAV_HREFS.carouselCreate]: LayoutGrid,
+  [WORKSPACE_NAV_HREFS.schedulePost]: CalendarCheck2,
+  [WORKSPACE_NAV_HREFS.postQueue]: ClipboardClock,
+  [WORKSPACE_NAV_HREFS.contentPlan]: CalendarRange,
+  [WORKSPACE_NAV_HREFS.gallery]: Images,
+  [WORKSPACE_NAV_HREFS.linkedProfiles]: Share2,
+  [WORKSPACE_NAV_HREFS.analytics]: BarChart3,
 };
 
 const workspaceNav = WORKSPACE_NAV.map((item) => ({
@@ -138,7 +137,7 @@ export function AppSidebar({
   const workspaceItems = (() => {
     if (isAccountFrozen) {
       return workspaceNav.filter(
-        (item) => item.href === '/social-media-integration'
+        (item) => item.href === WORKSPACE_NAV_HREFS.linkedProfiles
       );
     }
     const items = [...workspaceNav];
@@ -146,7 +145,7 @@ export function AppSidebar({
     // UserPlanCreditsProvider (not a separate auto-mode API gate).
     if (billing?.mode === 'auto') {
       const postQueueIdx = items.findIndex(
-        (item) => item.href === '/scheduled-post'
+        (item) => item.href === WORKSPACE_NAV_HREFS.postQueue
       );
       const contentPlanItem = {
         ...CONTENT_PLAN_NAV_ITEM,

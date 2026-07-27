@@ -49,7 +49,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const MAX_MEMORY_LAYER_PDF_BYTES = 50 * 1024 * 1024;
 
@@ -921,15 +920,25 @@ export default function TemplateDnaMemoryLayerPage() {
                 ) : null}
 
                 {showStrictPhotoWarning ? (
-                  <Alert className="mt-5 border-amber-200 bg-amber-50 text-amber-950">
-                    <TriangleAlert className="text-amber-600" aria-hidden />
-                    <AlertTitle>Few product photos</AlertTitle>
-                    <AlertDescription className="text-amber-900/80">
-                      You have fewer than 10 product photos. Turn off Strictly
-                      use Memory Layer so generation can also run without brand
-                      photos and avoid repeating the same images too often.
-                    </AlertDescription>
-                  </Alert>
+                  <div
+                    role="alert"
+                    className="mt-5 flex items-start gap-3 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3.5 py-3 text-sm shadow-sm ring-1 ring-amber-500/20"
+                  >
+                    <TriangleAlert
+                      className="mt-0.5 size-4 shrink-0 text-amber-300"
+                      aria-hidden
+                    />
+                    <div className="min-w-0 space-y-1">
+                      <p className="font-semibold text-amber-200">
+                        Few product photos
+                      </p>
+                      <p className="leading-relaxed text-amber-100/85">
+                        You have fewer than 10 product photos. Turn off Strictly
+                        use Memory Layer so generation can also run without brand
+                        photos and avoid repeating the same images too often.
+                      </p>
+                    </div>
+                  </div>
                 ) : null}
               </section>
             )}

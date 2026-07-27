@@ -1,7 +1,7 @@
 /**
  * Shared status helpers for scheduled posts.
  *
- * The Scheduled Posts page (`/scheduled-post`) and the User Approval page (`/approval`)
+ * The Scheduled Posts page (`/scheduled-posts`) and the User Approval page (`/approval`)
  * both render scheduled posts using the same status pill semantics. Keeping
  * the mapping in one place stops the two pages from drifting (e.g. relabelling
  * `pending` differently or applying different colours).
@@ -228,9 +228,9 @@ export function generatedByLabel(value: string | undefined): string | null {
     case 'ai-engine':
       return 'AI Engine';
     case 'batch-generation':
-      return 'Bulk Creator';
+      return 'Legacy bulk';
     case 'events-post':
-      return 'Holiday & Festival Posts';
+      return 'Event Studio';
     case 'product-advert':
       return 'Product Ads';
     case 'video-generation':
@@ -240,7 +240,7 @@ export function generatedByLabel(value: string | undefined): string | null {
     case 'instant-generation':
       return 'Content Studio';
     case 'bulk-create':
-      return 'Bulk Creator';
+      return 'Legacy bulk';
     case 'quick-create':
       return 'Content Studio';
     case 'campaign':

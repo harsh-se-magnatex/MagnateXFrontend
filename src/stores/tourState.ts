@@ -17,7 +17,7 @@ export type TourRequest = {
 
 type TourStore = {
   /**
-   * When true, the gated pages (instant-generation, batch-generation,
+   * When true, the gated pages (instant-generation,
    * product-advert, festive-post) bypass their paywall early-return and
    * pretend all three platforms are connected, with click handlers no-op'd.
    * Toggled around the `platform` tour so brand-new users without any

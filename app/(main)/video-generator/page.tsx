@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeftRight,
   ImagePlus,
+  Images,
   Trash2,
 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
@@ -34,13 +35,14 @@ import {
   validateGenerationPlatformSelection,
 } from '@/lib/platform-selection';
 import { cn } from '@/lib/utils';
+import { MediaLibraryImagePickerDialog } from '@/components/shared/MediaLibraryImagePickerDialog';
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 type SocialPlatform = (typeof PLATFORM_ORDER)[number];
 
 type PipelinePhase = 'idle' | 'preparing' | 'generating' | 'ready' | 'failed';
 
-type FrameKind = 'logo' | 'upload';
+type FrameKind = 'logo' | 'upload' | 'gallery';
 
 type FrameSlot = {
   previewUrl: string | null;
@@ -73,6 +75,29 @@ function platformLabel(platform: SocialPlatform): string {
   return 'LinkedIn';
 }
 
+/** Matches backend `aspectRatioForPlatform` (Veo: 9:16 or 16:9). */
+function aspectRatioForPlatform(platform: SocialPlatform | ''): '9:16' | '16:9' {
+  if (platform === 'instagram') return '9:16';
+  return '16:9';
+}
+
+function previewAspectClass(platform: SocialPlatform | ''): string {
+  return aspectRatioForPlatform(platform) === '9:16'
+    ? 'aspect-[9/16]'
+    : 'aspect-video';
+}
+
+function aspectRatioHint(platform: SocialPlatform | ''): string {
+  if (!platform) {
+    return 'Select a platform — preview shape matches the generated video (9:16 or 16:9).';
+  }
+  const ratio = aspectRatioForPlatform(platform);
+  if (ratio === '9:16') {
+    return 'Instagram videos are 9:16 portrait — frame previews use the same shape.';
+  }
+  return 'Facebook and LinkedIn videos are 16:9 widescreen — frame previews use the same shape.';
+}
+
 function revokeIfBlob(url: string | null) {
   if (url?.startsWith('blob:')) {
     URL.revokeObjectURL(url);
@@ -84,21 +109,34 @@ function FrameCard({
   subtitle,
   frame,
   disabled,
+  previewAspectClass,
+  isPortraitPreview,
   onUpload,
   onRemove,
+  onPickFromGallery,
 }: {
   title: string;
   subtitle: string;
   frame: FrameSlot;
   disabled?: boolean;
+  previewAspectClass: string;
+  isPortraitPreview?: boolean;
   onUpload: (file: File) => void;
   onRemove: () => void;
+  onPickFromGallery?: () => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const isLogoCard = frame.kind === 'logo';
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+    <div
+      className={cn(
+        'flex min-w-0 flex-col rounded-2xl border border-slate-200 bg-white p-3 shadow-sm',
+        isPortraitPreview
+          ? 'mx-auto w-full max-w-[13rem] sm:max-w-[15rem]'
+          : 'min-w-0 flex-1'
+      )}
+    >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div>
           <p className="text-sm font-semibold text-slate-800">{title}</p>
@@ -120,7 +158,8 @@ function FrameCard({
       {frame.previewUrl ? (
         <div
           className={cn(
-            'relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200',
+            'relative flex w-full max-w-full items-center justify-center overflow-hidden rounded-xl border border-slate-200',
+            previewAspectClass,
             isLogoCard ? 'bg-slate-900' : 'bg-slate-100'
           )}
         >
@@ -134,15 +173,31 @@ function FrameCard({
           />
         </div>
       ) : (
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => inputRef.current?.click()}
-          className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/80 text-slate-600 transition hover:border-violet-300 hover:bg-violet-50/40 disabled:opacity-50"
-        >
-          <ImagePlus className="h-7 w-7 text-violet-500" />
-          <span className="text-xs font-medium">Upload image</span>
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => inputRef.current?.click()}
+            className={cn(
+              'flex w-full max-w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/80 text-slate-600 transition hover:border-violet-300 hover:bg-violet-50/40 disabled:opacity-50',
+              previewAspectClass
+            )}
+          >
+            <ImagePlus className="h-7 w-7 text-violet-500" />
+            <span className="text-xs font-medium">Upload image</span>
+          </button>
+          {onPickFromGallery ? (
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={onPickFromGallery}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
+            >
+              <Images className="h-4 w-4" aria-hidden />
+              Choose from Media Library
+            </button>
+          ) : null}
+        </div>
       )}
 
       <input
@@ -159,14 +214,26 @@ function FrameCard({
       />
 
       {frame.previewUrl ? (
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => inputRef.current?.click()}
-          className="mt-2 text-xs font-medium text-violet-700 hover:underline disabled:opacity-50"
-        >
-          Replace image
-        </button>
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => inputRef.current?.click()}
+            className="text-xs font-medium text-violet-700 hover:underline disabled:opacity-50"
+          >
+            Replace image
+          </button>
+          {onPickFromGallery ? (
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={onPickFromGallery}
+              className="text-xs font-medium text-violet-700 hover:underline disabled:opacity-50"
+            >
+              Choose from library
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </div>
   );
@@ -182,6 +249,9 @@ export default function VideoGenerationPage() {
   const [pipelinePhase, setPipelinePhase] = useState<PipelinePhase>('idle');
   const [result, setResult] = useState<VideoGenerationResult | null>(null);
   const [captionCopied, setCaptionCopied] = useState(false);
+  const [galleryPickerTarget, setGalleryPickerTarget] = useState<
+    'first' | 'last' | null
+  >(null);
 
   const { billing, loading: creditsLoading } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
@@ -207,13 +277,26 @@ export default function VideoGenerationPage() {
     [platform, allowedPlatforms, billing?.activePlan]
   );
 
-  const sceneFrameForPrepare = useMemo(
+  const hasGalleryFrame = useMemo(
     () =>
-      [firstFrame, lastFrame].find(
-        (slot) => slot.kind === 'upload' && slot.file
-      ) ?? null,
+      [firstFrame, lastFrame].some(
+        (slot) => slot.kind === 'gallery' && Boolean(slot.previewUrl)
+      ),
     [firstFrame, lastFrame]
   );
+
+  const hasUploadedSceneFile = useMemo(
+    () =>
+      [firstFrame, lastFrame].some(
+        (slot) => slot.kind === 'upload' && Boolean(slot.file)
+      ),
+    [firstFrame, lastFrame]
+  );
+
+  const framesReady =
+    Boolean(firstFrame.previewUrl) &&
+    Boolean(lastFrame.previewUrl) &&
+    (hasUploadedSceneFile || hasGalleryFrame);
 
   const perPlatformCost = 4;
   const creditOk =
@@ -222,11 +305,6 @@ export default function VideoGenerationPage() {
     userCredits !== undefined && userCredits < perPlatformCost;
 
   const isBusy = pipelinePhase === 'generating';
-
-  const framesReady =
-    Boolean(firstFrame.previewUrl) &&
-    Boolean(lastFrame.previewUrl) &&
-    Boolean(sceneFrameForPrepare?.file);
 
   const canGenerate =
     framesReady &&
@@ -280,6 +358,32 @@ export default function VideoGenerationPage() {
     setPipelinePhase('idle');
     setResult(null);
   }, []);
+
+  const setGalleryFrame = useCallback(
+    (target: 'first' | 'last', imageUrl: string) => {
+      const url = imageUrl.trim();
+      if (!url) return;
+      const next: FrameSlot = {
+        previewUrl: url,
+        file: null,
+        kind: 'gallery',
+        isLogoFromDb: false,
+      };
+      if (target === 'first') {
+        setFirstFrame((prev) => {
+          revokeIfBlob(prev.previewUrl);
+          return next;
+        });
+      } else {
+        setLastFrame((prev) => {
+          revokeIfBlob(prev.previewUrl);
+          return next;
+        });
+      }
+      resetRun();
+    },
+    [resetRun]
+  );
 
   const setUploadFrame = useCallback(
     (target: 'first' | 'last', file: File) => {
@@ -402,7 +506,7 @@ export default function VideoGenerationPage() {
       ],
     };
     setPostSchedulerPrefill(payload);
-    router.push('/post-scheduler?prefill=gallery');
+    router.push(`${WORKSPACE_NAV_HREFS.schedulePost}?prefill=gallery`);
   }
 
   async function handleCopyCaption() {
@@ -414,6 +518,8 @@ export default function VideoGenerationPage() {
   }
 
   const progressLabel = isBusy ? 'Generating video...' : '';
+  const framePreviewAspect = previewAspectClass(platform);
+  const isPortraitPreview = aspectRatioForPlatform(platform) === '9:16';
 
   if (creditsLoading || logoLoading) {
     return <PageLoadingState message="Loading your account..." />;
@@ -442,6 +548,59 @@ export default function VideoGenerationPage() {
 
         <div className="space-y-6">
           <div>
+            <span className="mb-2 block text-sm font-medium text-slate-700">
+              Platform
+            </span>
+            {showSelectAccountsFirst ? (
+              <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                Connect at least one social account before generating video.{' '}
+                <Link
+                  href={WORKSPACE_NAV_HREFS.linkedProfiles}
+                  className="font-medium underline"
+                >
+                  Connected Accounts
+                </Link>
+              </p>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {PLATFORM_ORDER.map((entry) => {
+                    const enabled = allowedPlatforms.includes(entry);
+                    const selected = platform === entry;
+                    const ratio = aspectRatioForPlatform(entry);
+                    return (
+                      <button
+                        key={entry}
+                        type="button"
+                        disabled={!enabled || isBusy}
+                        onClick={() => {
+                          setPlatform(entry);
+                          resetRun();
+                        }}
+                        className={cn(
+                          'rounded-full border px-4 py-2 text-sm font-semibold transition',
+                          selected
+                            ? 'border-violet-600 bg-violet-600 text-white'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300',
+                          !enabled && 'cursor-not-allowed opacity-50'
+                        )}
+                      >
+                        {platformLabel(entry)}
+                        <span className="ml-1.5 text-xs font-normal opacity-80">
+                          {ratio}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  {aspectRatioHint(platform)}
+                </p>
+              </>
+            )}
+          </div>
+
+          <div>
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-slate-700">
@@ -454,7 +613,7 @@ export default function VideoGenerationPage() {
               </div>
             </div>
 
-            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
               <FrameCard
                 title="First frame"
                 subtitle={
@@ -462,12 +621,17 @@ export default function VideoGenerationPage() {
                     ? firstFrame.isLogoFromDb
                       ? 'Brand logo (from profile)'
                       : 'Brand logo'
-                    : 'Scene image'
+                    : firstFrame.kind === 'gallery'
+                      ? 'From Media Library'
+                      : 'Scene image'
                 }
                 frame={firstFrame}
+                previewAspectClass={framePreviewAspect}
+                isPortraitPreview={isPortraitPreview}
                 disabled={isBusy}
                 onUpload={(file) => setUploadFrame('first', file)}
                 onRemove={() => clearFrame('first')}
+                onPickFromGallery={() => setGalleryPickerTarget('first')}
               />
 
               <button
@@ -486,12 +650,17 @@ export default function VideoGenerationPage() {
                 subtitle={
                   lastFrame.kind === 'logo'
                     ? 'Brand logo'
-                    : 'Scene image (upload)'
+                    : lastFrame.kind === 'gallery'
+                      ? 'From Media Library'
+                      : 'Scene image (upload)'
                 }
                 frame={lastFrame}
+                previewAspectClass={framePreviewAspect}
+                isPortraitPreview={isPortraitPreview}
                 disabled={isBusy}
                 onUpload={(file) => setUploadFrame('last', file)}
                 onRemove={() => clearFrame('last')}
+                onPickFromGallery={() => setGalleryPickerTarget('last')}
               />
             </div>
 
@@ -522,50 +691,6 @@ export default function VideoGenerationPage() {
               rows={3}
               className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
             />
-          </div>
-
-          <div>
-            <span className="mb-2 block text-sm font-medium text-slate-700">
-              Platform
-            </span>
-            {showSelectAccountsFirst ? (
-              <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-                Connect at least one social account before generating video.{' '}
-                <Link
-                  href={WORKSPACE_NAV_HREFS.linkedProfiles}
-                  className="font-medium underline"
-                >
-                  Connected Accounts
-                </Link>
-              </p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {PLATFORM_ORDER.map((entry) => {
-                  const enabled = allowedPlatforms.includes(entry);
-                  const selected = platform === entry;
-                  return (
-                    <button
-                      key={entry}
-                      type="button"
-                      disabled={!enabled || isBusy}
-                      onClick={() => {
-                        setPlatform(entry);
-                        resetRun();
-                      }}
-                      className={cn(
-                        'rounded-full border px-4 py-2 text-sm font-semibold transition',
-                        selected
-                          ? 'border-violet-600 bg-violet-600 text-white'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300',
-                        !enabled && 'cursor-not-allowed opacity-50'
-                      )}
-                    >
-                      {platformLabel(entry)}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
           <button
@@ -599,7 +724,10 @@ export default function VideoGenerationPage() {
               <video
                 controls
                 poster={result.posterUrl}
-                className="w-full rounded-lg border border-violet-100 bg-black"
+                className={cn(
+                  'w-full max-w-2xl mx-auto rounded-lg border border-violet-100 bg-black object-contain',
+                  previewAspectClass(result.platform as SocialPlatform)
+                )}
                 src={result.videoUrl}
               />
               {result.videoCaption ? (
@@ -641,6 +769,26 @@ export default function VideoGenerationPage() {
           ) : null}
         </div>
       </div>
+
+      <MediaLibraryImagePickerDialog
+        open={galleryPickerTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setGalleryPickerTarget(null);
+        }}
+        title={
+          galleryPickerTarget === 'first'
+            ? 'Choose image for first frame'
+            : galleryPickerTarget === 'last'
+              ? 'Choose image for last frame'
+              : 'Choose from Media Library'
+        }
+        onSelect={(url) => {
+          if (galleryPickerTarget) {
+            setGalleryFrame(galleryPickerTarget, url);
+            setGalleryPickerTarget(null);
+          }
+        }}
+      />
     </div>
   );
 }

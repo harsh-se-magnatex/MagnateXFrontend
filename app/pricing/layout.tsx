@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Sociogenie Pricing',
   description:
-    'Elite includes a 10-day free trial: daily AI content, human review before publishing, and automated scheduling.',
+    'Plans for AI and Studio modes: daily content, human review before publishing, and automated scheduling.',
   alternates: {
     canonical: 'https://sociogenie.in/pricing',
   },
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Sociogenie Pricing',
     description:
-      'Elite includes a 10-day free trial. Daily AI content, human review, automated publishing.',
+      'Plans with daily AI content, human review, and automated publishing.',
   },
 };
 

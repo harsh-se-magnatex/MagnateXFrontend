@@ -28,6 +28,10 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import {
+  WORKSPACE_NAV_HREFS,
+  workspacePageTitle,
+} from '@/lib/workspace-nav';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   getUserAIenginePageContext,
@@ -1058,9 +1062,11 @@ export default function AIEnginePage() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => router.push('/social-media-integration')}
+                  onClick={() =>
+                    router.push(WORKSPACE_NAV_HREFS.linkedProfiles)
+                  }
                 >
-                  Open social connections
+                  {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                 </Button>
               </div>
             )}
@@ -1091,9 +1097,11 @@ export default function AIEnginePage() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => router.push('/social-media-integration')}
+                  onClick={() =>
+                    router.push(WORKSPACE_NAV_HREFS.linkedProfiles)
+                  }
                 >
-                  Open social connections
+                  {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                 </Button>
               </div>
             )}
@@ -1143,9 +1151,11 @@ export default function AIEnginePage() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => router.push('/social-media-integration')}
+                  onClick={() =>
+                    router.push(WORKSPACE_NAV_HREFS.linkedProfiles)
+                  }
                 >
-                  Open social connections
+                  {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                 </Button>
               </div>
             )}

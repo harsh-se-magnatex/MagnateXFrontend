@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import {
   Brain,
-  CloudLightning,
   ImagePlus,
   CalendarSync,
   Sparkles,
@@ -18,13 +17,6 @@ const createFlows = [
     href: WORKSPACE_NAV_HREFS.quickCreate,
     icon: Brain,
     gradient: 'from-primary-blue to-blue-400',
-  },
-  {
-    title: workspacePageTitle(WORKSPACE_NAV_HREFS.bulkCreate),
-    description: 'Create multiple posts in one run for your content calendar.',
-    href: WORKSPACE_NAV_HREFS.bulkCreate,
-    icon: CloudLightning,
-    gradient: 'from-primary-purple to-violet-400',
   },
   {
     title: workspacePageTitle(WORKSPACE_NAV_HREFS.productAdvert),

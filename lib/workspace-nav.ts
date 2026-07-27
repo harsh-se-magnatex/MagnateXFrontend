@@ -1,20 +1,44 @@
 /** Sidebar labels and matching routes — single source of truth for workspace navigation. */
 
 export const WORKSPACE_NAV_HREFS = {
-  quickCreate: '/instant-generation',
-  bulkCreate: '/batch-generation',
-  productAdvert: '/product-advert',
-  videoGeneration: '/video-generation',
-  festivePost: '/festive-post',
-  createCampaign: '/create-campaign',
-  carouselCreate: '/create/carousel-generation',
+  quickCreate: '/content-studio',
+  productAdvert: '/product-ads',
+  videoGeneration: '/video-generator',
+  festivePost: '/event-studio',
+  createCampaign: '/campaigns',
+  carouselCreate: '/carousel-posts',
   schedulePost: '/post-scheduler',
-  postQueue: '/scheduled-post',
-  contentPlan: '/content-plan',
+  postQueue: '/scheduled-posts',
+  contentPlan: '/content-calendar',
   gallery: '/media-library',
-  linkedProfiles: '/social-media-integration',
+  linkedProfiles: '/connected-accounts',
   analytics: '/analytics',
 } as const;
+
+/** Old app paths → current workspace routes (bookmarks, emails, stored `spendedOn`). */
+export const WORKSPACE_LEGACY_PATH_REDIRECTS: Record<string, string> = {
+  '/instant-generation': WORKSPACE_NAV_HREFS.quickCreate,
+  '/product-advert': WORKSPACE_NAV_HREFS.productAdvert,
+  '/video-generation': WORKSPACE_NAV_HREFS.videoGeneration,
+  '/festive-post': WORKSPACE_NAV_HREFS.festivePost,
+  '/create-campaign': WORKSPACE_NAV_HREFS.createCampaign,
+  '/create/carousel-generation': WORKSPACE_NAV_HREFS.carouselCreate,
+  '/carousel-generation': WORKSPACE_NAV_HREFS.carouselCreate,
+  '/scheduled-post': WORKSPACE_NAV_HREFS.postQueue,
+  '/content-plan': WORKSPACE_NAV_HREFS.contentPlan,
+  '/social-media-integration': WORKSPACE_NAV_HREFS.linkedProfiles,
+  '/batch-generation': WORKSPACE_NAV_HREFS.quickCreate,
+};
+
+export function resolveWorkspacePath(pathname: string): string {
+  const base = pathname.split('?')[0]?.split('#')[0] ?? pathname;
+  for (const [legacy, next] of Object.entries(WORKSPACE_LEGACY_PATH_REDIRECTS)) {
+    if (base === legacy || base.startsWith(`${legacy}/`)) {
+      return base.replace(legacy, next);
+    }
+  }
+  return base;
+}
 
 export type WorkspaceNavHref =
   (typeof WORKSPACE_NAV_HREFS)[keyof typeof WORKSPACE_NAV_HREFS];
@@ -33,12 +57,6 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.quickCreate),
   },
   {
-    name: 'Bulk Creator',
-    href: WORKSPACE_NAV_HREFS.bulkCreate,
-    match: (pathname) =>
-      !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.bulkCreate),
-  },
-  {
     name: 'Product Ads',
     href: WORKSPACE_NAV_HREFS.productAdvert,
     match: (pathname) =>
@@ -51,7 +69,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.videoGeneration),
   },
   {
-    name: 'Holiday & Festival Posts',
+    name: 'Event Studio',
     href: WORKSPACE_NAV_HREFS.festivePost,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.festivePost),

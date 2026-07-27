@@ -59,7 +59,7 @@ export default function PrivacyPolicyPage() {
           <li>visit our website, marketing pages, or blog;</li>
           <li>create or maintain a SocioGenie account;</li>
           <li>
-            subscribe to a plan, start a free trial, or purchase Top-Up
+            subscribe to a plan or purchase Top-Up
             Credits;
           </li>
           <li>
@@ -68,8 +68,8 @@ export default function PrivacyPolicyPage() {
           </li>
           <li>upload brand assets, products, or media;</li>
           <li>
-            use AI-powered features such as the AI Engine, Bulk Creator, Content
-            Studio, Product Ads, Holiday & Festival Posts, the AI
+            use AI-powered features such as the AI Engine, Content
+            Studio, Product Ads, Event Studio, the AI
             Chatbot Assistant, or the Approval Workflow;
           </li>
           <li>contact us for support, sales, or any other reason.</li>
@@ -178,7 +178,7 @@ export default function PrivacyPolicyPage() {
           </li>
           <li>
             <strong>To send service communications</strong> — transactional
-            emails (account, billing, security, trial expiry, credit
+            emails (account, billing, security, credit
             depletion). <em>Legal basis: contract; legitimate interest.</em>
           </li>
           <li>
@@ -201,8 +201,8 @@ export default function PrivacyPolicyPage() {
         <h2>5. AI Processing &amp; Automated Decision-Making</h2>
         <p>
           SocioGenie is an AI-powered platform. To deliver core features (Brand
-          DNA analysis, Business Data, AI Engine, Bulk Creator, Content
-          Studio, Product Ads, Holiday & Festival Posts, Chatbot
+          DNA analysis, Business Data, AI Engine, Content
+          Studio, Product Ads, Event Studio, Chatbot
           Assistant), we send relevant content and brand data to enterprise AI
           providers acting as our processors / sub-processors:
         </p>

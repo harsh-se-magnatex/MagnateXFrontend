@@ -1,4 +1,5 @@
 import type { TourId, TourRequest } from '@/src/stores/tourState';
+import { WORKSPACE_NAV_HREFS } from '@/lib/workspace-nav';
 
 export type TourStep = {
   /** CSS selector for the target element. */
@@ -89,7 +90,7 @@ const PLATFORM_STEPS: TourStep[] = [
       'Welcome to your dashboard — credits, scheduled posts, and a one-shot prompt box all live here.',
   },
   {
-    element: '#tour-nav-instant-generation',
+    element: '#tour-nav-content-studio',
     path: '/home',
     side: 'right',
     title: 'Content Studio',
@@ -99,7 +100,7 @@ const PLATFORM_STEPS: TourStep[] = [
   // 8b. Content Studio (3 steps)
   {
     element: '#tour-qc-prompt',
-    path: '/instant-generation',
+    path: WORKSPACE_NAV_HREFS.quickCreate,
     side: 'bottom',
     title: 'Your prompt goes here',
     description:
@@ -108,7 +109,7 @@ const PLATFORM_STEPS: TourStep[] = [
   },
   {
     element: '#tour-qc-platforms',
-    path: '/instant-generation',
+    path: WORKSPACE_NAV_HREFS.quickCreate,
     side: 'top',
     title: 'Pick the platform',
     description:
@@ -117,36 +118,17 @@ const PLATFORM_STEPS: TourStep[] = [
   },
   {
     element: '#tour-qc-generate',
-    path: '/instant-generation',
+    path: WORKSPACE_NAV_HREFS.quickCreate,
     side: 'top',
     title: 'Generate, then schedule',
     description:
       "Hit Generate (one credit per platform). The Schedule panel on the right unlocks the moment a post appears — pick a date and time and you're done.",
     paid: true,
   },
-  // 8c. Bulk Creator (2 steps)
-  {
-    element: '#tour-bulk-dates',
-    path: '/batch-generation',
-    side: 'bottom',
-    title: 'Plan a whole week (or month)',
-    description:
-      'Pick which platforms and up to 5 upcoming dates — we generate a post for every date in a single run.',
-    paid: true,
-  },
-  {
-    element: '#tour-bulk-generate',
-    path: '/batch-generation',
-    side: 'top',
-    title: 'Auto-generated + auto-scheduled',
-    description:
-      'Each post is automatically scheduled for its date at your preferred posting time. Zero manual work after Generate.',
-    paid: true,
-  },
   // 8d. Product Ads (3 steps)
   {
     element: '#tour-pa-upload',
-    path: '/product-advert',
+    path: WORKSPACE_NAV_HREFS.productAdvert,
     side: 'bottom',
     title: 'Upload + pick a mode',
     description:
@@ -155,7 +137,7 @@ const PLATFORM_STEPS: TourStep[] = [
   },
   {
     element: '#tour-pa-mode-advert',
-    path: '/product-advert',
+    path: WORKSPACE_NAV_HREFS.productAdvert,
     side: 'right',
     title: 'Mode 1 — Advert image',
     description:
@@ -164,17 +146,17 @@ const PLATFORM_STEPS: TourStep[] = [
   },
   {
     element: '#tour-pa-mode-social',
-    path: '/product-advert',
+    path: WORKSPACE_NAV_HREFS.productAdvert,
     side: 'right',
     title: 'Mode 2 — Full social post',
     description:
       'Generates the ad image AND a complete caption, headline, CTA, and hashtags — ready to publish. Costs more credits but saves you the writing.',
     paid: true,
   },
-  // 8e. Holiday & Festival Posts (1 step)
+  // 8e. Event Studio (1 step)
   {
     element: '#tour-fp-events',
-    path: '/festive-post',
+    path: WORKSPACE_NAV_HREFS.festivePost,
     side: 'right',
     title: 'Auto-celebrate festivals',
     description:
@@ -194,7 +176,7 @@ const PLATFORM_STEPS: TourStep[] = [
   // 8g. Scheduled Posts (1 step)
   {
     element: '#tour-pq-list',
-    path: '/scheduled-post',
+    path: WORKSPACE_NAV_HREFS.postQueue,
     side: 'top',
     title: 'Your scheduled posts',
     description:
@@ -213,7 +195,7 @@ const PLATFORM_STEPS: TourStep[] = [
   // 8i. Connected Accounts (1 step, FREE)
   {
     element: '#tour-lp-connect',
-    path: '/social-media-integration',
+    path: WORKSPACE_NAV_HREFS.linkedProfiles,
     side: 'bottom',
     title: 'Connect your accounts (free)',
     description:
@@ -222,7 +204,7 @@ const PLATFORM_STEPS: TourStep[] = [
   // 8j. Campaigns (2 steps)
   {
     element: '#tour-campaign-builder',
-    path: '/create-campaign',
+    path: WORKSPACE_NAV_HREFS.createCampaign,
     side: 'bottom',
     title: 'Plan a full campaign',
     description:
@@ -231,7 +213,7 @@ const PLATFORM_STEPS: TourStep[] = [
   },
   {
     element: '#tour-campaign-confirm',
-    path: '/create-campaign',
+    path: WORKSPACE_NAV_HREFS.createCampaign,
     side: 'left',
     title: 'Confirm and generate drafts',
     description:
