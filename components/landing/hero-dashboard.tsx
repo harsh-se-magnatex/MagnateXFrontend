@@ -31,7 +31,7 @@ const ACTIVITY_ITEMS: {
 }[] = [
   {
     platform: 'instagram',
-    description: 'Product Advert · Awaiting your review',
+    description: 'Product Ads · Awaiting your review',
     time: '2:30 PM',
     state: 'pending',
   },
@@ -43,7 +43,7 @@ const ACTIVITY_ITEMS: {
   },
   {
     platform: 'facebook',
-    description: 'Festive Post · Scheduled for 6:15 PM',
+    description: 'Holiday & Festival Posts · Scheduled for 6:15 PM',
     time: '6:15 PM',
     state: 'approved',
   },

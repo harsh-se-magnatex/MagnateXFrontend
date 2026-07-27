@@ -157,7 +157,7 @@ export default function CarouselGenerationPage() {
       <header className="space-y-2">
         <div className="flex items-center gap-2 text-primary">
           <Layers className="h-6 w-6" />
-          <h1 className={workspacePageTitleClass}>Carousel Create</h1>
+          <h1 className={workspacePageTitleClass}>Carousel Posts</h1>
         </div>
         <p className={workspacePageDescriptionClass}>
           Generate a 2–7 slide portrait carousel (1080×1350) with storyboarding

@@ -60,6 +60,13 @@ export type PaymentSubscriptionSummary = {
   canDeletePaymentMethod: boolean;
   /** Next-cycle plan change from Dodo, if any. */
   scheduledPlanChange?: ScheduledPlanChangeSummary | null;
+  /** Our Firestore pending plan change (source of truth for planName). */
+  pendingPlanChange?: {
+    productId: string | null;
+    planId: string | null;
+    planName: string | null;
+    previousPlan: string | null;
+  } | null;
 };
 
 export type PaymentSummaryPayload = {

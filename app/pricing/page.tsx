@@ -50,11 +50,11 @@ const BILLING_FAQ_ITEMS = [
 ] as const;
 
 const CREDIT_ACTIONS = [
-  { label: 'Product Advert', credits: '4 credits' },
+  { label: 'Product Ads', credits: '4 credits' },
   { label: 'Campaign post', credits: '3 credits / day' },
-  { label: 'Quick Create', credits: '2 credits' },
-  { label: 'Bulk Create (Studio Plans)', credits: '2 credits' },
-  { label: 'Festive post', credits: '2 credits' },
+  { label: 'Content Studio', credits: '2 credits' },
+  { label: 'Bulk Creator (Studio Plans)', credits: '2 credits' },
+  { label: 'Holiday & Festival Posts', credits: '2 credits' },
   { label: 'Regeneration', credits: '1 credit (First regen free)' },
 ] as const;
 

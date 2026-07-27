@@ -27,67 +27,67 @@ export type WorkspaceNavItem = {
 
 export const WORKSPACE_NAV: WorkspaceNavItem[] = [
   {
-    name: 'Quick Create',
+    name: 'Content Studio',
     href: WORKSPACE_NAV_HREFS.quickCreate,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.quickCreate),
   },
   {
-    name: 'Bulk Create',
+    name: 'Bulk Creator',
     href: WORKSPACE_NAV_HREFS.bulkCreate,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.bulkCreate),
   },
   {
-    name: 'Product Advert',
+    name: 'Product Ads',
     href: WORKSPACE_NAV_HREFS.productAdvert,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.productAdvert),
   },
   {
-    name: 'Video Generation',
+    name: 'Video Generator',
     href: WORKSPACE_NAV_HREFS.videoGeneration,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.videoGeneration),
   },
   {
-    name: 'Festive Post',
+    name: 'Holiday & Festival Posts',
     href: WORKSPACE_NAV_HREFS.festivePost,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.festivePost),
   },
   {
-    name: 'Create Campaign',
+    name: 'Campaigns',
     href: WORKSPACE_NAV_HREFS.createCampaign,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.createCampaign),
   },
   {
-    name: 'Carousel Create',
+    name: 'Carousel Posts',
     href: WORKSPACE_NAV_HREFS.carouselCreate,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.carouselCreate),
   },
   {
-    name: 'Schedule Post',
+    name: 'Post Scheduler',
     href: WORKSPACE_NAV_HREFS.schedulePost,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.schedulePost),
   },
   {
-    name: 'Post Queue',
+    name: 'Scheduled Posts',
     href: WORKSPACE_NAV_HREFS.postQueue,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.postQueue),
   },
   {
-    name: 'Gallery',
+    name: 'Media Library',
     href: WORKSPACE_NAV_HREFS.gallery,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.gallery),
   },
   {
-    name: 'Linked Profiles',
+    name: 'Connected Accounts',
     href: WORKSPACE_NAV_HREFS.linkedProfiles,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.linkedProfiles),
@@ -104,7 +104,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
 
 /** Auto-mode only — appended in the sidebar from `UserPlanCreditsProvider`. */
 export const CONTENT_PLAN_NAV_ITEM: WorkspaceNavItem = {
-  name: 'Content Plan',
+  name: 'Content Calendar',
   href: WORKSPACE_NAV_HREFS.contentPlan,
   match: (pathname) =>
     !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.contentPlan),

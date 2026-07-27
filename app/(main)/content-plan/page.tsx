@@ -32,22 +32,22 @@ const PLATFORM_SHORT: Record<ContentPlanPlatform, string> = {
 function kindLabel(kind: ContentPlanGeneratedKind | string): string {
   switch (kind) {
     case 'campaign':
-      return 'Campaign';
+      return 'Campaigns';
     case 'ai-engine':
       return 'AI Engine';
     case 'bulk-create':
-      return 'Bulk Create';
+      return 'Bulk Creator';
     case 'quick-create':
-      return 'Quick Create';
+      return 'Content Studio';
     case 'product-advert':
-      return 'Product Ad';
+      return 'Product Ads';
     case 'video-generation':
-      return 'Video';
+      return 'Video Generator';
     case 'carousel':
-      return 'Carousel';
+      return 'Carousel Posts';
     case 'festive':
     case 'festival':
-      return 'Festival';
+      return 'Holiday & Festival Posts';
     case 'empty':
       return '—';
     default:
@@ -289,12 +289,12 @@ function ContentPlanSheet({
 }
 
 const LEGEND: Array<{ kind: string; label: string }> = [
-  { kind: 'campaign', label: 'Campaign' },
+  { kind: 'campaign', label: 'Campaigns' },
   { kind: 'ai-engine', label: 'AI Engine' },
-  { kind: 'quick-create', label: 'Quick Create' },
-  { kind: 'video-generation', label: 'Video' },
-  { kind: 'carousel', label: 'Carousel' },
-  { kind: 'festival', label: 'Festival' },
+  { kind: 'quick-create', label: 'Content Studio' },
+  { kind: 'video-generation', label: 'Video Generator' },
+  { kind: 'carousel', label: 'Carousel Posts' },
+  { kind: 'festival', label: 'Holiday & Festival Posts' },
   { kind: 'empty', label: 'Empty' },
 ];
 
@@ -436,7 +436,7 @@ export default function ContentPlanPage() {
             href="/social-media-integration"
             className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
           >
-            Linked Profiles
+            Connected Accounts
           </Link>
         </div>
       ) : null}

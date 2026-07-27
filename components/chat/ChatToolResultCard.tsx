@@ -61,7 +61,7 @@ export function ChatToolResultCard({
             )
           )}
         >
-          {platform} isn&apos;t connected yet — open Linked Profiles to add it.
+          {platform} isn&apos;t connected yet — open Connected Accounts to add it.
           <DismissButton onDismiss={onDismiss} />
         </div>
       );
@@ -209,7 +209,7 @@ export function ChatToolResultCard({
           })}
         </ul>
         <p className="mt-1.5 text-[11px] text-muted-foreground">
-          Pick the event on the Festive Post page — the engine writes the caption
+          Pick the event on the Holiday & Festival Posts page — the engine writes the caption
           and image for you from your brand context.
         </p>
         <DismissButton onDismiss={onDismiss} />

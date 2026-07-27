@@ -104,11 +104,11 @@ type HomePageData = {
 
 const QUICK_SUGGESTIONS = [
   {
-    label: 'Generate a post',
+    label: 'Content Studio',
     href: '/instant-generation',
   },
   {
-    label: 'Build a week of content',
+    label: 'Bulk Creator',
     href: '/batch-generation',
   },
   {

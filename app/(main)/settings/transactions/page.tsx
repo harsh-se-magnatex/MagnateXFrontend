@@ -104,7 +104,7 @@ export default function TransactionsPage() {
     <div className="max-w-[min(100%,80rem)] w-full mx-auto px-4 sm:px-6 animate-in fade-in duration-500">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-          Transaction history
+          Payment History
         </h1>
         <p className="mt-2 text-sm text-slate-500">
           Credit top-ups and plan purchases recorded for your account. For

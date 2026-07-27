@@ -68,8 +68,8 @@ export default function PrivacyPolicyPage() {
           </li>
           <li>upload brand assets, products, or media;</li>
           <li>
-            use AI-powered features such as the AI Engine, Bulk Create, Quick
-            Create, Product Advert Generator, Festival Post Generator, the AI
+            use AI-powered features such as the AI Engine, Bulk Creator, Content
+            Studio, Product Ads, Holiday & Festival Posts, the AI
             Chatbot Assistant, or the Approval Workflow;
           </li>
           <li>contact us for support, sales, or any other reason.</li>
@@ -201,8 +201,8 @@ export default function PrivacyPolicyPage() {
         <h2>5. AI Processing &amp; Automated Decision-Making</h2>
         <p>
           SocioGenie is an AI-powered platform. To deliver core features (Brand
-          DNA analysis, Business Data, AI Engine, Bulk Create, Quick Create,
-          Product Advert Generator, Festival Post Generator, Chatbot
+          DNA analysis, Business Data, AI Engine, Bulk Creator, Content
+          Studio, Product Ads, Holiday & Festival Posts, Chatbot
           Assistant), we send relevant content and brand data to enterprise AI
           providers acting as our processors / sub-processors:
         </p>

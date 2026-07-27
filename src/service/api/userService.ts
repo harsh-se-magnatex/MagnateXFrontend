@@ -567,6 +567,49 @@ export const selectSocialPlatformApi = async (selected: {
   return apiPost<ApiEnvelope>('/api/v1/user/select-social-platform', selected);
 };
 
+export type NextPlanPlatformsPayload = {
+  activePlan: string;
+  targetPlan: string | null;
+  maxAllowed: number;
+  currentSelected: {
+    facebook: boolean;
+    instagram: boolean;
+    linkedin: boolean;
+  };
+  pendingSelected: {
+    facebook: boolean;
+    instagram: boolean;
+    linkedin: boolean;
+  } | null;
+  pendingSelectedForPlan: string | null;
+  hasPendingPlanChange: boolean;
+  pendingPlanName: string | null;
+  nextBillingDate: string | null;
+  withinSelectionWindow: boolean;
+  selectionComplete: boolean;
+};
+
+export const getNextPlanPlatforms = async () => {
+  return apiGet<ApiEnvelope<NextPlanPlatformsPayload>>(
+    '/api/v1/user/next-plan-platforms'
+  );
+};
+
+export const selectNextPlanPlatformsApi = async (selected: {
+  facebook: boolean;
+  instagram: boolean;
+  linkedin: boolean;
+}) => {
+  return apiPost<
+    ApiEnvelope<{
+      pendingSelected: typeof selected;
+      pendingSelectedForPlan: string;
+      maxAllowed: number;
+      message: string;
+    }>
+  >('/api/v1/user/select-next-plan-platforms', selected);
+};
+
 export type MemoryLayerAnswerPayload = {
   questionId: string;
   skipped: boolean;

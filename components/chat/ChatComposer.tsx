@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { useChatStore } from '@/src/stores/chatStore';
 
 const SUGGESTED_PROMPTS = [
-  'What does Bulk Create do?',
+  'What does Bulk Creator do?',
   'Suggest a Diwali post for me',
   'Summarize my Instagram analytics',
   'Why did my last post fail?',

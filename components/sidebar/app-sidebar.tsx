@@ -110,7 +110,12 @@ const workspaceNav = WORKSPACE_NAV.map((item) => ({
 const settingsNavItems = [
   { name: 'Account', href: '/settings/account', icon: User },
   { name: 'Billing & Credits', href: '/settings/billings', icon: CreditCard },
-  { name: 'Transactions', href: '/settings/transactions', icon: Receipt },
+  {
+    name: 'Next plan platforms',
+    href: '/settings/next-plan-platforms',
+    icon: Share2,
+  },
+  { name: 'Payment History', href: '/settings/transactions', icon: Receipt },
   { name: 'Automation', href: '/settings/automation', icon: Settings2 },
   {
     name: 'Support & Legal',

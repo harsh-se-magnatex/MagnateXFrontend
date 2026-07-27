@@ -41,7 +41,7 @@ const createFlows = [
     gradient: 'from-violet-500 to-indigo-400',
   },
   {
-    title: 'Carousel Create',
+    title: workspacePageTitle(WORKSPACE_NAV_HREFS.carouselCreate),
     description: 'Generate 2–7 slide portrait carousels with AI storyboarding.',
     href: WORKSPACE_NAV_HREFS.carouselCreate,
     icon: Layers,

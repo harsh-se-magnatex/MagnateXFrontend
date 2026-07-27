@@ -524,32 +524,53 @@ export default function BillingsPage() {
   const subscriptionStatus = formatTitleCase(subscriptionSummary?.status);
   const billingFrequencyDisplay = formatBillingFrequency(subscriptionSummary);
 
-  /** Prime/Elite auto: show platform reminder only within 2 days of renewal. */
+  /** Show platform reminder within 15 days of renewal (any active plan). */
   const showRenewalPlatformReminder = useMemo(() => {
-    if (billing?.mode !== 'auto') return false;
     if (!subscriptionSummary?.nextBillingDate) return false;
-    if (subscriptionSummary.scheduledPlanChange) return false;
     if (subscriptionSummary.cancelAtNextBillingDate) return false;
-
-    const planKey = normalizePlanKey(
-      subscriptionSummary.planName ?? billing?.activePlan ?? ''
-    );
-    const isPrimeOrElite =
-      planKey.startsWith('prime-') || planKey.startsWith('elite-');
-    if (!isPrimeOrElite) return false;
+    if (billing?.activePlan === 'non-subscribed') return false;
 
     const renewAt = new Date(subscriptionSummary.nextBillingDate).getTime();
     if (!Number.isFinite(renewAt)) return false;
     const msUntilRenew = renewAt - Date.now();
-    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
-    return msUntilRenew >= 0 && msUntilRenew <= twoDaysMs;
+    const fifteenDaysMs = 15 * 24 * 60 * 60 * 1000;
+    return msUntilRenew >= 0 && msUntilRenew <= fifteenDaysMs;
   }, [
-    billing?.mode,
     billing?.activePlan,
     subscriptionSummary?.nextBillingDate,
-    subscriptionSummary?.scheduledPlanChange,
     subscriptionSummary?.cancelAtNextBillingDate,
-    subscriptionSummary?.planName,
+  ]);
+
+  const nextPlanPlatformSelectionComplete = useMemo(() => {
+    const pending = billing?.pendingSelected;
+    if (!pending) return false;
+    const target =
+      subscriptionSummary?.pendingPlanChange?.planName ??
+      billing?.pendingSelectedForPlan ??
+      billing?.activePlan;
+    if (!target || billing?.pendingSelectedForPlan !== target) {
+      // Allow match when forPlan equals active and no scheduled change.
+      if (
+        billing?.pendingSelectedForPlan &&
+        billing.pendingSelectedForPlan === billing.activePlan &&
+        !subscriptionSummary?.pendingPlanChange?.planName
+      ) {
+        return (
+          [pending.facebook, pending.instagram, pending.linkedin].filter(Boolean)
+            .length >= 1
+        );
+      }
+      return false;
+    }
+    return (
+      [pending.facebook, pending.instagram, pending.linkedin].filter(Boolean)
+        .length >= 1
+    );
+  }, [
+    billing?.pendingSelected,
+    billing?.pendingSelectedForPlan,
+    billing?.activePlan,
+    subscriptionSummary?.pendingPlanChange?.planName,
   ]);
 
   const planComparisonRows = useMemo(() => {
@@ -893,14 +914,15 @@ export default function BillingsPage() {
                             )}
                           </span>
                           . Until then you keep your current plan and limits.
-                          {billing?.mode === 'auto' ? (
-                            <>
-                              {' '}
-                              After the change takes effect, you will need to
-                              confirm your social platforms so we can create your
-                              new auto campaign for the correct accounts.
-                            </>
-                          ) : null}
+                          {' '}
+                          Please select platforms for your next plan so renewal
+                          applies the right accounts automatically.
+                          <Link
+                            href="/settings/next-plan-platforms"
+                            className="ml-1 font-semibold text-indigo-700 underline-offset-2 hover:underline"
+                          >
+                            Select next-plan platforms
+                          </Link>
                         </p>
                         {(subscriptionSummary.scheduledPlanChange?.addons
                           ?.length ?? 0) > 0 ? (
@@ -939,21 +961,36 @@ export default function BillingsPage() {
                   ) : null}
                   {showRenewalPlatformReminder ? (
                     <div
-                      className="mt-5 rounded-2xl border border-amber-500/35 bg-amber-950/55 px-4 py-4 text-sm text-amber-100 ring-1 ring-amber-500/20"
+                      className="mt-5 rounded-2xl border border-amber-500/35 bg-amber-50 px-4 py-4 text-sm text-amber-950 ring-1 ring-amber-500/20"
                       role="status"
                     >
-                      <p className="text-[11px] font-bold uppercase tracking-wide text-amber-300">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800">
                         Before your next renewal
                       </p>
-                      <p className="mt-2 leading-relaxed text-amber-100/90">
+                      <p className="mt-2 leading-relaxed text-amber-900/90">
                         Your plan renews on{' '}
-                        <span className="font-semibold text-amber-50">
+                        <span className="font-semibold text-amber-950">
                           {formatTxnDate(subscriptionSummary.nextBillingDate)}
                         </span>
-                        . Please confirm your social platforms are the ones you
-                        want before then. A new auto campaign will be created for
-                        the platforms selected at renewal.
+                        . For a smoother experience, select the platforms you
+                        want for your next plan now
+                        {nextPlanPlatformSelectionComplete
+                          ? ' — you already have a next-cycle selection saved'
+                          : ''}
+                        . If you skip this, we will continue with your current
+                        platforms.
                       </p>
+                      <Button
+                        asChild
+                        size="sm"
+                        className="mt-3 rounded-xl bg-amber-700 text-white hover:bg-amber-800"
+                      >
+                        <Link href="/settings/next-plan-platforms">
+                          {nextPlanPlatformSelectionComplete
+                            ? 'Review next-plan platforms'
+                            : 'Select next-plan platforms'}
+                        </Link>
+                      </Button>
                     </div>
                   ) : null}
                 </>
@@ -1330,11 +1367,11 @@ export default function BillingsPage() {
            Credit used per action by Manual Trigger:
           </p>
           <ul className="text-sm text-slate-700 space-y-2 list-none pl-0">
-            <li>· Product Advert: 4 credits</li>
+            <li>· Product Ads: 4 credits</li>
             <li>· Campaign post: 3 credits per day</li>
-            <li>· Quick Create: 2 credits</li>
-            <li>· Bulk Create (Studio Plans): 2 credits</li>
-            <li>· Festive post: 2 credits</li>
+            <li>· Content Studio: 2 credits</li>
+            <li>· Bulk Creator (Studio Plans): 2 credits</li>
+            <li>· Holiday & Festival Posts: 2 credits</li>
             <li>· Regeneration: 1 credit (First regen free)</li>
           </ul>
         </section>

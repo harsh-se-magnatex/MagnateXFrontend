@@ -535,7 +535,7 @@ export default function VideoGenerationPage() {
                   href={WORKSPACE_NAV_HREFS.linkedProfiles}
                   className="font-medium underline"
                 >
-                  Linked Profiles
+                  Connected Accounts
                 </Link>
               </p>
             ) : (

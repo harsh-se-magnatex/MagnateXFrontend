@@ -76,9 +76,9 @@ export default function TermsOfServicePage() {
           optional human quality review, publishing infrastructure, and
           analytics. Core capabilities include onboarding and Brand DNA setup,
           the Business Data, the Media Library, social-account integrations,
-          configurable automation preferences, the AI Engine, Bulk Create,
-          Quick Create, the Product Advert Generator, the Festival Post
-          Generator, the User/Managed Approval Workflow, automated scheduling
+          configurable automation preferences, the AI Engine, Bulk Creator,
+          Content Studio, Product Ads, Holiday & Festival Posts, the
+          User/Managed Approval Workflow, automated scheduling
           and publishing, analytics &amp; insights, the AI Chatbot Assistant,
           and the subscription &amp; credit system.
         </p>
