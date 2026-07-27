@@ -37,7 +37,7 @@ import {
   postReplyUndo,
 } from '@/src/service/api/analyticService';
 
-import { type GrowthStudioPlatform, platformLabel } from './_common';
+import { type GrowthStudioPlatform, platformLabel, type PreloadedReplySuggestions } from './_common';
 import type { ReplyQueueGroup, ReplyQueueLoadStats } from './replyQueue';
 import { totalCommentCount } from './replyQueue';
 
@@ -111,6 +111,27 @@ type LastSent = {
 function readSuggestion(state: SuggestionState | undefined): string {
   if (!state || state.status !== 'ready') return '';
   return state.edited ?? state.text;
+}
+
+function buildInitialSuggestions(
+  groups: readonly ReplyQueueGroup[],
+  preloaded?: PreloadedReplySuggestions
+): SuggestionsMap {
+  if (!preloaded) return {};
+  const out: SuggestionsMap = {};
+  for (const group of groups) {
+    for (const comment of group.comments) {
+      const hit = preloaded[comment.commentId];
+      if (hit) {
+        out[comment.commentId] = {
+          status: 'ready',
+          text: hit.suggestion,
+          source: hit.source,
+        };
+      }
+    }
+  }
+  return out;
 }
 
 function PostMediaThumb({
@@ -549,7 +570,7 @@ function ReplyQueueRow({
   comment: string;
   state: SuggestionState | undefined;
   sendState: SendState | undefined;
-  onRequest: () => void;
+  onRequest: (refresh?: boolean) => void;
   onEdit: (next: string) => void;
   onSend: (message: string) => void;
 }) {
@@ -631,7 +652,7 @@ function ReplyQueueRow({
               type="button"
               size="sm"
               variant="ghost"
-              onClick={onRequest}
+              onClick={() => onRequest(true)}
               disabled={isSending}
               className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
             >
@@ -655,7 +676,7 @@ function ReplyQueueRow({
             type="button"
             size="sm"
             variant="outline"
-            onClick={onRequest}
+            onClick={() => onRequest(false)}
             disabled={state?.status === 'loading'}
             className="h-7 gap-1.5 px-2 text-xs"
           >
@@ -686,7 +707,7 @@ function ReplyQueueGroupCard({
   group: ReplyQueueGroup;
   suggestions: SuggestionsMap;
   sendStates: SendStateMap;
-  onRequest: (commentId: string, comment: string) => void;
+  onRequest: (commentId: string, comment: string, refresh?: boolean) => void;
   onEdit: (commentId: string, next: string) => void;
   onSend: (
     postId: string,
@@ -740,7 +761,7 @@ function ReplyQueueGroupCard({
             comment={c.comment}
             state={suggestions[c.commentId]}
             sendState={sendStates[c.commentId]}
-            onRequest={() => onRequest(c.commentId, c.comment)}
+            onRequest={(refresh) => onRequest(c.commentId, c.comment, refresh)}
             onEdit={(next) => onEdit(c.commentId, next)}
             onSend={(message) =>
               onSend(group.postId, c.commentId, c.comment, message)
@@ -757,6 +778,7 @@ export function RepliesWaitingCard({
   groups,
   pageName,
   loadStats,
+  preloadedReplySuggestions,
 }: {
   platform: GrowthStudioPlatform;
   groups?: ReplyQueueGroup[];
@@ -768,11 +790,15 @@ export function RepliesWaitingCard({
    * back to the legacy "Inbox zero" / "All caught up" empty states.
    */
   loadStats?: ReplyQueueLoadStats;
+  /** Cron-built reply drafts keyed by comment id. */
+  preloadedReplySuggestions?: PreloadedReplySuggestions;
 }) {
   const safeGroups = useMemo(() => groups ?? [], [groups]);
 
   const [open, setOpen] = useState(false);
-  const [suggestions, setSuggestions] = useState<SuggestionsMap>({});
+  const [suggestions, setSuggestions] = useState<SuggestionsMap>(() =>
+    buildInitialSuggestions(safeGroups, preloadedReplySuggestions)
+  );
   const [sendStates, setSendStates] = useState<SendStateMap>({});
   const [lastSent, setLastSent] = useState<LastSent | null>(null);
   const [undoState, setUndoState] = useState<UndoState>({ status: 'idle' });
@@ -895,7 +921,7 @@ export function RepliesWaitingCard({
         });
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : 'Something went wrong';
+          'Something went wrong';
         setSendStates((prev) => ({
           ...prev,
           [commentId]: { status: 'error', error: errorMessage },
@@ -929,7 +955,7 @@ export function RepliesWaitingCard({
       setUndoState({ status: 'idle' });
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Something went wrong';
+        'Something went wrong';
       setUndoState({ status: 'error', error: errorMessage });
     }
   }, [lastSent, platform]);
@@ -940,7 +966,7 @@ export function RepliesWaitingCard({
   }, []);
 
   const requestSuggestion = useCallback(
-    async (commentId: string, comment: string) => {
+    async (commentId: string, comment: string, refresh = false) => {
       const group = safeGroups.find((g) =>
         g.comments.some((c) => c.commentId === commentId)
       );
@@ -952,8 +978,10 @@ export function RepliesWaitingCard({
         const res = await postReplySuggestion({
           platform,
           comment,
+          commentId,
           postMessage: group?.postMessage,
           pageName,
+          refresh,
         });
         const { suggestion, source } = res.data;
         setSuggestions((prev) => ({
@@ -962,7 +990,7 @@ export function RepliesWaitingCard({
         }));
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Something went wrong';
+          'Something went wrong';
         setSuggestions((prev) => ({
           ...prev,
           [commentId]: { status: 'error', error: message },

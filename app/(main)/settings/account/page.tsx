@@ -131,7 +131,7 @@ export default function AccountSettingsPage() {
     try {
       const res = await updateUserName(trimmed);
       if (!res.success) {
-        showErrorToast(res.message || 'Could not update name.');
+        showErrorToast('Could not update name.');
         return;
       }
       try {
@@ -144,9 +144,7 @@ export default function AccountSettingsPage() {
       setName(trimmed);
       toast.success(res.message || 'Name updated.');
     } catch (err: unknown) {
-      showErrorToast(
-        err instanceof Error ? err.message : 'Could not update name.'
-      );
+      showErrorToast('Could not update name.');
     } finally {
       setNameSaving(false);
     }
@@ -174,13 +172,10 @@ export default function AccountSettingsPage() {
 
     setSaving(true);
     try {
-      const res = await forgotPassword(
-        resetEmail.trim(),
-        `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`
-      );
+      const res = await forgotPassword(resetEmail.trim());
       if (!res.success) {
         setPasswordMessageTone('error');
-        setPasswordMessage(res.message || 'Failed to send reset email.');
+        setPasswordMessage('Failed to change password.');
         return;
       }
       setPasswordMessageTone('success');
@@ -189,9 +184,7 @@ export default function AccountSettingsPage() {
       );
     } catch (err: unknown) {
       setPasswordMessageTone('error');
-      setPasswordMessage(
-        err instanceof Error ? err.message : 'Failed to change password.'
-      );
+      setPasswordMessage('Failed to change password.');
     } finally {
       setSaving(false);
       setResetEmail('');
@@ -209,9 +202,7 @@ export default function AccountSettingsPage() {
       await logOutFromAllDevices();
       router.replace('/sign-in');
     } catch (err: unknown) {
-      showErrorToast(
-        err instanceof Error ? err.message : 'Failed to log out.'
-      );
+      showErrorToast('Failed to log out.');
     }
   };
 
@@ -223,9 +214,7 @@ export default function AccountSettingsPage() {
       await deleteUserAccount();
       await signOutUser();
     } catch (err: unknown) {
-      showErrorToast(
-        err instanceof Error ? err.message : 'Failed to delete account.'
-      );
+      showErrorToast('Failed to delete account.');
     } finally {
       setIsDeletingAccount(false);
     }

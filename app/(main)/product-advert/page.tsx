@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Expand } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import {
   generateProductAdvertApi,
+  type ProductAdvertGenerateResponse,
   type ProductGenerationMode,
 } from '@/src/service/api/product-advert.service';
-import { useFeatureJob } from '@/src/hooks/useFeatureJob';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import Link from 'next/link';
@@ -24,14 +24,15 @@ import {
   type PostSchedulerPrefillPost,
 } from '@/lib/post-scheduler-prefill-store';
 import { DownloadPngButton } from '@/components/download-png-button';
+import { SharePostButton } from '@/components/share-post-button';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
   useImagePreview,
 } from '@/components/image-preview';
-import { Progress } from '@/components/ui/progress';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import {
   useProductAdvertState,
   type AdvertResult,
@@ -68,6 +69,66 @@ const BACKGROUND_OPTIONS = [
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 
+function mapWorkerResultToAdvertResult(
+  platform: string,
+  r: Record<string, unknown>
+): AdvertResult | null {
+  if (typeof r.url !== 'string') return null;
+  const copyRaw =
+    r.copy && typeof r.copy === 'object'
+      ? (r.copy as Record<string, unknown>)
+      : null;
+  return {
+    platform,
+    chosenContentType:
+      typeof r.chosenContentType === 'string' ? r.chosenContentType : undefined,
+    contentFormatLabel:
+      typeof r.contentFormatLabel === 'string' ? r.contentFormatLabel : undefined,
+    analysis:
+      r.analysis && typeof r.analysis === 'object'
+        ? (r.analysis as Record<string, unknown>)
+        : null,
+    copy: copyRaw
+      ? {
+          headline: String(copyRaw.headline ?? ''),
+          primary_text: String(copyRaw.primary_text ?? ''),
+          cta: String(copyRaw.cta ?? ''),
+          hashtags: Array.isArray(copyRaw.hashtags)
+            ? (copyRaw.hashtags as unknown[]).map((t) => String(t ?? ''))
+            : [],
+        }
+      : null,
+    imageUrl: String(r.url ?? ''),
+    imageFilePath: typeof r.filePath === 'string' ? r.filePath : undefined,
+    logoPosition: typeof r.logoPosition === 'string' ? r.logoPosition : undefined,
+    selectedLogoVariantIndex:
+      typeof r.selectedLogoVariantIndex === 'number'
+        ? r.selectedLogoVariantIndex
+        : undefined,
+    logoVariantSource:
+      typeof r.logoVariantSource === 'string' ? r.logoVariantSource : undefined,
+    logoVariantCount:
+      typeof r.logoVariantCount === 'number' ? r.logoVariantCount : undefined,
+    marketingTagline:
+      typeof r.marketingTagline === 'string' ? r.marketingTagline : undefined,
+    productAdvertDocId: typeof r.postId === 'string' ? r.postId : null,
+  };
+}
+
+function mapProductAdvertResponse(
+  response: ProductAdvertGenerateResponse
+): { generationMode: ProductGenerationMode; platformResults: AdvertResult[] } {
+  const platformResults = response.platformResults
+    .map(({ platform, result }) =>
+      mapWorkerResultToAdvertResult(platform, result)
+    )
+    .filter((row): row is AdvertResult => row != null);
+  return {
+    generationMode: response.generationMode,
+    platformResults,
+  };
+}
+
 function platformLabel(platform: SocialPlatform): string {
   if (platform === 'instagram') return 'Instagram';
   if (platform === 'facebook') return 'Facebook';
@@ -86,21 +147,8 @@ export default function ProductAdvertPage() {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string>('');
   const [captionCopied, setCaptionCopied] = useState(false);
-  const [isScheduling, setIsScheduling] = useState(false);
-  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
   const imagePreview = useImagePreview();
-
-  // Firestore-driven progress for the current run. parentJobId + per-platform
-  // job docs come from `users/{uid}.activeJobs['product-advert']`.
-  const featureJob = useFeatureJob('product-advert');
-  const {
-    parentJobId: activeParentJobId,
-    jobs: jobMap,
-    overallPct,
-    allDone,
-    isRunning,
-    onGenerated,
-  } = featureJob;
 
   // Session state: in-memory Zustand, survives SPA navigation within the tab.
   const generationMode = useProductAdvertState((s) => s.generationMode);
@@ -125,8 +173,6 @@ export default function ProductAdvertPage() {
   );
   const finalResult = useProductAdvertState((s) => s.finalResult);
   const setFinalResult = useProductAdvertState((s) => s.setFinalResult);
-  const loading = useProductAdvertState((s) => s.loading);
-  const setLoading = useProductAdvertState((s) => s.setLoading);
   const lastGenerationMode = useProductAdvertState((s) => s.lastGenerationMode);
   const setLastGenerationMode = useProductAdvertState(
     (s) => s.setLastGenerationMode
@@ -214,7 +260,7 @@ export default function ProductAdvertPage() {
   const canGenerate =
     !!file &&
     creditOk &&
-    !loading &&
+    !isGenerating &&
     platformSelection.ok &&
     !(
       generationMode === 'advert_asset' &&
@@ -236,15 +282,11 @@ export default function ProductAdvertPage() {
     }
   }
 
-  const lastMaterializedRef = useRef<string | null>(null);
-  const generationModeForRunRef = useRef<ProductGenerationMode>('advert_asset');
-
   async function handleGenerate() {
-    if (isTourDemo) return;
+    if (isTourDemo || isGenerating) return;
     try {
       setError('');
       setFinalResult(null);
-      lastMaterializedRef.current = null;
       if (!file) throw new Error('Please upload a PNG product image.');
       if (
         generationMode === 'advert_asset' &&
@@ -258,8 +300,7 @@ export default function ProductAdvertPage() {
       const user = auth.currentUser;
       if (!user) throw new Error('You must be signed in to generate adverts.');
 
-      setLoading(true);
-      generationModeForRunRef.current = generationMode;
+      setIsGenerating(true);
 
       const selectedBackground =
         background === 'Other (custom)' ? customBackground.trim() : background;
@@ -274,129 +315,20 @@ export default function ProductAdvertPage() {
         campaignContext,
         useIndustryResearch,
       });
-      onGenerated({
-        parentJobId: response.parentJobId,
-        jobs: response.jobs,
-      });
+      const mapped = mapProductAdvertResponse(response);
+      setFinalResult(mapped);
+      setLastGenerationMode(mapped.generationMode);
+      if (mapped.platformResults.length) {
+        toast.success('Advert generated successfully');
+      }
     } catch (e: unknown) {
       const message = 'Failed to generate advert. Please try again.';
       showErrorToast(message);
-      setLoading(false);
       console.log(e);
+    } finally {
+      setIsGenerating(false);
     }
   }
-
-  // Materialize the legacy `finalResult` shape from sibling job docs once each
-  // platform has settled. Runs once per parentJobId.
-  useEffect(() => {
-    if (!allDone || !activeParentJobId) return;
-    if (lastMaterializedRef.current === activeParentJobId) return;
-    lastMaterializedRef.current = activeParentJobId;
-
-    const jobList = Object.values(jobMap);
-    if (!jobList.length) {
-      setLoading(false);
-      return;
-    }
-
-    const platformResults: AdvertResult[] = jobList
-      .filter((j) => j.status === 'done' && typeof j.result?.url === 'string')
-      .map((j) => {
-        const r = (j.result ?? {}) as Record<string, unknown>;
-        const copyRaw =
-          r.copy && typeof r.copy === 'object'
-            ? (r.copy as Record<string, unknown>)
-            : null;
-        return {
-          platform: String(j.platform ?? ''),
-          chosenContentType:
-            typeof r.chosenContentType === 'string'
-              ? r.chosenContentType
-              : undefined,
-          contentFormatLabel:
-            typeof r.contentFormatLabel === 'string'
-              ? r.contentFormatLabel
-              : undefined,
-          analysis:
-            r.analysis && typeof r.analysis === 'object'
-              ? (r.analysis as Record<string, unknown>)
-              : null,
-          copy: copyRaw
-            ? {
-              headline: String(copyRaw.headline ?? ''),
-              primary_text: String(copyRaw.primary_text ?? ''),
-              cta: String(copyRaw.cta ?? ''),
-              hashtags: Array.isArray(copyRaw.hashtags)
-                ? (copyRaw.hashtags as unknown[]).map((t) => String(t ?? ''))
-                : [],
-            }
-            : null,
-          imageUrl: String(r.url ?? ''),
-          imageFilePath:
-            typeof r.filePath === 'string' ? r.filePath : undefined,
-          logoPosition:
-            typeof r.logoPosition === 'string' ? r.logoPosition : undefined,
-          selectedLogoVariantIndex:
-            typeof r.selectedLogoVariantIndex === 'number'
-              ? r.selectedLogoVariantIndex
-              : undefined,
-          logoVariantSource:
-            typeof r.logoVariantSource === 'string'
-              ? r.logoVariantSource
-              : undefined,
-          logoVariantCount:
-            typeof r.logoVariantCount === 'number'
-              ? r.logoVariantCount
-              : undefined,
-          marketingTagline:
-            typeof r.marketingTagline === 'string'
-              ? r.marketingTagline
-              : undefined,
-          productAdvertDocId:
-            typeof r.postId === 'string' ? r.postId : null,
-        };
-      });
-
-    const generationModeFromResult =
-      jobList.find(
-        (j) =>
-          typeof j.result?.generationMode === 'string' &&
-          (j.result.generationMode === 'advert_asset' ||
-            j.result.generationMode === 'social_full')
-      )?.result?.generationMode as ProductGenerationMode | undefined;
-    const finalMode: ProductGenerationMode =
-      generationModeFromResult ?? generationModeForRunRef.current;
-
-    setFinalResult({
-      generationMode: finalMode,
-      platformResults,
-    });
-    setLastGenerationMode(finalMode);
-    setLoading(false);
-    if (platformResults.length) {
-      toast.success('Advert generated successfully');
-    }
-  }, [
-    allDone,
-    activeParentJobId,
-    jobMap,
-    setFinalResult,
-    setLastGenerationMode,
-    setLoading,
-  ]);
-
-  // Keep the persisted `loading` flag in sync with Firestore-driven
-  // `isRunning`. The materialize effect resets `loading` in the happy path,
-  // but if `allDone` never fires (stale `activeJobs.product-advert` slot, or
-  // missing job docs) the button can hang on "Generating…". This second
-  // branch drops `loading` the moment `isRunning` clears.
-  useEffect(() => {
-    if (isRunning && !loading) {
-      setLoading(true);
-    } else if (!isRunning && loading) {
-      setLoading(false);
-    }
-  }, [isRunning, loading, setLoading]);
 
   function buildAdvertCaption(resultItem: AdvertResult) {
     const headline = (resultItem.copy?.headline || '').trim();
@@ -415,6 +347,10 @@ export default function ProductAdvertPage() {
       .trim();
   }
 
+  function resolveSchedulerCaption(resultItem: AdvertResult) {
+    return buildAdvertCaption(resultItem);
+  }
+
   function handleSendToScheduler(resultItem?: AdvertResult) {
     const sourceItems = resultItem
       ? [resultItem]
@@ -423,13 +359,14 @@ export default function ProductAdvertPage() {
       .map((item) => ({
         imageUrl: String(item.imageUrl ?? '').trim(),
         imageFilePath: String(item.imageFilePath ?? '').trim(),
-        message: buildAdvertCaption(item),
+        message: resolveSchedulerCaption(item),
         platform: String(item.platform ?? '').toLowerCase() as PostSchedulerPrefillPost['platform'],
         source: 'productadvert' as const,
       }))
       .filter(
         (item) =>
           !!item.imageUrl &&
+          !!item.imageFilePath &&
           PLATFORM_ORDER.includes(item.platform)
       );
 
@@ -450,7 +387,7 @@ export default function ProductAdvertPage() {
   }
 
   async function handleCopyCaption(resultItem: AdvertResult) {
-    const caption = buildAdvertCaption(resultItem);
+    const caption = resolveSchedulerCaption(resultItem);
     if (!caption) return;
     await navigator.clipboard.writeText(caption);
     setCaptionCopied(true);
@@ -461,31 +398,8 @@ export default function ProductAdvertPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+  if (!isTourDemo && isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
-  }
-
-  if (
-    !isTourDemo &&
-    new Date(formattedPlanExpiresAt).getTime() < new Date().getTime()
-  ) {
-    return (
-      <div className="animate-in fade-in duration-500 pb-20 flex flex-col items-center justify-center h-screen">
-        <h1 className="text-3xl font-bold tracking-tight  text-slate-900">
-          <p className="text-center">You are not eligible for this feature.</p>
-          <p className="text-center">
-            Please subscribe to a plan to use this feature.
-          </p>
-        </h1>
-        <p className="mt-2 text-base text-slate-500 max-w-2xl">
-          You can subscribe to a plan{' '}
-          <Link href="/settings/billings" className="underline text-indigo-600">
-            here
-          </Link>
-          .
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -718,38 +632,16 @@ export default function ProductAdvertPage() {
           disabled={!canGenerate}
           className="w-full py-3 rounded-full font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-transform disabled:opacity-60"
         >
-          {loading
+          {isGenerating
             ? 'Generating...'
-            : `${generationMode === 'social_full' ? 'Generate full post' : 'Generate advert'}${insufficientCredits ? ' (insufficient credits)' : ''
+            : `${generationMode === 'social_full' ? 'Generate full post' : 'Generate advert'}${insufficientCredits ? ' (Insufficient credits)' : ''
             }`}
         </button>
 
-        {(loading || isRunning) && (
-          <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 space-y-2">
-            <div className="flex items-center justify-between text-xs font-medium text-indigo-700">
-              <span>Generating...</span>
-              <span>{overallPct}%</span>
-            </div>
-            <Progress
-              value={overallPct}
-              className="h-1.5 bg-indigo-100 **:data-[slot=progress-indicator]:bg-indigo-500"
-            />
-            {Object.values(jobMap).length > 1 && (
-              <div className="space-y-1 pt-1">
-                {Object.values(jobMap).map((job) => (
-                  <div
-                    key={job.jobId}
-                    className="flex items-center justify-between text-[11px] text-indigo-700/80"
-                  >
-                    <span className="capitalize">
-                      {job.platform ?? 'unknown'}
-                    </span>
-                    <span>{job.pct ?? 0}%</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {isGenerating && (
+          <p className="mt-4 text-xs font-medium text-indigo-700">
+            Generating…
+          </p>
         )}
 
         {error && <p className="text-rose-600 mt-4 text-sm">{error}</p>}
@@ -851,9 +743,17 @@ export default function ProductAdvertPage() {
                         `advert-${item.platform}-${Date.now()}.png`
                       }
                     />
+                    <SharePostButton
+                      imageUrl={item.imageUrl}
+                      caption={buildAdvertCaption(item)}
+                      platform={item.platform}
+                      getFilename={() =>
+                        `advert-${item.platform}-${Date.now()}.png`
+                      }
+                    />
                   </div>
 
-                  {item.copy && finalResult.platformResults.length === 1 && (
+                  {finalResult.platformResults.length === 1 && (
                     <div className="mt-4">
                       <button
                         onClick={() => handleSendToScheduler(item)}

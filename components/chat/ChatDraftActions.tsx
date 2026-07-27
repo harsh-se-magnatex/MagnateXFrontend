@@ -35,23 +35,23 @@ function summariseDraft(result: AssistantToolResult): DraftSummary | null {
     case 'draft_quick':
       return {
         prefillKind: 'draft_quick',
-        label: 'Open in Quick Create',
+        label: 'Open in Content Studio',
         ctaDeepLink: link || '/instant-generation',
         promptText: prompt,
       };
     case 'draft_advert':
       return {
         prefillKind: 'draft_advert',
-        label: 'Open in Product Advert',
+        label: 'Open in Product Ads',
         ctaDeepLink: link || '/product-advert',
         promptText: prompt,
       };
     case 'festival_info':
-      // No prefill — Bulk Create and Festive Post don't accept user prompts.
+      // No prefill — Bulk Creator and Holiday & Festival Posts don't accept user prompts.
       // We just deep-link to the page so the user can pick an event there.
       return {
         prefillKind: null,
-        label: 'Open Festive Post',
+        label: 'Open Holiday & Festival Posts',
         ctaDeepLink: link || '/festive-post',
       };
     default:

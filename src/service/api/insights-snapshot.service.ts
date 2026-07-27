@@ -3,6 +3,7 @@ import type { ApiEnvelope } from '@/lib/api-types';
 
 import type {
   WhatToPostNextPayload,
+  WeeklyVerdictPayload,
   WhereToSpendPayload,
   WhereToSpendPlatform,
 } from './analyticService';
@@ -34,6 +35,37 @@ export type AnalyticsSnapshotDocument = {
   >;
   whereToSpend: Partial<
     Record<AnalyticsSnapshotPlatform, WhereToSpendPayload>
+  >;
+  /** Present on snapshots built after the weekly-verdict cache rollout. */
+  weeklyVerdict?: Partial<
+    Record<
+      AnalyticsSnapshotPlatform,
+      { verdict: WeeklyVerdictPayload; source: 'openai' | 'fallback' }
+    >
+  >;
+  optimalPostingTime?: Partial<
+    Record<
+      AnalyticsSnapshotPlatform,
+      {
+        hhmm: string | null;
+        status: 'computed' | 'preserved' | 'absent';
+        sampleSize?: number;
+        source?: 'ai_openai' | 'aggregated_posts';
+        reasoning?: string;
+      }
+    >
+  >;
+  replySuggestions?: Partial<
+    Record<
+      AnalyticsSnapshotPlatform,
+      Record<string, { suggestion: string; source: 'openai' | 'fallback' }>
+    >
+  >;
+  firstCommentSuggestions?: Partial<
+    Record<
+      AnalyticsSnapshotPlatform,
+      Record<string, { suggestion: string; source: 'openai' | 'fallback' }>
+    >
   >;
 };
 

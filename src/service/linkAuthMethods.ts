@@ -56,10 +56,16 @@ export const LINK_EMAIL_STORAGE_KEY = 'magnatex:emailForLink';
 export const LINK_EMAIL_PASSWORD_SESSION_KEY = 'magnatex:pendingLinkPassword';
 
 function linkEmailCompleteUrl(): string {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && window.location?.origin) {
     return `${window.location.origin}/settings/account/complete-email-link`;
   }
-  return `${process.env.NEXT_PUBLIC_APP_URL}/settings/account/complete-email-link`;
+  const fromEnv = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+  if (fromEnv && /^https?:\/\//i.test(fromEnv)) {
+    return `${fromEnv}/settings/account/complete-email-link`;
+  }
+  throw new Error(
+    'NEXT_PUBLIC_APP_URL is missing. Set it to your app origin (e.g. https://test.sociogenie.ai).'
+  );
 }
 
 /**

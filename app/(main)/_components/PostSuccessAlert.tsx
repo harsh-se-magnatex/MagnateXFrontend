@@ -76,18 +76,9 @@ export function PostSuccessAlerts() {
                     </span>
                   </div>
                   <h3 className="text-sm font-semibold text-zinc-900">
-                    {stripBakedDate(notification.message)} on{' '}
+                    {stripBakedDate(notification.message.split(' on ')[0])} on{' '}
                     {fmtTimestamp(notification.postedAt)}
                   </h3>
-                </div>
-
-                <div className="flex shrink-0 items-center gap-3">
-                  <Link
-                    href={`/scheduled-post`}
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
-                  >
-                    View Post
-                  </Link>
                 </div>
               </div>
             </NotificationListItem>

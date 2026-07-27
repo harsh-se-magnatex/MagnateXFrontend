@@ -1,5 +1,4 @@
 import axiosClient from '@/lib/axios';
-import type { ActivePlatformJob } from '@/src/types/job';
 
 /** Hard cap on how many days a single campaign can plan. Mirrors the
  *  backend constant so the two layers can never drift. */
@@ -131,10 +130,10 @@ export type CreateCampaignParams = {
   suggestionId?: string;
 };
 
-/** 202 envelope returned by `POST /api/v1/campaign/create`. */
+/** Sync response from `POST /api/v1/campaign/create`. */
 export type CreateCampaignResponse = {
-  parentJobId: string;
-  jobs: ActivePlatformJob[];
+  successCount: number;
+  failedCount: number;
   dayCount: number;
   platforms: string[];
   /** Total credits charged when every (day × platform) succeeds. */
@@ -232,23 +231,19 @@ export async function scheduleCampaignDraftApi(params: {
 }
 
 export type RegenerateCampaignDraftResponse = {
-  parentJobId: string;
-  jobs: Array<{
-    jobId: string;
-    platform: 'instagram' | 'facebook' | 'linkedin';
-  }>;
   draftId: string;
-  /** Exact credit amount the worker will deduct on success. `0` for the
+  /** Exact credit amount the worker deducted on success. `0` for the
    *  user's free first regen. */
   chargeCredits: number;
   /** `regenerationCount` BEFORE this run — UI shows it for transparency. */
   regenerationCountBefore: number;
+  successCount: number;
+  failedCount: number;
+  regeneratedDraftId: string;
 };
 
 /**
- * Kick off a single-draft regeneration. The server queues a `campaign-post`
- * job that overwrites the draft in place; the existing `useFeatureJob`
- * progress hook on the page picks the run up automatically.
+ * Regenerate a single campaign draft synchronously (worker overwrites in place).
  *
  * Pricing: free for the first regen of any given draft, then 1 credit
  * for every regen after that. The exact charge for THIS attempt is in

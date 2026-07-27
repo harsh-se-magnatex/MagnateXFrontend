@@ -84,12 +84,8 @@ export default function HelpSupportPage() {
       // Refresh messages
       const response = await getSupportMessages();
       setMessages(response.data.supportData || []);
-    } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to send support message'
-      );
+    } catch {
+      showErrorToast('Failed to send support message');
     } finally {
       setIsSubmitting(false);
     }

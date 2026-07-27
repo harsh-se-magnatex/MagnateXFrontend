@@ -99,15 +99,69 @@ export const signInWithGoogle = async (
   }
 };
 
+function noAccountError(): Error & { code: string } {
+  const err = new Error(
+    'No account found. Please sign up first.'
+  ) as Error & { code: string };
+  err.code = 'auth/user-not-found';
+  return err;
+}
+
+/**
+ * Same behavior as the old `fetchSignInMethodsForEmail` path, but works when
+ * Firebase email-enumeration protection is enabled (client methods are always []).
+ * Uses a direct fetch so the axios 401 interceptor cannot interrupt auth pages.
+ */
+async function lookupEmailAuth(email: string): Promise<{
+  registered: boolean | null;
+  providers: string[];
+}> {
+  const base = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '');
+  if (base) {
+    try {
+      const res = await fetch(`${base}/api/v1/user/check-email-registered`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const json = (await res.json()) as ApiEnvelope<{
+          registered?: boolean;
+          providers?: string[];
+        }>;
+        return {
+          registered: !!json.data?.registered,
+          providers: Array.isArray(json.data?.providers)
+            ? json.data.providers
+            : [],
+        };
+      }
+    } catch {
+      /* fall through to client Firebase API (works in local/dev) */
+    }
+  }
+
+  try {
+    const providers = await fetchSignInMethodsForEmail(auth, email);
+    return {
+      registered: providers.length > 0 ? true : null,
+      providers,
+    };
+  } catch {
+    return { registered: null, providers: [] };
+  }
+}
+
 export const createUserEmailPassword = async (
   email: string,
   password: string
 ) => {
   try {
-    const methods = await fetchSignInMethodsForEmail(auth, email);
+    const { providers } = await lookupEmailAuth(email);
 
-    if (methods.length > 0 && !methods.includes('password')) {
-      return await handleProviderMerge(email, password, methods);
+    if (providers.length > 0 && !providers.includes('password')) {
+      return await handleProviderMerge(email, password, providers);
     }
 
     const res = await checkEmailExistsinDeletedUsers(email);
@@ -117,15 +171,17 @@ export const createUserEmailPassword = async (
       );
     }
     const result = await createUserWithEmailAndPassword(auth, email, password);
-    // if (!result.user.emailVerified) {
-    //   await sendEmailVerification(result.user, {
-    //     url: `${process.env.NEXT_PUBLIC_APP_URL}/sign-in`,
-    //     handleCodeInApp: true,
-    //   });
-    //   toast.info(
-    //     'Email verification sent. Please check your inbox (and spam folder).'
-    //   );
-    // }
+
+    if (!result.user.emailVerified) {
+      await sendEmailVerification(result.user, {
+        url: appContinueUrl('/sign-in'),
+        handleCodeInApp: true,
+      });
+      toast.info(
+        'Email verification sent. Please check your inbox (and spam folder).'
+      );
+    }
+
     const idToken = await result.user.getIdToken(true);
     await loginUser(idToken, 'signup', 'password');
     void trackSignUp('password');
@@ -137,11 +193,27 @@ export const createUserEmailPassword = async (
 
 export const signInEmailPassword = async (email: string, password: string) => {
   let result: UserCredential | null = null;
-  const methods = await fetchSignInMethodsForEmail(auth, email);
+  const { registered, providers } = await lookupEmailAuth(email);
 
-  if (methods.length > 0 && !methods.includes('password')) {
-    await handleProviderMerge(email, password, methods);
+  // Unknown email → same as old auth/user-not-found → sign-up page
+  if (registered === false) {
+    const deleted = await checkEmailExistsinDeletedUsers(email);
+    if (deleted.data?.exists && deleted.data?.deletedDocId) {
+      return {
+        user: null,
+        result: null,
+        showRecoveryPopup: true,
+        deletedDocId: deleted.data.deletedDocId,
+      };
+    }
+    throw noAccountError();
   }
+
+  // Old path: Google-only account → popup + link password, then password sign-in
+  if (providers.length > 0 && !providers.includes('password')) {
+    await handleProviderMerge(email, password, providers);
+  }
+
   try {
     result = await signInWithEmailAndPassword(auth, email, password);
   } catch (error: unknown) {
@@ -149,7 +221,7 @@ export const signInEmailPassword = async (email: string, password: string) => {
       error && typeof error === 'object' && 'code' in error
         ? String((error as { code: unknown }).code)
         : '';
-    if (code === 'auth/user-not-found') {
+    if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
       const res = await checkEmailExistsinDeletedUsers(email);
       if (res.data?.exists && res.data?.deletedDocId) {
         return {
@@ -159,15 +231,45 @@ export const signInEmailPassword = async (email: string, password: string) => {
           deletedDocId: res.data.deletedDocId,
         };
       }
+
+      // Fallback when pre-check could not run (e.g. API not deployed yet)
+      if (registered !== true) {
+        throw noAccountError();
+      }
+
+      const again = await lookupEmailAuth(email);
+      if (again.registered === false) {
+        throw noAccountError();
+      }
+      if (
+        again.providers.length > 0 &&
+        !again.providers.includes('password')
+      ) {
+        await handleProviderMerge(email, password, again.providers);
+        result = await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        throw error;
+      }
+    } else {
+      throw error;
     }
-    throw error;
   }
-  // if (result && !result?.user.emailVerified) {
-  //   showErrorToast(
-  //     'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
-  //   );
-  //   return result;
-  // }
+  if (result && !result?.user.emailVerified) {
+    try {
+      await sendEmailVerification(result.user, {
+        url: appContinueUrl('/sign-in'),
+        handleCodeInApp: true,
+      });
+      toast.info(
+        'Email not verified. We sent a new verification link — check your inbox (and spam folder).'
+      );
+    } catch {
+      showErrorToast(
+        'Email not verified. Please check your inbox (and spam folder) and verify your email to continue.'
+      );
+    }
+    return result;
+  }
   if (!result?.user) {
     throw new Error('Login failed');
   }
@@ -207,9 +309,13 @@ const handleProviderMerge = async (
     const emailCredential = EmailAuthProvider.credential(email, password);
     await linkWithCredential(googleResult.user, emailCredential);
 
-    const idToken = await googleResult.user.getIdToken(true);
+    // Backend marks Auth + Firestore emailVerified=true (Google already verified).
+    let idToken = await googleResult.user.getIdToken(true);
     await loginUser(idToken, 'signin', '');
     await linkProvider(idToken, 'password');
+
+    await googleResult.user.reload();
+    idToken = await googleResult.user.getIdToken(true);
 
     toast.success('Email & Google accounts merged!');
     return googleResult;
@@ -226,17 +332,33 @@ export const signOutUser = async () => {
   }
 };
 
+/** Continue URL for Firebase emails — must be an absolute https URL with a real domain. */
+export function appContinueUrl(path = '/'): string {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  const fromEnv = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+  if (fromEnv && /^https?:\/\//i.test(fromEnv)) {
+    return `${fromEnv}${normalized}`;
+  }
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}${normalized}`;
+  }
+  throw new Error(
+    'NEXT_PUBLIC_APP_URL is missing. Set it to your app origin (e.g. https://test.sociogenie.ai).'
+  );
+}
+
 export const forgotPassword = async (email: string, url?: string) => {
   try {
-    console.log('email', email);
-    console.log('url', url);
+    const continueUrl =
+      url && /^https?:\/\//i.test(url) ? url : appContinueUrl('/reset-password');
     await sendPasswordResetEmail(auth, email, {
-      url: url ? url : `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+      url: continueUrl,
       handleCodeInApp: true,
     });
     return { success: true };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Request failed';
+    const message =
+      error instanceof Error ? error.message : 'Failed to send reset link.';
     return { success: false, message };
   }
 };

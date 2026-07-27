@@ -4,11 +4,19 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import NavBar from './(main)/_components/NavBar';
+<<<<<<< HEAD
+=======
+import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
+>>>>>>> test
 import { Landing3DBackground } from '@/components/landing/landing-3d-background';
 import { LandingScrollCallouts } from '@/components/landing/landing-scroll-callouts';
 import '@/components/landing/landing-3d.css';
 
+<<<<<<< HEAD
 const SCROLL_SPACER_COUNT = 12;
+=======
+const SCROLL_SPACER_COUNT = 16;
+>>>>>>> test
 
 const fadeIn = {
   hidden: { opacity: 0, y: 32 },
@@ -73,10 +81,17 @@ export default function Home() {
               variants={fadeIn}
               className="mt-10 flex flex-wrap items-center justify-center gap-4"
             >
+<<<<<<< HEAD
               <Link href="/sign-up" className="landing-btn-primary group">
                 Start Free — 10-Day Elite Trial
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
+=======
+              <GuestAuthLink href="/sign-up" className="landing-btn-primary group">
+                Start Free — 10-Day Elite Trial
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </GuestAuthLink>
+>>>>>>> test
               <Link href="/product" className="landing-btn-secondary">
                 See how it works
               </Link>

@@ -140,6 +140,11 @@ export type AiEngineReviewCell = {
   imageUrl: string | null;
   postStatus: string | null;
   UserApprovalStatus: string | null;
+  preferredTime: string | null;
+  optimalFacebookTime: string | null;
+  optimalInstagramTime: string | null;
+  optimalLinkedinTime: string | null;
+  useAnalyticsOptimalPostingTime: boolean | null;
   error: string | null;
   startedAt: number | null;
   updatedAt: number | null;

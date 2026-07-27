@@ -59,11 +59,11 @@ const ONBOARDING_STEPS: TourStep[] = [
     side: 'bottom',
     title: "What's next",
     description:
-      "When the counter hits the end, we'll take you to your Memory Layer to fine-tune your brand voice with a few questions and reference photos.",
+      "When the counter hits the end, we'll take you to your Business Data to fine-tune your brand voice with a few questions and reference photos.",
   },
 ];
 
-/** Tour B — brand-memory / memory layer (1 step, single page).
+/** Tour B — brand-memory / Business Data (1 step, single page).
  *  Originally 2 steps; collapsed because the photo-upload area only renders
  *  in the second phase of the form, so a single welcome step is cleaner. */
 const BRAND_MEMORY_STEPS: TourStep[] = [
@@ -79,7 +79,7 @@ const BRAND_MEMORY_STEPS: TourStep[] = [
 
 /** Tour C — platform walkthrough (17 steps, cross-page) */
 const PLATFORM_STEPS: TourStep[] = [
-  // 8a. Home → Quick Create (2 steps)
+  // 8a. Home → Content Studio (2 steps)
   {
     element: '#tour-home-command',
     path: '/home',
@@ -92,11 +92,11 @@ const PLATFORM_STEPS: TourStep[] = [
     element: '#tour-nav-instant-generation',
     path: '/home',
     side: 'right',
-    title: 'Quick Create',
+    title: 'Content Studio',
     description:
       "Let's start with single, on-demand posts. Click Next to take a look inside.",
   },
-  // 8b. Quick Create (3 steps)
+  // 8b. Content Studio (3 steps)
   {
     element: '#tour-qc-prompt',
     path: '/instant-generation',
@@ -124,7 +124,7 @@ const PLATFORM_STEPS: TourStep[] = [
       "Hit Generate (one credit per platform). The Schedule panel on the right unlocks the moment a post appears — pick a date and time and you're done.",
     paid: true,
   },
-  // 8c. Bulk Create (2 steps)
+  // 8c. Bulk Creator (2 steps)
   {
     element: '#tour-bulk-dates',
     path: '/batch-generation',
@@ -143,7 +143,7 @@ const PLATFORM_STEPS: TourStep[] = [
       'Each post is automatically scheduled for its date at your preferred posting time. Zero manual work after Generate.',
     paid: true,
   },
-  // 8d. Product Advert (3 steps)
+  // 8d. Product Ads (3 steps)
   {
     element: '#tour-pa-upload',
     path: '/product-advert',
@@ -171,7 +171,7 @@ const PLATFORM_STEPS: TourStep[] = [
       'Generates the ad image AND a complete caption, headline, CTA, and hashtags — ready to publish. Costs more credits but saves you the writing.',
     paid: true,
   },
-  // 8e. Festive Post (1 step)
+  // 8e. Holiday & Festival Posts (1 step)
   {
     element: '#tour-fp-events',
     path: '/festive-post',
@@ -191,26 +191,26 @@ const PLATFORM_STEPS: TourStep[] = [
       'Beyond AI generation, you can compose a post from scratch right here — image, caption, platform, date, time. Everything we publish for you flows through this page.',
     paid: true,
   },
-  // 8g. Post Queue (1 step)
+  // 8g. Scheduled Posts (1 step)
   {
     element: '#tour-pq-list',
     path: '/scheduled-post',
     side: 'top',
-    title: 'Your scheduled queue',
+    title: 'Your scheduled posts',
     description:
       "Everything you've scheduled lives here. Edit, reschedule, or cancel before it publishes.",
     paid: true,
   },
-  // 8h. Gallery (1 step)
+  // 8h. Media Library (1 step)
   {
     element: '#tour-gl-grid',
     path: '/media-library',
     side: 'top',
-    title: 'Your gallery',
+    title: 'Your media library',
     description:
       "Every post you've ever generated — scheduled or not — lives here. Reuse, download, or send any of them back to the scheduler anytime.",
   },
-  // 8i. Linked Profiles (1 step, FREE)
+  // 8i. Connected Accounts (1 step, FREE)
   {
     element: '#tour-lp-connect',
     path: '/social-media-integration',
@@ -219,7 +219,7 @@ const PLATFORM_STEPS: TourStep[] = [
     description:
       'Link Facebook, Instagram, and LinkedIn here. This is free and required before anything we generate can actually publish.',
   },
-  // 8j. Create Campaign (2 steps)
+  // 8j. Campaigns (2 steps)
   {
     element: '#tour-campaign-builder',
     path: '/create-campaign',
@@ -245,7 +245,7 @@ const PLATFORM_STEPS: TourStep[] = [
     side: 'bottom',
     title: 'Quick jumps up top',
     description:
-      'From any page: Home for the dashboard, AI Engine to tune prompts, Brand DNA to edit everything you set up in onboarding and the memory layer, Contact Us for support — and the sign-out button on the right.',
+      'From any page: Home for the dashboard, AI Engine to tune prompts, Brand DNA to edit everything you set up in onboarding and Business Data, Contact Us for support — and the sign-out button on the right.',
   },
   // 8l. Final CTA
   FINAL_STEP,

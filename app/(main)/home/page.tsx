@@ -39,7 +39,6 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTourState } from '@/src/stores/tourState';
-import { getPageTourRequest } from '@/components/tour/tour-steps';
 import { EmailVerificationPurchaseAlert } from '@/components/shared/EmailVerificationPurchaseAlert';
 import Cookies from 'js-cookie';
 import {
@@ -105,11 +104,11 @@ type HomePageData = {
 
 const QUICK_SUGGESTIONS = [
   {
-    label: 'Generate a post',
+    label: 'Content Studio',
     href: '/instant-generation',
   },
   {
-    label: 'Build a week of content',
+    label: 'Bulk Creator',
     href: '/batch-generation',
   },
   {
@@ -324,10 +323,8 @@ export default function Home() {
     if (loading || authLoading || billingLoading || !user) return;
     const { doneTours, requestTour } = useTourState.getState();
     if (!doneTours['brand-memory'] || doneTours.platform) return;
-    const homeTour = getPageTourRequest('/home');
-    if (homeTour) {
-      requestTour(homeTour);
-    }
+    // First visit after onboarding / Business Data — full cross-page walkthrough.
+    requestTour({ tour: 'platform', startIndex: 0 });
   }, [loading, authLoading, billingLoading, user]);
 
   useEffect(() => {

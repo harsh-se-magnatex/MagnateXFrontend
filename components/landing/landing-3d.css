@@ -221,6 +221,67 @@
   -webkit-backdrop-filter: blur(28px);
 }
 
+<<<<<<< HEAD
+=======
+.landing-final-cta {
+  left: 1rem;
+  right: 1rem;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  top: auto;
+  z-index: 2;
+  transform: translateY(calc(var(--cta-enter, 0) * 28px))
+    scale(calc(1 - var(--cta-enter, 0) * 0.04));
+}
+
+.landing-cta-scrim {
+  z-index: 1;
+  height: min(52vh, 420px);
+  background: linear-gradient(
+    to top,
+    rgba(5, 5, 8, 0.92) 0%,
+    rgba(5, 5, 8, 0.55) 45%,
+    transparent 100%
+  );
+}
+
+@media (min-width: 640px) {
+  .landing-cta-scrim {
+    height: 100%;
+    background: linear-gradient(
+      to right,
+      rgba(5, 5, 8, 0.88) 0%,
+      rgba(5, 5, 8, 0.45) 38%,
+      transparent 62%
+    );
+  }
+}
+
+.landing-cta-panel--final {
+  padding: 1.35rem 1.25rem;
+  border-radius: 1.35rem;
+  text-align: center;
+  background: rgba(5, 7, 12, 0.94);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 20px 60px -16px rgba(0, 0, 0, 0.92);
+}
+
+.landing-cta-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.65rem;
+}
+
+.landing-cta-actions .landing-btn-primary,
+.landing-cta-actions .landing-btn-secondary {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.875rem;
+}
+
+>>>>>>> test
 @media (min-width: 640px) {
   .landing-cta-panel {
     padding: 3rem 3.5rem;
@@ -229,6 +290,52 @@
   .landing-callout-card {
     padding: 2rem 2.25rem;
   }
+<<<<<<< HEAD
+=======
+
+  .landing-final-cta {
+    left: 2.5rem;
+    right: auto;
+    bottom: auto;
+    top: 54%;
+    width: min(420px, calc(46vw - 2rem));
+    max-width: 420px;
+    transform: translateY(calc(-50% + var(--cta-enter, 0) * 28px))
+      scale(calc(1 - var(--cta-enter, 0) * 0.04));
+  }
+
+  .landing-cta-panel--final {
+    padding: 2rem 2rem;
+    border-radius: 1.5rem;
+    text-align: left;
+  }
+
+  .landing-cta-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .landing-cta-actions .landing-btn-primary,
+  .landing-cta-actions .landing-btn-secondary {
+    width: auto;
+    padding: 0.9rem 1.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .landing-final-cta {
+    left: 5rem;
+    width: min(460px, calc(42vw - 2rem));
+    max-width: 460px;
+  }
+
+  .landing-cta-panel--final {
+    padding: 2.25rem 2.25rem;
+  }
+>>>>>>> test
 }
 
 /* ── Scroll spacers ───────────────────────────────────────── */

@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2, Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
 import {
   postAnalyticsWeeklyVerdict,
   type WeeklyVerdictPayload,
 } from '@/src/service/api/analyticService';
+import { useWeeklyVerdictCache } from '@/src/stores/weeklyVerdictCache';
 import { cn } from '@/lib/utils';
 
 /**
@@ -13,6 +14,10 @@ import { cn } from '@/lib/utils';
  * platform tab. Replaces the old bullet/structured AI Recommendations
  * cards with a graded performance table, ordered priorities, and a
  * "what's working" list — all driven by the last 3 weeks of synced data.
+ *
+ * Reads from the cron-built analytics snapshot (seeded into the zustand
+ * cache on page load) and only falls back to a live API call when no
+ * cached verdict exists yet.
  */
 
 type Platform = 'facebook' | 'instagram' | 'linkedin';
@@ -55,10 +60,6 @@ const PLATFORM_ACCENT: Record<Platform, string> = {
   linkedin: 'from-sky-500/10 to-card ring-sky-500/20',
 };
 
-function stableSerialize(ctx: Record<string, unknown>): string {
-  return JSON.stringify(ctx);
-}
-
 function VerdictSkeleton() {
   return (
     <div className="space-y-3 p-5">
@@ -80,48 +81,46 @@ function VerdictSkeleton() {
   );
 }
 
-/**
- * Public wrapper — remounts the inner fetcher when `context` changes so
- * the inner state initialises straight to "loading" without us calling
- * setState inside an effect (react-hooks/set-state-in-effect).
- */
+function initialStateFor(platform: Platform): FetchState {
+  const cached = useWeeklyVerdictCache.getState().getFresh(platform);
+  return cached
+    ? { status: 'ready', payload: cached.payload, source: cached.source }
+    : { status: 'loading' };
+}
+
 export function AnalyticsWeeklyVerdict({
   platform,
   context,
   className,
 }: {
   platform: Platform;
+  /** Kept for live fallback when no snapshot exists yet. */
   context: Record<string, unknown>;
   className?: string;
 }) {
-  const cacheKey = useMemo(() => stableSerialize(context), [context]);
-  return (
-    <AnalyticsWeeklyVerdictInner
-      key={`${platform}:${cacheKey}`}
-      platform={platform}
-      context={context}
-      className={className}
-    />
-  );
-}
-
-function AnalyticsWeeklyVerdictInner({
-  platform,
-  context,
-  className,
-}: {
-  platform: Platform;
-  context: Record<string, unknown>;
-  className?: string;
-}) {
-  const [state, setState] = useState<FetchState>({ status: 'loading' });
+  const [state, setState] = useState<FetchState>(() => initialStateFor(platform));
 
   useEffect(() => {
+    const cache = useWeeklyVerdictCache.getState();
+    const cached = cache.getFresh(platform);
+    if (cached) {
+      setState({
+        status: 'ready',
+        payload: cached.payload,
+        source: cached.source,
+      });
+      return;
+    }
+
     let cancelled = false;
+    setState({ status: 'loading' });
     (async () => {
       try {
         const res = await postAnalyticsWeeklyVerdict({ platform, context });
         if (cancelled) return;
+        useWeeklyVerdictCache
+          .getState()
+          .set(platform, res.data.verdict, res.data.source);
         setState({
           status: 'ready',
           payload: res.data.verdict,
@@ -131,17 +130,16 @@ function AnalyticsWeeklyVerdictInner({
         if (cancelled) return;
         setState({
           status: 'error',
-          error:
-            err instanceof Error
-              ? err.message
-              : 'Could not load the weekly verdict',
+          error: 'Could not load the weekly verdict',
         });
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [platform, context]);
+    // Context is only used for the live fallback when no snapshot/cache exists.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- platform-keyed cache
+  }, [platform]);
 
   return (
     <section

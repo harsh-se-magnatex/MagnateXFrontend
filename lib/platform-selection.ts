@@ -18,8 +18,29 @@ export const PLAN_MAX_SOCIAL: Record<string, number> = {
 export function listEnabledPlatforms(
   selectedAccounts: Partial<Record<SocialPlatform, boolean>> | null | undefined
 ): SocialPlatform[] {
-  if (!selectedAccounts) return [];
+  if (!selectedAccounts || typeof selectedAccounts !== 'object') return [];
   return PLATFORM_ORDER.filter((platform) => selectedAccounts[platform] === true);
+}
+
+export function countEnabledPlatforms(
+  selectedAccounts: Partial<Record<SocialPlatform, boolean>> | null | undefined
+): number {
+  return listEnabledPlatforms(selectedAccounts).length;
+}
+
+/** True when the user has chosen every platform slot their plan allows. */
+export function isPlatformSelectionComplete(args: {
+  activePlan: string;
+  selected: Partial<Record<SocialPlatform, boolean>> | null | undefined;
+}): boolean {
+  const maxAllowed = PLAN_MAX_SOCIAL[args.activePlan] ?? 0;
+  if (maxAllowed <= 0) return true;
+  return countEnabledPlatforms(args.selected) >= maxAllowed;
+}
+
+/** Plans that already include all three platforms — no upgrade path for more slots. */
+export function isMaxPlatformPlan(activePlan: string): boolean {
+  return (PLAN_MAX_SOCIAL[activePlan] ?? 0) >= 3;
 }
 
 export function validateGenerationPlatformSelection(args: {

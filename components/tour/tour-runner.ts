@@ -7,7 +7,7 @@
  * on the new page.
  */
 import 'driver.js/dist/driver.css';
-import { driver, type Driver } from 'driver.js';
+import { driver, type DriveStep, type Driver } from 'driver.js';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { useTourState, type TourId } from '@/src/stores/tourState';
 import { TOUR_STEPS, type TourStep } from './tour-steps';
@@ -62,6 +62,20 @@ function currentPath(): string {
   return window.location.pathname;
 }
 
+type DriverPopoverSide = NonNullable<DriveStep['popover']> extends {
+  side?: infer S;
+}
+  ? S
+  : never;
+
+/** driver.js no longer accepts `side: "over"`; map it to the default placement. */
+function toDriverPopoverSide(
+  side: TourStep['side']
+): DriverPopoverSide | undefined {
+  if (!side || side === 'over') return undefined;
+  return side;
+}
+
 /** Returns true when the next step needs an SPA route hop. */
 function needsRoute(next: TourStep | undefined): boolean {
   const nextPath = stepPath(next);
@@ -99,6 +113,14 @@ function waitForElement(
   });
 }
 
+/** driver.js `Side` does not include `"over"` — tour config uses that to mean centered on the target. */
+function toDrivePopoverSide(
+  side: TourStep['side']
+): 'top' | 'right' | 'bottom' | 'left' | undefined {
+  if (!side || side === 'over') return undefined;
+  return side;
+}
+
 /**
  * Build a driver.js config from a `TourStep` list. We use the global
  * `onNextClick` / `onPrevClick` hooks so that we can intercept Next/Back
@@ -126,7 +148,7 @@ export function startTour(opts: StartTourOptions): void {
     onFinish?.();
   };
 
-  const driveSteps = steps.slice(windowStart, windowEnd + 1).map((s, idx) => {
+  const driveSteps: DriveStep[] = steps.slice(windowStart, windowEnd + 1).map((s, idx) => {
     const isLast = idx === windowEnd - windowStart;
     const final = s.finalCta;
     return {
@@ -134,7 +156,7 @@ export function startTour(opts: StartTourOptions): void {
       popover: {
         title: s.title,
         description: buildDescriptionHtml(s),
-        side: s.side,
+        side: toDrivePopoverSide(s.side),
         align: s.align,
         nextBtnText: final
           ? final.label

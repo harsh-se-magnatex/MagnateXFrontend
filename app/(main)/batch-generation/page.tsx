@@ -2,12 +2,14 @@
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import { useAuth } from '@/src/hooks/useAuth';
 import Link from 'next/link';
 import { DownloadPngButton } from '@/components/download-png-button';
+import { SharePostButton } from '@/components/share-post-button';
 import { useRouter } from 'next/navigation';
 import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarCheck2, Expand, Loader2, Sparkles } from 'lucide-react';
+import { CalendarCheck2, CreditCard, Expand, Loader2, Sparkles } from 'lucide-react';
 import {
   ImagePreviewButton,
   ImagePreviewOverlay,
@@ -21,8 +23,6 @@ import {
   type InstantGenerationPlatform,
 } from '@/src/service/api/instant-generation.service';
 import type { BatchDayResult } from '@/src/stores/batchGenerationState';
-import { useFeatureJob } from '@/src/hooks/useFeatureJob';
-import { jobKey } from '@/src/hooks/useParentJob';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import { useBatchGenerationState } from '@/src/stores/batchGenerationState';
@@ -30,12 +30,6 @@ import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
-import { Progress } from '@/components/ui/progress';
-import {
-  useJobMetadataCache,
-  type JobMetadata,
-} from '@/src/stores/jobMetadataCache';
-import { getJobMetadata } from '@/src/service/api/job-metadata.service';
 import { useTourDemo } from '@/src/stores/tourState';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +37,15 @@ const MAX_DATES = 5;
 const DATE_WINDOW_DAYS = 45;
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
+
+function totalBatchSelectedDates(
+  selectedByPlatform: Partial<Record<InstantGenerationPlatform, string[]>>
+): number {
+  return PLATFORM_ORDER.reduce(
+    (sum, platform) => sum + (selectedByPlatform[platform]?.length ?? 0),
+    0
+  );
+}
 
 /** Scheduled post with preview — running/orchestrating locks report exists=true but post=null. */
 function isAiEngineContentReady(row: AiEngineDateStatusRow): boolean {
@@ -106,9 +109,6 @@ export default function BatchGenerationPage() {
   const setActivePreviewDate = useBatchGenerationState(
     (s) => s.setActivePreviewDate
   );
-
-  const jobMetadataByParent = useJobMetadataCache((s) => s.byParentJobId);
-  const setJobMetadata = useJobMetadataCache((s) => s.setMetadata);
 
   const { billing, loading: creditsLoading } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
@@ -277,31 +277,8 @@ export default function BatchGenerationPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+  if (!isTourDemo && isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
-  }
-
-  if (
-    !isTourDemo &&
-    new Date(formattedPlanExpiresAt).getTime() < new Date().getTime()
-  ) {
-    return (
-      <div className="animate-in fade-in duration-500 pb-20 flex flex-col items-center justify-center h-screen">
-        <h1 className="text-3xl font-bold tracking-tight  text-slate-900">
-          <p className="text-center">You are not eligible for this feature.</p>
-          <p className="text-center">
-            Please subscribe to a plan to use this feature.
-          </p>
-        </h1>
-        <p className="mt-2 text-base text-slate-500 max-w-2xl">
-          You can subscribe to a plan{' '}
-          <Link href="/settings/billings" className="underline text-indigo-600">
-            here
-          </Link>
-          .
-        </p>
-      </div>
-    );
   }
 
   return (
@@ -322,8 +299,6 @@ export default function BatchGenerationPage() {
       statusLoadingByPlatform={statusLoadingByPlatform}
       errorsByPlatform={errorsByPlatform}
       selectedAccounts={selectedAccounts}
-      jobMetadataByParent={jobMetadataByParent}
-      setJobMetadata={setJobMetadata}
       handleToggleDate={handleToggleDate}
       setActivePreviewDate={setActivePreviewDate}
       setErrorsByPlatform={setErrorsByPlatform}
@@ -370,8 +345,6 @@ type BatchGenerationPageBodyProps = {
   statusLoadingByPlatform: Partial<Record<InstantGenerationPlatform, boolean>>;
   errorsByPlatform: Partial<Record<InstantGenerationPlatform, string>>;
   selectedAccounts: BatchPlatformAccounts;
-  jobMetadataByParent: Record<string, JobMetadata>;
-  setJobMetadata: (parentJobId: string, meta: JobMetadata) => void;
   handleToggleDate: (
     platform: InstantGenerationPlatform,
     dateKey: string
@@ -401,11 +374,24 @@ function BatchGenerationPageBody(props: BatchGenerationPageBodyProps) {
     user,
     router,
     billing,
+    creditsLoading,
     showSelectAccountsFirst,
     platformsForDisplay,
     selectedAccounts,
   } = props;
   const isTourDemo = useTourDemo();
+  const userCredits = billing?.credits ?? 0;
+  const isManualMode = billing?.mode === 'manual';
+  const bulkCreditPerPost = isManualMode ? 2 : 0;
+  const totalSelectedDates = useMemo(
+    () => totalBatchSelectedDates(props.selectedByPlatform),
+    [props.selectedByPlatform]
+  );
+  const totalCreditCost = bulkCreditPerPost * totalSelectedDates;
+  const insufficientCredits =
+    bulkCreditPerPost > 0 &&
+    totalSelectedDates > 0 &&
+    userCredits < totalCreditCost;
 
   if (authLoading) {
     return <PageLoadingState />;
@@ -434,28 +420,30 @@ function BatchGenerationPageBody(props: BatchGenerationPageBodyProps) {
     );
   }
 
-  if (!isTourDemo && billing?.activePlan === 'non-subscribed') {
+  if (!isTourDemo && isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
   }
 
   return (
     <div className="mx-auto max-w-7xl animate-in fade-in duration-500 pb-20 px-2">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          {workspacePageTitle(WORKSPACE_NAV_HREFS.bulkCreate)}
-        </h1>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
-          Pick up to {MAX_DATES} days per platform. We use your{' '}
-          <Link
-            href="/template-dna"
-            className="font-semibold text-indigo-600 underline-offset-2 hover:underline"
-          >
-            brand profile
-          </Link>{' '}
-          and posting preferences to create each post and schedule it
-          automatically.
-        </p>
-      </header>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            {workspacePageTitle(WORKSPACE_NAV_HREFS.bulkCreate)}
+          </h1>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
+            Pick up to {MAX_DATES} days per platform. We use your{' '}
+            <Link
+              href="/template-dna"
+              className="font-semibold text-indigo-600 underline-offset-2 hover:underline"
+            >
+              brand profile
+            </Link>{' '}
+            and posting preferences to create each post and schedule it
+            automatically.
+          </p>
+        </div>
+        </header>
 
       <div className="mt-6 grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
         {platformsForDisplay.map((meta, idx) => (
@@ -577,14 +565,13 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
     uid,
     isFirstCard = false,
     billing,
+    creditsLoading,
     selectedByPlatform,
     generatingByPlatform,
     activePreviewDateByPlatform,
     statusByPlatform,
     statusLoadingByPlatform,
     errorsByPlatform,
-    jobMetadataByParent,
-    setJobMetadata,
     handleToggleDate,
     setActivePreviewDate,
     setErrorsByPlatform,
@@ -602,21 +589,21 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
   // the campaign / product-advert flows so users aren't surprised.
   const isManualMode = billing?.mode === 'manual';
   const bulkCreditPerPost = isManualMode ? 2 : 0;
-
-  const featureJob = useFeatureJob('ai-engine', platform);
-  const {
-    parentJobId: activeParentJobId,
-    jobs: jobMap,
-    overallPct,
-    allDone,
-    isRunning,
-    onGenerated,
-    platformJobs: activePlatformJobs,
-  } = featureJob;
-  const lastMaterializedRef = useRef<string | null>(null);
-  const imagePreview = useImagePreview();
+  const userCredits = billing?.credits ?? 0;
+  const generatingDatesRef = useRef<string[]>([]);
 
   const selected = selectedByPlatform[platform] || [];
+  const platformCreditCost = bulkCreditPerPost * selected.length;
+  const totalSelectedDates = useMemo(
+    () => totalBatchSelectedDates(selectedByPlatform),
+    [selectedByPlatform]
+  );
+  const totalCreditCost = bulkCreditPerPost * totalSelectedDates;
+  const insufficientCredits =
+    bulkCreditPerPost > 0 &&
+    selected.length > 0 &&
+    totalSelectedDates > 0 &&
+    userCredits < totalCreditCost;
   const rows = statusByPlatform[platform] || [];
   // Green only when post preview is ready (not while a run is in-flight).
   const aiEngineRows = rows.filter(isAiEngineContentReady);
@@ -639,75 +626,16 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
     ...campaignSet,
   ]);
   const openDatesCount = dateKeys.filter((d) => !blockedSet.has(d)).length;
-  const isGenerating = !!generatingByPlatform[platform] || isRunning;
+  const isGenerating = !!generatingByPlatform[platform];
   const statusLoading = !!statusLoadingByPlatform[platform];
   const platformError = errorsByPlatform[platform];
-  const slotSelectedDates = useMemo(() => {
-    if (!activePlatformJobs.length) return undefined;
-    const dedup = Array.from(
-      new Set(
-        activePlatformJobs
-          .map((j) => j.date)
-          .filter((d): d is string => typeof d === 'string')
-      )
-    );
-    return dedup.length > 0 ? dedup.sort() : undefined;
-  }, [activePlatformJobs]);
-
-  const cachedSelectedDates = useMemo(() => {
-    if (!activeParentJobId) return undefined;
-    return jobMetadataByParent[activeParentJobId]?.selectedDates;
-  }, [jobMetadataByParent, activeParentJobId]);
-
-  const inFlightSelectedDates = cachedSelectedDates ?? slotSelectedDates;
 
   const generatingDateSet = useMemo(() => {
-    if (!isGenerating || !inFlightSelectedDates?.length) return new Set<string>();
-    return new Set(inFlightSelectedDates);
-  }, [isGenerating, inFlightSelectedDates]);
+    if (!isGenerating || !generatingDatesRef.current.length) return new Set<string>();
+    return new Set(generatingDatesRef.current);
+  }, [isGenerating, generatingByPlatform[platform]]);
 
-  const jobCompletedDateSet = useMemo(() => {
-    const set = new Set<string>();
-    for (const entry of activePlatformJobs) {
-      const job = jobMap[jobKey(entry)];
-      if (job?.status !== 'done') continue;
-      const date =
-        entry.date ??
-        (typeof (job.result as { date?: string } | null)?.date === 'string'
-          ? (job.result as { date: string }).date
-          : undefined);
-      if (date) set.add(date);
-    }
-    return set;
-  }, [activePlatformJobs, jobMap]);
-
-  const prevDoneJobCountRef = useRef(0);
-  useEffect(() => {
-    const doneCount = Object.values(jobMap).filter(
-      (j) => j.status === 'done'
-    ).length;
-    if (doneCount > prevDoneJobCountRef.current) {
-      void fetchStatusForPlatform(platform);
-    }
-    prevDoneJobCountRef.current = doneCount;
-  }, [jobMap, fetchStatusForPlatform, platform]);
-
-  const fallbackFetchedRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!activeParentJobId) return;
-    if (cachedSelectedDates || slotSelectedDates) return;
-    if (fallbackFetchedRef.current === activeParentJobId) return;
-    fallbackFetchedRef.current = activeParentJobId;
-    void (async () => {
-      const meta = await getJobMetadata(activeParentJobId);
-      if (meta.selectedDates && meta.selectedDates.length > 0) {
-        setJobMetadata(activeParentJobId, {
-          selectedDates: meta.selectedDates,
-          selectedPlatforms: meta.selectedPlatforms,
-        });
-      }
-    })();
-  }, [activeParentJobId, cachedSelectedDates, slotSelectedDates, setJobMetadata]);
+  const imagePreview = useImagePreview();
 
   const handleGenerate = useCallback(async () => {
     if (isTourDemo) return;
@@ -728,88 +656,61 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
       }));
       return;
     }
+    const cost = bulkCreditPerPost * selectedDates.length;
+    const pendingTotalCost =
+      bulkCreditPerPost * totalBatchSelectedDates(selectedByPlatform);
+    if (pendingTotalCost > userCredits) {
+      setErrorsByPlatform((prev) => ({
+        ...prev,
+        [platform]:
+          'Not enough credits for all selected days across platforms. Please top up your account or deselect some dates.',
+      }));
+      return;
+    }
+    if (cost > userCredits) {
+      setErrorsByPlatform((prev) => ({
+        ...prev,
+        [platform]: 'Not enough credits. Please top up your account.',
+      }));
+      return;
+    }
     try {
       setGenerating(platform, true);
-      lastMaterializedRef.current = null;
+      generatingDatesRef.current = selectedDates;
       const response = await generateInstantPostsBatchApi({
         userId: uid,
         platform,
         dates: selectedDates,
       });
-      setJobMetadata(response.parentJobId, {
-        selectedDates,
-        selectedPlatforms: [platform],
-      });
-      onGenerated({
-        parentJobId: response.parentJobId,
-        jobs: response.jobs,
-      });
+      const finalResults = (response.results ?? [])
+        .filter((row): row is BatchDayResult => !!row?.date)
+        .sort((a, b) => a.date.localeCompare(b.date));
+      setResults(platform, finalResults);
       setSelectedDates(platform, []);
+      void fetchStatusForPlatform(platform);
     } catch (e: unknown) {
-      const message =
-        e instanceof Error ? e.message : 'Something went wrong.';
+      const message = 'Something went wrong.';
       setErrorsByPlatform((prev) => ({
         ...prev,
         [platform]: message,
       }));
+    } finally {
+      generatingDatesRef.current = [];
       setGenerating(platform, false);
     }
   }, [
     platform,
     selectedByPlatform,
     uid,
-    onGenerated,
-    setGenerating,
     setResults,
     setSelectedDates,
     setErrorsByPlatform,
-    setJobMetadata,
-    isTourDemo,
-  ]);
-
-  useEffect(() => {
-    if (!allDone || !activeParentJobId) return;
-    if (lastMaterializedRef.current === activeParentJobId) return;
-    lastMaterializedRef.current = activeParentJobId;
-
-    const jobList = Object.values(jobMap);
-    if (!jobList.length) return;
-
-    const finalResults: BatchDayResult[] = jobList
-      .map((j) => {
-        const r = (j.result ?? {}) as Record<string, unknown>;
-        const date = typeof r.date === 'string' ? r.date : null;
-        if (!date) return null;
-        return {
-          date,
-          success: j.status === 'done' && r.success !== false,
-          ...(j.error?.message ? { error: j.error.message } : {}),
-        } as BatchDayResult;
-      })
-      .filter((row): row is BatchDayResult => !!row)
-      .sort((a, b) => a.date.localeCompare(b.date));
-
-    setResults(platform, finalResults);
-    setGenerating(platform, false);
-    void fetchStatusForPlatform(platform);
-  }, [
-    allDone,
-    activeParentJobId,
-    jobMap,
-    fetchStatusForPlatform,
     setGenerating,
-    setResults,
-    platform,
+    fetchStatusForPlatform,
+    isTourDemo,
+    bulkCreditPerPost,
+    userCredits,
   ]);
-
-  useEffect(() => {
-    const flagged = !!generatingByPlatform[platform];
-    if (isRunning && !flagged) {
-      setGenerating(platform, true);
-    } else if (!isRunning && flagged) {
-      setGenerating(platform, false);
-    }
-  }, [isRunning, platform, generatingByPlatform, setGenerating]);
 
   return (
     <section className="glass-card rounded-3xl p-5 sm:p-6 flex flex-col gap-4">
@@ -832,22 +733,48 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
       ) : (
         <>
           {bulkCreditPerPost > 0 ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2 text-xs text-amber-900 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl border border-amber-200 bg-amber-500/20 px-3 py-2 text-xs text-amber-900">
               <span>
                 <span className="font-semibold">{bulkCreditPerPost} credits</span>
                 {' per post'}
                 {selected.length > 0 && (
                   <>
                     {' \u00b7 '}
-                    <span className="font-semibold">
-                      {bulkCreditPerPost * selected.length} credits
+                    <span
+                      className={cn(
+                        'font-semibold',
+                        insufficientCredits && 'text-rose-700'
+                      )}
+                    >
+                      {platformCreditCost} credits
                     </span>
-                    {' total for the '}
-                    {selected.length} selected day
-                    {selected.length === 1 ? '' : 's'}
+                    {' for '}
+                    {selected.length} day
+                    {selected.length === 1 ? '' : 's'} here
+                    {totalSelectedDates > selected.length ? (
+                      <>
+                        {' \u00b7 '}
+                        <span
+                          className={cn(
+                            'font-semibold',
+                            insufficientCredits && 'text-rose-700'
+                          )}
+                        >
+                          {totalCreditCost} credits
+                        </span>
+                        {' total across platforms'}
+                      </>
+                    ) : null}
                   </>
                 )}
               </span>
+              {!creditsLoading &&
+                insufficientCredits &&
+                selected.length > 0 && (
+                  <span className="whitespace-nowrap rounded-full border border-rose-100 bg-rose-50 px-2 text-[10px] font-medium text-rose-600">
+                    Need {totalCreditCost}
+                  </span>
+                )}
             </div>
           ) : billing?.mode === 'auto' ? (
             <>
@@ -893,20 +820,11 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
                   const blocked = blockedSet.has(dateKey);
                   const hasGeneratedContent =
                     isCampaign ||
-                    jobCompletedDateSet.has(dateKey) ||
                     (statusRow ? isAiEngineContentReady(statusRow) : false);
                   const isGeneratingDate =
                     !hasGeneratedContent &&
                     isGenerating &&
-                    (generatingDateSet.has(dateKey) ||
-                      activePlatformJobs.some((entry) => {
-                        if (entry.date !== dateKey) return false;
-                        const job = jobMap[jobKey(entry)];
-                        return (
-                          !job ||
-                          (job.status !== 'done' && job.status !== 'failed')
-                        );
-                      }));
+                    generatingDateSet.has(dateKey);
                   const selectedDate = selectedSet.has(dateKey);
                   const showBlue = selectedDate || isGeneratingDate;
                   const previewing =
@@ -973,8 +891,11 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
             disabled={
               !connected ||
               isGenerating ||
+              creditsLoading ||
               (!isTourDemo &&
-                (selected.length === 0 || openDatesCount === 0))
+                (selected.length === 0 ||
+                  openDatesCount === 0 ||
+                  insufficientCredits))
             }
             onClick={() => void handleGenerate()}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
@@ -989,62 +910,14 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
                 <Sparkles className="h-4 w-4" aria-hidden />
                 Generate {selected.length || 0} day
                 {selected.length === 1 ? '' : 's'}
+                {insufficientCredits ? ' (insufficient credits)' : ''}
               </>
             )}
           </button>
           {isGenerating && (
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2 space-y-2">
-              <div className="flex items-center justify-between text-xs font-medium text-indigo-700">
-                <span>Generating...</span>
-                <span>{overallPct}%</span>
-              </div>
-              <Progress
-                value={overallPct}
-                className="h-1.5 bg-indigo-100 **:data-[slot=progress-indicator]:bg-indigo-500"
-              />
-              {Object.values(jobMap).length > 1 && (
-                <div className="space-y-1 pt-1">
-                  {Object.values(jobMap).map((job) => {
-                    const slot = activePlatformJobs.find(
-                      (j) => j.jobId === job.jobId
-                    );
-                    const resultDate =
-                      typeof (job.result as { date?: string } | null)?.date ===
-                        'string'
-                        ? (job.result as { date: string }).date
-                        : undefined;
-                    const dateKey = slot?.date ?? resultDate;
-                    const label = dateKey
-                      ? format(new Date(`${dateKey}T12:00:00`), 'MMM d')
-                      : meta.label;
-                    return (
-                      <div
-                        key={job.jobId}
-                        className="flex items-center justify-between text-[11px] text-indigo-700/80"
-                      >
-                        <span>{label}</span>
-                        <span>{job.pct ?? 0}%</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              {inFlightSelectedDates && inFlightSelectedDates.length > 0 && (
-                <p className="text-[11px] text-indigo-700/80">
-                  Generating{' '}
-                  <span className="font-semibold">
-                    {inFlightSelectedDates.length} day
-                    {inFlightSelectedDates.length === 1 ? '' : 's'}
-                  </span>
-                  :{' '}
-                  {inFlightSelectedDates
-                    .map((d) =>
-                      format(new Date(`${d}T12:00:00`), 'MMM d')
-                    )
-                    .join(', ')}
-                </p>
-              )}
-            </div>
+            <p className="rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2 text-xs font-medium text-indigo-700">
+              Generating…
+            </p>
           )}
           {connected && !statusLoading && openDatesCount === 0 && (
             <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
@@ -1172,6 +1045,15 @@ function BatchGenerationPlatformCard(props: BatchGenerationPlatformCardProps) {
                           getFilename={() =>
                             `batch-${platform}-${activePreviewRow.date}-${Date.now()}.png`
                           }
+                        />
+                        <SharePostButton
+                          imageUrl={activePreviewRow.post.imageUrl}
+                          caption={activePreviewRow.post.message}
+                          platform={platform}
+                          getFilename={() =>
+                            `batch-${platform}-${activePreviewRow.date}-${Date.now()}.png`
+                          }
+                          className="inline-flex items-center justify-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 transition disabled:opacity-60"
                         />
                       </div>
                     ) : null}

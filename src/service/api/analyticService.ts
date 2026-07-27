@@ -215,10 +215,15 @@ export type PostBriefKind =
   | 'plug-a-gap'
   | 'try-a-new-format';
 
+export type PostSuggestedFormat =
+  | 'carousel'
+  | 'reel'
+  | 'video'
+  | 'single image';
+
 /**
- * One idea card. `prompt` is intentionally hidden in the UI; it is only
- * forwarded to `/instant-generation` when the user clicks the card's
- * "Generate this post" button.
+ * One idea card. `prompt` is forwarded to Quick Create or Carousel Create
+ * when the user clicks the card's generate button.
  */
 export type PostBrief = {
   key: PostBriefKind;
@@ -226,6 +231,7 @@ export type PostBrief = {
   description: string;
   hint: string;
   prompt: string;
+  suggestedFormat?: PostSuggestedFormat;
 };
 
 export type WhatToPostNextPayload = {
@@ -248,8 +254,11 @@ export type ReplySuggestionPlatform = WhereToSpendPlatform;
 export type ReplySuggestionInput = {
   platform: ReplySuggestionPlatform;
   comment: string;
+  commentId?: string;
   postMessage?: string;
   pageName?: string;
+  /** Skip the cron snapshot and call OpenAI live (Regenerate). */
+  refresh?: boolean;
 };
 
 export type ReplySuggestionPayload = {
@@ -307,6 +316,7 @@ export type FirstCommentSuggestionInput = {
   postId: string;
   postMessage?: string;
   pageName?: string;
+  refresh?: boolean;
 };
 
 export type FirstCommentSuggestionPayload = {
@@ -354,6 +364,45 @@ export type FirstCommentUndoPayload = {
 export const postFirstCommentUndo = async (body: FirstCommentUndoInput) => {
   return apiPost<ApiEnvelope<FirstCommentUndoPayload>>(
     '/api/v1/growth-studio/first-comment-undo',
+    body
+  );
+};
+
+/* ────────────────── Growth Studio — Monthly budget allocation ──────────── */
+
+export type BudgetAllocationPlatform = WhereToSpendPlatform;
+
+export type PostBudgetAllocation = {
+  postId: string;
+  caption: string;
+  mediaUrl?: string;
+  permalinkUrl?: string;
+  engagementRate: number;
+  hoursSincePost: number;
+  format: 'single' | 'carousel' | 'video' | 'reel' | 'other';
+  amount: number;
+  percent: number;
+  rationale: string;
+};
+
+export type BudgetAllocationPayload = {
+  visible: boolean;
+  currency: 'INR';
+  monthlyBudget: number;
+  allocations: PostBudgetAllocation[];
+  source: 'openai' | 'fallback';
+  reason?: string;
+  summary?: string;
+};
+
+export type BudgetAllocationInput = {
+  platform: BudgetAllocationPlatform;
+  monthlyBudget: number;
+};
+
+export const postBudgetAllocation = async (body: BudgetAllocationInput) => {
+  return apiPost<ApiEnvelope<BudgetAllocationPayload>>(
+    '/api/v1/growth-studio/budget-allocation',
     body
   );
 };

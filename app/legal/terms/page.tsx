@@ -44,7 +44,7 @@ export default function TermsOfServicePage() {
             social-media accounts.
           </li>
           <li>
-            <strong>“Brand DNA” / “AI Memory Layer”</strong> means the brand
+            <strong>“Brand DNA” / “Business Data”</strong> means the brand
             data, preferences, and configuration you provide to personalise the
             AI outputs.
           </li>
@@ -75,10 +75,10 @@ export default function TermsOfServicePage() {
           combines AI automation, content generation, brand intelligence,
           optional human quality review, publishing infrastructure, and
           analytics. Core capabilities include onboarding and Brand DNA setup,
-          the AI Memory Layer, the Media Library, social-account integrations,
-          configurable automation preferences, the AI Engine, Bulk Create,
-          Quick Create, the Product Advert Generator, the Festival Post
-          Generator, the User/Managed Approval Workflow, automated scheduling
+          the Business Data, the Media Library, social-account integrations,
+          configurable automation preferences, the AI Engine, Bulk Creator,
+          Content Studio, Product Ads, Holiday & Festival Posts, the
+          User/Managed Approval Workflow, automated scheduling
           and publishing, analytics &amp; insights, the AI Chatbot Assistant,
           and the subscription &amp; credit system.
         </p>

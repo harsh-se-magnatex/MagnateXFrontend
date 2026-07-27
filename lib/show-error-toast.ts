@@ -47,7 +47,10 @@ export function showErrorToast(message: ErrorMessage, data?: ExternalToast) {
       action ??
       ({
         label: 'OK',
-        onClick: () => toast.dismiss(id),
+        onClick: (event) => {
+          event.stopPropagation();
+          toast.dismiss(id);
+        },
       } satisfies Action),
   });
   return id;

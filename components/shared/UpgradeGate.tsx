@@ -39,13 +39,8 @@ export type UpgradeGateProps = {
  * (`app/(main)/layout.tsx`).
  *
  * @example
- * // Auto-mode users cannot use Manual Review:
- * <UpgradeGate gated={billing?.mode === 'auto'} tooltip="Upgrade to manual mode" className="flex-1">
- *   <button disabled={billing?.mode === 'auto'} className="w-full ...">Manual Review</button>
- * </UpgradeGate>
- *
- * // Manual-mode users cannot use Auto Approve:
- * <UpgradeGate gated={billing?.mode === 'manual'} tooltip="Upgrade to automatic mode" className="flex-1">
+ * // Studio plans cannot use Auto Approve:
+ * <UpgradeGate gated={billing?.mode === 'manual'} tooltip="Upgrade to an AI plan" className="flex-1">
  *   <button disabled={billing?.mode === 'manual'} className="w-full ...">Auto Approve</button>
  * </UpgradeGate>
  */

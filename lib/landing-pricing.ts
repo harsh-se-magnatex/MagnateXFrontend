@@ -120,7 +120,7 @@ function buildFeatureLines(id: PlanId): PricingLine[] {
   if (mode === 'AI') lines.push({ text: 'Daily automated posts' });
   lines.push({ text: 'Human-reviewed content' });
   lines.push({
-    text: `${credits} credits/month \u2014 up to ${quickPosts} quick create OR ${festivePosts} festive OR ${campaignPosts} campaign OR ${productAdverts} product advert posts`,
+    text: `${credits} credits/month \u2014 up to ${quickPosts} quick create OR ${festivePosts} festive OR ${campaignPosts} campaign posts OR ${productAdverts} product advert posts`,
   });
   lines.push({ text: 'AI-powered analytics & recommendations' });
   return lines;

@@ -101,6 +101,10 @@ export type Post = {
   postId: string;
   message: string;
   mediaUrl: string;
+  /** All image URLs for album / carousel posts (cover is usually `mediaUrl`). */
+  mediaUrls?: string[];
+  mediaType?: 'image' | 'video' | string;
+  videoUrl?: string;
   permalinkUrl?: string;
   type?: string;
   isPublished?: boolean;
@@ -173,6 +177,8 @@ export type LinkedInPost = {
   commentary?: string;
   message?: string;
   mediaUrl?: string;
+  /** All image URLs for MultiImage / carousel posts. */
+  mediaUrls?: string[];
   mediaId?: string;
   mediaUrlExpiresAt?: number | null;
   permalinkUrl?: string;

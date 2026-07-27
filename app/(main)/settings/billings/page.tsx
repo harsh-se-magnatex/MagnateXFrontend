@@ -84,8 +84,10 @@ import {
 import { EmailVerificationPurchaseAlert } from '@/components/shared/EmailVerificationPurchaseAlert';
 import {
   EMAIL_VERIFICATION_PURCHASE_MESSAGE,
+  TOP_UP_REQUIRES_PLAN_MESSAGE,
   needsEmailVerificationForPurchase,
 } from '@/lib/email-verification-for-purchase';
+import { isPlanInactive } from '@/lib/plan-access';
 
 /** Tier ladder shown left-to-right in the upgrade dialog. Studio/AI mode
  *  is chosen via a separate toggle; this controls only the tier order. */
@@ -420,13 +422,13 @@ export default function BillingsPage() {
       const res = await getTransactions();
       const rows = res.data.transactions ?? [];
       const purchaseLike = rows.filter(
-        (r) => r.type === 'purchase' || r.type === 'plan'
+        (r) => r.type === 'purchase' || r.type === 'plan' || r.type === 'credits'
       );
       const sorted =
         purchaseLike.length > 0
           ? purchaseLike
           : rows.filter((r) => r.type !== 'deduction');
-      setBillingHistory(sorted.slice(0, 5));
+      setBillingHistory(sorted.slice(0, sorted.length));
     } catch {
       setBillingHistory([]);
     } finally {
@@ -522,6 +524,55 @@ export default function BillingsPage() {
   const subscriptionStatus = formatTitleCase(subscriptionSummary?.status);
   const billingFrequencyDisplay = formatBillingFrequency(subscriptionSummary);
 
+  /** Show platform reminder within 15 days of renewal (any active plan). */
+  const showRenewalPlatformReminder = useMemo(() => {
+    if (!subscriptionSummary?.nextBillingDate) return false;
+    if (subscriptionSummary.cancelAtNextBillingDate) return false;
+    if (billing?.activePlan === 'non-subscribed') return false;
+
+    const renewAt = new Date(subscriptionSummary.nextBillingDate).getTime();
+    if (!Number.isFinite(renewAt)) return false;
+    const msUntilRenew = renewAt - Date.now();
+    const fifteenDaysMs = 15 * 24 * 60 * 60 * 1000;
+    return msUntilRenew >= 0 && msUntilRenew <= fifteenDaysMs;
+  }, [
+    billing?.activePlan,
+    subscriptionSummary?.nextBillingDate,
+    subscriptionSummary?.cancelAtNextBillingDate,
+  ]);
+
+  const nextPlanPlatformSelectionComplete = useMemo(() => {
+    const pending = billing?.pendingSelected;
+    if (!pending) return false;
+    const target =
+      subscriptionSummary?.pendingPlanChange?.planName ??
+      billing?.pendingSelectedForPlan ??
+      billing?.activePlan;
+    if (!target || billing?.pendingSelectedForPlan !== target) {
+      // Allow match when forPlan equals active and no scheduled change.
+      if (
+        billing?.pendingSelectedForPlan &&
+        billing.pendingSelectedForPlan === billing.activePlan &&
+        !subscriptionSummary?.pendingPlanChange?.planName
+      ) {
+        return (
+          [pending.facebook, pending.instagram, pending.linkedin].filter(Boolean)
+            .length >= 1
+        );
+      }
+      return false;
+    }
+    return (
+      [pending.facebook, pending.instagram, pending.linkedin].filter(Boolean)
+        .length >= 1
+    );
+  }, [
+    billing?.pendingSelected,
+    billing?.pendingSelectedForPlan,
+    billing?.activePlan,
+    subscriptionSummary?.pendingPlanChange?.planName,
+  ]);
+
   const planComparisonRows = useMemo(() => {
     const modeDisplay = planModeToDisplay(upgradeMode);
     return PLAN_COMPARISON_ORDER.map((tierKey) => {
@@ -540,13 +591,18 @@ export default function BillingsPage() {
   }, [plans, upgradeMode]);
 
   const emailVerificationRequired = needsEmailVerificationForPurchase(user);
+  const topUpRequiresPlan = isPlanInactive(billing);
 
   const handleCreditPackPurchase = async (creditPackId: string) => {
     if (!user) return;
-    // if (emailVerificationRequired) {
-    //   showErrorToast(EMAIL_VERIFICATION_PURCHASE_MESSAGE);
-    //   return;
-    // }
+    if (emailVerificationRequired) {
+      showErrorToast(EMAIL_VERIFICATION_PURCHASE_MESSAGE);
+      return;
+    }
+    if (topUpRequiresPlan) {
+      showErrorToast(TOP_UP_REQUIRES_PLAN_MESSAGE);
+      return;
+    }
     if (clickedTopUp.current === creditPackId) return;
     try {
       setTopUpLoading(true);
@@ -576,7 +632,7 @@ export default function BillingsPage() {
       window.location.href = data.checkoutUrl;
     } catch (error: any) {
       clickedPurchasePlan.current = null;
-      showErrorToast(error.message || 'Failed to purchase plan');
+      showErrorToast('Failed to purchase plan');
     } finally {
       setPlanPurchaseLoading(false);
     }
@@ -598,9 +654,7 @@ export default function BillingsPage() {
         setPlanSwitchPreview(res.data);
         setPlanSwitchOpen(true);
       } catch (error: unknown) {
-        showErrorToast(
-          error instanceof Error ? error.message : 'Could not preview plan change'
-        );
+        showErrorToast('Could not preview plan change');
       } finally {
         setPlanChoiceBusyId(null);
       }
@@ -626,11 +680,7 @@ export default function BillingsPage() {
       setUpgradeOpen(false);
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Could not schedule plan change'
-      );
+      showErrorToast('Could not schedule plan change');
     } finally {
       setPlanSwitchSubmitting(false);
     }
@@ -643,11 +693,7 @@ export default function BillingsPage() {
       const res = await createCustomerPortalSession();
       window.location.href = res.data.portalUrl;
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Could not open payment portal';
-      showErrorToast(message);
+      showErrorToast('Could not open payment portal');
       setPortalLoading(false);
     }
   };
@@ -673,11 +719,7 @@ export default function BillingsPage() {
       toast.success('Payment method deleted');
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Could not delete payment method';
-      showErrorToast(message);
+      showErrorToast('Could not delete payment method');
     } finally {
       setDeletePaymentMethodLoading(false);
     }
@@ -691,11 +733,7 @@ export default function BillingsPage() {
       toast.success('Scheduled plan change cancelled.');
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Could not cancel scheduled plan change'
-      );
+      showErrorToast('Could not cancel scheduled plan change');
     } finally {
       setCancelScheduledChangeLoading(false);
     }
@@ -715,11 +753,7 @@ export default function BillingsPage() {
       );
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Could not cancel subscription';
-      showErrorToast(message);
+      showErrorToast('Could not cancel subscription');
     } finally {
       setCancelSubscriptionLoading(false);
     }
@@ -733,11 +767,7 @@ export default function BillingsPage() {
       toast.success('Cancellation revoked.');
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Could not revoke cancellation'
-      );
+      showErrorToast('Could not revoke cancellation');
     } finally {
       setRevokeCancellationLoading(false);
     }
@@ -872,22 +902,31 @@ export default function BillingsPage() {
                         <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-800">
                           Scheduled plan change
                         </p>
-                        <p className="font-semibold text-slate-900">
+                        <p className="font-semibold text-foreground">
                           Then:{' '}
                           {subscriptionSummary.scheduledPlanChange.planLabel}
                         </p>
-                        <p className="text-slate-600 leading-relaxed">
+                        <p className="text-muted-foreground leading-relaxed">
                           Starts on{' '}
-                          <span className="font-medium text-slate-900">
+                          <span className="font-medium text-foreground">
                             {formatIsoDateTime(
                               subscriptionSummary.scheduledPlanChange.effectiveAt
                             )}
                           </span>
                           . Until then you keep your current plan and limits.
+                          {' '}
+                          Please select platforms for your next plan so renewal
+                          applies the right accounts automatically.
+                          <Link
+                            href="/settings/next-plan-platforms"
+                            className="ml-1 font-semibold text-indigo-700 underline-offset-2 hover:underline"
+                          >
+                            Select next-plan platforms
+                          </Link>
                         </p>
                         {(subscriptionSummary.scheduledPlanChange?.addons
                           ?.length ?? 0) > 0 ? (
-                          <ul className="text-xs text-slate-600 list-disc pl-4 space-y-0.5">
+                          <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
                             {subscriptionSummary.scheduledPlanChange?.addons?.map(
                               (a) => (
                                 <li key={a.addonId}>
@@ -901,7 +940,7 @@ export default function BillingsPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="shrink-0 rounded-xl border-rose-200 bg-white text-rose-800 hover:bg-rose-50"
+                        className="shrink-0 rounded-xl border-rose-400/60 bg-transparent text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
                         disabled={
                           cancelScheduledChangeLoading ||
                           !!subscriptionSummary.cancelAtNextBillingDate
@@ -917,6 +956,40 @@ export default function BillingsPage() {
                           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                         ) : null}
                         Cancel scheduled change
+                      </Button>
+                    </div>
+                  ) : null}
+                  {showRenewalPlatformReminder ? (
+                    <div
+                      className="mt-5 rounded-2xl border border-amber-500/35 bg-amber-50 px-4 py-4 text-sm text-amber-950 ring-1 ring-amber-500/20"
+                      role="status"
+                    >
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800">
+                        Before your next renewal
+                      </p>
+                      <p className="mt-2 leading-relaxed text-amber-900/90">
+                        Your plan renews on{' '}
+                        <span className="font-semibold text-amber-950">
+                          {formatTxnDate(subscriptionSummary.nextBillingDate)}
+                        </span>
+                        . For a smoother experience, select the platforms you
+                        want for your next plan now
+                        {nextPlanPlatformSelectionComplete
+                          ? ' — you already have a next-cycle selection saved'
+                          : ''}
+                        . If you skip this, we will continue with your current
+                        platforms.
+                      </p>
+                      <Button
+                        asChild
+                        size="sm"
+                        className="mt-3 rounded-xl bg-amber-700 text-white hover:bg-amber-800"
+                      >
+                        <Link href="/settings/next-plan-platforms">
+                          {nextPlanPlatformSelectionComplete
+                            ? 'Review next-plan platforms'
+                            : 'Select next-plan platforms'}
+                        </Link>
                       </Button>
                     </div>
                   ) : null}
@@ -961,22 +1034,22 @@ export default function BillingsPage() {
           </div>
           {subscriptionSummary?.cancelAtNextBillingDate ? (
             <div
-              className="mt-6 flex gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 px-4 py-4 sm:px-5"
+              className="mt-6 flex gap-3 rounded-2xl border border-emerald-500/35 bg-emerald-950/55 px-4 py-4 text-emerald-100 ring-1 ring-emerald-500/20 sm:px-5"
               role="status"
               aria-live="polite"
             >
-              <div className="mt-0.5 shrink-0 text-emerald-700" aria-hidden>
+              <div className="mt-0.5 shrink-0 text-emerald-400" aria-hidden>
                 <Info className="h-5 w-5" />
               </div>
               <div className="min-w-0 space-y-1 text-sm">
-                <p className="font-semibold text-emerald-950">
+                <p className="font-semibold text-emerald-50">
                   Cancellation is scheduled — you&apos;re all set
                 </p>
-                <p className="text-emerald-900/90 leading-relaxed">
+                <p className="leading-relaxed text-emerald-100/90">
                   This is saved as a &ldquo;cancel at end of billing period&rdquo;
                   on your payment provider — same as when you confirm in their
                   billing flow. You keep full access until{' '}
-                  <span className="font-semibold text-emerald-950">
+                  <span className="font-semibold text-emerald-50">
                     {formatTxnDate(subscriptionSummary.nextBillingDate)}
                   </span>
                   , and you will not be charged again for this plan after that
@@ -1174,14 +1247,25 @@ export default function BillingsPage() {
                 </p>
               </div>
             </div>
-            <Button
-              type="button"
-              className="rounded-xl shrink-0 self-start"
-              onClick={() => setTopUpOpen(true)}
-              disabled={billing?.activePlan === 'non-subscribed'}
-            >
-              Top up credits
-            </Button>
+            <div className="flex flex-col items-stretch sm:items-end gap-2 shrink-0 self-start">
+              <Button
+                type="button"
+                className="rounded-xl"
+                onClick={() => setTopUpOpen(true)}
+                disabled={topUpRequiresPlan || emailVerificationRequired}
+              >
+                Top up credits
+              </Button>
+              {topUpRequiresPlan ? (
+                <p className="text-xs text-amber-800 max-w-[16rem] sm:text-right">
+                  {TOP_UP_REQUIRES_PLAN_MESSAGE}
+                </p>
+              ) : emailVerificationRequired ? (
+                <p className="text-xs text-amber-800 max-w-[16rem] sm:text-right">
+                  {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+                </p>
+              ) : null}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-amber-500/25 bg-amber-500/5 overflow-hidden divide-y divide-border/60">
@@ -1283,11 +1367,11 @@ export default function BillingsPage() {
            Credit used per action by Manual Trigger:
           </p>
           <ul className="text-sm text-slate-700 space-y-2 list-none pl-0">
-            <li>· Product Advert: 4 credits</li>
+            <li>· Product Ads: 4 credits</li>
             <li>· Campaign post: 3 credits per day</li>
-            <li>· Quick Create: 2 credits</li>
-            <li>· Bulk Create (Studio Plans): 2 credits</li>
-            <li>· Festive post: 2 credits</li>
+            <li>· Content Studio: 2 credits</li>
+            <li>· Bulk Creator (Studio Plans): 2 credits</li>
+            <li>· Holiday & Festival Posts: 2 credits</li>
             <li>· Regeneration: 1 credit (First regen free)</li>
           </ul>
         </section>
@@ -1327,15 +1411,22 @@ export default function BillingsPage() {
               .
             </p>
           ) : (
-            <Table>
+            <Table
+              containerClassName="max-h-80 overflow-y-auto custom-scrollbar -mx-1 px-1"
+              className="border-separate border-spacing-0"
+            >
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-slate-600">Date</TableHead>
-                  <TableHead className="text-slate-600">Description</TableHead>
-                  <TableHead className="text-slate-600 text-right">
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600">
+                    Date
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600">
+                    Description
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right">
                     Amount
                   </TableHead>
-                  <TableHead className="text-slate-600 text-right">
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right">
                     Invoice
                   </TableHead>
                 </TableRow>
@@ -1353,12 +1444,17 @@ export default function BillingsPage() {
                       {txnAmountCell(row)}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Link
-                        href="/settings/transactions"
-                        className="text-sm font-medium text-indigo-600 hover:underline"
-                      >
-                        View
-                      </Link>
+                      {row.invoiceUrl ? (
+                        <Link
+                          href={row.invoiceUrl}
+                          target="_blank"
+                          className="text-sm font-medium text-indigo-600 hover:underline"
+                        >
+                          View
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-slate-500">Not available</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -1375,10 +1471,10 @@ export default function BillingsPage() {
           className="sm:max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl"
         >
           <DialogHeader>
-            <DialogTitle className="text-lg sm:text-xl">
+            <DialogTitle className="text-lg sm:text-xl text-foreground">
               Unlock more platforms and content
             </DialogTitle>
-            <DialogDescription className="text-slate-600 text-left space-y-2">
+            <DialogDescription className="text-muted-foreground text-left space-y-2">
               {billing?.activePlan === 'non-subscribed' ? (
                 <span>
                   You do not have an active subscription yet. Choose a plan to
@@ -1459,31 +1555,31 @@ export default function BillingsPage() {
                       {landingPlan.badge}
                     </span>
                   ) : null}
-                  <h3 className="font-semibold text-slate-900 text-center mt-1">
+                  <h3 className="font-semibold text-foreground text-center mt-1">
                     {landingPlan.name}
                   </h3>
-                  <p className="text-sm text-slate-500 text-center mt-1 leading-snug">
+                  <p className="text-sm text-muted-foreground text-center mt-1 leading-snug">
                    {landingPlan.mode === 'AI' ? 'Auto Plan' : 'Manual Plan'}
                   </p>
                   <div className="mt-1 mb-4 text-center">
-                    <p className="text-sm font-semibold text-slate-700">
+                    <p className="text-sm font-semibold text-foreground">
                       {formatUsd(displayPrice)}/mo
                     </p>
                     {landingPlan.trialOffer ? (
-                      <p className="mt-1 text-xs font-semibold text-emerald-600">
+                      <p className="mt-1 text-xs font-semibold text-emerald-500">
                         {landingPlan.trialOffer}
                       </p>
                     ) : null}
                   </div>
                   {isActive ? (
-                    <p className="text-sm text-slate-800 text-center space-y-3">
+                    <p className="text-sm text-foreground text-center space-y-3">
                       Active
                     </p>
                   ) : null}
-                  <ul className="text-xs text-slate-600 space-y-2 flex flex-col justify-end flex-1">
+                  <ul className="text-xs text-muted-foreground space-y-2 flex flex-col justify-end flex-1">
                     {(meta?.bullets ?? landingPlan.lines.map((line) => line.text)).map((b, i) => (
                       <li key={i} className="flex gap-2">
-                        <span className="text-indigo-500 shrink-0">·</span>
+                        <span className="text-primary shrink-0">·</span>
                         <span>{b}</span>
                       </li>
                     ))}
@@ -1503,50 +1599,58 @@ export default function BillingsPage() {
                       </div>
                     )}
                     {!isActive && (
-                      <Button
-                        variant="outline"
-                        className="h-auto w-full flex-col gap-0.5 rounded-xl py-3"
-                        disabled={
-                          planPurchaseLoading ||
-                          planChoiceBusyId === plan.id
-                        }
-                        onClick={() =>
-                          void initiatePlanChoice(
-                            plan.id,
-                            landingPlan.name
-                          )
-                        }
-                      >
-                        {planChoiceBusyId === plan.id ? (
-                          <>
-                            <Loader2
-                              className="h-4 w-4 shrink-0 animate-spin"
-                              aria-hidden
-                            />
-                            Preparing preview…
-                          </>
-                        ) : planPurchaseLoading &&
-                          clickedPurchasePlan.current === plan.id ? (
-                          <>
-                            <Loader2
-                              className="h-4 w-4 shrink-0 animate-spin"
-                              aria-hidden
-                            />
-                            Opening checkout…
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-sm font-semibold leading-tight">
-                              Start {planButtonDisplayName(landingPlan.name)}
-                            </span>
-                            {landingPlan.trialOffer ? (
-                              <span className="text-[11px] font-medium leading-tight text-emerald-600">
-                                {landingPlan.trialOffer}
+                      <div className="space-y-2">
+                        <Button
+                          variant="outline"
+                          className="h-auto w-full flex-col gap-0.5 rounded-xl py-3"
+                          disabled={
+                            emailVerificationRequired ||
+                            planPurchaseLoading ||
+                            planChoiceBusyId === plan.id
+                          }
+                          onClick={() =>
+                            void initiatePlanChoice(
+                              plan.id,
+                              landingPlan.name
+                            )
+                          }
+                        >
+                          {planChoiceBusyId === plan.id ? (
+                            <>
+                              <Loader2
+                                className="h-4 w-4 shrink-0 animate-spin"
+                                aria-hidden
+                              />
+                              Preparing preview…
+                            </>
+                          ) : planPurchaseLoading &&
+                            clickedPurchasePlan.current === plan.id ? (
+                            <>
+                              <Loader2
+                                className="h-4 w-4 shrink-0 animate-spin"
+                                aria-hidden
+                              />
+                              Opening checkout…
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm font-semibold leading-tight text-foreground">
+                                Start {planButtonDisplayName(landingPlan.name)}
                               </span>
-                            ) : null}
-                          </>
-                        )}
-                      </Button>
+                              {landingPlan.trialOffer ? (
+                                <span className="text-[11px] font-medium leading-tight text-emerald-500">
+                                  {landingPlan.trialOffer}
+                                </span>
+                              ) : null}
+                            </>
+                          )}
+                        </Button>
+                        {emailVerificationRequired ? (
+                          <p className="text-[11px] leading-snug text-amber-800 text-center">
+                            {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+                          </p>
+                        ) : null}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1554,7 +1658,13 @@ export default function BillingsPage() {
             })}
           </div>
 
-          <p className="text-center text-xs text-slate-500 pt-2">
+          {emailVerificationRequired ? (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-center text-xs font-medium text-amber-900">
+              {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+            </p>
+          ) : null}
+
+          <p className="text-center text-xs text-muted-foreground pt-2">
             {canChangePlanViaSubscription ? (
               <>
                 Plan switches apply on your next billing date. You keep your
@@ -1849,9 +1959,15 @@ export default function BillingsPage() {
                 Credits are used for product ads, instant posts, festive
                 campaigns, and regenerations. Valid for 30 days from purchase.
               </p>
-              {/* <p className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                Credits require an active subscription to use.
-              </p> */}
+              {topUpRequiresPlan ? (
+                <p className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                  {TOP_UP_REQUIRES_PLAN_MESSAGE}
+                </p>
+              ) : emailVerificationRequired ? (
+                <p className="text-xs font-medium text-amber-900 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                  {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+                </p>
+              ) : null}
             </DialogDescription>
           </DialogHeader>
 
@@ -1876,19 +1992,35 @@ export default function BillingsPage() {
                       {pack.credits} credits
                     </p>
                   </div>
-                  <Button
-                    className="w-full rounded-xl mt-auto"
-                    onClick={() => {
-                      setSelectedCreditPack(pack);
-                      void handleCreditPackPurchase(pack.id);
-                    }}
-                  >
-                    {topUpLoading && selectedCreditPack?.id === pack.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      'Purchase'
-                    )}
-                  </Button>
+                  <div className="mt-auto space-y-2">
+                    <Button
+                      className="w-full rounded-xl"
+                      disabled={
+                        topUpRequiresPlan ||
+                        emailVerificationRequired ||
+                        topUpLoading
+                      }
+                      onClick={() => {
+                        setSelectedCreditPack(pack);
+                        void handleCreditPackPurchase(pack.id);
+                      }}
+                    >
+                      {topUpLoading && selectedCreditPack?.id === pack.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Purchase'
+                      )}
+                    </Button>
+                    {topUpRequiresPlan ? (
+                      <p className="text-[11px] leading-snug text-amber-800 text-center">
+                        {TOP_UP_REQUIRES_PLAN_MESSAGE}
+                      </p>
+                    ) : emailVerificationRequired ? (
+                      <p className="text-[11px] leading-snug text-amber-800 text-center">
+                        {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               ))}
           </div>

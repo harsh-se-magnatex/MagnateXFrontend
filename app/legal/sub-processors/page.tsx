@@ -14,7 +14,7 @@ const SUBPROCESSORS: SubProcessor[] = [
     name: 'Google LLC — Firebase / Google Cloud Platform',
     purpose:
       'Authentication, Firestore database, Cloud Storage, Cloud Functions, hosting.',
-    data: 'Account data, brand assets, AI Memory Layer, generated content, OAuth tokens, logs.',
+    data: 'Account data, brand assets, Business Data, generated content, OAuth tokens, logs.',
     country: 'United States (us-central1)',
     safeguard: 'EU SCCs + EU-US Data Privacy Framework (Google is certified)',
   },

@@ -96,12 +96,8 @@ export default function AdminUsersPage() {
             : item
         )
       );
-    } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to update freeze status'
-      );
+    } catch {
+      showErrorToast('Failed to update freeze status');
     } finally {
       setActionUserId(null);
     }

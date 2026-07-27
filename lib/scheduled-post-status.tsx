@@ -1,7 +1,7 @@
 /**
  * Shared status helpers for scheduled posts.
  *
- * The Post Queue (`/scheduled-post`) and the User Approval page (`/approval`)
+ * The Scheduled Posts page (`/scheduled-post`) and the User Approval page (`/approval`)
  * both render scheduled posts using the same status pill semantics. Keeping
  * the mapping in one place stops the two pages from drifting (e.g. relabelling
  * `pending` differently or applying different colours).
@@ -202,7 +202,7 @@ export type ScheduledPostScheduleInput = ScheduledPostStatusInput & {
 };
 
 /**
- * Matches the Post Queue "Upcoming" tab and `isUpcomingPost` in
+ * Matches the Scheduled Posts "Upcoming" tab and `isUpcomingPost` in
  * `scheduled-post/page.tsx` / `applyScheduledPostsTabFilter` on the API.
  */
 export function isUpcomingScheduledPost(
@@ -228,19 +228,28 @@ export function generatedByLabel(value: string | undefined): string | null {
     case 'ai-engine':
       return 'AI Engine';
     case 'batch-generation':
-      return 'Bulk Create';
+      return 'Bulk Creator';
     case 'events-post':
-      return 'Festive Post';
+      return 'Holiday & Festival Posts';
     case 'product-advert':
-      return 'Product advert';
+      return 'Product Ads';
+    case 'video-generation':
+      return 'Video Generator';
     case 'scheduler':
-      return 'Schedule Post';
+      return 'Post Scheduler';
     case 'instant-generation':
-      return 'Quick Create';
+      return 'Content Studio';
     case 'bulk-create':
-      return 'Bulk Create';
+      return 'Bulk Creator';
     case 'quick-create':
-      return 'Quick Create';
+      return 'Content Studio';
+    case 'campaign':
+    case 'create-campaign':
+      return 'Campaigns';
+    case 'carousel-engine':
+    case 'carousel':
+    case 'carousel-create':
+      return 'Carousel Posts';
     default:
       return trimmed;
   }

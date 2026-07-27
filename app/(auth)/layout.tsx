@@ -1,8 +1,7 @@
 import React from 'react';
 import NavBar from '../(main)/_components/NavBar';
 import { AppGradientBackground } from '@/components/shared/AppGradientBackground';
-
-
+import { RedirectIfAuthenticated } from '@/components/auth/RedirectIfAuthenticated';
 
 export default function AuthLayout({
   children,
@@ -13,9 +12,9 @@ export default function AuthLayout({
     <>
       <AppGradientBackground variant="subtle" />
       <NavBar isAuthRender />
-    <div className="relative min-h-svh pb-8 text-foreground sm:pt-22">
-      {children}
-    </div>
+      <div className="relative min-h-svh pb-8 text-foreground sm:pt-22">
+        <RedirectIfAuthenticated>{children}</RedirectIfAuthenticated>
+      </div>
     </>
   );
 }

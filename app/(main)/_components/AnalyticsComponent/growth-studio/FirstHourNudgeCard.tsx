@@ -287,7 +287,7 @@ function FirstCommentPanel({
     } catch (err) {
       setSuggestion({
         status: 'error',
-        error: err instanceof Error ? err.message : 'Something went wrong',
+        error: 'Something went wrong',
       });
     }
   }, [platform, recentPost.postId, recentPost.message, pageName]);
@@ -332,7 +332,7 @@ function FirstCommentPanel({
     } catch (err) {
       setSend({
         status: 'error',
-        error: err instanceof Error ? err.message : 'Something went wrong',
+        error: 'Something went wrong',
       });
     }
   }, [suggestion, platform, recentPost.postId, onSentChange]);
@@ -350,7 +350,7 @@ function FirstCommentPanel({
     } catch (err) {
       setUndo({
         status: 'error',
-        error: err instanceof Error ? err.message : 'Something went wrong',
+        error: 'Something went wrong',
       });
     }
   }, [platform, recentPost.postId, onSentChange]);

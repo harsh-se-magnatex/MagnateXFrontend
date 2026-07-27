@@ -30,10 +30,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { isPlanInactive } from '@/lib/plan-access';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   Sheet,
@@ -62,7 +62,6 @@ import {
 } from '@/lib/platform-selection';
 
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
-import { useFeatureJob } from '@/src/hooks/useFeatureJob';
 import {
   CAMPAIGN_CREDIT_PER_DAY,
   DEFAULT_CAMPAIGN_SET_SIZE,
@@ -335,17 +334,6 @@ export default function CreateCampaignPage() {
   const clearAllDates = useCampaignState((s) => s.clearAllDates);
   const removeDay = useCampaignState((s) => s.removeDay);
 
-  const featureJob = useFeatureJob('campaign-post');
-  const {
-    parentJobId: activeParentJobId,
-    jobs: jobMap,
-    overallPct,
-    allDone,
-    isRunning,
-    onGenerated,
-  } = featureJob;
-  const lastMaterializedRef = useRef<string | null>(null);
-
   // -------------------- plan window / dates --------------------
   const planExpiresAt = useMemo(
     () => firestoreTimestampToDate(billing?.planExpiresAt ?? null),
@@ -423,7 +411,6 @@ export default function CreateCampaignPage() {
 
   const canSubmit =
     !isSubmitting &&
-    !isRunning &&
     !planCreditsLoading &&
     days.length > 0 &&
     datedDays.length === days.length &&
@@ -456,51 +443,7 @@ export default function CreateCampaignPage() {
     })();
   }, [loadSuggestionSet, setIsLoadingSuggestions, suggestions.length]);
 
-  // -------------------- job result toast --------------------
-  useEffect(() => {
-    if (!allDone || !activeParentJobId) return;
-    if (lastMaterializedRef.current === activeParentJobId) return;
-    lastMaterializedRef.current = activeParentJobId;
-    const jobList = Object.values(jobMap);
-    const totals = jobList.reduce(
-      (acc, job) => {
-        const r = (job.result ?? {}) as Record<string, unknown>;
-        return {
-          successCount:
-            acc.successCount +
-            (typeof r.successCount === 'number' ? r.successCount : 0),
-          failedCount:
-            acc.failedCount +
-            (typeof r.failedCount === 'number' ? r.failedCount : 0),
-        };
-      },
-      { successCount: 0, failedCount: 0 }
-    );
-    if (totals.successCount > 0 && totals.failedCount === 0) {
-      toast.success(
-        `Drafts ready — ${totals.successCount} post(s) saved. Open Drafts to schedule them.`
-      );
-    } else if (totals.successCount > 0) {
-      toast.success(
-        `${totals.successCount} drafts saved, ${totals.failedCount} failed. Open Drafts to review.`
-      );
-    } else if (totals.failedCount > 0) {
-      showErrorToast('Campaign generation failed. Please try again.');
-    } else {
-      toast.success('Campaign processed.');
-    }
-    setIsSubmitting(false);
-    // Refresh the drafts list when the drawer is mounted so the user sees
-    // the newly-generated drafts without having to close+reopen.
-    void refreshDraftsRef.current?.();
-  }, [allDone, activeParentJobId, jobMap, setIsSubmitting]);
-
-  useEffect(() => {
-    if (isRunning && !isSubmitting) setIsSubmitting(true);
-    else if (!isRunning && isSubmitting) setIsSubmitting(false);
-  }, [isRunning, isSubmitting, setIsSubmitting]);
-
-  // -------------------- gallery actions --------------------
+  // -------------------- create draft batch --------------------
   const handleGenerateSet = useCallback(
     async (size?: number) => {
       if (isLoadingSuggestions) return;
@@ -514,16 +457,8 @@ export default function CreateCampaignPage() {
         toast.success(
           `Generated ${set.suggestions.length} campaign idea${set.suggestions.length === 1 ? '' : 's'}.`
         );
-      } catch (err) {
-        const typed = err as {
-          response?: { data?: { message?: string } };
-          message?: string;
-        };
-        showErrorToast(
-          typed?.response?.data?.message ||
-            typed?.message ||
-            'Could not generate campaign suggestions.'
-        );
+      } catch {
+        showErrorToast('Could not generate campaign suggestions.');
       } finally {
         setIsLoadingSuggestions(false);
       }
@@ -539,16 +474,8 @@ export default function CreateCampaignPage() {
         const fresh = await regenerateCampaignApi(suggestionId);
         replaceSuggestion(fresh);
         toast.success('Suggestion refreshed.');
-      } catch (err) {
-        const typed = err as {
-          response?: { data?: { message?: string } };
-          message?: string;
-        };
-        showErrorToast(
-          typed?.response?.data?.message ||
-            typed?.message ||
-            'Could not regenerate this suggestion.'
-        );
+      } catch {
+        showErrorToast('Could not regenerate this suggestion.');
       } finally {
         setRegeneratingSuggestionId(null);
       }
@@ -695,7 +622,6 @@ export default function CreateCampaignPage() {
     if (!canSubmit) return;
     try {
       setIsSubmitting(true);
-      lastMaterializedRef.current = null;
       const response = await createCampaignApi({
         theme: theme || 'Brand Campaign',
         description,
@@ -716,23 +642,23 @@ export default function CreateCampaignPage() {
         platforms: genPlatforms,
         suggestionId: selectedSuggestionId ?? undefined,
       });
-      onGenerated({
-        parentJobId: response.parentJobId,
-        jobs: response.jobs,
-      });
-      toast.success(
-        `Generating ${response.dayCount} draft(s) across ${response.platforms.length} platform(s).`
-      );
-    } catch (error: unknown) {
-      const typed = error as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-      showErrorToast(
-        typed?.response?.data?.message ||
-          typed?.message ||
-          'Could not create the campaign.'
-      );
+      if (response.successCount > 0 && response.failedCount === 0) {
+        toast.success(
+          `Drafts ready — ${response.successCount} post(s) saved. Open Drafts to schedule them.`
+        );
+      } else if (response.successCount > 0) {
+        toast.success(
+          `${response.successCount} drafts saved, ${response.failedCount} failed. Open Drafts to review.`
+        );
+      } else if (response.failedCount > 0) {
+        showErrorToast('Campaign generation failed. Please try again.');
+      } else {
+        toast.success('Campaign processed.');
+      }
+      void refreshDraftsRef.current?.();
+    } catch {
+      showErrorToast('Could not create the campaign.');
+    } finally {
       setIsSubmitting(false);
     }
   }, [
@@ -744,7 +670,6 @@ export default function CreateCampaignPage() {
     genPlatforms,
     goal,
     insufficientCredits,
-    onGenerated,
     platformSelection,
     selectedSuggestionId,
     setIsSubmitting,
@@ -769,30 +694,8 @@ export default function CreateCampaignPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (billing?.activePlan === 'non-subscribed') {
+  if (isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
-  }
-
-  const planExpired =
-    planExpiresAt != null && planExpiresAt.getTime() < Date.now();
-  if (planExpired) {
-    return (
-      <div className="animate-in fade-in duration-500 pb-20 flex flex-col items-center justify-center h-screen">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          <p className="text-center">You are not eligible for this feature.</p>
-          <p className="text-center">
-            Please subscribe to a plan to use this feature.
-          </p>
-        </h1>
-        <p className="mt-2 text-base text-slate-500 max-w-2xl">
-          You can subscribe to a plan{' '}
-          <Link href="/settings/billings" className="underline text-indigo-600">
-            here
-          </Link>
-          .
-        </p>
-      </div>
-    );
   }
 
   const hasSelectablePlatforms = allowedPlatforms.length > 0;
@@ -907,14 +810,6 @@ export default function CreateCampaignPage() {
             totalDays={days.length}
             canSubmit={canSubmit}
             isSubmitting={isSubmitting}
-            isRunning={isRunning}
-            overallPct={overallPct}
-            jobCount={Object.values(jobMap).length}
-            jobs={Object.values(jobMap).map((job) => ({
-              jobId: job.jobId,
-              platform: job.platform ?? 'unknown',
-              pct: job.pct ?? 0,
-            }))}
             totalCost={totalCost}
             userCredits={userCredits}
             insufficientCredits={insufficientCredits}
@@ -930,8 +825,7 @@ export default function CreateCampaignPage() {
         registerRefresh={handleSetRefreshDrafts}
         dateWindow={dateWindow}
         formattedToday={formattedToday}
-        isCampaignJobRunning={isRunning}
-        onCampaignJobStarted={onGenerated}
+        isCampaignJobRunning={isSubmitting}
       />
     </div>
   );
@@ -1464,10 +1358,6 @@ type CampaignSummaryProps = {
   totalDays: number;
   canSubmit: boolean;
   isSubmitting: boolean;
-  isRunning: boolean;
-  overallPct: number;
-  jobCount: number;
-  jobs: Array<{ jobId: string; platform: string; pct: number }>;
   totalCost: number;
   userCredits: number;
   insufficientCredits: boolean;
@@ -1488,10 +1378,6 @@ function CampaignSummary(props: CampaignSummaryProps) {
     totalDays,
     canSubmit,
     isSubmitting,
-    isRunning,
-    overallPct,
-    jobCount,
-    jobs,
     totalCost,
     userCredits,
     insufficientCredits,
@@ -1635,30 +1521,10 @@ function CampaignSummary(props: CampaignSummaryProps) {
           View drafts
         </button>
 
-        {(isSubmitting || isRunning) && (
-          <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-3 space-y-2">
-            <div className="flex items-center justify-between text-xs font-medium text-indigo-700">
-              <span>Generating…</span>
-              <span>{overallPct}%</span>
-            </div>
-            <Progress
-              value={overallPct}
-              className="h-1.5 bg-indigo-100 **:data-[slot=progress-indicator]:bg-indigo-500"
-            />
-            {jobCount > 1 && (
-              <div className="space-y-1 pt-1">
-                {jobs.map((job) => (
-                  <div
-                    key={job.jobId}
-                    className="flex items-center justify-between text-[11px] text-indigo-700/80"
-                  >
-                    <span className="capitalize">{job.platform}</span>
-                    <span>{job.pct}%</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+        {isSubmitting && (
+          <p className="mt-4 text-xs font-medium text-indigo-700">
+            Generating drafts…
+          </p>
         )}
       </section>
     </aside>
@@ -1675,17 +1541,8 @@ type DraftsDrawerProps = {
   registerRefresh: (fn: (() => Promise<void>) | null) => void;
   dateWindow: string[];
   formattedToday: string;
-  /** True while a campaign-post job is in flight (create OR regen). Used
-   *  to grey out regen buttons across all rows — only one campaign-post
-   *  job can occupy the activeJobs slot at a time. */
+  /** True while campaign create or draft regen is in flight. */
   isCampaignJobRunning: boolean;
-  /** Hook into the page's `useFeatureJob` optimistic cache so the
-   *  progress UI lights up immediately after a regen is queued (without
-   *  waiting for the user-doc Firestore snapshot). */
-  onCampaignJobStarted: (response: {
-    parentJobId: string;
-    jobs: Array<{ jobId: string; platform: 'instagram' | 'facebook' | 'linkedin' }>;
-  }) => void;
 };
 
 function DraftsDrawer(props: DraftsDrawerProps) {
@@ -1696,7 +1553,6 @@ function DraftsDrawer(props: DraftsDrawerProps) {
     dateWindow,
     formattedToday,
     isCampaignJobRunning,
-    onCampaignJobStarted,
   } = props;
   const [drafts, setDrafts] = useState<CampaignDraft[]>([]);
   const [loading, setLoading] = useState(false);
@@ -1728,16 +1584,8 @@ function DraftsDrawer(props: DraftsDrawerProps) {
       // still being regenerated?". Once the new image/regenerationCount
       // is in `list`, the spinner can go away.
       setRegeneratingDraftId(null);
-    } catch (err) {
-      const typed = err as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-      showErrorToast(
-        typed?.response?.data?.message ||
-          typed?.message ||
-          'Could not load drafts.'
-      );
+    } catch {
+      showErrorToast('Could not load drafts.');
     } finally {
       setLoading(false);
     }
@@ -1785,28 +1633,17 @@ function DraftsDrawer(props: DraftsDrawerProps) {
       }
       try {
         setRegeneratingDraftId(draftId);
-        const response = await regenerateCampaignDraftApi({ draftId });
-        onCampaignJobStarted({
-          parentJobId: response.parentJobId,
-          jobs: response.jobs,
-        });
-        toast.success("Regenerating");
-      } catch (err) {
+        await regenerateCampaignDraftApi({ draftId });
+        toast.success('Draft regenerated');
+        await refresh();
+      } catch {
         // Roll back the spinner so the user can retry; the toast already
         // tells them what went wrong.
         setRegeneratingDraftId(null);
-        const typed = err as {
-          response?: { data?: { message?: string } };
-          message?: string;
-        };
-        showErrorToast(
-          typed?.response?.data?.message ||
-            typed?.message ||
-            'Could not start the regeneration.'
-        );
+        showErrorToast('Could not start the regeneration.');
       }
     },
-    [isCampaignJobRunning, onCampaignJobStarted, regeneratingDraftId]
+    [isCampaignJobRunning, regeneratingDraftId, refresh]
   );
 
   return (
@@ -2030,16 +1867,8 @@ function DraftRow(props: DraftRowProps) {
       });
       toast.success('Draft scheduled.');
       onScheduled();
-    } catch (err) {
-      const typed = err as {
-        response?: { data?: { message?: string } };
-        message?: string;
-      };
-      showErrorToast(
-        typed?.response?.data?.message ||
-          typed?.message ||
-          'Could not schedule this draft.'
-      );
+    } catch {
+      showErrorToast('Could not schedule this draft.');
     } finally {
       setScheduling(false);
     }

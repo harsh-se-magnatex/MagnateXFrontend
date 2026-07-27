@@ -20,6 +20,7 @@ export async function proxy(req: NextRequest) {
   const path = url.pathname;
 
   const session = (await cookies()).get('session');
+  
   const is = {
     auth: AUTH.includes(path),
     public: PUBLIC.some((r) => path.startsWith(r)),
@@ -27,9 +28,10 @@ export async function proxy(req: NextRequest) {
   };
 
   if (is.auth) {
-    return session
-      ? NextResponse.redirect(new URL('/home', req.url))
-      : NextResponse.next();
+    // Do not bounce /sign-in → /home on cookie presence alone.
+    // A stale/invalid session fights the client 401 → /sign-in redirect
+    // and causes an infinite reload loop. Auth pages verify via /auth/me.
+    return NextResponse.next();
   }
 
   if (path.startsWith('/admin')) {

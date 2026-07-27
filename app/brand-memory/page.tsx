@@ -1,8 +1,9 @@
 'use client';
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
@@ -13,9 +14,12 @@ import {
   putMemoryLayer,
   putMemoryLayerBrandPhotoDescription,
   uploadMemoryLayerBrandPhotos,
+  uploadMemoryLayerSourcePdf,
   type MemoryLayerAnswerPayload,
 } from '@/src/service/api/userService';
 import { useTourState } from '@/src/stores/tourState';
+
+const MAX_MEMORY_LAYER_PDF_BYTES = 50 * 1024 * 1024;
 
 type Question = {
   id: string;
@@ -46,8 +50,27 @@ function parseMemory(data: unknown): MemoryPayload | null {
   return data as MemoryPayload;
 }
 
+/** Browsers sometimes report an empty MIME type for valid images (e.g. Linux, some exports). */
+function isImageFile(f: File): boolean {
+  if (f.type.startsWith('image/')) return true;
+  if (f.type !== '') return false;
+  const ext = f.name.split('.').pop()?.toLowerCase() ?? '';
+  return [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'gif',
+    'bmp',
+    'heic',
+    'heif',
+    'svg',
+  ].includes(ext);
+}
+
 export default function BrandMemoryPage() {
   const router = useRouter();
+  const pdfInputId = useId();
   const goHomeWithPlatformTour = useCallback(() => {
     useTourState.getState().queuePlatformTour();
     router.replace('/home');
@@ -68,8 +91,13 @@ export default function BrandMemoryPage() {
     { id: string; file: File; previewUrl: string; description: string }[]
   >([]);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [pendingPdf, setPendingPdf] = useState<File | null>(null);
   const pendingRef = useRef(pendingStaged);
   pendingRef.current = pendingStaged;
+  const brandPhotosMetaRef = useRef(brandPhotosMeta);
+  brandPhotosMetaRef.current = brandPhotosMeta;
+  const isExtracting = uploadingPdf;
 
   useEffect(() => {
     return () => {
@@ -88,7 +116,7 @@ export default function BrandMemoryPage() {
     try {
       const res = await getMemoryLayer();
       if (!isEnvelopeOk(res as { success?: boolean })) {
-        throw new Error('Failed to load brand memory');
+        throw new Error('Failed to load Business Data');
       }
       const raw = (
         res as { data?: { memoryLayer?: unknown } }
@@ -119,9 +147,7 @@ export default function BrandMemoryPage() {
         setBrandPhotosMeta(ml.brandPhotos ?? []);
       }
     } catch (e) {
-      showErrorToast(
-        e instanceof Error ? e.message : 'Something went wrong'
-      );
+      showErrorToast('Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -130,6 +156,19 @@ export default function BrandMemoryPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const refreshBrandPhotos = useCallback(async () => {
+    try {
+      const res = await getMemoryLayer();
+      if (!isEnvelopeOk(res as { success?: boolean })) return;
+      const ml = parseMemory(
+        (res as { data?: { memoryLayer?: unknown } }).data?.memoryLayer
+      );
+      if (ml?.brandPhotos) setBrandPhotosMeta(ml.brandPhotos);
+    } catch {
+      /* ignore silent refresh errors */
+    }
+  }, []);
 
   useEffect(() => {
     const m: Record<string, string> = {};
@@ -224,7 +263,7 @@ export default function BrandMemoryPage() {
       }
       goHomeWithPlatformTour();
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'Failed to skip');
+      showErrorToast('Failed to skip');
     } finally {
       setSubmitting(false);
     }
@@ -252,37 +291,69 @@ export default function BrandMemoryPage() {
     setQIndex((i) => Math.max(0, i - 1));
   }, [phase, questions.length]);
 
-  const onFilesPicked = useCallback(
-    (list: FileList | null) => {
-      if (!list?.length) return;
-      const maxPending = 30 - brandPhotosMeta.length;
-      setPendingStaged((prev) => {
-        const next = [...prev];
-        for (let i = 0; i < list.length; i++) {
-          if (next.length >= maxPending) {
-            toast.message(
-              `Maximum ${maxPending} new file(s) for this step (30 images total including existing)`
-            );
-            break;
-          }
-          const f = list.item(i);
-          if (!f) continue;
-          if (!f.type.startsWith('image/')) {
-            showErrorToast(`${f.name} is not an image`);
-            continue;
-          }
-          next.push({
-            id: `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2)}`,
-            file: f,
-            previewUrl: URL.createObjectURL(f),
-            description: '',
-          });
+  const onFilesPicked = useCallback((list: FileList | null) => {
+    if (!list?.length) return;
+    const brandPhotos = brandPhotosMetaRef.current;
+    setPendingStaged((prev) => {
+      const maxTotal = 30 - brandPhotos.length;
+      const room = Math.max(0, maxTotal - prev.length);
+      if (room === 0) {
+        toast.message('30 image limit reached');
+        return prev;
+      }
+      const next = [...prev];
+      for (let i = 0; i < list.length; i++) {
+        if (next.length >= maxTotal) {
+          toast.message('30 image limit reached');
+          break;
         }
-        return next;
-      });
-    },
-    [brandPhotosMeta.length]
-  );
+        const f = list.item(i);
+        if (!f) continue;
+        if (!isImageFile(f)) {
+          showErrorToast(`${f.name} is not an image`);
+          continue;
+        }
+        next.push({
+          id: `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2)}`,
+          file: f,
+          previewUrl: URL.createObjectURL(f),
+          description: '',
+        });
+      }
+      return next;
+    });
+  }, []);
+
+  const handleUploadPdf = async () => {
+    if (!pendingPdf) {
+      toast.message('Choose a PDF first');
+      return;
+    }
+    if (pendingPdf.size > MAX_MEMORY_LAYER_PDF_BYTES) {
+      showErrorToast('PDF must be 50MB or smaller');
+      return;
+    }
+    try {
+      setUploadingPdf(true);
+      const res = await uploadMemoryLayerSourcePdf(pendingPdf);
+      if (!isEnvelopeOk(res as { success?: boolean })) {
+        throw new Error('PDF upload failed');
+      }
+      const data = (res as {
+        data?: { memoryLayer?: unknown; sourceDocumentId?: string };
+      }).data;
+      if (data?.memoryLayer) {
+        const ml = parseMemory(data.memoryLayer);
+        if (ml?.brandPhotos) setBrandPhotosMeta(ml.brandPhotos);
+      }
+      setPendingPdf(null);
+      toast.success('PDF uploaded');
+    } catch (e) {
+      showErrorToast('PDF upload failed');
+    } finally {
+      setUploadingPdf(false);
+    }
+  };
 
   const removePending = useCallback((id: string) => {
     setPendingStaged((prev) => {
@@ -314,7 +385,7 @@ export default function BrandMemoryPage() {
         if (ml?.brandPhotos) setBrandPhotosMeta(ml.brandPhotos);
         toast.success('Image description saved');
       } catch (e) {
-        showErrorToast(e instanceof Error ? e.message : 'Save failed');
+        showErrorToast('Save failed');
       }
     },
     [brandPhotosMeta, serverDescDrafts]
@@ -339,6 +410,15 @@ export default function BrandMemoryPage() {
         if (!isEnvelopeOk(up as { success?: boolean })) {
           throw new Error('Photo upload failed');
         }
+        const data = (up as {
+          data?: {
+            memoryLayer?: unknown;
+          };
+        }).data;
+        if (data?.memoryLayer) {
+          const ml = parseMemory(data.memoryLayer);
+          if (ml?.brandPhotos) setBrandPhotosMeta(ml.brandPhotos);
+        }
         for (const p of pendingStaged) {
           try {
             URL.revokeObjectURL(p.previewUrl);
@@ -360,7 +440,7 @@ export default function BrandMemoryPage() {
       toast.success('Saved');
       goHomeWithPlatformTour();
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'Failed to finish');
+      showErrorToast('Failed to finish');
     } finally {
       setSubmitting(false);
     }
@@ -386,7 +466,7 @@ export default function BrandMemoryPage() {
       }
       goHomeWithPlatformTour();
     } catch (e) {
-      showErrorToast(e instanceof Error ? e.message : 'Failed');
+      showErrorToast('Failed');
     } finally {
       setSubmitting(false);
     }
@@ -564,17 +644,89 @@ export default function BrandMemoryPage() {
           <>
             <div className={cn(photosScrollClass, 'mt-4 space-y-4')}>
             <p className="text-sm text-gray-600">
-              Optional: you can add {remainingPhotoSlots} more image
-              {remainingPhotoSlots === 1 ? '' : 's'} in this step (30 max in storage
+              Optional: upload a PDF brochure or individual images. SocioGenie
+              suggests descriptions when you leave them blank — edit anytime. Up
+              to 30 images total
               {brandPhotosMeta.length > 0
-                ? `, ${brandPhotosMeta.length} already saved`
+                ? ` (${brandPhotosMeta.length} already saved`
                 : ''}
               {pendingStaged.length > 0
-                ? `, ${pendingStaged.length} staged`
+                ? `${brandPhotosMeta.length > 0 ? ',' : ' ('}${pendingStaged.length} staged`
                 : ''}
-              ). Add an image description under each preview (max{' '}
-              {BRAND_PHOTO_DESCRIPTION_MAX} characters).
+              {brandPhotosMeta.length > 0 || pendingStaged.length > 0
+                ? ')'
+                : ''}
+              . You can add {remainingPhotoSlots} more image
+              {remainingPhotoSlots === 1 ? '' : 's'} in this step (max{' '}
+              {BRAND_PHOTO_DESCRIPTION_MAX} characters per description).
             </p>
+
+            {isExtracting && (
+              <p className="text-xs font-medium text-[#00D1FF] flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Processing PDF…
+              </p>
+            )}
+
+            <div className="rounded-xl border border-dashed border-white/30 bg-white/5 p-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">
+                Import from PDF
+              </h3>
+              <p className="text-sm text-gray-500 mb-3 max-w-[52ch]">
+                Upload a product brochure or catalog PDF (max 50MB).
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <label
+                  htmlFor={pdfInputId}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-gray-200 cursor-pointer hover:bg-white/15',
+                    isExtracting && 'opacity-60 pointer-events-none'
+                  )}
+                >
+                  <FileText className="w-4 h-4" />
+                  {pendingPdf ? pendingPdf.name : 'Choose PDF'}
+                  <input
+                    id={pdfInputId}
+                    type="file"
+                    accept="application/pdf"
+                    className="sr-only"
+                    disabled={isExtracting}
+                    onChange={(e) => {
+                      const f = e.target.files?.[0] ?? null;
+                      if (f && f.size > MAX_MEMORY_LAYER_PDF_BYTES) {
+                        showErrorToast('PDF must be 50MB or smaller');
+                        e.target.value = '';
+                        return;
+                      }
+                      setPendingPdf(f);
+                      queueMicrotask(() => {
+                        e.target.value = '';
+                      });
+                    }}
+                  />
+                </label>
+                {pendingPdf ? (
+                  <button
+                    type="button"
+                    onClick={() => setPendingPdf(null)}
+                    className="text-xs text-gray-500 hover:text-gray-300"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={!pendingPdf || isExtracting}
+                  onClick={() => void handleUploadPdf()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-linear-to-r from-[#6C5CE7] to-[#00D1FF] px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:opacity-90 disabled:opacity-60"
+                >
+                  {uploadingPdf ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : null}
+                  Upload PDF
+                </button>
+              </div>
+            </div>
             {brandPhotosMeta.length > 0 && (
               <div>
                 <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase">
@@ -623,13 +775,24 @@ export default function BrandMemoryPage() {
                 </div>
               </div>
             )}
-            <label className="block border-2 border-dashed border-white/20 rounded-xl p-6 sm:p-8 text-center cursor-pointer hover:bg-white/5 shrink-0">
+            <label
+              className={cn(
+                'block border-2 border-dashed border-white/20 rounded-xl p-6 sm:p-8 text-center cursor-pointer hover:bg-white/5 shrink-0',
+                isExtracting && 'opacity-60 pointer-events-none'
+              )}
+            >
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept="image/*"
                 multiple
                 className="hidden"
-                onChange={(e) => onFilesPicked(e.target.files)}
+                disabled={isExtracting}
+                onChange={(e) => {
+                  onFilesPicked(e.target.files);
+                  queueMicrotask(() => {
+                    e.target.value = '';
+                  });
+                }}
               />
               <span className="text-gray-700">Drop or click to add images</span>
             </label>
@@ -704,7 +867,7 @@ export default function BrandMemoryPage() {
               </button>
               <button
                 type="button"
-                disabled={submitting}
+                disabled={submitting || isExtracting}
                 onClick={() => void skipPhotos()}
                 className="px-4 py-2 rounded-lg text-sm text-gray-600"
               >
@@ -712,9 +875,9 @@ export default function BrandMemoryPage() {
               </button>
               <button
                 type="button"
-                disabled={submitting}
+                disabled={submitting || isExtracting}
                 onClick={() => void finish()}
-                className="px-6 py-2 rounded-lg text-sm bg-linear-to-r from-[#00D1FF] to-[#6C5CE7] text-white"
+                className="px-6 py-2 rounded-lg text-sm bg-linear-to-r from-[#00D1FF] to-[#6C5CE7] text-white disabled:opacity-60"
               >
                 {submitting ? 'Saving…' : 'Finish'}
               </button>

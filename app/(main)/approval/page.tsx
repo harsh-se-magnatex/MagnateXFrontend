@@ -9,8 +9,13 @@ import {
   type MouseEvent,
 } from 'react';
 import Link from 'next/link';
-import { Calendar, ExternalLink, Info, Loader2, Sparkles } from 'lucide-react';
+import { Calendar, ExternalLink, Info, Loader2, Search, Sparkles } from 'lucide-react';
 import { performActionByUserOnScheduledPost } from '@/src/service/api/userService';
+import { GenerationResearchDialog } from '@/components/generation-research-dialog';
+import {
+  hasViewableResearch,
+  parseGenerationResearchFromProof,
+} from '@/lib/generation-research';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
@@ -29,12 +34,16 @@ import {
   ImagePreviewOverlay,
   useImagePreview,
 } from '@/components/image-preview';
+import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
+import {
+  hasSchedulableMediaPreview,
+  resolveSchedulableMediaPreview,
+} from '@/lib/post-media-preview';
 import {
   SCHEDULED_POST_REGENERATE_CREDIT,
   canScheduledPostRegenerate,
   willScheduledPostRegenChargeCredits,
 } from '@/lib/scheduled-post-regenerate';
-import { useScheduledPostRegenJob, parseRegenJobFromResponse } from '@/src/hooks/useScheduledPostRegenJob';
 
 type FirestoreTimestamp = {
   _seconds: number;
@@ -50,7 +59,10 @@ export type PendingScheduledPost = {
   message: string;
   removedByUser?: boolean;
   rejectedByUser?: boolean;
+  mediaType?: 'image' | 'video' | 'carousel' | string | null;
   imageUrl: string | null;
+  videoUrl?: string | null;
+  videoPosterUrl?: string | null;
   scheduleAt: FirestoreTimestamp;
   platform: string;
   postStatus: string;
@@ -62,6 +74,7 @@ export type PendingScheduledPost = {
   error?: string | null;
   errors?: string[] | null;
   GeneratedBy?: string;
+  generationProof?: unknown;
   /**
    * Mirrors `users/{uid}/scheduledPosts/{postId}.regenratedCount` (typo
    * preserved to match the Firestore field). The backend initializes it to
@@ -188,6 +201,12 @@ function PendingPostCard({
   const generatedBy = generatedByLabel(post.GeneratedBy);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showRegenerate = canScheduledPostRegenerate(post);
+  const showActions = status.variant !== 'failed';
+  const mediaPreview = resolveSchedulableMediaPreview(post);
+  const hasMedia = hasSchedulableMediaPreview(mediaPreview);
+  const previewUrl = mediaPreview.isVideo
+    ? mediaPreview.videoUrl
+    : mediaPreview.imageUrl;
   return (
     <div
       ref={cardRef}
@@ -212,15 +231,17 @@ function PendingPostCard({
       )}
     >
       <div className="relative mb-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 aspect-4/3">
-        {post.imageUrl ? (
-          <img
-            src={post.imageUrl}
-            alt=""
+        {hasMedia ? (
+          <PostMediaPreview
+            preview={mediaPreview}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            videoClassName="h-full w-full object-cover"
+            controls={mediaPreview.isVideo}
+            muted
           />
         ) : (
           <div className="flex h-full min-h-[140px] items-center justify-center text-sm text-slate-500">
-            No image
+            No media
           </div>
         )}
         <div className="absolute left-2 top-2 max-w-[calc(100%-1rem)]">
@@ -246,13 +267,13 @@ function PendingPostCard({
             </span>
           </div>
         ) : null}
-        {post.imageUrl && !isRegenerating ? (
+        {previewUrl && !isRegenerating && !mediaPreview.isVideo ? (
           <div className="absolute bottom-2 right-2">
             <ImagePreviewButton
               variant="overlay-icon"
               stopPropagation
               onClick={() =>
-                onPreviewImage(post.imageUrl as string, 'Scheduled post image')
+                onPreviewImage(previewUrl, 'Scheduled post image')
               }
             />
           </div>
@@ -294,7 +315,7 @@ function PendingPostCard({
 
       {status.reason ? (
         <p
-          className="mt-2 line-clamp-2 rounded-md border border-red-100 bg-red-50/60 px-2 py-1 text-[11px] leading-snug text-red-700"
+          className="mt-2 line-clamp-2 rounded-md border border-red-100 bg-red-500/20 px-2 py-1 text-[11px] leading-snug text-red-700"
           title={status.reason}
         >
           <span className="font-semibold">Reason: </span>
@@ -303,16 +324,18 @@ function PendingPostCard({
       ) : null}
 
       <div className="mt-3 space-y-2">
-        <ApprovalActionButtons
-          size="card"
-          stopPropagation
-          disabled={actionDisabled || isRegenerating}
-          showRegenerate={showRegenerate}
-          onRegenerate={onRegenerate}
-          onAccept={onAccept}
-          onReject={onReject}
-          regenChargesCredits={regenChargesCredits}
-        />
+        {showActions ? (
+          <ApprovalActionButtons
+            size="card"
+            stopPropagation
+            disabled={actionDisabled || isRegenerating}
+            showRegenerate={showRegenerate}
+            onRegenerate={onRegenerate}
+            onAccept={onAccept}
+            onReject={onReject}
+            regenChargesCredits={regenChargesCredits}
+          />
+        ) : null}
         <p className="text-[11px] text-slate-400 group-hover:text-slate-500">
           {isRegenerating
             ? 'Regeneration in progress'
@@ -365,12 +388,21 @@ function DetailModal({
   formatTimestamp: (ts: TimestampInput) => string;
   onPreviewImage: (url: string, alt?: string) => void;
 }) {
+  const [researchOpen, setResearchOpen] = useState(false);
   const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showRegenerate = canScheduledPostRegenerate(post);
+  const showActions = status.variant !== 'failed';
+  const research = parseGenerationResearchFromProof(post.generationProof);
+  const showResearch = hasViewableResearch(research);
+  const mediaPreview = resolveSchedulableMediaPreview(post);
+  const hasMedia = hasSchedulableMediaPreview(mediaPreview);
+  const openUrl = mediaPreview.isVideo
+    ? mediaPreview.videoUrl
+    : mediaPreview.imageUrl;
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
@@ -409,47 +441,62 @@ function DetailModal({
           </button>
         </div>
         <div className="p-4 space-y-4">
-          {post.imageUrl && (
+          {hasMedia ? (
             <div>
-              <p className="text-xs font-medium text-slate-500 mb-1">Image</p>
-              <button
-                type="button"
-                onClick={() =>
-                  onPreviewImage(post.imageUrl as string, 'Scheduled post image')
-                }
-                className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]"
-                aria-label="Open image preview"
-              >
-                <img
-                  src={post.imageUrl}
-                  alt="Post"
-                  className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
+              <p className="text-xs font-medium text-slate-500 mb-1">
+                {mediaPreview.isVideo ? 'Video' : 'Image'}
+              </p>
+              {mediaPreview.isVideo ? (
+                <PostMediaPreview
+                  preview={mediaPreview}
+                  className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200"
+                  videoClassName="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200"
+                  controls
+                  muted={false}
                 />
-              </button>
-              <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
-                <ImagePreviewButton
+              ) : (
+                <button
+                  type="button"
                   onClick={() =>
                     onPreviewImage(
-                      post.imageUrl as string,
+                      openUrl as string,
                       'Scheduled post image'
                     )
                   }
-                  className="rounded-lg bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100 px-4 py-2"
-                />
-              </div>
-              <div className="flex w-full justify-end">
-                <a
-                  href={post.imageUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-[#4A8FF6]/20"
+                  className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]"
+                  aria-label="Open image preview"
                 >
-                  Open in new tab
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </div>
+                  <PostMediaPreview
+                    preview={mediaPreview}
+                    className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
+                  />
+                </button>
+              )}
+              {!mediaPreview.isVideo && openUrl ? (
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
+                  <ImagePreviewButton
+                    onClick={() =>
+                      onPreviewImage(openUrl, 'Scheduled post image')
+                    }
+                    className="rounded-lg bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100 px-4 py-2"
+                  />
+                </div>
+              ) : null}
+              {openUrl ? (
+                <div className="flex w-full justify-end">
+                  <a
+                    href={openUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-[#4A8FF6]/20"
+                  >
+                    Open in new tab
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+              ) : null}
             </div>
-          )}
+          ) : null}
           <DetailRow label="Caption / Message" value={post.message || '—'} long />
           <DetailRow label="Schedule at" value={scheduleAt} />
           <DetailRow label="Created at" value={createdAt} />
@@ -465,7 +512,7 @@ function DetailModal({
               {status.label}
             </span>
             {status.variant === 'failed' ? (
-              <p className="mt-2 whitespace-pre-wrap break-words rounded-lg border border-red-100 bg-red-50/60 p-2 text-xs text-red-700">
+              <p className="mt-2 whitespace-pre-wrap break-words rounded-lg border border-red-100 bg-red-500/30 p-2 text-xs text-red-700">
                 <span className="font-semibold">Reason: </span>
                 {status.reason ?? 'No failure reason recorded.'}
               </p>
@@ -475,36 +522,56 @@ function DetailModal({
           {generatedBy ? (
             <DetailRow label="Generated by" value={generatedBy} />
           ) : null}
-          <div className="pt-4 border-t border-slate-200">
-            <p className="text-xs font-medium text-slate-500 mb-3">Actions</p>
-            {regenChargesCredits ? (
-              <div
-                className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
-                role="note"
+          {showResearch ? (
+            <div>
+              <p className="text-xs font-medium text-slate-500 mb-2">Research</p>
+              <button
+                type="button"
+                onClick={() => setResearchOpen(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-[#4A8FF6]/30 bg-[#4A8FF6]/5 px-3 py-2 text-sm font-medium text-[#1e40af] hover:bg-[#4A8FF6]/10 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/40"
               >
-                <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
-                <span className="leading-snug">
-                  <span className="font-semibold">
-                    {SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted
-                  </span>{' '}
-                  if you regenerate this post.
-                </span>
-              </div>
-            ) : null}
-            <ApprovalActionButtons
-              size="modal"
-              disabled={actionLoading}
-              showRegenerate={showRegenerate}
-              onRegenerate={() =>
-                onAction(post.postId, 'regenerate', post.platform)
-              }
-              onAccept={() => onAction(post.postId, 'approve', post.platform)}
-              onReject={() => onAction(post.postId, 'reject', post.platform)}
-              regenChargesCredits={regenChargesCredits}
-            />
-          </div>
+                <Search className="h-4 w-4" aria-hidden />
+                View research
+              </button>
+            </div>
+          ) : null}
+          {showActions ? (
+            <div className="pt-4 border-t border-slate-200">
+              <p className="text-xs font-medium text-slate-500 mb-3">Actions</p>
+              {regenChargesCredits ? (
+                <div
+                  className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                  role="note"
+                >
+                  <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                  <span className="leading-snug">
+                    <span className="font-semibold">
+                      {SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted
+                    </span>{' '}
+                    if you regenerate this post.
+                  </span>
+                </div>
+              ) : null}
+              <ApprovalActionButtons
+                size="modal"
+                disabled={actionLoading}
+                showRegenerate={showRegenerate}
+                onRegenerate={() =>
+                  onAction(post.postId, 'regenerate', post.platform)
+                }
+                onAccept={() => onAction(post.postId, 'approve', post.platform)}
+                onReject={() => onAction(post.postId, 'reject', post.platform)}
+                regenChargesCredits={regenChargesCredits}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
+      <GenerationResearchDialog
+        open={researchOpen}
+        onClose={() => setResearchOpen(false)}
+        research={research}
+      />
     </div>
   );
 }
@@ -601,15 +668,30 @@ export default function ApprovalPage() {
     }
   }, [needApproval]);
 
-  const onRegenSettledRef = useRef<() => Promise<void>>(async () => {});
-  onRegenSettledRef.current = silentRefresh;
+  const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(
+    () => new Set()
+  );
 
-  const {
-    regeneratingPostIds,
-    markRegenerating,
-    attachRegenJob,
-    cancelRegeneration,
-  } = useScheduledPostRegenJob(onRegenSettledRef);
+  const markRegenerating = useCallback((postId: string) => {
+    let accepted = false;
+    setRegeneratingPostIds((prev) => {
+      if (prev.has(postId)) return prev;
+      accepted = true;
+      const next = new Set(prev);
+      next.add(postId);
+      return next;
+    });
+    return accepted;
+  }, []);
+
+  const cancelRegeneration = useCallback((postId: string) => {
+    setRegeneratingPostIds((prev) => {
+      if (!prev.has(postId)) return prev;
+      const next = new Set(prev);
+      next.delete(postId);
+      return next;
+    });
+  }, []);
 
   const lastPostRef = useCallback(
     (node: HTMLDivElement | null) => {
@@ -653,12 +735,8 @@ export default function ApprovalPage() {
       // so we optimistically pop the card out of the "needs my approval"
       // bucket and snapshot the previous list to roll back on failure.
       //
-      // Regenerate is fundamentally different — the API just enqueues a Cloud
-      // Tasks job (worker takes ~30-60s to re-render the image). If we pop
-      // the card here, the user sees it vanish and thinks the page reloaded;
-      // they also lose any signal that work is in progress. So for regen we
-      // keep the card in place and switch it into a "Regenerating…" overlay
-      // state via `regeneratingPostIds` instead.
+      // Regenerate runs synchronously on the server; keep the card visible
+      // with a "Regenerating…" overlay via `regeneratingPostIds`.
       const previousPosts = pendingPosts;
       const previousSelected = selectedPost;
       const isRegen = action === 'regenerate';
@@ -669,7 +747,7 @@ export default function ApprovalPage() {
           setSelectedPost(null);
         }
       } else {
-        markRegenerating(postId);
+        if (!markRegenerating(postId)) return;
         if (selectedPost?.postId === postId) {
           setSelectedPost(null);
         }
@@ -677,21 +755,11 @@ export default function ApprovalPage() {
 
       setActingPostId(postId);
       try {
-        const response = await performActionByUserOnScheduledPost(
-          postId,
-          action,
-          platform
-        );
+        await performActionByUserOnScheduledPost(postId, action, platform);
         if (!isRegen) {
           void silentRefresh();
         } else {
-          const job = parseRegenJobFromResponse(response.data);
-          if (job) {
-            attachRegenJob(postId, job);
-          } else {
-            cancelRegeneration(postId);
-            showErrorToast('Regeneration started but job tracking failed');
-          }
+          await silentRefresh();
         }
       } catch {
         showErrorToast('Failed to perform action on scheduled post');
@@ -704,6 +772,9 @@ export default function ApprovalPage() {
           }
         }
       } finally {
+        if (isRegen) {
+          cancelRegeneration(postId);
+        }
         setActingPostId(null);
       }
     },
@@ -712,7 +783,6 @@ export default function ApprovalPage() {
       selectedPost,
       silentRefresh,
       markRegenerating,
-      attachRegenJob,
       cancelRegeneration,
     ]
   );

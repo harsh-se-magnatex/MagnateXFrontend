@@ -4,25 +4,24 @@ import Link from 'next/link';
 import {
   Activity,
   BarChart3,
-  Bell,
   Brain,
   CalendarCheck2,
-  CalendarDays,
+  CalendarRange,
   CalendarSync,
+  ChevronsUpDown,
   ClipboardClock,
   CloudLightning,
   CreditCard,
-  Fingerprint,
   HelpCircle,
   Eye,
   ImagePlus,
   Images,
   Receipt,
   Send,
-  Settings,
   Settings2,
   Share2,
   Sparkles,
+  Video,
   LayoutGrid,
   User,
   Wand2,
@@ -41,8 +40,16 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { usePathname } from 'next/navigation';
-import { WORKSPACE_NAV, type WorkspaceNavHref } from '@/lib/workspace-nav';
+import { WORKSPACE_NAV, CONTENT_PLAN_NAV_ITEM, type WorkspaceNavHref } from '@/lib/workspace-nav';
 import { useTourState } from '@/src/stores/tourState';
 import { getPageTourRequest } from '@/components/tour/tour-steps';
 import { useAuth } from '@/hooks/useAuth';
@@ -51,10 +58,6 @@ import {
   PRICING_PLANS_BY_ID,
   type PlanId,
 } from '@/lib/landing-pricing';
-import {
-  formatNotificationCount,
-  useNotificationCounts,
-} from '@/app/(main)/_components/NotificationCountsProvider';
 
 /** Turn a route into a stable id slug for tour anchoring.
  *  `/instant-generation` → `tour-nav-instant-generation`
@@ -87,10 +90,13 @@ const workspaceNavIcons: Record<WorkspaceNavHref, typeof Brain> = {
   '/instant-generation': Brain,
   '/batch-generation': CloudLightning,
   '/product-advert': ImagePlus,
+  '/video-generation': Video,
   '/festive-post': CalendarSync,
   '/create-campaign': Sparkles,
+  '/create/carousel-generation': LayoutGrid,
   '/post-scheduler': CalendarCheck2,
   '/scheduled-post': ClipboardClock,
+  '/content-plan': CalendarRange,
   '/media-library': Images,
   '/social-media-integration': Share2,
   '/analytics': BarChart3,
@@ -104,9 +110,13 @@ const workspaceNav = WORKSPACE_NAV.map((item) => ({
 const settingsNavItems = [
   { name: 'Account', href: '/settings/account', icon: User },
   { name: 'Billing & Credits', href: '/settings/billings', icon: CreditCard },
-  { name: 'Transactions', href: '/settings/transactions', icon: Receipt },
+  {
+    name: 'Next plan platforms',
+    href: '/settings/next-plan-platforms',
+    icon: Share2,
+  },
+  { name: 'Payment History', href: '/settings/transactions', icon: Receipt },
   { name: 'Automation', href: '/settings/automation', icon: Settings2 },
-  { name: 'Notifications', href: '/settings/notifications', icon: Bell },
   {
     name: 'Support & Legal',
     href: '/settings/support-legal',
@@ -124,24 +134,37 @@ export function AppSidebar({
   isAccountFrozen: boolean;
 }) {
   const pathname = usePathname();
-  const { total: notificationTotal, cap: notificationCap } =
-    useNotificationCounts();
-  const notificationBadge = formatNotificationCount(
-    notificationTotal,
-    notificationCap
-  );
-  const workspaceItems = isAccountFrozen
-    ? workspaceNav.filter((item) => item.href === '/social-media-integration')
-    : workspaceNav;
-  const settingsChildrenFrozen = settingsNavItems.filter(
-    (child) => child.href === '/settings/billings'
-  );
+  const { billing } = useUserPlanCredits();
+  const workspaceItems = (() => {
+    if (isAccountFrozen) {
+      return workspaceNav.filter(
+        (item) => item.href === '/social-media-integration'
+      );
+    }
+    const items = [...workspaceNav];
+    // Content Plan is auto-mode only — append from users/{uid}.mode via
+    // UserPlanCreditsProvider (not a separate auto-mode API gate).
+    if (billing?.mode === 'auto') {
+      const postQueueIdx = items.findIndex(
+        (item) => item.href === '/scheduled-post'
+      );
+      const contentPlanItem = {
+        ...CONTENT_PLAN_NAV_ITEM,
+        icon: workspaceNavIcons[CONTENT_PLAN_NAV_ITEM.href],
+      };
+      if (postQueueIdx >= 0) {
+        items.splice(postQueueIdx + 1, 0, contentPlanItem);
+      } else {
+        items.push(contentPlanItem);
+      }
+    }
+    return items;
+  })();
   const settingsChildItems = isAccountFrozen
-    ? settingsChildrenFrozen
+    ? settingsNavItems.filter((child) => child.href === '/settings/billings')
     : settingsNavItems;
   const { isMobile, setOpenMobile } = useSidebar();
   const { user, accountName, loading: authLoading } = useAuth();
-  const { billing } = useUserPlanCredits();
 
   const displayName =
     (accountName ?? user?.displayName ?? user?.email ?? 'Account').trim();
@@ -243,73 +266,24 @@ export function AppSidebar({
                 </SidebarMenuItem>
               </SidebarMenu>
             )}
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Settings — always expanded (no collapsible); heading mirrors former dropdown row */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="mb-1 flex items-center gap-2 px-4 text-[10px] font-bold uppercase tracking-widest text-sidebar-foreground/45">
-            <Settings className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
-            Settings
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsChildItems.map((child) => {
-                const href = child.href;
-                const isChildActive = pathname === href;
-                const showBadge =
-                  href === '/settings/notifications' && !!notificationBadge;
-                return (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton asChild isActive={isChildActive}>
-                      <Link
-                        id={tourNavId(href)}
-                        href={href}
-                        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${isChildActive
-                            ? 'bg-primary text-primary-foreground shadow-sm'
-                            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
-                          }`}
-                      >
-                        <child.icon
-                          className={`h-4 w-4 shrink-0 ${isChildActive ? 'text-primary-foreground' : 'text-sidebar-foreground/80'}`}
-                        />
-                        <span
-                          className={
-                            isChildActive ? 'text-primary-foreground' : 'text-sidebar-foreground'
-                          }
-                        >
-                          {child.name}
-                        </span>
-                        {showBadge && (
-                          <span
-                            className={`ml-auto inline-flex min-w-[1.25rem] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold leading-none ring-1 ${
-                              isChildActive
-                                ? 'bg-white/20 text-white ring-white/30'
-                                : 'bg-rose-500 text-white ring-transparent'
-                            }`}
-                            aria-label={`${notificationBadge} unread notifications`}
-                          >
-                            {notificationBadge}
-                          </span>
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-              {!isAccountFrozen && pageTourRequest && (
+            {!isAccountFrozen && pageTourRequest && (
+              <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    type="button"
-                    onClick={startPageTour}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                  >
-                    <Sparkles className="h-4 w-4 shrink-0 text-sidebar-foreground/80" />
-                    <span className="text-sidebar-foreground">Take this page tour</span>
+                  <SidebarMenuButton asChild>
+                    <button
+                      type="button"
+                      onClick={startPageTour}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    >
+                      <Sparkles className="h-4 w-4 shrink-0 text-sidebar-foreground/80" />
+                      <span className="text-sidebar-foreground">
+                        Take this page tour
+                      </span>
+                    </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              )}
-            </SidebarMenu>
+              </SidebarMenu>
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
 
@@ -429,22 +403,65 @@ export function AppSidebar({
         )}
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border bg-sidebar p-3">
-        <div
-          className="flex cursor-default items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-sidebar-accent"
-        >
-          <div
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-sm ring-1 ring-primary/30"
-            aria-hidden
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="Open settings menu"
+              className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-sm ring-1 ring-primary/30"
+                aria-hidden
+              >
+                {authLoading ? '…' : nameInitials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-sidebar-foreground">
+                  {authLoading ? 'Loading…' : displayName}
+                </p>
+                <p className="truncate text-xs text-sidebar-foreground/60">
+                  {planLabel}
+                </p>
+              </div>
+              <ChevronsUpDown
+                className="h-4 w-4 shrink-0 text-sidebar-foreground/50"
+                aria-hidden
+              />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side="top"
+            align="start"
+            sideOffset={8}
+            className="min-w-56"
           >
-            {authLoading ? '…' : nameInitials}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-sidebar-foreground">
-              {authLoading ? 'Loading…' : displayName}
-            </p>
-            <p className="truncate text-xs text-sidebar-foreground/60">{planLabel}</p>
-          </div>
-        </div>
+            <DropdownMenuLabel className="text-xs text-muted-foreground">
+              Settings
+            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              {settingsChildItems.map((child) => {
+                const isActive = pathname === child.href;
+                return (
+                  <DropdownMenuItem key={child.href} asChild>
+                    <Link
+                      id={tourNavId(child.href)}
+                      href={child.href}
+                      className={
+                        isActive
+                          ? 'bg-accent text-accent-foreground'
+                          : undefined
+                      }
+                    >
+                      <child.icon className="h-4 w-4" />
+                      <span>{child.name}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -57,7 +57,12 @@ const geistMono = Geist_Mono({
 });
 
 
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') ??
+  'https://www.sociogenie.ai';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(appUrl),
   title: 'Sociogenie – AI Social Media Management for Small Businesses',
   description:
     'Sociogenie helps small businesses automate social media with AI-generated, human-reviewed content for Instagram, Facebook, and LinkedIn. Setup in under 10 minutes.',

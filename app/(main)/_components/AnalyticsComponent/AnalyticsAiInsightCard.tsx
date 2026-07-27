@@ -86,9 +86,7 @@ export function AnalyticsAiInsightCard({
         }
       } catch (e) {
         if (!cancelled) {
-          setStructuredError(
-            e instanceof Error ? e.message : 'Could not load insights'
-          );
+          setStructuredError('Could not load insights');
           setStructuredPayload(null);
           structuredReadyKeyRef.current = null;
         }
@@ -117,9 +115,7 @@ export function AnalyticsAiInsightCard({
         if (!cancelled) setData(res.data);
       } catch (e) {
         if (!cancelled) {
-          setError(
-            e instanceof Error ? e.message : 'Could not load recommendations'
-          );
+          setError('Could not load recommendations');
           setData(null);
         }
       } finally {

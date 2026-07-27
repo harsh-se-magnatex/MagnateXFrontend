@@ -100,6 +100,16 @@ export function PlaceholderShell({
 /** Generic platform identifier shared by the four growth-studio sections. */
 export type GrowthStudioPlatform = 'facebook' | 'instagram' | 'linkedin';
 
+export type PreloadedEngagementSuggestion = {
+  suggestion: string;
+  source: 'openai' | 'fallback';
+};
+
+export type PreloadedReplySuggestions = Record<
+  string,
+  PreloadedEngagementSuggestion
+>;
+
 const PLATFORM_LABELS: Record<GrowthStudioPlatform, string> = {
   facebook: 'Facebook',
   instagram: 'Instagram',

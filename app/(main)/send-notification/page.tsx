@@ -59,12 +59,8 @@ export default function SendNotificationPage() {
         message: '',
         title: '',
       });
-    } catch (error: unknown) {
-      showErrorToast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to send notification'
-      );
+    } catch {
+      showErrorToast('Failed to send notification');
     } finally {
       setSending(false);
     }

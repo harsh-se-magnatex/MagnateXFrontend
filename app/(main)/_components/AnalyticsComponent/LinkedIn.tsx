@@ -27,6 +27,7 @@ import {
   buildReplyQueueGroupsLinkedIn,
   GrowthStudioBlock,
 } from './growth-studio';
+import type { PreloadedReplySuggestions } from './growth-studio/_common';
 import {
   classifyPostsAsNudgeOrDud,
   weeklyDeltaFromPostFrequency,
@@ -75,6 +76,7 @@ function linkedInPostToPost(p: LinkedInPost): Post {
     postId: p.postId,
     message: text,
     mediaUrl: p.mediaUrl ?? '',
+    mediaUrls: p.mediaUrls,
     permalinkUrl: p.permalinkUrl,
     type: p.type,
     reactions: p.reactions ?? p.likes ?? 0,
@@ -258,6 +260,7 @@ export default function WLinkedInAnalyticsView({
   impressionsChartData,
   updatedLabel,
   repliedCommentIds,
+  preloadedReplySuggestions,
 }: {
   connection: LinkedInAnalyticsConnection;
   li: LinkedInAnalytics | null;
@@ -274,6 +277,7 @@ export default function WLinkedInAnalyticsView({
   impressionsChartData: { date: string; impressions: number }[];
   updatedLabel?: string;
   repliedCommentIds?: string[];
+  preloadedReplySuggestions?: PreloadedReplySuggestions;
 }) {
   const growthSectionRef = useRef<HTMLElement>(null);
   const topPostsSectionRef = useRef<HTMLElement>(null);
@@ -407,11 +411,6 @@ export default function WLinkedInAnalyticsView({
             {li.pageName ?? li.displayName}
           </p>
         ) : null}
-        {li?.organizationUrn ? (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {li.organizationUrn}
-          </p>
-        ) : null}
         {updatedLabel ? (
           <p className="text-sm text-muted-foreground">Last updated {updatedLabel}</p>
         ) : null}
@@ -516,6 +515,7 @@ export default function WLinkedInAnalyticsView({
         platform="linkedin"
         replyGroups={replyGroups}
         pageName={li?.pageName ?? li?.displayName}
+        preloadedReplySuggestions={preloadedReplySuggestions}
       />
 
       <section

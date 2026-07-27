@@ -150,9 +150,15 @@ export function SigninForm({
       }
       const code = extractFirebaseAuthCode(err);
       const message = getFirebaseAuthErrorMessage(err);
+      const shouldGoToSignUp =
+        code === 'auth/user-not-found' ||
+        (err instanceof Error &&
+          err.message.includes('No account found. Please sign up first.'));
       showErrorToast(message);
-      if (code === 'auth/user-not-found') {
-        router.push('/sign-up');
+      if (shouldGoToSignUp) {
+        router.replace(
+          `/sign-up?email=${encodeURIComponent(email.trim())}`
+        );
       }
     } finally {
       setSignInLoading(false);
@@ -173,10 +179,7 @@ export function SigninForm({
       ) {
         return;
       }
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to recover deleted user account';
+      const message = 'Failed to recover deleted user account';
       showErrorToast(message);
     }
   };
@@ -199,8 +202,7 @@ export function SigninForm({
       ) {
         return;
       }
-      const message =
-        err instanceof Error ? err.message : 'Failed to create new account';
+      const message = 'Failed to create new account';
       showErrorToast(message);
     }
   };

@@ -65,11 +65,7 @@ export default function CompleteEmailLinkPage() {
         return;
       }
       setErrMsg(
-        code
-          ? formatAuthLinkError(code)
-          : err instanceof Error
-            ? err.message
-            : 'Could not complete linking.'
+        code ? formatAuthLinkError(code) : 'Could not complete linking.'
       );
       setView('error');
     }

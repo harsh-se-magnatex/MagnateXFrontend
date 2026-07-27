@@ -25,7 +25,7 @@ const FIREBASE_AUTH_USER_MESSAGES: Record<string, string> = {
     'That email is already registered. Try signing in instead.',
   'auth/weak-password': 'Please choose a stronger password.',
   'auth/invalid-credential':
-    'Sign-in failed. Check your details and try again, or use another sign-in method.',
+    'Incorrect email or password. Please try again.',
   'auth/invalid-verification-code':
     'That code is incorrect or expired. Request a new code and try again.',
   'auth/invalid-verification-id':
@@ -79,9 +79,20 @@ function isRawFirebaseWrapper(message: string): boolean {
   return /^Firebase:\s*Error\s*\(auth\//i.test(message);
 }
 
+/** True if message looks like axios/HTTP technical noise. */
+function isTechnicalHttpMessage(message: string): boolean {
+  return (
+    /status code\s*\d+/i.test(message) ||
+    /^Request failed/i.test(message) ||
+    /^Network Error$/i.test(message) ||
+    /^(GET|POST|PUT|PATCH|DELETE)\s+\S+\s+failed$/i.test(message) ||
+    (message.startsWith('{') && message.includes('"'))
+  );
+}
+
 /**
- * Human-readable auth error for toasts. Non-Firebase `Error` messages are returned as-is
- * (e.g. app strings like deleted-account guidance).
+ * Human-readable auth error for toasts. App-thrown guidance strings are kept;
+ * technical HTTP/Firebase wrappers are replaced with a generic message.
  */
 export function getFirebaseAuthErrorMessage(error: unknown): string {
   const code = extractFirebaseAuthCode(error);
@@ -93,7 +104,9 @@ export function getFirebaseAuthErrorMessage(error: unknown): string {
   }
   if (error instanceof Error && error.message) {
     const msg = error.message.trim();
-    if (msg && !isRawFirebaseWrapper(msg)) return msg;
+    if (msg && !isRawFirebaseWrapper(msg) && !isTechnicalHttpMessage(msg)) {
+      return msg;
+    }
   }
   return 'Something went wrong. Please try again.';
 }

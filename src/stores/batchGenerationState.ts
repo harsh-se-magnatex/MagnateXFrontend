@@ -2,14 +2,12 @@ import { create } from 'zustand';
 import type { InstantGenerationPlatform } from '@/src/service/api/instant-generation.service';
 import '@/src/stores/clearLegacyPersistedState';
 
-/**
- * Per-date outcome for a batch run, reconstructed on the client from per-job
- * Firestore docs (`jobs/{jobId}.result.date`, `jobs/{jobId}.status`).
- */
+/** Per-date outcome returned by the sync batch generation API. */
 export type BatchDayResult = {
   date: string;
   success: boolean;
   error?: string;
+  scheduledPostId?: string;
 };
 
 type PlatformRecord<T> = Partial<Record<InstantGenerationPlatform, T>>;

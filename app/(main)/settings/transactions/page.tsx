@@ -81,8 +81,7 @@ export default function TransactionsPage() {
       const res = await getTransactions();
       setTransactions(res.data.transactions ?? []);
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : 'Failed to load transactions';
-      showErrorToast(message);
+      showErrorToast('Failed to load transactions');
       setTransactions([]);
     } finally {
       setListLoading(false);
@@ -105,7 +104,7 @@ export default function TransactionsPage() {
     <div className="max-w-[min(100%,80rem)] w-full mx-auto px-4 sm:px-6 animate-in fade-in duration-500">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-          Transaction history
+          Payment History
         </h1>
         <p className="mt-2 text-sm text-slate-500">
           Credit top-ups and plan purchases recorded for your account. For
@@ -133,25 +132,31 @@ export default function TransactionsPage() {
             No transactions yet. Purchases and top-ups will appear here.
           </p>
         ) : (
-          <div className="w-full min-w-0 -mx-1 sm:mx-0">
-            <Table className="min-w-[880px] w-full table-fixed">
+            <Table
+              containerClassName="max-h-80 overflow-y-auto custom-scrollbar w-full min-w-0 -mx-1 px-1 sm:mx-0"
+              className="min-w-[880px] w-full table-fixed border-separate border-spacing-0"
+            >
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="text-slate-600 w-[16%]">Date</TableHead>
-                  <TableHead className="text-slate-600 w-[11%]">Type</TableHead>
-                  <TableHead className="text-slate-600 min-w-0 w-[26%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 w-[16%]">
+                    Date
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 w-[11%]">
+                    Type
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 min-w-0 w-[26%]">
                     Description
                   </TableHead>
-                  <TableHead className="text-slate-600 text-right w-[9%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right w-[9%]">
                     Amount (INR)
                   </TableHead>
-                  <TableHead className="text-slate-600 text-right w-[9%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right w-[9%]">
                     Credits
                   </TableHead>
-                  <TableHead className="text-slate-600 text-right w-[9%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right w-[9%]">
                     Balance after
                   </TableHead>
-                  <TableHead className="text-slate-600 text-right w-[8%] min-w-28">
+                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right w-[8%] min-w-28">
                     Invoice
                   </TableHead>
                 </TableRow>
@@ -184,7 +189,6 @@ export default function TransactionsPage() {
                 ))}
               </TableBody>
             </Table>
-          </div>
         )}
       </section>
     </div>

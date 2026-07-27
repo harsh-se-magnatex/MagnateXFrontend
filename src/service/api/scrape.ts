@@ -1,7 +1,8 @@
 import { apiPost } from '@/lib/api-client';
+import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
 
 export const scrapeUrl = async (url: string) => {
-  return apiPost('/api/v1/scrape/dna', { url });
+  return apiPost('/api/v1/scrape/dna', { url: normalizeWebsiteUrl(url) });
 };
 
 export const extractCatalogPdf = async (file: File) => {

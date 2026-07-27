@@ -43,6 +43,12 @@ export const checkEmailExistsinDeletedUsers = async (email: string) => {
   );
 };
 
+export const checkEmailRegistered = async (email: string) => {
+  return apiPost<
+    ApiEnvelope<{ registered: boolean; providers: string[] }>
+  >('/api/v1/user/check-email-registered', { email });
+};
+
 /** Same endpoint as email check; body uses `phoneNumber` (E.164, e.g. +919876543210). */
 export const checkPhoneExistsInDeletedUsers = async (phoneNumber: string) => {
   return apiPost<ApiEnvelope<{ exists: boolean; deletedDocId?: string }>>(
@@ -77,9 +83,13 @@ export const suggestOnboardingBrandCopy = async (
   );
 };
 
-export const uploadLogo = async (logo: File | string) => {
+export const uploadLogo = async (
+  logo: File | string,
+  options?: { context?: 'onboarding' }
+) => {
   const formData = new FormData();
   formData.append('logo', logo);
+  if (options?.context) formData.append('context', options.context);
   return apiPost<
     ApiEnvelope<{
       url: string;
@@ -131,21 +141,54 @@ export const getSupportMessages = async () => {
 /** Gallery / generation pipeline that produced this image. Backend uses
  *  this to set `GeneratedBy` on the scheduled-post doc so the scheduled-post
  *  list shows the correct pipeline tag (e.g. "Instant" vs "Product advert"). */
-export type ScheduleUserPostSource = 'instant-generation' | 'productadvert';
+export type ScheduleUserPostSource =
+  | 'instant-generation'
+  | 'productadvert'
+  | 'videoGeneration'
+  | 'carouselGeneratedPosts';
+
+export type ScheduleUserPostCarouselSlide = {
+  index?: number;
+  imageFilePath: string;
+  imageUrl: string;
+  headline?: string | null;
+  purpose?: string | null;
+  visualType?: string | null;
+};
 
 /** Library / generated media: server already has Firebase path + preview URL. */
 export type ScheduleUserPostFromLibrary = {
-  imageFilePath: string;
-  imageUrl: string;
   message: string;
   time: string;
   platform: string;
   source?: ScheduleUserPostSource;
-};
+} & (
+  | {
+      mediaType?: 'image';
+      imageFilePath: string;
+      imageUrl: string;
+    }
+  | {
+      mediaType: 'video';
+      videoFilePath: string;
+      videoUrl: string;
+      videoPosterPath?: string;
+      videoPosterUrl?: string;
+      imageFilePath?: string;
+      imageUrl?: string;
+    }
+  | {
+      mediaType: 'carousel';
+      carouselSlides: ScheduleUserPostCarouselSlide[];
+      imageFilePath?: string;
+      imageUrl?: string;
+    }
+);
 
 /** Local image: multipart field `file` (matches backend `upload.single('file')`). */
 export type ScheduleUserPostFromFile = {
   file: File;
+  mediaType?: 'image' | 'video';
   message: string;
   time: string;
   platform: string;
@@ -157,9 +200,12 @@ export type ScheduleUserPostInput =
 
 export const scheduleUserPost = async (params: ScheduleUserPostInput) => {
   if ('file' in params) {
-    const { file, message, time, platform } = params;
+    const { file, mediaType, message, time, platform } = params;
     const formData = new FormData();
     formData.append('file', file);
+    if (mediaType) {
+      formData.append('mediaType', mediaType);
+    }
     formData.append('message', message);
     formData.append('time', time);
     formData.append('platform', platform);
@@ -168,12 +214,43 @@ export const scheduleUserPost = async (params: ScheduleUserPostInput) => {
       formData
     );
   }
-  const { imageFilePath, imageUrl, message, time, platform, source } = params;
+  const {
+    message,
+    time,
+    platform,
+    source,
+    ...media
+  } = params;
+  const body =
+    media.mediaType === 'carousel'
+      ? {
+          mediaType: 'carousel' as const,
+          carouselSlides: media.carouselSlides,
+          ...(media.imageFilePath ? { imageFilePath: media.imageFilePath } : {}),
+          ...(media.imageUrl ? { imageUrl: media.imageUrl } : {}),
+        }
+      : media.mediaType === 'video'
+        ? {
+            mediaType: 'video' as const,
+            videoFilePath: media.videoFilePath,
+            videoUrl: media.videoUrl,
+            ...(media.videoPosterPath
+              ? { videoPosterPath: media.videoPosterPath }
+              : {}),
+            ...(media.videoPosterUrl
+              ? { videoPosterUrl: media.videoPosterUrl }
+              : {}),
+            ...(media.imageFilePath ? { imageFilePath: media.imageFilePath } : {}),
+            ...(media.imageUrl ? { imageUrl: media.imageUrl } : {}),
+          }
+        : {
+            imageFilePath: media.imageFilePath,
+            imageUrl: media.imageUrl,
+          };
   return apiPost<ApiEnvelope>(
     '/api/v1/user/schedule-user-post',
     {
-      imageFilePath,
-      imageUrl,
+      ...body,
       message,
       time,
       platform,
@@ -303,9 +380,9 @@ export const createNewAccount = async (
 
 export type ScheduledPostUserActionResult = {
   message: string;
-  jobId?: string;
-  parentJobId?: string;
+  scheduledPostId?: string;
   platform?: string;
+  result?: Record<string, unknown>;
 };
 
 export const performActionByUserOnScheduledPost = async (
@@ -441,15 +518,32 @@ export const setLogoVariantsForImagesPreference = async (
   });
 };
 
-export const generateAiLogoPicks = async (requirements = '', count = 1) => {
+export type GenerateAiLogoOptions = {
+  context?: 'onboarding';
+  businessName?: string;
+  industry?: string;
+};
+
+export const generateAiLogoPicks = async (
+  requirements = '',
+  count = 1,
+  options?: GenerateAiLogoOptions
+) => {
   return apiPost<
     ApiEnvelope<{
       picks: string[];
+      urls?: string[];
       generatedAt: string;
+      remaining?: number;
     }>
   >('/api/v1/user/ai-logo/generate', {
     requirements,
     count,
+    ...(options?.context ? { context: options.context } : {}),
+    ...(options?.businessName
+      ? { businessName: options.businessName }
+      : {}),
+    ...(options?.industry ? { industry: options.industry } : {}),
   });
 };
 
@@ -473,6 +567,49 @@ export const selectSocialPlatformApi = async (selected: {
   return apiPost<ApiEnvelope>('/api/v1/user/select-social-platform', selected);
 };
 
+export type NextPlanPlatformsPayload = {
+  activePlan: string;
+  targetPlan: string | null;
+  maxAllowed: number;
+  currentSelected: {
+    facebook: boolean;
+    instagram: boolean;
+    linkedin: boolean;
+  };
+  pendingSelected: {
+    facebook: boolean;
+    instagram: boolean;
+    linkedin: boolean;
+  } | null;
+  pendingSelectedForPlan: string | null;
+  hasPendingPlanChange: boolean;
+  pendingPlanName: string | null;
+  nextBillingDate: string | null;
+  withinSelectionWindow: boolean;
+  selectionComplete: boolean;
+};
+
+export const getNextPlanPlatforms = async () => {
+  return apiGet<ApiEnvelope<NextPlanPlatformsPayload>>(
+    '/api/v1/user/next-plan-platforms'
+  );
+};
+
+export const selectNextPlanPlatformsApi = async (selected: {
+  facebook: boolean;
+  instagram: boolean;
+  linkedin: boolean;
+}) => {
+  return apiPost<
+    ApiEnvelope<{
+      pendingSelected: typeof selected;
+      pendingSelectedForPlan: string;
+      maxAllowed: number;
+      message: string;
+    }>
+  >('/api/v1/user/select-next-plan-platforms', selected);
+};
+
 export type MemoryLayerAnswerPayload = {
   questionId: string;
   skipped: boolean;
@@ -489,9 +626,13 @@ export const generateMemoryLayerQuestions = async (opts?: {
 };
 
 export const getMemoryLayer = async () => {
-  return apiGet<ApiEnvelope<{ memoryLayer: unknown, memoryLayerEnabled: boolean }>>(
-    '/api/v1/user/memory-layer'
-  );
+  return apiGet<
+    ApiEnvelope<{
+      memoryLayer: unknown;
+      memoryLayerEnabled: boolean;
+      memoryLayerStrict: boolean;
+    }>
+  >('/api/v1/user/memory-layer');
 };
 
 export const putMemoryLayer = async (body: {
@@ -524,10 +665,9 @@ export const uploadMemoryLayerBrandPhotos = async (
     );
     formData.append('descriptions', JSON.stringify(aligned));
   }
-  return apiPost<ApiEnvelope<{ memoryLayer: unknown; uploaded: number; describeJobId?: string; parentJobId?: string }>>(
-    '/api/v1/user/memory-layer/brand-photos',
-    formData
-  );
+  return apiPost<
+    ApiEnvelope<{ memoryLayer: unknown; uploaded: number; described?: number }>
+  >('/api/v1/user/memory-layer/brand-photos', formData);
 };
 
 export const putMemoryLayerBrandPhotoDescription = async (
@@ -557,16 +697,21 @@ export const uploadMemoryLayerSourcePdf = async (file: File) => {
   formData.append('pdf', file);
   return apiPost<
     ApiEnvelope<{
-      parentJobId: string;
-      jobId: string;
       sourceDocumentId: string;
+      memoryLayer: unknown;
+      imagesAdded?: number;
     }>
   >('/api/v1/user/memory-layer/source-pdf', formData);
 };
 
-export const toggleMemoryLayerPreference = async (enabled: boolean) => {
-  return apiPut<ApiEnvelope>(
-    '/api/v1/user/toggle-memory-layer-preference',
-    { enabled }
-  );
+export const toggleMemoryLayerPreference = async (opts: {
+  enabled?: boolean;
+  strict?: boolean;
+}) => {
+  return apiPut<
+    ApiEnvelope<{
+      memoryLayerEnabled?: boolean;
+      memoryLayerStrict?: boolean;
+    }>
+  >('/api/v1/user/toggle-memory-layer-preference', opts);
 };

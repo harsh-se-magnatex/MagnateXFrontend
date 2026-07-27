@@ -41,7 +41,7 @@ const FAQS = [
   {
     question: 'What is the credit system?',
     answer:
-      'Credits unlock on-demand actions: product advert posts 4 credits, quick create posts 2 credits, Bulk Create 2 credits (Studio Plans), festive posts 2 credits, campaign posts 3 credits per day, and regeneration posts 1 credit (Free first regeneration). Your plan includes a monthly credit allowance; add-on packs are valid for 30 days. Daily automated posting (AI Plans) does not use this balance.',
+      'Credits unlock on-demand actions: product ads 4 credits, Content Studio posts 2 credits, Bulk Creator 2 credits (Studio Plans), Holiday & Festival Posts 2 credits, campaign posts 3 credits per day, and regeneration posts 1 credit (Free first regeneration). Your plan includes a monthly credit allowance; add-on packs are valid for 30 days. Daily automated posting (AI Plans) does not use this balance.',
   },
   {
     question: 'How do I update my profile information?',
@@ -121,7 +121,7 @@ export default function SupportAndLegalPage() {
       setContactForm({ name: '', email: '', message: '' });
       toast.success('Message sent successfully.');
     } catch (err: any) {
-      showErrorToast(err.response.data.message || 'Failed to send message.');
+      showErrorToast('Failed to send message.');
     } finally {
       setContactSending(false);
     }
@@ -144,7 +144,7 @@ export default function SupportAndLegalPage() {
       setBugForm({ subject: '', description: '' });
       toast.success('Bug report submitted successfully.');
     } catch (err: any) {
-      showErrorToast(err.response.data.message || 'Failed to submit report.');
+      showErrorToast('Failed to submit report.');
     } finally {
       setBugSending(false);
     }
@@ -167,9 +167,7 @@ export default function SupportAndLegalPage() {
       setRefundForm({ reason: '', details: '' });
       toast.success('Refund request submitted successfully.');
     } catch (err: any) {
-      showErrorToast(
-        err.response?.data?.message || 'Failed to submit refund request.'
-      );
+      showErrorToast('Failed to submit refund request.');
     } finally {
       setRefundSending(false);
     }

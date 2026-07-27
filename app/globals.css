@@ -361,7 +361,9 @@
 .app-shell .bg-indigo-50\/20,
 .app-shell .bg-indigo-50\/30,
 .app-shell .bg-indigo-50\/50,
-.app-shell .bg-indigo-50\/60 {
+.app-shell .bg-indigo-50\/60,
+.app-shell .bg-indigo-50\/70,
+.app-shell .bg-indigo-50\/90 {
   background-color: color-mix(in srgb, var(--primary-blue) 14%, transparent);
 }
 
@@ -378,7 +380,8 @@
 
 .app-shell .text-indigo-600,
 .app-shell .text-indigo-700,
-.app-shell .text-indigo-700\/80 {
+.app-shell .text-indigo-700\/80,
+.app-shell .text-indigo-800 {
   color: #a5b4fc;
 }
 
@@ -430,6 +433,8 @@
 
 /* Status / accent tints (amber, emerald, sky, blue, pink) */
 .app-shell .bg-amber-50,
+.app-shell .bg-amber-50\/70,
+.app-shell .bg-amber-50\/90,
 .app-shell .hover\:bg-amber-100:hover {
   background-color: color-mix(in srgb, #f59e0b 14%, transparent);
 }
@@ -444,6 +449,8 @@
 }
 
 .app-shell .bg-emerald-50,
+.app-shell .bg-emerald-50\/60,
+.app-shell .bg-emerald-50\/90,
 .app-shell .hover\:bg-emerald-100:hover {
   background-color: color-mix(in srgb, #10b981 14%, transparent);
 }
@@ -475,6 +482,8 @@
   color: #38bdf8;
 }
 
+.app-shell .bg-blue-50,
+.app-shell .bg-blue-50\/90,
 .app-shell .bg-blue-50\/60 {
   background-color: color-mix(in srgb, #3b82f6 14%, transparent);
 }
@@ -484,6 +493,7 @@
   border-color: color-mix(in srgb, #3b82f6 35%, transparent);
 }
 
+.app-shell .text-blue-900,
 .app-shell .text-blue-700,
 .app-shell .text-blue-800 {
   color: #60a5fa;
@@ -711,62 +721,80 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Sonner: dedicated error toaster — true viewport center (not bottom-right stack) */
+/* Sonner: dedicated error toaster — centered card stack (not a vertical list) */
 [data-sonner-toaster].sonner-error-center [data-close-button],
 [data-sonner-toaster].sonner-error-center [data-icon] {
   display: none !important;
 }
 
-/*
- * Sonner's toasts are `position: absolute` inside the toaster wrapper, so the
- * wrapper has no intrinsic height. Anchoring the wrapper at `top: 50%` therefore
- * placed the toast's top edge at the viewport center (visually below center).
- * We instead stretch the wrapper to the full viewport and use flexbox to
- * vertically + horizontally center the toast itself.
- */
 [data-sonner-toaster].sonner-error-center {
   position: fixed !important;
-  inset: 0 !important;
-  top: 0 !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(calc(100vw - 2rem), var(--width, 356px)) !important;
+  max-width: min(calc(100vw - 2rem), var(--width, 356px)) !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  display: block !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+  z-index: 60 !important;
+}
+
+[data-sonner-toaster].sonner-error-center [data-sonner-toast] {
   left: 0 !important;
   right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  max-width: 100vw !important;
-  height: 100vh !important;
-  max-height: 100vh !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 1rem !important;
-  overflow-y: auto !important;
-  padding: 1rem !important;
-  transform: none !important;
-  pointer-events: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  z-index: var(--z-index) !important;
+}
+
+[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-expanded='true']::after {
+  display: none !important;
+}
+
+/* Front card defines height; only it is interactive. */
+[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-front='true'] {
+  position: relative !important;
+  top: auto !important;
+  bottom: auto !important;
+  --y: translateY(0) !important;
+  --offset: 0px !important;
+  transform: var(--y) !important;
+  height: auto !important;
+  pointer-events: auto !important;
 }
 
 /*
- * Sonner stacks toasts with absolute positioning + translateY(--offset). Our
- * flex-centered wrapper keeps position:relative on each toast, but the transform
- * still applies — so multiple errors appear scattered. Reset transforms and let
- * the column flex layout stack them instead.
+ * Older errors sit behind the front card (slightly lower + smaller) instead of
+ * stacking upward as a scrollable column.
  */
-[data-sonner-toaster].sonner-error-center [data-sonner-toast] {
-  position: relative !important;
-  top: auto !important;
-  left: auto !important;
-  right: auto !important;
+[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-front='false'] {
+  position: absolute !important;
+  top: 0 !important;
   bottom: auto !important;
-  width: var(--width) !important;
-  max-width: min(calc(100vw - 2rem), var(--width, 356px)) !important;
-  height: auto !important;
-  --y: translateY(0) !important;
+  --stack-offset: calc(8px * var(--toasts-before));
+  --stack-scale: calc(1 - var(--toasts-before) * 0.03);
+  --y: translateY(var(--stack-offset)) scale(var(--stack-scale)) !important;
   --offset: 0px !important;
-  transform: none !important;
+  transform: var(--y) !important;
+  height: var(--front-toast-height) !important;
   opacity: 1 !important;
-  pointer-events: auto !important;
-  flex-shrink: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-front='false'] > * {
+  opacity: 0 !important;
+}
+
+[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-visible='false'] {
+  display: none !important;
 }
 
 /* ---------------------------------------------------------------------------
