@@ -26,10 +26,7 @@ import {
 const NAV_ITEMS = [
   { label: 'How It Works', href: '/product#how-it-works' },
   { label: 'Features', href: '/product#features' },
-<<<<<<< HEAD
-=======
   { label: 'How It Looks', href: '/how-it-looks' },
->>>>>>> test
   { label: 'Pricing', href: '/product#pricing' },
   { label: 'FAQ', href: '/product#faq' },
 ] as const;

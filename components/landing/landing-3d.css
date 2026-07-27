@@ -221,8 +221,6 @@
   -webkit-backdrop-filter: blur(28px);
 }
 
-<<<<<<< HEAD
-=======
 .landing-final-cta {
   left: 1rem;
   right: 1rem;
@@ -281,7 +279,6 @@
   font-size: 0.875rem;
 }
 
->>>>>>> test
 @media (min-width: 640px) {
   .landing-cta-panel {
     padding: 3rem 3.5rem;
@@ -290,8 +287,6 @@
   .landing-callout-card {
     padding: 2rem 2.25rem;
   }
-<<<<<<< HEAD
-=======
 
   .landing-final-cta {
     left: 2.5rem;
@@ -335,7 +330,6 @@
   .landing-cta-panel--final {
     padding: 2.25rem 2.25rem;
   }
->>>>>>> test
 }
 
 /* ── Scroll spacers ───────────────────────────────────────── */

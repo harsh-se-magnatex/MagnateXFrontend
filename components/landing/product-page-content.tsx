@@ -4,10 +4,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-<<<<<<< HEAD
-=======
 import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
->>>>>>> test
 import { Footer } from '@/components/shared/Footer';
 import { AppGradientBackground } from '@/components/shared/AppGradientBackground';
 import {
@@ -26,10 +23,7 @@ import {
   ImageIcon,
   PartyPopper,
   Bolt,
-<<<<<<< HEAD
-=======
   Eye,
->>>>>>> test
 } from 'lucide-react';
 import NavBar from '@/app/(main)/_components/NavBar';
 import { HowItWorksFlow } from '@/components/landing/workflow-pipeline';
@@ -185,32 +179,20 @@ export function ProductPageContent() {
               variants={fadeIn}
               className="mt-6 text-lg leading-relaxed text-muted-foreground font-(--font-dm-sans)"
             >
-<<<<<<< HEAD
-              AI-generated content, human review, and automated publishing
-=======
               SocioGenie generates content, human review, and automated publishing
->>>>>>> test
               across Instagram, Facebook &amp; LinkedIn.
             </motion.p>
             <motion.div
               variants={fadeIn}
               className="mt-8 flex flex-wrap justify-center gap-3"
             >
-<<<<<<< HEAD
-              <Link
-=======
               <GuestAuthLink
->>>>>>> test
                 href="/sign-up"
                 className="group inline-flex items-center rounded-xl bg-gradient-primary px-7 py-3.5 text-sm font-bold text-white transition-all hover:shadow-xl hover:shadow-primary-purple/25 active:scale-[0.98]"
               >
                 Get Started Free
                 <Rocket className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-<<<<<<< HEAD
-              </Link>
-=======
               </GuestAuthLink>
->>>>>>> test
               <Link
                 href="/"
                 className="group inline-flex items-center rounded-xl border border-border/80 bg-transparent px-7 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
@@ -297,8 +279,6 @@ export function ProductPageContent() {
         </section>
 
         <section
-<<<<<<< HEAD
-=======
           id="social-preview"
           aria-labelledby="social-preview-heading"
           className="scroll-mt-24 border-t border-border/40 bg-card/20 px-6 py-10 sm:py-14"
@@ -335,7 +315,6 @@ export function ProductPageContent() {
         </section>
 
         <section
->>>>>>> test
           id="pricing"
           className="scroll-mt-24 border-t border-border/40 px-6 py-10 sm:py-14"
         >
@@ -419,21 +398,13 @@ export function ProductPageContent() {
               Ready to automate your social media?
             </motion.h2>
             <motion.div variants={fadeIn} className="mt-8">
-<<<<<<< HEAD
-              <Link
-=======
               <GuestAuthLink
->>>>>>> test
                 href="/sign-up"
                 className="group inline-flex items-center rounded-xl bg-gradient-primary px-10 py-4 text-base font-bold text-white transition-all hover:shadow-xl hover:shadow-primary-purple/25 active:scale-[0.98]"
               >
                 Get Started Free
                 <Rocket className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-<<<<<<< HEAD
-              </Link>
-=======
               </GuestAuthLink>
->>>>>>> test
             </motion.div>
           </motion.div>
         </section>

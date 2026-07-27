@@ -1,17 +1,10 @@
 'use client';
 
-<<<<<<< HEAD
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-=======
 import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
->>>>>>> test
 import { calloutOpacity, pageScroll01 } from '@/lib/landing-scroll';
 
 type Callout = {
@@ -29,11 +22,7 @@ const CALLOUTS: Callout[] = [
   {
     id: 'researcher',
     step: '01',
-<<<<<<< HEAD
-    tag: 'AI Researcher',
-=======
     tag: 'Researcher',
->>>>>>> test
     title: 'Always watching your market',
     description:
       'Continuously monitors your industry, competitors, trending conversations and market opportunities — so your content is never a step behind.',
@@ -44,11 +33,7 @@ const CALLOUTS: Callout[] = [
   {
     id: 'strategist',
     step: '02',
-<<<<<<< HEAD
-    tag: 'AI Strategist',
-=======
     tag: 'Strategist',
->>>>>>> test
     title: 'A plan before a single word',
     description:
       'Decides what your audience actually wants to see and builds a content plan focused on long-term growth — not random posting.',
@@ -59,11 +44,7 @@ const CALLOUTS: Callout[] = [
   {
     id: 'copywriter',
     step: '03',
-<<<<<<< HEAD
-    tag: 'AI Copywriter',
-=======
     tag: 'Copywriter',
->>>>>>> test
     title: 'Writes in your brand voice',
     description:
       'Captions, hooks, stories, educational posts and promotional campaigns — crafted to sound like your business, never generic AI.',
@@ -74,11 +55,7 @@ const CALLOUTS: Callout[] = [
   {
     id: 'creative',
     step: '04',
-<<<<<<< HEAD
-    tag: 'AI Creative Director',
-=======
     tag: 'Creative Director',
->>>>>>> test
     title: 'Visuals that match your brand',
     description:
       'Generates professional creatives aligned to your branding and colours — designed to stop the scroll and lift engagement.',
@@ -100,11 +77,7 @@ const CALLOUTS: Callout[] = [
   {
     id: 'publisher',
     step: '06',
-<<<<<<< HEAD
-    tag: 'AI Publisher',
-=======
     tag: 'Auto Publisher',
->>>>>>> test
     title: 'Published at the perfect time',
     description:
       'Finds the best posting time for every platform and publishes automatically across Instagram, Facebook & LinkedIn.',
@@ -115,17 +88,10 @@ const CALLOUTS: Callout[] = [
   {
     id: 'analyst',
     step: '07',
-<<<<<<< HEAD
-    tag: 'AI Growth Analyst',
-    title: 'Learns from every post',
-    description:
-      'Tracks performance, measures engagement and continuously improves future content. Every cycle makes your AI smarter.',
-=======
     tag: 'Growth Analyst',
     title: 'Learns from every post',
     description:
       'Tracks performance, measures engagement and continuously improves future content. Every cycle makes your content smarter.',
->>>>>>> test
     scrollStart: 0.75,
     scrollEnd: 0.85,
     position: 'left',
@@ -206,41 +172,6 @@ export function LandingScrollCallouts() {
       })}
 
       {ctaOpacity > 0.02 && (
-<<<<<<< HEAD
-        <article
-          className="landing-scroll-callout pointer-events-auto absolute left-1/2 top-1/2 w-[min(580px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2"
-          style={{
-            opacity: ctaOpacity,
-            transform: `translate(-50%, calc(-50% + ${(1 - ctaOpacity) * 32}px)) scale(${0.95 + ctaOpacity * 0.05})`,
-          }}
-        >
-          <div className="landing-cta-panel">
-            <p className="landing-eyebrow">Focus on your business</p>
-            <h2 className="landing-display mt-4 text-[clamp(2rem,5vw,2.75rem)] leading-[1.08] tracking-[-0.03em] text-white">
-              We&apos;ll handle
-              <br />
-              <span className="landing-accent">your growth.</span>
-            </h2>
-            <p className="landing-body mx-auto mt-5 max-w-md text-[15px] leading-[1.7] text-white/65 sm:text-base">
-              Your AI researches, creates, publishes, and learns — so you can
-              focus on serving customers while your social media grows
-              automatically.
-            </p>
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <Link href="/sign-up" className="landing-btn-primary group w-full sm:w-auto">
-                Start Free — 10-Day Elite Trial
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <Link href="/product" className="landing-btn-secondary w-full sm:w-auto">
-                Explore features
-              </Link>
-            </div>
-            <p className="landing-body mt-5 text-xs text-white/40">
-              No credit card · Cancel anytime
-            </p>
-          </div>
-        </article>
-=======
         <>
           <div
             className="landing-cta-scrim pointer-events-none absolute inset-x-0 bottom-0"
@@ -282,7 +213,6 @@ export function LandingScrollCallouts() {
           </div>
           </article>
         </>
->>>>>>> test
       )}
     </div>
   );

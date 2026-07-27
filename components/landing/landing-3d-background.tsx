@@ -3,14 +3,6 @@
 import { useEffect, useRef } from 'react';
 import { getFrameScrubT } from '@/lib/landing-scroll';
 
-<<<<<<< HEAD
-const TOTAL_FRAMES = 898;
-const LERP_SPEED = 0.22;
-const FRAME_BASE_PATH = '/frames-jpg/frame_';
-
-function framePath(index: number): string {
-  return `${FRAME_BASE_PATH}${String(index + 1).padStart(6, '0')}.jpg`;
-=======
 const TOTAL_FRAMES = 634;
 const LERP_SPEED = 0.22;
 const FRAME_BASE_PATH_DESKTOP = '/frames-jpg/frame_';
@@ -23,7 +15,6 @@ function isMobileViewport(): boolean {
 
 function framePath(index: number, basePath: string): string {
   return `${basePath}${String(index + 1).padStart(6, '0')}.jpg`;
->>>>>>> test
 }
 
 type Landing3DBackgroundProps = {
@@ -46,13 +37,10 @@ export function Landing3DBackground({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-<<<<<<< HEAD
-=======
     const basePath = isMobileViewport()
       ? FRAME_BASE_PATH_MOBILE
       : FRAME_BASE_PATH_DESKTOP;
 
->>>>>>> test
     const images: HTMLImageElement[] = new Array(TOTAL_FRAMES);
     let currentFrame = 0;
     let targetFrame = 0;
@@ -76,11 +64,7 @@ export function Landing3DBackground({
           markFrameLoaded(frameIndex);
           if (frameIndex === TOTAL_FRAMES - 1) isReady = true;
         };
-<<<<<<< HEAD
-        images[i].src = framePath(i);
-=======
         images[i].src = framePath(i, basePath);
->>>>>>> test
       }
     } else {
       const img = new Image();
@@ -88,21 +72,13 @@ export function Landing3DBackground({
         isReady = true;
         drawFrame(img);
       };
-<<<<<<< HEAD
-      img.src = framePath(0);
-=======
       img.src = framePath(0, basePath);
->>>>>>> test
       images[0] = img;
     }
 
     function resize() {
-<<<<<<< HEAD
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-=======
       const dprCap = isMobileViewport() ? 1.5 : 2;
       const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
->>>>>>> test
       const w = window.innerWidth;
       const h = window.innerHeight;
       canvas!.width = Math.round(w * dpr);
