@@ -14,8 +14,16 @@ export const loginUser = async (
   idToken: string,
   intent: 'signin' | 'signup',
   method: string,
-  options?: { name?: string }
+  options?: { name?: string; timeZone?: string }
 ) => {
+  let timeZone = options?.timeZone;
+  if (!timeZone) {
+    try {
+      timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      timeZone = undefined;
+    }
+  }
   return apiPost<
     ApiEnvelope<{ showRecoveryPopup?: boolean; deletedDocId?: string }>
   >('/api/v1/user/login', {
@@ -23,6 +31,7 @@ export const loginUser = async (
     intent,
     method,
     ...(options?.name ? { name: options.name } : {}),
+    ...(timeZone ? { timeZone } : {}),
   });
 };
 

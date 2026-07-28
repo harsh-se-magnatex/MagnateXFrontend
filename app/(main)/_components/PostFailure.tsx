@@ -23,14 +23,18 @@ type PostFailureAlert = {
 };
 
 /**
- * The backend bakes a 12-hour locale date into `notification.message`
- * (`Your post has been failed to post on instagram on Jun 3, 2026, 4:13 PM`).
- * Strip that trailing "on <date>" portion so we can re-append our own
- * 24-hour, timezone-aware label. Falls back to the original text if the
+ * Backend may bake a date into `notification.message` (legacy 12h AM/PM or
+ * 24h). Prefer the structured `failedAt` field for display; this strips a
+ * trailing "on <date>" if present. Falls back to the original text if the
  * pattern doesn't match.
  */
 function stripBakedDate(message: string): string {
-  return message.replace(/\s+on\s+[A-Za-z]{3,9}\s+\d{1,2},\s+\d{4},\s+\d{1,2}:\d{2}\s*(?:AM|PM)\s*$/i, '').trim();
+  return message
+    .replace(
+      /\s+on\s+(?:[A-Za-z]{3,9}\s+\d{1,2},\s+\d{4}|\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}),\s+\d{1,2}:\d{2}(?:\s*(?:AM|PM))?\s*$/i,
+      ''
+    )
+    .trim();
 }
 
 export function PostFailureAlerts() {

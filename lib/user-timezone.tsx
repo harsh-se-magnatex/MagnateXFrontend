@@ -53,7 +53,7 @@ const PRESET_FORMATS: Record<TimestampStyle, string> = {
 const DEFAULT_PLACEHOLDER = '—';
 
 /** Browser timezone, evaluated lazily so SSR doesn't crash. */
-function getBrowserTimeZone(): string {
+export function getBrowserTimeZone(): string {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   } catch {

@@ -374,14 +374,6 @@ export default function AutomationPreferencePage() {
     return () => unsubscribe();
   }, [user?.uid]);
 
-  useEffect(() => {
-    try {
-      setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
-    } catch {
-      setTimeZone('UTC');
-    }
-  }, []);
-
   const handleRefreshOptimal = useCallback(
     async (platform: OptimalPostingPlatform) => {
       setPlatformOptimal((prev) => ({

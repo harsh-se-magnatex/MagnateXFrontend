@@ -70,13 +70,14 @@ function LinkedInFeedPost({
       <button
         type="button"
         onClick={onOpen}
-        className="relative mx-4 mt-3 block aspect-[1.91/1] w-[calc(100%-2rem)] overflow-hidden rounded-lg bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple"
+        className="relative mx-4 mt-3 block aspect-square w-[calc(100%-2rem)] overflow-hidden rounded-lg bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple"
         aria-label="Open LinkedIn post"
       >
         <ShowcaseMedia
           post={post}
           playVideo={false}
           interactive={false}
+          mediaClassName="object-contain"
           sizes="(max-width: 552px) 100vw, 552px"
         />
       </button>

@@ -144,9 +144,18 @@ export function ShowcasePostDetail({
   );
 }
 
+function detailMediaFrameClass(post: ShowcasePost, rounded = false): string {
+  const base = rounded
+    ? 'relative mx-4 mt-3 overflow-hidden rounded-lg bg-neutral-100'
+    : 'relative w-full overflow-hidden bg-neutral-100';
+  // Generated assets are mostly square; carousels are portrait 4:5.
+  // Always leave room for object-contain so nothing is cropped.
+  if (post.mediaType === 'carousel') return `${base} aspect-[4/5]`;
+  return `${base} aspect-square`;
+}
+
 function InstagramDetail({ post }: { post: ShowcasePost }) {
   const { likes } = getPostEngagement(post);
-  const isCarousel = post.mediaType === 'carousel';
   return (
     <article className="overflow-hidden rounded-xl bg-white shadow-xl">
       <div className="flex items-center gap-2 border-b border-neutral-100 px-3 py-2.5">
@@ -160,17 +169,11 @@ function InstagramDetail({ post }: { post: ShowcasePost }) {
           </p>
         </div>
       </div>
-      <div
-        className={
-          isCarousel
-            ? 'relative aspect-[4/5] w-full bg-neutral-100'
-            : 'relative aspect-square w-full bg-neutral-100'
-        }
-      >
+      <div className={detailMediaFrameClass(post)}>
         <ShowcaseMedia
           post={post}
           playVideo
-          mediaClassName={isCarousel ? 'object-contain' : 'object-cover'}
+          mediaClassName="object-contain"
           sizes="(max-width: 768px) 100vw, 560px"
         />
       </div>
@@ -197,7 +200,6 @@ function InstagramDetail({ post }: { post: ShowcasePost }) {
 
 function FacebookDetail({ post }: { post: ShowcasePost }) {
   const { likes, comments, shares } = getPostEngagement(post);
-  const isCarousel = post.mediaType === 'carousel';
   return (
     <article className="overflow-hidden rounded-xl border border-neutral-200/80 bg-white shadow-xl">
       <div className="flex items-start gap-3 px-4 pt-4">
@@ -214,17 +216,11 @@ function FacebookDetail({ post }: { post: ShowcasePost }) {
       <p className="px-4 pt-3 text-[15px] leading-snug text-neutral-800">
         {post.caption}
       </p>
-      <div
-        className={
-          isCarousel
-            ? 'relative mx-4 mt-3 aspect-[4/5] overflow-hidden rounded-lg bg-neutral-100'
-            : 'relative mx-4 mt-3 aspect-[4/3] overflow-hidden rounded-lg bg-neutral-100'
-        }
-      >
+      <div className={detailMediaFrameClass(post, true)}>
         <ShowcaseMedia
           post={post}
           playVideo
-          mediaClassName={isCarousel ? 'object-contain' : 'object-cover'}
+          mediaClassName="object-contain"
           sizes="(max-width: 680px) 100vw, 680px"
         />
       </div>
@@ -259,7 +255,6 @@ function FacebookDetail({ post }: { post: ShowcasePost }) {
 
 function LinkedInDetail({ post }: { post: ShowcasePost }) {
   const { likes, comments, shares } = getPostEngagement(post);
-  const isCarousel = post.mediaType === 'carousel';
   return (
     <article className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl">
       <div className="flex items-start gap-3 px-4 pt-4">
@@ -279,17 +274,11 @@ function LinkedInDetail({ post }: { post: ShowcasePost }) {
       <p className="px-4 pt-3 text-[14px] leading-relaxed text-neutral-800 whitespace-pre-wrap">
         {post.caption}
       </p>
-      <div
-        className={
-          isCarousel
-            ? 'relative mx-4 mt-3 aspect-[4/5] overflow-hidden rounded-lg bg-neutral-100'
-            : 'relative mx-4 mt-3 aspect-[1.91/1] overflow-hidden rounded-lg bg-neutral-100'
-        }
-      >
+      <div className={detailMediaFrameClass(post, true)}>
         <ShowcaseMedia
           post={post}
           playVideo
-          mediaClassName={isCarousel ? 'object-contain' : 'object-cover'}
+          mediaClassName="object-contain"
           sizes="(max-width: 552px) 100vw, 552px"
         />
       </div>

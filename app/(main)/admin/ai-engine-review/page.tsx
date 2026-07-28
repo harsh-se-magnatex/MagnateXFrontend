@@ -35,6 +35,7 @@ import {
   Wand2,
   X,
 } from 'lucide-react';
+import { formatTimestampInTz, getBrowserTimeZone } from '@/lib/user-timezone';
 import { ImagePreviewButton, ImagePreviewOverlay, useImagePreview } from '@/components/image-preview';
 
 const PLATFORMS: AiEnginePlatform[] = ['instagram', 'facebook', 'linkedin'];
@@ -957,7 +958,9 @@ function Timestamp({ label, ms }: { label: string; ms: number | null }) {
   }
   let formatted = '—';
   try {
-    formatted = new Date(ms).toLocaleString();
+    formatted = formatTimestampInTz(ms, getBrowserTimeZone(), {
+      style: 'datetime',
+    });
   } catch {
     /* ignore */
   }

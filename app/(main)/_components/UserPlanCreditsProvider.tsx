@@ -72,12 +72,24 @@ type FirestoreTimestamp = {
   nanoseconds: number;
 };
 
+function timestampMillis(ts: FirestoreTimestamp | null | undefined): number | null {
+  if (!ts || typeof ts.seconds !== 'number') return null;
+  return ts.seconds * 1000 + (ts.nanoseconds ?? 0) / 1e6;
+}
+
+/** 24-hour display helper (UTC). Prefer `useTimestampFormatter` in UI. */
 export function formatTimestamp(ts: FirestoreTimestamp | null): string {
   if (!ts) return '—';
   const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1e6);
-  return date.toLocaleString(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
+  return date.toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    hourCycle: 'h23',
+    timeZone: 'UTC',
   });
 }
 
@@ -115,11 +127,20 @@ function parseBilling(
   const usesSplitCreditPools =
     hasNumericPoolField &&
     (planCredits + topupCredits > 0 || hasPoolExpiry);
-  const topupCreditsExpired = formatTimestamp(data.topupCreditsExpiresAt as FirestoreTimestamp | null);
-  const planCreditsExpired = formatTimestamp(data.planCreditsExpiresAt as FirestoreTimestamp | null);
-  const isTopupCreditsExpired = topupCredits > 0 ? new Date(topupCreditsExpired).getTime() < new Date().getTime() : true;
-  const isPlanCreditsExpired = new Date(planCreditsExpired).getTime() < new Date().getTime();
-  const credits = numField(isPlanCreditsExpired ? 0 : planCredits) + numField(isTopupCreditsExpired ? 0 : topupCredits)
+  const topupExpiresMs = timestampMillis(
+    data.topupCreditsExpiresAt as FirestoreTimestamp | null
+  );
+  const planExpiresMs = timestampMillis(
+    data.planCreditsExpiresAt as FirestoreTimestamp | null
+  );
+  const now = Date.now();
+  const isTopupCreditsExpired =
+    topupCredits > 0 ? topupExpiresMs == null || topupExpiresMs < now : true;
+  const isPlanCreditsExpired =
+    planExpiresMs == null || planExpiresMs < now;
+  const credits =
+    numField(isPlanCreditsExpired ? 0 : planCredits) +
+    numField(isTopupCreditsExpired ? 0 : topupCredits);
 
   return {
     usesSplitCreditPools,

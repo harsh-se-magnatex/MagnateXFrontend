@@ -66,13 +66,14 @@ function FacebookFeedPost({
       <button
         type="button"
         onClick={onOpen}
-        className="relative mx-4 mt-3 block aspect-[4/3] w-[calc(100%-2rem)] overflow-hidden rounded-lg bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple"
+        className="relative mx-4 mt-3 block aspect-square w-[calc(100%-2rem)] overflow-hidden rounded-lg bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple"
         aria-label="Open Facebook post"
       >
         <ShowcaseMedia
           post={post}
           playVideo={false}
           interactive={false}
+          mediaClassName="object-contain"
           sizes="(max-width: 680px) 100vw, 680px"
         />
       </button>

@@ -74,6 +74,7 @@ function InstagramFeedPost({
           post={post}
           playVideo={false}
           interactive={false}
+          mediaClassName="object-contain"
           sizes="(max-width: 768px) 50vw, 360px"
         />
       </button>

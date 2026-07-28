@@ -751,7 +751,7 @@ export default function AIContentPage() {
             : 'Image-only'),
         inferredImageContext: response.inferredImageContext,
         renderedImages,
-        createdAt: new Date().toLocaleString(),
+        createdAt: new Date().toISOString(),
       };
 
       setGenerated(item);
@@ -1990,7 +1990,7 @@ export default function AIContentPage() {
                           {item.promptSummary}
                         </span>
                         <span className="text-[10px] uppercase tracking-wider text-slate-500">
-                          {item.createdAt}
+                          {fmtTimestamp(item.createdAt, { style: 'datetime-short' })}
                         </span>
                       </div>
                       {typeof item.inferredImageContext === 'string' &&
