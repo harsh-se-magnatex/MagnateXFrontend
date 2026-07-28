@@ -31,10 +31,18 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { isPlanInactive } from '@/lib/plan-access';
 import { showErrorToast } from '@/lib/show-error-toast';
+import { useTimestampFormatter } from '@/lib/user-timezone';
 import {
   Sheet,
   SheetContent,
@@ -946,11 +954,11 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
       </section>
 
       {autoSeeded && pickedReason ? (
-        <div className="rounded-2xl border border-indigo-200 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-950">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-600">
+        <div className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
             Why auto mode picked this
           </p>
-          <p className="mt-1 leading-relaxed">{pickedReason}</p>
+          <p className="mt-1 leading-relaxed text-slate-900">{pickedReason}</p>
         </div>
       ) : null}
 
@@ -1868,6 +1876,21 @@ type DraftRowProps = {
   onOpenPreview: (url: string, alt?: string) => void;
 };
 
+const HOURS_24 = Array.from({ length: 24 }, (_, i) =>
+  String(i).padStart(2, '0')
+);
+const MINUTES_60 = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, '0')
+);
+
+function splitHhMm(value: string): { hour: string; minute: string } {
+  const [h = '09', m = '00'] = value.split(':');
+  return {
+    hour: HOURS_24.includes(h) ? h : '09',
+    minute: MINUTES_60.includes(m) ? m : '00',
+  };
+}
+
 function DraftRow(props: DraftRowProps) {
   const {
     draft,
@@ -1880,11 +1903,11 @@ function DraftRow(props: DraftRowProps) {
     isPreviewOpen,
     onOpenPreview,
   } = props;
+  const fmtTimestamp = useTimestampFormatter();
   const isScheduled = draft.status === 'scheduled';
   const targetDate = draft.targetDate || dateWindow[0] || formattedToday;
   const [date, setDate] = useState<string>(targetDate);
-  // Default time of day for the picker — 9 AM in the user's local TZ is a
-  // safe early-morning slot that's well before most engagement peaks.
+  // Default 09:00 — always stored/shown as 24-hour HH:mm (no AM/PM).
   const [time, setTime] = useState<string>('09:00');
   const [scheduling, setScheduling] = useState(false);
   // First regen is free; everything after costs CAMPAIGN_REGENERATE_CREDIT.
@@ -1894,6 +1917,7 @@ function DraftRow(props: DraftRowProps) {
   const canRegen = canRegenerateDraft(draft.regenerationCount ?? 0);
 
   const scheduledAtDate = isScheduled ? unknownTsToDate(draft.scheduledAt) : null;
+  const { hour: timeHour, minute: timeMinute } = splitHhMm(time);
 
   const handleSchedule = useCallback(async () => {
     if (scheduling) return;
@@ -2006,11 +2030,11 @@ function DraftRow(props: DraftRowProps) {
         )}
 
         {isScheduled ? (
-          <div className="mt-auto rounded-xl border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-[11px] font-semibold text-emerald-300">
+          <div className="mt-auto rounded-xl border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-900">
             <p className="inline-flex items-center gap-1">
               <CalendarCheck2 className="h-3.5 w-3.5" />
               {scheduledAtDate
-                ? `Will publish ${format(scheduledAtDate, "EEE, MMM d 'at' h:mm a")}`
+                ? `Will publish ${fmtTimestamp(scheduledAtDate, { style: 'datetime' })}`
                 : 'Scheduled'}
             </p>
           </div>
@@ -2036,15 +2060,62 @@ function DraftRow(props: DraftRowProps) {
                   className="mt-1 w-full rounded-lg border border-border bg-muted px-2 py-1.5 text-xs font-medium text-muted-foreground cursor-not-allowed"
                 />
               </label>
-              <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Time
-                <input
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                />
-              </label>
+              <div
+                className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                role="group"
+                aria-label="Time (24-hour)"
+              >
+                <span>Time (24h)</span>
+                <div className="mt-1 flex items-center gap-1">
+                  <Select
+                    value={timeHour}
+                    onValueChange={(h) => setTime(`${h}:${timeMinute}`)}
+                  >
+                    <SelectTrigger
+                      className="h-8 flex-1 px-2 text-xs tabular-nums"
+                      aria-label="Hour (00–23)"
+                    >
+                      <SelectValue placeholder="HH" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {HOURS_24.map((h) => (
+                        <SelectItem
+                          key={h}
+                          value={h}
+                          className="tabular-nums text-xs"
+                        >
+                          {h}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span aria-hidden className="select-none text-muted-foreground">
+                    :
+                  </span>
+                  <Select
+                    value={timeMinute}
+                    onValueChange={(m) => setTime(`${timeHour}:${m}`)}
+                  >
+                    <SelectTrigger
+                      className="h-8 flex-1 px-2 text-xs tabular-nums"
+                      aria-label="Minute (00–59)"
+                    >
+                      <SelectValue placeholder="MM" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-64">
+                      {MINUTES_60.map((m) => (
+                        <SelectItem
+                          key={m}
+                          value={m}
+                          className="tabular-nums text-xs"
+                        >
+                          {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
             <button

@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarRange, Loader2, Play, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import { useUserTimezone } from '@/lib/user-timezone';
 import {
   forceRunContentPlanApi,
   getContentPlanApi,
@@ -165,12 +167,14 @@ function PlatformCell({
   date,
   platform,
   entries,
+  todayIso,
   forceRunKey,
   onForceRun,
 }: {
   date: string;
   platform: ContentPlanPlatform;
   entries: CellEntry[];
+  todayIso: string;
   forceRunKey: string | null;
   onForceRun: (date: string, platform: ContentPlanPlatform) => void;
 }) {
@@ -182,7 +186,11 @@ function PlatformCell({
     );
   }
 
+  const isPast = date < todayIso;
+  const hasGenerated = entries.some((e) => e.source === 'generated');
   const showForceRun =
+    !isPast &&
+    !hasGenerated &&
     entries.every((e) => e.source === 'upcoming') &&
     entries.some((e) => canForceRunKind(e.kind));
   const cellKey = `${date}::${platform}`;
@@ -254,11 +262,14 @@ function PlatformCell({
 function ContentPlanSheet({
   days,
   platforms,
+  todayIso,
   forceRunKey,
   onForceRun,
 }: {
   days: ContentPlanDay[];
   platforms: ContentPlanPlatform[];
+  /** YYYY-MM-DD in the user's timezone — highlighted as Today. */
+  todayIso: string;
   forceRunKey: string | null;
   onForceRun: (date: string, platform: ContentPlanPlatform) => void;
 }) {
@@ -292,6 +303,7 @@ function ContentPlanSheet({
             {days.map((day, rowIdx) => {
               const { weekday, day: dayLabel } = formatDateParts(day.date);
               const festivalNames = day.festivals.map((f) => f.name).join(' · ');
+              const isToday = day.date === todayIso;
               const zebra = rowIdx % 2 === 1;
 
               return (
@@ -299,21 +311,37 @@ function ContentPlanSheet({
                   key={day.date}
                   className={cn(
                     'align-top transition-colors hover:bg-accent/40',
-                    zebra && 'bg-muted/20'
+                    isToday
+                      ? 'bg-primary/10 ring-1 ring-inset ring-primary/30'
+                      : zebra && 'bg-muted/20'
                   )}
                 >
                   <th
                     scope="row"
                     className={cn(
                       'sticky left-0 z-10 border-b border-r border-border px-3 py-2 text-left font-normal backdrop-blur-sm',
-                      zebra ? 'bg-muted/90' : 'bg-card/95'
+                      isToday
+                        ? 'bg-primary/15'
+                        : zebra
+                          ? 'bg-muted/90'
+                          : 'bg-card/95'
                     )}
                   >
                     <div className="flex flex-col gap-0.5">
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                         {weekday}
+                        {isToday ? (
+                          <span className="ml-1 rounded bg-primary px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">
+                            Today
+                          </span>
+                        ) : null}
                       </span>
-                      <span className="text-[13px] font-semibold text-foreground">
+                      <span
+                        className={cn(
+                          'text-[13px] font-semibold',
+                          isToday ? 'text-primary' : 'text-foreground'
+                        )}
+                      >
                         {dayLabel}
                       </span>
                       {festivalNames ? (
@@ -341,6 +369,7 @@ function ContentPlanSheet({
                           date={day.date}
                           platform={platform}
                           entries={entries}
+                          todayIso={todayIso}
                           forceRunKey={forceRunKey}
                           onForceRun={onForceRun}
                         />
@@ -370,6 +399,11 @@ const LEGEND: Array<{ kind: string; label: string }> = [
 export default function ContentPlanPage() {
   const { user, loading: authLoading } = useAuth();
   const { billing, loading: creditsLoading } = useUserPlanCredits();
+  const timeZone = useUserTimezone();
+  const todayIso = useMemo(
+    () => formatInTimeZone(new Date(), timeZone, 'yyyy-MM-dd'),
+    [timeZone]
+  );
   const [days, setDays] = useState<ContentPlanDay[]>([]);
   const [range, setRange] = useState<{ from: string; to: string } | null>(
     null
@@ -407,13 +441,17 @@ export default function ContentPlanPage() {
     });
   }, [days, platforms]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent === true;
+    if (!silent) {
+      setLoading(true);
+      setError('');
+    }
     try {
       const data = await getContentPlanApi();
       setDays(data.days);
       setRange({ from: data.from, to: data.to });
+      if (silent) setError('');
     } catch (err) {
       const message =
         err &&
@@ -428,21 +466,65 @@ export default function ContentPlanPage() {
           : err instanceof Error
             ? err.message
             : 'Failed to load content plan';
-      setError(message);
-      setDays([]);
+      if (!silent) {
+        setError(message);
+        setDays([]);
+      } else {
+        toast.error(`Could not refresh calendar: ${message}`);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   const handleForceRun = useCallback(
     async (date: string, platform: ContentPlanPlatform) => {
+      if (date < todayIso) {
+        toast.error('Force Run is not available for past dates');
+        return;
+      }
       const key = `${date}::${platform}`;
       setForceRunKey(key);
       try {
         await forceRunContentPlanApi({ date, platform });
-        toast.success(`Queued generation for ${platform} on ${date}`);
-        await load();
+        toast.success(`Generating for ${platform} on ${date}`);
+        // Optimistic: mark cell as queued so Force Run disappears without a
+        // full-page loading flash; then silently refresh for server truth.
+        setDays((prev) =>
+          prev.map((day) => {
+            if (day.date !== date) return day;
+            const slot = day.byPlatform[platform];
+            if (!slot) return day;
+            const queuedFromUpcoming = slot.upcoming
+              .filter((u) => canForceRunKind(u.kind))
+              .map((u) => ({
+                kind: u.kind as ContentPlanGeneratedItem['kind'],
+                status: 'queued' as const,
+                title: u.label,
+                captionPreview: u.note,
+              }));
+            return {
+              ...day,
+              byPlatform: {
+                ...day.byPlatform,
+                [platform]: {
+                  generated:
+                    queuedFromUpcoming.length > 0
+                      ? queuedFromUpcoming
+                      : [
+                          {
+                            kind: 'other' as const,
+                            status: 'queued' as const,
+                            title: 'Queued',
+                          },
+                        ],
+                  upcoming: [],
+                },
+              },
+            };
+          })
+        );
+        void load({ silent: true });
       } catch (err) {
         const message =
           err &&
@@ -462,7 +544,7 @@ export default function ContentPlanPage() {
         setForceRunKey(null);
       }
     },
-    [load]
+    [load, todayIso]
   );
 
   useEffect(() => {
@@ -510,15 +592,19 @@ export default function ContentPlanPage() {
           </span>
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-          Content Plan
+          Content Calendar
         </h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Spreadsheet view of your auto calendar — rows are days, columns are
-          platforms. Colored cells show what is already set or still planned.
+          Your plan calendar from start to end — rows are days, columns are
+          platforms. Colored cells show what is already
+          set or still planned.
         </p>
         {range?.from && range?.to ? (
-          <p className="text-xs text-muted-foreground">
-            {range.from} → {range.to}
+          <p className="text-xs font-medium text-foreground">
+            Plan period:{' '}
+            <span className="tabular-nums text-muted-foreground">
+              {formatDateParts(range.from).day} → {formatDateParts(range.to).day}
+            </span>
           </p>
         ) : null}
       </header>
@@ -582,12 +668,13 @@ export default function ContentPlanPage() {
           <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
             Tip: hover over a cell for details. Force Run appears only on
             planned Content Studio, AI Engine, Video, or Carousel cells — it
-            hides after Force Run or when content is already queued/generated
+            hides after Force Run or when content is already generating/generated
             (not available on campaign posts).
           </p>
           <ContentPlanSheet
             days={visibleDays}
             platforms={platforms}
+            todayIso={todayIso}
             forceRunKey={forceRunKey}
             onForceRun={handleForceRun}
           />

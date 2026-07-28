@@ -144,15 +144,15 @@ export function AppSidebar({
     // Content Plan is auto-mode only — append from users/{uid}.mode via
     // UserPlanCreditsProvider (not a separate auto-mode API gate).
     if (billing?.mode === 'auto') {
-      const postQueueIdx = items.findIndex(
-        (item) => item.href === WORKSPACE_NAV_HREFS.postQueue
+      const schedulePostIdx = items.findIndex(
+        (item) => item.href === WORKSPACE_NAV_HREFS.schedulePost
       );
       const contentPlanItem = {
         ...CONTENT_PLAN_NAV_ITEM,
         icon: workspaceNavIcons[CONTENT_PLAN_NAV_ITEM.href],
       };
-      if (postQueueIdx >= 0) {
-        items.splice(postQueueIdx + 1, 0, contentPlanItem);
+      if (schedulePostIdx >= 0) {
+        items.splice(schedulePostIdx + 1, 0, contentPlanItem);
       } else {
         items.push(contentPlanItem);
       }
