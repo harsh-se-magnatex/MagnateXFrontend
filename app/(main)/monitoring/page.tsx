@@ -123,28 +123,28 @@ function ActionButtons({
   };
   const isCard = size === 'card';
   const btn = isCard
-    ? 'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1'
-    : 'rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2';
+    ? 'rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-background'
+    : 'rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background';
   return (
     <div className={`flex items-center gap-3 ${!isCard ? 'flex-wrap' : ''}`}>
       <button
         type="button"
         onClick={(e) => handle(onRegenerate, e)}
-        className={`${btn} bg-amber-100 text-amber-800 hover:bg-amber-200  focus:ring-amber-500`}
+        className={`${btn} bg-amber-500 text-neutral-950 hover:bg-amber-400 focus:ring-amber-500`}
       >
         Regenerate
       </button>
       <button
         type="button"
         onClick={(e) => handle(onAccept, e)}
-        className={`${btn} bg-emerald-100 text-emerald-800 hover:bg-emerald-200  focus:ring-emerald-500`}
+        className={`${btn} bg-emerald-600 text-white hover:bg-emerald-500 focus:ring-emerald-500`}
       >
         Accept
       </button>
       <button
         type="button"
         onClick={(e) => handle(onReject, e)}
-        className={`${btn} bg-red-100 text-red-800 hover:bg-red-200  focus:ring-red-500`}
+        className={`${btn} bg-red-600 text-white hover:bg-red-500 focus:ring-red-500`}
       >
         Reject
       </button>
@@ -316,7 +316,7 @@ export default function MonitoringPage() {
             <h2 className="text-lg font-semibold text-zinc-900">
               Pending scheduled posts
             </h2>
-            <div className="flex flex-wrap gap-1 rounded-xl border border-zinc-200 bg-zinc-100 p-1">
+            <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-muted p-1">
               {TABS.map((tab) => {
                 const tCount = tabsState[tab].posts.length;
                 const tHasMore = tabsState[tab].hasMore;
@@ -326,8 +326,8 @@ export default function MonitoringPage() {
                     type="button"
                     onClick={() => setDateTab(tab)}
                     className={`rounded-lg px-4 py-2 text-xs font-semibold capitalize transition-all ${dateTab === tab
-                        ? 'bg-white text-zinc-900 shadow-sm'
-                        : 'text-zinc-500 hover:text-zinc-800'
+                        ? 'bg-card text-foreground shadow-sm ring-1 ring-border'
+                        : 'text-muted-foreground hover:text-foreground'
                       }`}
                   >
                     {tab} ({tCount}
@@ -430,7 +430,7 @@ export default function MonitoringPage() {
                           <span>{post.userName}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-700 ">
+                          <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-foreground ring-1 ring-inset ring-border">
                             {status}
                           </span>
                         </div>

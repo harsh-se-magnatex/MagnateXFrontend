@@ -86,8 +86,12 @@ export function ShowcasePostDetail({
           role="dialog"
           aria-modal="true"
           aria-label="Post detail"
+          onClick={onClose}
         >
-          <div className="flex items-center justify-between px-3 py-2 text-white">
+          <div
+            className="flex items-center justify-between px-3 py-2 text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               onClick={onClose}
@@ -126,7 +130,8 @@ export function ShowcasePostDetail({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className="mx-auto h-full max-w-xl"
+              className="mx-auto max-w-xl"
+              onClick={(e) => e.stopPropagation()}
             >
               {platform === 'instagram' && <InstagramDetail post={post} />}
               {platform === 'facebook' && <FacebookDetail post={post} />}
@@ -141,6 +146,7 @@ export function ShowcasePostDetail({
 
 function InstagramDetail({ post }: { post: ShowcasePost }) {
   const { likes } = getPostEngagement(post);
+  const isCarousel = post.mediaType === 'carousel';
   return (
     <article className="overflow-hidden rounded-xl bg-white shadow-xl">
       <div className="flex items-center gap-2 border-b border-neutral-100 px-3 py-2.5">
@@ -154,8 +160,19 @@ function InstagramDetail({ post }: { post: ShowcasePost }) {
           </p>
         </div>
       </div>
-      <div className="relative aspect-square w-full bg-neutral-100">
-        <ShowcaseMedia post={post} playVideo sizes="(max-width: 768px) 100vw, 560px" />
+      <div
+        className={
+          isCarousel
+            ? 'relative aspect-[4/5] w-full bg-neutral-100'
+            : 'relative aspect-square w-full bg-neutral-100'
+        }
+      >
+        <ShowcaseMedia
+          post={post}
+          playVideo
+          mediaClassName={isCarousel ? 'object-contain' : 'object-cover'}
+          sizes="(max-width: 768px) 100vw, 560px"
+        />
       </div>
       <div className="px-3 py-2.5">
         <div className="flex items-center justify-between text-neutral-800">
@@ -180,6 +197,7 @@ function InstagramDetail({ post }: { post: ShowcasePost }) {
 
 function FacebookDetail({ post }: { post: ShowcasePost }) {
   const { likes, comments, shares } = getPostEngagement(post);
+  const isCarousel = post.mediaType === 'carousel';
   return (
     <article className="overflow-hidden rounded-xl border border-neutral-200/80 bg-white shadow-xl">
       <div className="flex items-start gap-3 px-4 pt-4">
@@ -196,8 +214,19 @@ function FacebookDetail({ post }: { post: ShowcasePost }) {
       <p className="px-4 pt-3 text-[15px] leading-snug text-neutral-800">
         {post.caption}
       </p>
-      <div className="relative mx-4 mt-3 aspect-[4/3] overflow-hidden rounded-lg bg-neutral-100">
-        <ShowcaseMedia post={post} playVideo sizes="(max-width: 680px) 100vw, 680px" />
+      <div
+        className={
+          isCarousel
+            ? 'relative mx-4 mt-3 aspect-[4/5] overflow-hidden rounded-lg bg-neutral-100'
+            : 'relative mx-4 mt-3 aspect-[4/3] overflow-hidden rounded-lg bg-neutral-100'
+        }
+      >
+        <ShowcaseMedia
+          post={post}
+          playVideo
+          mediaClassName={isCarousel ? 'object-contain' : 'object-cover'}
+          sizes="(max-width: 680px) 100vw, 680px"
+        />
       </div>
       <div className="mx-4 mt-3 flex items-center justify-between border-b border-neutral-100 pb-2 text-xs text-neutral-500">
         <span className="flex items-center gap-1">
@@ -230,6 +259,7 @@ function FacebookDetail({ post }: { post: ShowcasePost }) {
 
 function LinkedInDetail({ post }: { post: ShowcasePost }) {
   const { likes, comments, shares } = getPostEngagement(post);
+  const isCarousel = post.mediaType === 'carousel';
   return (
     <article className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl">
       <div className="flex items-start gap-3 px-4 pt-4">
@@ -249,8 +279,19 @@ function LinkedInDetail({ post }: { post: ShowcasePost }) {
       <p className="px-4 pt-3 text-[14px] leading-relaxed text-neutral-800 whitespace-pre-wrap">
         {post.caption}
       </p>
-      <div className="relative mx-4 mt-3 aspect-[1.91/1] overflow-hidden rounded-lg bg-neutral-100">
-        <ShowcaseMedia post={post} playVideo sizes="(max-width: 552px) 100vw, 552px" />
+      <div
+        className={
+          isCarousel
+            ? 'relative mx-4 mt-3 aspect-[4/5] overflow-hidden rounded-lg bg-neutral-100'
+            : 'relative mx-4 mt-3 aspect-[1.91/1] overflow-hidden rounded-lg bg-neutral-100'
+        }
+      >
+        <ShowcaseMedia
+          post={post}
+          playVideo
+          mediaClassName={isCarousel ? 'object-contain' : 'object-cover'}
+          sizes="(max-width: 552px) 100vw, 552px"
+        />
       </div>
       <div className="mx-4 mt-3 flex items-center justify-between border-b border-neutral-100 pb-2 text-xs text-neutral-500">
         <span>{likes.toLocaleString()} reactions</span>
