@@ -301,6 +301,9 @@ export default function CreateCampaignPage() {
   const setGoal = useCampaignState((s) => s.setGoal);
   const suggestions = useCampaignState((s) => s.suggestions);
   const maxDaysFromServer = useCampaignState((s) => s.maxDays);
+  const autoSeeded = useCampaignState((s) => s.autoSeeded);
+  const pickedSuggestionId = useCampaignState((s) => s.pickedSuggestionId);
+  const pickedReason = useCampaignState((s) => s.pickedReason);
   const selectedSuggestionId = useCampaignState(
     (s) => s.selectedSuggestionId
   );
@@ -433,7 +436,14 @@ export default function CreateCampaignPage() {
       try {
         setIsLoadingSuggestions(true);
         const set = await getCampaignSuggestionsApi();
-        loadSuggestionSet(set.suggestions, set.maxDays);
+        loadSuggestionSet(set.suggestions, set.maxDays, {
+          autoSeeded: set.autoSeeded === true,
+          pickedSuggestionId: set.pickedSuggestionId ?? null,
+          pickedReason: set.pickedReason ?? null,
+        });
+        if (typeof set.goal === 'string' && set.goal.trim()) {
+          setGoal(set.goal);
+        }
       } catch (err) {
         // Soft-fail: empty gallery just nudges the user to click Generate.
         console.warn('[create-campaign] initial fetch failed', err);
@@ -441,7 +451,7 @@ export default function CreateCampaignPage() {
         setIsLoadingSuggestions(false);
       }
     })();
-  }, [loadSuggestionSet, setIsLoadingSuggestions, suggestions.length]);
+  }, [loadSuggestionSet, setGoal, setIsLoadingSuggestions, suggestions.length]);
 
   // -------------------- create draft batch --------------------
   const handleGenerateSet = useCallback(
@@ -453,7 +463,11 @@ export default function CreateCampaignPage() {
           goal,
           count: size ?? DEFAULT_CAMPAIGN_SET_SIZE,
         });
-        loadSuggestionSet(set.suggestions, set.maxDays);
+        loadSuggestionSet(set.suggestions, set.maxDays, {
+          autoSeeded: false,
+          pickedSuggestionId: null,
+          pickedReason: null,
+        });
         toast.success(
           `Generated ${set.suggestions.length} campaign idea${set.suggestions.length === 1 ? '' : 's'}.`
         );
@@ -744,6 +758,9 @@ export default function CreateCampaignPage() {
           onRegenerate={handleRegenerateOne}
           onSelect={selectSuggestion}
           effectiveMaxDays={effectiveMaxDays}
+          autoSeeded={autoSeeded}
+          pickedSuggestionId={pickedSuggestionId}
+          pickedReason={pickedReason}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -845,6 +862,9 @@ type SuggestionGalleryProps = {
   onRegenerate: (suggestionId: string) => void;
   onSelect: (suggestionId: string) => void;
   effectiveMaxDays: number;
+  autoSeeded?: boolean;
+  pickedSuggestionId?: string | null;
+  pickedReason?: string | null;
 };
 
 function SuggestionGallery(props: SuggestionGalleryProps) {
@@ -858,6 +878,9 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
     onRegenerate,
     onSelect,
     effectiveMaxDays,
+    autoSeeded = false,
+    pickedSuggestionId = null,
+    pickedReason = null,
   } = props;
 
   const showSkeleton = isLoading && suggestions.length === 0;
@@ -877,9 +900,9 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
               1. Pick a campaign idea
             </h2>
             <p className="text-xs text-slate-500">
-              Optional: tell the AI what the campaign should focus on, then
-              hit Generate. Each idea is a {effectiveMaxDays}-day plan you
-              can fully edit after picking.
+              {autoSeeded && pickedSuggestionId
+                ? 'Auto mode already chose one idea for you (see the badge below). You can still pick a different card.'
+                : `Optional: tell the AI what the campaign should focus on, then hit Generate. Each idea is a ${effectiveMaxDays}-day plan you can fully edit after picking.`}
             </p>
           </div>
         </div>
@@ -922,6 +945,15 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
         </div>
       </section>
 
+      {autoSeeded && pickedReason ? (
+        <div className="rounded-2xl border border-indigo-200 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-950">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-600">
+            Why auto mode picked this
+          </p>
+          <p className="mt-1 leading-relaxed">{pickedReason}</p>
+        </div>
+      ) : null}
+
       {showSkeleton && (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: DEFAULT_CAMPAIGN_SET_SIZE }).map((_, idx) => (
@@ -963,6 +995,9 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
                   suggestion={suggestion}
                   isRegenerating={regeneratingId === suggestion.id}
                   anyRegenerating={regeneratingId != null}
+                  isAiPicked={
+                    autoSeeded && pickedSuggestionId === suggestion.id
+                  }
                   onRegenerate={() => onRegenerate(suggestion.id)}
                   onSelect={() => onSelect(suggestion.id)}
                 />
@@ -979,20 +1014,36 @@ type SuggestionCardProps = {
   suggestion: CampaignSuggestion;
   isRegenerating: boolean;
   anyRegenerating: boolean;
+  isAiPicked?: boolean;
   onRegenerate: () => void;
   onSelect: () => void;
 };
 
 function SuggestionCard(props: SuggestionCardProps) {
-  const { suggestion, isRegenerating, anyRegenerating, onRegenerate, onSelect } =
-    props;
+  const {
+    suggestion,
+    isRegenerating,
+    anyRegenerating,
+    isAiPicked = false,
+    onRegenerate,
+    onSelect,
+  } = props;
   return (
     <div
       className={cn(
-        'group relative flex h-full flex-col rounded-3xl border border-border bg-card p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md',
+        'group relative flex h-full flex-col rounded-3xl border bg-card p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md',
+        isAiPicked
+          ? 'border-indigo-400 ring-2 ring-indigo-100'
+          : 'border-border',
         isRegenerating && 'opacity-70'
       )}
     >
+      {isAiPicked ? (
+        <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-indigo-600 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+          <Sparkles className="h-3 w-3" />
+          AI picked for you
+        </span>
+      ) : null}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-bold text-slate-900 line-clamp-2">
