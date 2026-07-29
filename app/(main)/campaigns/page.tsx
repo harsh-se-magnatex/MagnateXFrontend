@@ -1615,9 +1615,9 @@ function DraftsDrawer(props: DraftsDrawerProps) {
   } = props;
   const [drafts, setDrafts] = useState<CampaignDraft[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<'draft' | 'scheduled' | 'all'>(
-    'draft'
-  );
+  const [filter, setFilter] = useState<
+    'draft' | 'ai-draft' | 'scheduled' | 'all'
+  >('draft');
   // Holds the id of the draft currently being regenerated so we can show a
   // per-row spinner. Set when the user clicks Regenerate, cleared once the
   // refresh after the job completes brings back the updated draft data
@@ -1634,11 +1634,23 @@ function DraftsDrawer(props: DraftsDrawerProps) {
   const refresh = useCallback(async () => {
     try {
       setLoading(true);
+      const statusParam =
+        filter === 'scheduled'
+          ? 'scheduled'
+          : filter === 'all'
+            ? undefined
+            : 'draft';
       const list = await listCampaignDraftsApi({
-        status: filter === 'all' ? undefined : filter,
+        status: statusParam,
         limit: 50,
       });
-      setDrafts(list);
+      const filtered =
+        filter === 'ai-draft'
+          ? list.filter((d) => d.autoSeeded === true)
+          : filter === 'draft'
+            ? list.filter((d) => d.autoSeeded !== true)
+            : list;
+      setDrafts(filtered);
       // Refreshed data is the authoritative source for "is this draft
       // still being regenerated?". Once the new image/regenerationCount
       // is in `list`, the spinner can go away.
@@ -1737,26 +1749,34 @@ function DraftsDrawer(props: DraftsDrawerProps) {
             Campaign drafts
           </SheetTitle>
           <SheetDescription className="text-xs text-muted-foreground">
-            Drafts are generated but not yet posted. Pick a date &amp; time
-            to push one onto your schedule.
+            Drafts are generated but not yet posted. Manual campaigns appear
+            under Draft; auto-mode content is under AI Draft. Pick a date
+            &amp; time to push one onto your schedule.
           </SheetDescription>
         </SheetHeader>
 
         <div className="border-b border-border px-6 py-3 flex items-center justify-between gap-3">
-          <div className="inline-flex rounded-full border border-border bg-muted p-1 text-xs font-semibold">
-            {(['draft', 'scheduled', 'all'] as const).map((value) => (
+          <div className="inline-flex flex-wrap rounded-full border border-border bg-muted p-1 text-xs font-semibold">
+            {(
+              [
+                { value: 'draft', label: 'Draft' },
+                { value: 'ai-draft', label: 'AI Draft' },
+                { value: 'scheduled', label: 'Scheduled' },
+                { value: 'all', label: 'All' },
+              ] as const
+            ).map((tab) => (
               <button
-                key={value}
+                key={tab.value}
                 type="button"
-                onClick={() => setFilter(value)}
+                onClick={() => setFilter(tab.value)}
                 className={cn(
-                  'rounded-full px-3 py-1 capitalize transition',
-                  filter === value
+                  'rounded-full px-3 py-1 transition',
+                  filter === tab.value
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 )}
               >
-                {value}
+                {tab.label}
               </button>
             ))}
           </div>
@@ -1783,7 +1803,11 @@ function DraftsDrawer(props: DraftsDrawerProps) {
           )}
           {!loading && drafts.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border bg-muted/40 p-6 text-center text-sm text-muted-foreground">
-              No {filter === 'all' ? '' : filter} drafts yet.
+              {filter === 'ai-draft'
+                ? 'No AI campaign drafts yet. Auto-mode campaigns will appear here when generated.'
+                : filter === 'all'
+                  ? 'No drafts yet.'
+                  : `No ${filter} drafts yet.`}
               {filter === 'draft' &&
                 ' Generate a campaign and the renders will land here.'}
             </div>

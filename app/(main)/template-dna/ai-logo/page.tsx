@@ -42,6 +42,7 @@ export default function AILogoPage() {
   const [basics, setBasics] = useState<Basics>({ businessName: '', industry: '' });
   const [requirements, setRequirements] = useState('');
   const [picks, setPicks] = useState<string[]>([]);
+  const [pickUrls, setPickUrls] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -93,9 +94,13 @@ export default function AILogoPage() {
       setGenerating(true);
       const response = await generateAiLogoPicks(requirements, 1);
       const nextPicks = response?.data?.picks || [];
+      const nextUrls = response?.data?.urls || [];
       if (!nextPicks.length) throw new Error('No logo pick was generated.');
       setPicks((currentPicks) =>
         [...nextPicks, ...currentPicks].slice(0, MAX_AI_LOGO_PICKS)
+      );
+      setPickUrls((current) =>
+        [...nextUrls, ...current].slice(0, MAX_AI_LOGO_PICKS)
       );
       toast.success('Logo pick is ready.');
       void handleGetAiGeneratedLogos();
@@ -112,16 +117,23 @@ export default function AILogoPage() {
     requirements,
   ]);
 
-  const selectedLogo = useMemo(() => {
+  const selectedPublicUrl = useMemo(() => {
     if (selectedIndex == null) return '';
-    return picks[selectedIndex] || '';
-  }, [selectedIndex, picks]);
+    const fromUrls = pickUrls[selectedIndex] || '';
+    if (fromUrls && !fromUrls.startsWith('data:')) return fromUrls;
+    const fromPick = picks[selectedIndex] || '';
+    if (fromPick && !fromPick.startsWith('data:')) return fromPick;
+    return '';
+  }, [selectedIndex, pickUrls, picks]);
 
   async function handleUseSelectedLogo() {
-    if (!selectedLogo) return;
+    if (!selectedPublicUrl) {
+      showErrorToast('Select a saved logo pick (wait for generation to finish).');
+      return;
+    }
     try {
       setSaving(true);
-      await saveAiGeneratedLogo(selectedLogo);
+      await saveAiGeneratedLogo(selectedPublicUrl);
       toast.success('Logo saved successfully.');
       router.push('/template-dna');
     } catch (error: unknown) {
@@ -134,13 +146,11 @@ export default function AILogoPage() {
   async function handleGetAiGeneratedLogos() {
     const response = await getAiGeneratedLogos();
     const logos = response?.data?.logos || [];
-    setPicks(
-      [...logos]
-        .sort(
-          (a, b) => getCreatedAtMs(b.createdAt) - getCreatedAtMs(a.createdAt)
-        )
-        .map((logo) => logo.url)
+    const sorted = [...logos].sort(
+      (a, b) => getCreatedAtMs(b.createdAt) - getCreatedAtMs(a.createdAt)
     );
+    setPicks(sorted.map((logo) => logo.url));
+    setPickUrls(sorted.map((logo) => logo.url));
   }
 
   useEffect(() => {
@@ -259,7 +269,7 @@ export default function AILogoPage() {
             <button
               type="button"
               onClick={() => void handleUseSelectedLogo()}
-              disabled={saving || !selectedLogo}
+              disabled={saving || !selectedPublicUrl}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 font-semibold text-indigo-700 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? (

@@ -1367,15 +1367,15 @@ export default function BillingsPage() {
             </h2>
           </div>
           <p className="text-sm text-slate-600 mb-4">
-           Credit used per action by Manual Trigger:
+           Credit used per post by <strong>Manual Trigger</strong>
           </p>
           <ul className="text-sm text-slate-700 space-y-2 list-none pl-0">
             <li>· Product Ads: 4 credits</li>
-            <li>· Campaign post: 3 credits per day</li>
+            <li>· Campaign post: 3 credits per post</li>
             <li>· Content Studio: 2 credits</li>
             <li>· Event Studio: 2 credits</li>
             <li>· Carousel: 3 credits per slide</li>
-            <li>· Video Generation: 15 credits (manual only)</li>
+            <li>· Video Generation: 15 credits</li>
             <li>· Regeneration: 1 credit (First regen free)</li>
           </ul>
         </section>

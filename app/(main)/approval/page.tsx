@@ -74,6 +74,8 @@ export type PendingScheduledPost = {
   error?: string | null;
   errors?: string[] | null;
   GeneratedBy?: string;
+  /** Only AI Engine posts support regenerate (matches scheduled-posts page). */
+  generatedByAiEngine?: boolean;
   generationProof?: unknown;
   /**
    * Mirrors `users/{uid}/scheduledPosts/{postId}.regenratedCount` (typo
@@ -200,7 +202,8 @@ function PendingPostCard({
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
-  const showRegenerate = canScheduledPostRegenerate(post);
+  const showRegenerate =
+    post.generatedByAiEngine === true && canScheduledPostRegenerate(post);
   const showActions = status.variant !== 'failed';
   const mediaPreview = resolveSchedulableMediaPreview(post);
   const hasMedia = hasSchedulableMediaPreview(mediaPreview);
@@ -394,7 +397,8 @@ function DetailModal({
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
-  const showRegenerate = canScheduledPostRegenerate(post);
+  const showRegenerate =
+    post.generatedByAiEngine === true && canScheduledPostRegenerate(post);
   const showActions = status.variant !== 'failed';
   const research = parseGenerationResearchFromProof(post.generationProof);
   const showResearch = hasViewableResearch(research);
@@ -728,6 +732,11 @@ export default function ApprovalPage() {
       }
       if (action === 'regenerate' && !platform) {
         showErrorToast('Missing platform for this post');
+        return;
+      }
+      const target = pendingPosts.find((p) => p.postId === postId);
+      if (action === 'regenerate' && target?.generatedByAiEngine !== true) {
+        showErrorToast('Only AI Engine posts can be regenerated.');
         return;
       }
 

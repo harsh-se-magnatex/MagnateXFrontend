@@ -190,6 +190,8 @@ export type CampaignDraft = {
    *  Kept loosely-typed so the UI can format defensively. */
   scheduledAt: unknown;
   createdAt: unknown;
+  /** True when this draft was produced by auto-mode campaign seed. */
+  autoSeeded?: boolean;
 };
 
 export async function listCampaignDraftsApi(params?: {

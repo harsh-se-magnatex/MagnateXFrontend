@@ -1504,6 +1504,7 @@ export default function SchedulePostPage() {
         return;
       }
       if (action === 'regenerate' && post.generatedByAiEngine !== true) {
+        showErrorToast('Only AI Engine posts can be regenerated.');
         return;
       }
       if (action === 'regenerate' && !platform) {

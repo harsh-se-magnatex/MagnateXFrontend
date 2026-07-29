@@ -140,6 +140,27 @@ function buildStepMeta(selected: SelectedPlatforms): StepMeta[] {
   return steps;
 }
 
+function automationDoneStorageKey(uid: string): string {
+  return `ai-engine-automation-done:${uid}`;
+}
+
+function readAutomationDone(uid: string | undefined | null): boolean {
+  if (!uid || typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(automationDoneStorageKey(uid)) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writeAutomationDone(uid: string): void {
+  try {
+    localStorage.setItem(automationDoneStorageKey(uid), '1');
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
 function isStepComplete(
   stepId: StepId,
   data: UserData,
@@ -194,7 +215,7 @@ function stepStatusLabel(
       return 'Optional — skipped';
     }
     if (stepId === 'automation' && skipped.has('automation')) {
-      return 'Optional — skipped';
+      return 'Done';
     }
     if (stepId === 'plan') return 'Active plan';
     if (stepId === 'business') return 'Profile ready';
@@ -442,6 +463,16 @@ export default function AIEnginePage() {
     React.useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    if (!user?.uid) return;
+    if (readAutomationDone(user.uid)) {
+      setSkipped((prev) => {
+        if (prev.has('automation')) return prev;
+        return new Set(prev).add('automation');
+      });
+    }
+  }, [user?.uid]);
+
   const getDetails = useCallback(async (opts?: { silent?: boolean }) => {
     try {
       if (!opts?.silent) setDataLoading(true);
@@ -533,6 +564,17 @@ export default function AIEnginePage() {
       return;
     }
     setOpenStepId((prev) => {
+      if (prev != null) {
+        const prevIdx = stepMeta.findIndex((s) => s.id === prev);
+        const prevDone =
+          prevIdx >= 0 &&
+          (stepMeta[prevIdx].id === 'ready'
+            ? allSetupDone
+            : stepCompletions[prevIdx] === true);
+        if (prevDone) {
+          return stepMeta[firstStrictIncompleteIdx]?.id ?? null;
+        }
+      }
       if (prev == null) return stepMeta[firstBlockingIncompleteIdx]?.id ?? null;
       const prevIdx = stepMeta.findIndex((s) => s.id === prev);
       if (prevIdx < 0) {
@@ -549,6 +591,8 @@ export default function AIEnginePage() {
     firstBlockingIncompleteIdx,
     stepPositionInitialized,
     stepMeta,
+    stepCompletions,
+    allSetupDone,
   ]);
 
   useEffect(() => {
@@ -562,6 +606,11 @@ export default function AIEnginePage() {
 
   const skipStep = (stepId: StepId) => {
     setSkipped((prev) => new Set(prev).add(stepId));
+  };
+
+  const markAutomationDone = () => {
+    if (user?.uid) writeAutomationDone(user.uid);
+    setSkipped((prev) => new Set(prev).add('automation'));
   };
 
   const maxAllowed = PLAN_MAX_SOCIAL[data.plan] ?? 0;
@@ -647,7 +696,91 @@ export default function AIEnginePage() {
     if (index < 0 || index >= stepMeta.length) return;
     if (index > firstBlockingIncompleteIdx) return;
     const id = stepMeta[index].id;
+    const done =
+      id === 'ready' ? allSetupDone : stepCompletions[index] === true;
+    if (done) return;
     setOpenStepId((prev) => (prev === id ? null : id));
+  };
+
+  const renderDoneRowCta = (stepId: StepId) => {
+    switch (stepId) {
+      case 'plan':
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            onClick={() => router.push('/settings/billings')}
+          >
+            Open billing
+          </Button>
+        );
+      case 'business':
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            onClick={() => router.push('/template-dna')}
+          >
+            {data.onBoarded ? 'Review brand profile' : 'Add brand details'}
+          </Button>
+        );
+      case 'selectSocial':
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            disabled={
+              !canSaveSelection || savingSelection || platformsLocked
+            }
+            onClick={() => {
+              if (platformsLocked) return;
+              setConfirmSelectionOpen(true);
+            }}
+          >
+            {platformsLocked ? 'Selection locked' : 'Save selection'}
+          </Button>
+        );
+      case 'automation':
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            onClick={() => router.push('/settings/automation')}
+          >
+            Set preferences
+          </Button>
+        );
+      case 'facebook':
+      case 'instagram':
+      case 'linkedin':
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0"
+            onClick={() => router.push(WORKSPACE_NAV_HREFS.linkedProfiles)}
+          >
+            {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
+          </Button>
+        );
+      case 'ready':
+        return (
+          <Button
+            size="sm"
+            className="shrink-0"
+            disabled={!allSetupDone}
+            onClick={() => router.push('/home')}
+          >
+            Go to home
+          </Button>
+        );
+      default:
+        return null;
+    }
   };
 
   if (loading) return <PageLoadingState />;
@@ -681,71 +814,90 @@ export default function AIEnginePage() {
           const done =
             step.id === 'ready' ? allSetupDone : stepCompletions[index];
           const locked = index > firstBlockingIncompleteIdx;
-          const isOpen = openStepId === step.id;
+          const isOpen = !done && openStepId === step.id;
           const status = stepStatusLabel(step.id, data, skipped, done);
           const Icon = step.icon;
 
           return (
             <div key={step.id} className="overflow-hidden">
-              <button
-                type="button"
-                disabled={locked}
-                onClick={() => openStep(index)}
+              <div
                 className={cn(
-                  'flex w-full items-center gap-3 px-5 py-4 text-left transition-colors',
-                  !locked && 'hover:bg-muted/40',
-                  isOpen && 'bg-muted/30',
-                  locked && 'cursor-not-allowed opacity-50'
+                  'flex w-full items-center gap-3 px-5 py-4',
+                  isOpen && 'bg-muted/30'
                 )}
               >
-                <span
-                  className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold',
-                    done &&
-                      'border-emerald-500/40 bg-emerald-500/15 text-emerald-700',
-                    !done &&
-                      !locked &&
-                      'border-border bg-background text-muted-foreground',
-                    locked && 'border-border bg-muted text-muted-foreground'
-                  )}
-                  aria-hidden
-                >
-                  {locked ? (
-                    <Lock className="h-3.5 w-3.5" />
-                  ) : done ? (
-                    <Check className="h-4 w-4" strokeWidth={2.5} />
-                  ) : (
-                    index + 1
-                  )}
-                </span>
-
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="text-sm font-semibold text-foreground">
-                      {step.label}
+                {done ? (
+                  <>
+                    <span
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-500/40 bg-emerald-500/15 text-sm font-semibold text-emerald-700"
+                      aria-hidden
+                    >
+                      <Check className="h-4 w-4" strokeWidth={2.5} />
                     </span>
-                  </span>
-                  <span
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="text-sm font-semibold text-foreground">
+                          {step.label}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 block text-xs text-emerald-700 dark:text-emerald-400">
+                        {status}
+                      </span>
+                    </span>
+                    <div className="ml-auto flex shrink-0 justify-end">
+                      {renderDoneRowCta(step.id)}
+                    </div>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={locked}
+                    onClick={() => openStep(index)}
                     className={cn(
-                      'mt-0.5 block text-xs',
-                      done
-                        ? 'text-emerald-700 dark:text-emerald-400'
-                        : 'text-muted-foreground'
+                      'flex w-full min-w-0 items-center gap-3 text-left transition-colors',
+                      !locked && 'hover:opacity-90',
+                      locked && 'cursor-not-allowed opacity-50'
                     )}
                   >
-                    {status}
-                  </span>
-                </span>
+                    <span
+                      className={cn(
+                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold',
+                        !locked &&
+                          'border-border bg-background text-muted-foreground',
+                        locked && 'border-border bg-muted text-muted-foreground'
+                      )}
+                      aria-hidden
+                    >
+                      {locked ? (
+                        <Lock className="h-3.5 w-3.5" />
+                      ) : (
+                        index + 1
+                      )}
+                    </span>
 
-                <ChevronDown
-                  className={cn(
-                    'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
-                    isOpen && 'rotate-180'
-                  )}
-                  aria-hidden
-                />
-              </button>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        <span className="text-sm font-semibold text-foreground">
+                          {step.label}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {status}
+                      </span>
+                    </span>
+
+                    <ChevronDown
+                      className={cn(
+                        'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                        isOpen && 'rotate-180'
+                      )}
+                      aria-hidden
+                    />
+                  </button>
+                )}
+              </div>
 
               {isOpen && !locked && (
                 <div className="border-t border-border/60 bg-background/50 px-5 pb-5 pt-4">
@@ -885,10 +1037,10 @@ export default function AIEnginePage() {
                     <div className="space-y-4">
                       <p className="text-sm text-muted-foreground">
                         {skipped.has('automation')
-                          ? 'Skipped for now. Fine-tune anytime in Settings → Automation.'
+                          ? 'Marked done. Fine-tune anytime in Settings → Automation.'
                           : 'Set tone, cadence, and posting preferences.'}
                       </p>
-                      <div className="flex flex-col gap-2 sm:flex-row">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <Button
                           onClick={() => router.push('/settings/automation')}
                         >
@@ -898,9 +1050,9 @@ export default function AIEnginePage() {
                           <Button
                             type="button"
                             variant="ghost"
-                            onClick={() => skipStep('automation')}
+                            onClick={markAutomationDone}
                           >
-                            Later
+                            Done
                           </Button>
                         )}
                       </div>
@@ -916,7 +1068,7 @@ export default function AIEnginePage() {
                         data.facebookConnected ??
                         data.availableFBPages.length > 0
                       ) ? (
-                        <Button className="w-full sm:w-auto" asChild>
+                        <Button className="w-full sm:w-auto mx-2" asChild>
                           <a href={facebookHref}>Connect Facebook</a>
                         </Button>
                       ) : data.selectedPageId == null ? (
@@ -952,7 +1104,7 @@ export default function AIEnginePage() {
                         Connect Instagram for publishing.
                       </p>
                       {!data.instagramConnected ? (
-                        <Button className="w-full sm:w-auto" asChild>
+                        <Button className="w-full sm:w-auto mx-2" asChild>
                           <a href={instagramHref}>Connect Instagram</a>
                         </Button>
                       ) : (
@@ -982,7 +1134,7 @@ export default function AIEnginePage() {
                         data.linkedinConnected ??
                         data.availableLinkedInPages.length > 0
                       ) ? (
-                        <Button className="w-full sm:w-auto" asChild>
+                        <Button className="w-full sm:w-auto mx-2" asChild>
                           <a href={linkedinHref}>Connect LinkedIn</a>
                         </Button>
                       ) : data.selectedLinkedInPageId == null ? (

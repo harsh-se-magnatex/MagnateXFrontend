@@ -1,7 +1,7 @@
 'use client';
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -203,32 +203,79 @@ export default function BrandMemoryPage() {
     setDraft((prev) => ({ ...prev, [qid]: row }));
   }, []);
 
+  const customTagRef = useRef(customTag);
+  customTagRef.current = customTag;
+
   const toggleMulti = useCallback(
     (q: Question, option: string) => {
-      const r = rowFor(q);
-      if (r.skipped) return;
-      const cur = 'multi' in r ? [...r.multi] : [];
-      const i = cur.indexOf(option);
-      if (i === -1) cur.push(option);
-      else cur.splice(i, 1);
-      setRow(q.id, { skipped: false, multi: cur });
+      setDraft((prev) => {
+        const existing = prev[q.id];
+        const cur =
+          existing && !existing.skipped && 'multi' in existing
+            ? [...existing.multi]
+            : [];
+        const i = cur.indexOf(option);
+        if (i === -1) cur.push(option);
+        else cur.splice(i, 1);
+        return { ...prev, [q.id]: { skipped: false, multi: cur } };
+      });
     },
-    [rowFor, setRow]
+    []
   );
 
-  const addCustomProduct = useCallback(
-    (q: Question) => {
-      const t = customTag.trim();
-      if (!t) return;
-      const r = rowFor(q);
-      if (r.skipped) return;
-      const cur = 'multi' in r ? [...r.multi] : [];
-      if (!cur.includes(t)) cur.push(t);
-      setRow(q.id, { skipped: false, multi: cur });
+  // Keep the input in sync with selected product-line chips.
+  useEffect(() => {
+    if (!current || current.type !== 'multiselect') return;
+    const r = draft[current.id];
+    if (!r || r.skipped || !('multi' in r)) {
       setCustomTag('');
-    },
-    [customTag, rowFor, setRow]
-  );
+      return;
+    }
+    setCustomTag(r.multi.join(', '));
+  }, [current, draft]);
+
+  const addCustomProduct = useCallback((q: Question) => {
+    const t = customTagRef.current.trim();
+    if (!t) return;
+
+    // Ignore the mirrored "a, b" selection string — that is not a new custom line.
+    const existing = draft[q.id];
+    const selected =
+      existing && !existing.skipped && 'multi' in existing ? existing.multi : [];
+    if (t === selected.join(', ')) return;
+
+    // If the user typed several comma-separated values, add each new one.
+    const parts = t
+      .split(',')
+      .map((p) => p.trim())
+      .filter(Boolean);
+    if (parts.length === 0) return;
+
+    setQuestions((prev) =>
+      prev.map((item) => {
+        if (item.id !== q.id) return item;
+        const opts = [...(item.options ?? [])];
+        for (const part of parts) {
+          if (!opts.some((o) => o.toLowerCase() === part.toLowerCase())) {
+            opts.push(part);
+          }
+        }
+        return { ...item, options: opts };
+      })
+    );
+
+    setDraft((prev) => {
+      const row = prev[q.id];
+      const cur =
+        row && !row.skipped && 'multi' in row ? [...row.multi] : [];
+      for (const part of parts) {
+        if (!cur.some((x) => x.toLowerCase() === part.toLowerCase())) {
+          cur.push(part);
+        }
+      }
+      return { ...prev, [q.id]: { skipped: false, multi: cur } };
+    });
+  }, [draft]);
 
   const buildAnswers = useCallback((): MemoryLayerAnswerPayload[] => {
     return questions.map((q) => {
@@ -479,31 +526,41 @@ export default function BrandMemoryPage() {
   const actionBarClass =
     'mt-4 flex shrink-0 flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-4';
 
-  const questionBody = useMemo(() => {
+  const renderQuestionBody = () => {
     if (!current) return null;
     const r = rowFor(current);
-    if (current.type === 'multiselect' && current.options?.length) {
+    if (current.type === 'multiselect') {
       const selected = !r.skipped && 'multi' in r ? r.multi : [];
+      const optionSet = new Set(current.options ?? []);
+      const displayOptions = [
+        ...(current.options ?? []),
+        ...selected.filter((s) => !optionSet.has(s)),
+      ];
       return (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {current.options.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => toggleMulti(current, opt)}
-                className={cn(
-                  'px-3 py-1.5 rounded-lg text-sm border transition-colors',
-                  selected.includes(opt)
-                    ? 'bg-[#6C5CE7]/80 border-[#00D1FF]/80 text-white'
-                    : 'bg-white cursor-pointer border-white/10 text-gray-200 hover:bg-white/20'
-                )}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-2">
+          {displayOptions.length > 0 ? (
+            <div className="flex flex-wrap content-start items-center gap-2">
+              {displayOptions.map((opt) => {
+                const isOn = selected.includes(opt);
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => toggleMulti(current, opt)}
+                    className={cn(
+                      'inline-flex max-w-full items-center rounded-full border px-3 py-1.5 text-left text-sm leading-snug transition-colors',
+                      isOn
+                        ? 'border-[#00D1FF]/70 bg-[#6C5CE7]/90 text-white shadow-[0_0_0_1px_rgba(0,209,255,0.25)]'
+                        : 'border-white/15 bg-white/5 text-white/85 hover:border-white/30 hover:bg-white/10'
+                    )}
+                  >
+                    <span className="truncate">{opt}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+          <div className="flex items-center gap-2">
             <input
               type="text"
               value={customTag}
@@ -511,18 +568,30 @@ export default function BrandMemoryPage() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  addCustomProduct(current);
+                  const t = customTag.trim();
+                  const selectedJoin = selected.join(', ');
+                  if (!t || t === selectedJoin) goNext();
+                  else addCustomProduct(current);
                 }
               }}
-              placeholder="Add your own product line"
-              className="flex-1 bg-white/10 border border-black/20 rounded-lg p-2 text-gray-900 placeholder:text-gray-500"
+              placeholder="Select chips or type a custom product line"
+              className="h-10 min-w-0 flex-1 rounded-lg border border-white/15 bg-white/10 px-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/45"
             />
             <button
               type="button"
-              onClick={() => addCustomProduct(current)}
-              className="px-3 py-2 rounded-lg bg-linear-to-r from-[#6C5CE7] to-[#00D1FF] text-white text-sm"
+              onClick={() => {
+                const t = customTag.trim();
+                const selectedJoin = selected.join(', ');
+                if (!t || t === selectedJoin) goNext();
+                else addCustomProduct(current);
+              }}
+              className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-linear-to-r from-[#6C5CE7] to-[#00D1FF] px-4 text-sm font-semibold text-white transition hover:opacity-90"
             >
-              Add
+              {(() => {
+                const t = customTag.trim();
+                const selectedJoin = selected.join(', ');
+                return t && t !== selectedJoin ? 'Add' : 'Next';
+              })()}
             </button>
           </div>
         </div>
@@ -538,7 +607,7 @@ export default function BrandMemoryPage() {
           onChange={(e) =>
             setRow(current.id, { skipped: false, text: e.target.value })
           }
-          className="w-full bg-white/10 border border-black/20 rounded-lg p-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/50"
+          className="w-full rounded-lg border border-white/15 bg-white/10 p-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/50"
         />
       );
     }
@@ -549,17 +618,10 @@ export default function BrandMemoryPage() {
         onChange={(e) =>
           setRow(current.id, { skipped: false, text: e.target.value })
         }
-        className="w-full bg-white/10 border border-black/20 rounded-lg p-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/50"
+        className="w-full rounded-lg border border-white/15 bg-white/10 p-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/50"
       />
     );
-  }, [
-    addCustomProduct,
-    current,
-    customTag,
-    rowFor,
-    setRow,
-    toggleMulti,
-  ]);
+  };
 
   if (loading) {
     return <PageLoadingState className="min-h-[60vh] mx-auto" />;
@@ -606,7 +668,7 @@ export default function BrandMemoryPage() {
                 Question {qIndex + 1} of {questions.length}
               </p>
               <p className="text-gray-200 font-medium">{current.prompt}</p>
-              {questionBody}
+              {renderQuestionBody()}
             </div>
             <div className={actionBarClass}>
               <button

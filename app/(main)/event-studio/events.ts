@@ -47,7 +47,7 @@ export const EVENTS = [
   {
     id: '6',
     name: 'Onam (Thiruvonam)',
-    date: '2026-08-28',
+    date: '2026-08-26',
     description:
       "Onam is a major harvest festival of Kerala celebrating King Mahabali's homecoming.",
     reason:
@@ -55,6 +55,15 @@ export const EVENTS = [
   },
   {
     id: '7',
+    name: 'Raksha Bandhan',
+    date: '2026-08-28',
+    description:
+      'Raksha Bandhan celebrates the bond between brothers and sisters.',
+    reason:
+      'It is celebrated to honor love, protection, and family connection.',
+  },
+  {
+    id: '8',
     name: 'National Sports Day',
     date: '2026-08-29',
     description:
@@ -63,18 +72,9 @@ export const EVENTS = [
       'It is celebrated to promote sports, fitness, and athletic excellence.',
   },
   {
-    id: '8',
-    name: 'Raksha Bandhan',
-    date: '2026-08-30',
-    description:
-      'Raksha Bandhan celebrates the bond between brothers and sisters.',
-    reason:
-      'It is celebrated to honor love, protection, and family connection.',
-  },
-  {
     id: '9',
     name: 'Janmashtami',
-    date: '2026-09-03',
+    date: '2026-09-04',
     description: 'Janmashtami marks the birth of Lord Krishna.',
     reason: 'It is celebrated to honor devotion, joy, and sacred storytelling.',
   },
@@ -90,7 +90,7 @@ export const EVENTS = [
   {
     id: '11',
     name: 'Ganesh Chaturthi',
-    date: '2026-09-12',
+    date: '2026-09-14',
     description: 'Ganesh Chaturthi celebrates the birth of Lord Ganesha.',
     reason:
       'It is celebrated to invite wisdom, prosperity, and new beginnings.',
@@ -133,7 +133,7 @@ export const EVENTS = [
   {
     id: '16',
     name: 'Karva Chauth',
-    date: '2026-10-25',
+    date: '2026-10-29',
     description:
       "Karva Chauth is a Hindu festival where married women observe a day-long fast for their husband's well-being.",
     reason: 'It is celebrated to honor love, devotion, and marital bonds.',
@@ -150,28 +150,28 @@ export const EVENTS = [
   {
     id: '18',
     name: 'Bhai Dooj',
-    date: '2026-11-10',
+    date: '2026-11-11',
     description:
       'Bhai Dooj celebrates the affection between brothers and sisters.',
     reason: 'It is celebrated to strengthen family bonds and mutual blessings.',
   },
   {
     id: '19',
-    name: "Children's Day",
-    date: '2026-11-15',
-    description:
-      "Children's Day honors children and celebrates the legacy of Pandit Jawaharlal Nehru.",
-    reason:
-      'It is celebrated to support childhood happiness, learning, and rights.',
-  },
-  {
-    id: '20',
     name: 'Chhath Puja',
-    date: '2026-11-17',
+    date: '2026-11-13',
     description:
       'Chhath Puja is a Hindu festival dedicated to the Sun God and Chhathi Maiya.',
     reason:
       'It is celebrated to express gratitude, devotion, and seek well-being for the family.',
+  },
+  {
+    id: '20',
+    name: "Children's Day",
+    date: '2026-11-14',
+    description:
+      "Children's Day honors children and celebrates the legacy of Pandit Jawaharlal Nehru.",
+    reason:
+      'It is celebrated to support childhood happiness, learning, and rights.',
   },
   {
     id: '21',
@@ -209,26 +209,26 @@ export const EVENTS = [
   },
   {
     id: '25',
+    name: 'Republic Day',
+    date: '2027-01-26',
+    description:
+    "Republic Day commemorates the adoption of India's Constitution in 1950.",
+    reason:
+    'It is celebrated to honor democracy, sovereignty, and national values.',
+  },
+  {
+    id: '26',
     name: 'Vasant Panchami',
-    date: '2027-01-23',
+    date: '2027-02-11',
     description:
       'Vasant Panchami honors Goddess Saraswati and marks the arrival of spring.',
     reason:
       'It is celebrated to invoke wisdom, learning, and creative inspiration.',
   },
   {
-    id: '26',
-    name: 'Republic Day',
-    date: '2027-01-26',
-    description:
-      "Republic Day commemorates the adoption of India's Constitution in 1950.",
-    reason:
-      'It is celebrated to honor democracy, sovereignty, and national values.',
-  },
-  {
     id: '27',
     name: 'Maha Shivratri',
-    date: '2027-03-05',
+    date: '2027-03-06',
     description:
       'Maha Shivratri is a major Hindu festival dedicated to Lord Shiva.',
     reason:
@@ -255,44 +255,44 @@ export const EVENTS = [
   {
     id: '30',
     name: 'Holi',
-    date: '2027-03-28',
+    date: '2027-03-22',
     description: 'Holi is the festival of colors, joy, and spring.',
     reason:
-      'It is celebrated to strengthen bonds, celebrate renewal, and express festivity.',
+    'It is celebrated to strengthen bonds, celebrate renewal, and express festivity.',
   },
   {
     id: '31',
+    name: 'Good Friday',
+    date: '2027-03-26',
+    description:
+      'Good Friday is a solemn Christian observance marking the crucifixion of Jesus Christ.',
+    reason:
+      'It is celebrated to remember sacrifice, faith, and spiritual reflection.',
+  },
+  {
+    id: '32',
     name: 'Ram Navami',
-    date: '2027-04-16',
+    date: '2027-04-15',
     description: 'Ram Navami marks the birth of Lord Rama.',
     reason: 'It is celebrated to honor devotion, righteousness, and dharma.',
   },
   {
-    id: '32',
+    id: '33',
     name: 'Mahavir Jayanti',
-    date: '2027-04-21',
+    date: '2027-04-19',
     description:
       'Mahavir Jayanti marks the birth of Lord Mahavir, the 24th Tirthankara of Jainism.',
     reason:
       'It is celebrated to honor non-violence, truth, and spiritual liberation.',
   },
   {
-    id: '33',
+    id: '34',
     name: 'Earth Day',
     date: '2027-04-22',
     description:
       'Earth Day is a global environmental observance promoting sustainability and climate awareness.',
     reason:
       'It is celebrated to encourage protection of nature and responsible living.',
-  },
-  {
-    id: '34',
-    name: 'Good Friday',
-    date: '2027-04-23',
-    description:
-      'Good Friday is a solemn Christian observance marking the crucifixion of Jesus Christ.',
-    reason:
-      'It is celebrated to remember sacrifice, faith, and spiritual reflection.',
   },
   {
     id: '35',
@@ -332,7 +332,7 @@ export const EVENTS = [
   {
     id: '39',
     name: "Father's Day",
-    date: '2027-06-13',
+    date: '2027-06-20',
     description:
       "Father's Day honors fathers and father figures for their guidance and support.",
     reason:
@@ -349,21 +349,21 @@ export const EVENTS = [
   },
   {
     id: '41',
+    name: "National Doctors' Day",
+    date: '2027-07-01',
+    description:
+    "National Doctors' Day honors doctors for their dedication, expertise, and service to society.",
+    reason:
+    'It is celebrated to appreciate medical care, healing, and compassionate service.',
+  },
+  {
+    id: '42',
     name: 'Rath Yatra',
-    date: '2027-06-27',
+    date: '2027-07-05',
     description:
       "Rath Yatra is a major Hindu festival associated with Lord Jagannath's grand chariot procession.",
     reason:
       'It is celebrated to express devotion, community participation, and sacred tradition.',
-  },
-  {
-    id: '42',
-    name: "National Doctors' Day",
-    date: '2027-07-01',
-    description:
-      "National Doctors' Day honors doctors for their dedication, expertise, and service to society.",
-    reason:
-      'It is celebrated to appreciate medical care, healing, and compassionate service.',
   },
   {
     id: '43',
@@ -394,63 +394,63 @@ export const EVENTS = [
   },
   {
     id: '46',
-    name: 'Onam (Thiruvonam)',
-    date: '2027-08-26',
-    description:
-      "Onam is a major harvest festival of Kerala celebrating King Mahabali's homecoming.",
-    reason:
-      'It is celebrated to honor unity, prosperity, and cultural tradition.',
-  },
-  {
-    id: '47',
     name: 'Raksha Bandhan',
-    date: '2027-08-28',
+    date: '2027-08-17',
     description:
       'Raksha Bandhan celebrates the bond between brothers and sisters.',
     reason:
       'It is celebrated to honor love, protection, and family connection.',
   },
   {
-    id: '48',
+    id: '47',
     name: 'National Sports Day',
     date: '2027-08-29',
     description:
-      'National Sports Day commemorates the birthday of hockey legend Major Dhyan Chand.',
+    'National Sports Day commemorates the birthday of hockey legend Major Dhyan Chand.',
     reason:
-      'It is celebrated to promote sports, fitness, and athletic excellence.',
+    'It is celebrated to promote sports, fitness, and athletic excellence.',
+  },
+  {
+    id: '48',
+    name: 'Janmashtami',
+    date: '2027-08-25',
+    description: 'Janmashtami marks the birth of Lord Krishna.',
+    reason: 'It is celebrated to honor devotion, joy, and sacred storytelling.',
   },
   {
     id: '49',
-    name: 'Janmashtami',
-    date: '2027-08-31',
-    description: 'Janmashtami marks the birth of Lord Krishna.',
-    reason: 'It is celebrated to honor devotion, joy, and sacred storytelling.',
+    name: 'Ganesh Chaturthi',
+    date: '2027-09-04',
+    description: 'Ganesh Chaturthi celebrates the birth of Lord Ganesha.',
+    reason:
+    'It is celebrated to invite wisdom, prosperity, and new beginnings.',
   },
   {
     id: '50',
     name: "Teachers' Day",
     date: '2027-09-05',
     description:
-      "Teachers' Day honors the contribution of educators in shaping lives and minds.",
+    "Teachers' Day honors the contribution of educators in shaping lives and minds.",
     reason:
-      'It is celebrated to appreciate teaching, mentorship, and learning.',
+    'It is celebrated to appreciate teaching, mentorship, and learning.',
   },
   {
     id: '51',
-    name: 'Ganesh Chaturthi',
-    date: '2027-09-07',
-    description: 'Ganesh Chaturthi celebrates the birth of Lord Ganesha.',
+    name: 'Onam (Thiruvonam)',
+    date: '2027-09-11',
+    description:
+      "Onam is a major harvest festival of Kerala celebrating King Mahabali's homecoming.",
     reason:
-      'It is celebrated to invite wisdom, prosperity, and new beginnings.',
+      'It is celebrated to honor unity, prosperity, and cultural tradition.',
   },
   {
     id: '52',
     name: "Engineers' Day",
     date: '2027-09-15',
     description:
-      "Engineers' Day honors engineers and the legacy of Sir M. Visvesvaraya.",
+    "Engineers' Day honors engineers and the legacy of Sir M. Visvesvaraya.",
     reason:
-      'It is celebrated to recognize innovation, problem-solving, and progress.',
+    'It is celebrated to recognize innovation, problem-solving, and progress.',
   },
   {
     id: '53',
@@ -490,7 +490,7 @@ export const EVENTS = [
   {
     id: '57',
     name: 'Karva Chauth',
-    date: '2027-10-13',
+    date: '2027-10-18',
     description:
       "Karva Chauth is a Hindu festival where married women observe a day-long fast for their husband's well-being.",
     reason: 'It is celebrated to honor love, devotion, and marital bonds.',
@@ -498,7 +498,7 @@ export const EVENTS = [
   {
     id: '58',
     name: 'Diwali',
-    date: '2027-10-28',
+    date: '2027-10-29',
     description:
       "Diwali is the festival of lights and one of India's biggest celebrations.",
     reason:
@@ -507,7 +507,7 @@ export const EVENTS = [
   {
     id: '59',
     name: 'Bhai Dooj',
-    date: '2027-10-30',
+    date: '2027-10-31',
     description:
       'Bhai Dooj celebrates the affection between brothers and sisters.',
     reason: 'It is celebrated to strengthen family bonds and mutual blessings.',
@@ -515,7 +515,7 @@ export const EVENTS = [
   {
     id: '60',
     name: 'Chhath Puja',
-    date: '2027-11-03',
+    date: '2027-11-04',
     description:
       'Chhath Puja is a Hindu festival dedicated to the Sun God and Chhathi Maiya.',
     reason:
@@ -524,7 +524,7 @@ export const EVENTS = [
   {
     id: '61',
     name: "Children's Day",
-    date: '2027-11-15',
+    date: '2027-11-14',
     description:
       "Children's Day honors children and celebrates the legacy of Pandit Jawaharlal Nehru.",
     reason:
@@ -533,7 +533,7 @@ export const EVENTS = [
   {
     id: '62',
     name: 'Guru Nanak Jayanti',
-    date: '2027-11-15',
+    date: '2027-11-14',
     description:
       'Guru Nanak Jayanti marks the birth anniversary of Guru Nanak Dev Ji.',
     reason:
