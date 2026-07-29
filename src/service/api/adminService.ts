@@ -128,95 +128,112 @@ export const activateAdminUserSubscription = async (payload: {
   );
 };
 
-// ─── AI Engine Review (admin portal) ─────────────────────────────────────────
+// ─── Content Calendar Review (admin portal) ──────────────────────────────────
 
-export type AiEnginePlatform = 'instagram' | 'facebook' | 'linkedin';
+export type ContentCalendarReviewPlatform =
+  | 'instagram'
+  | 'facebook'
+  | 'linkedin';
 
-export type AiEngineCellState = 'none' | 'running' | 'scheduled' | 'failed';
+export type ContentCalendarReviewUser = {
+  userId: string;
+  name: string;
+  email: string;
+  activePlan: string;
+  mode: string | null;
+  autoModeCalendarGenerated: boolean;
+  platforms: ContentCalendarReviewPlatform[];
+};
 
-export type AiEngineReviewCell = {
-  state: AiEngineCellState;
-  scheduledPostId: string | null;
-  imageUrl: string | null;
-  postStatus: string | null;
-  UserApprovalStatus: string | null;
+export type AdminContentPlanGeneratedItem = {
+  kind: string;
+  status: 'draft' | 'scheduled' | 'queued';
+  title?: string;
+  captionPreview?: string;
+  scheduledPostId?: string;
+  draftId?: string;
+  imageUrl?: string | null;
+  mediaType?: 'image' | 'video' | null;
+  postStatus?: string | null;
+  UserApprovalStatus?: string | null;
+  contentType?: string | null;
+  contentDescription?: string | null;
+  caption?: string | null;
+  error?: string | null;
+  scheduleAtMs?: number | null;
+  createdAtMs?: number | null;
+  updatedAtMs?: number | null;
+};
+
+export type AdminContentPlanUpcomingItem = {
+  kind: string;
+  label: string;
+  note?: string;
+};
+
+export type AdminContentPlanDay = {
+  date: string;
+  festivals: Array<{ id: string; name: string }>;
+  byPlatform: Partial<
+    Record<
+      ContentCalendarReviewPlatform,
+      {
+        generated: AdminContentPlanGeneratedItem[];
+        upcoming: AdminContentPlanUpcomingItem[];
+      }
+    >
+  >;
+};
+
+export type ContentCalendarReviewPreferences = {
   preferredTime: string | null;
   optimalFacebookTime: string | null;
   optimalInstagramTime: string | null;
   optimalLinkedinTime: string | null;
   useAnalyticsOptimalPostingTime: boolean | null;
-  error: string | null;
-  startedAt: number | null;
-  updatedAt: number | null;
-  contentType: string | null;
-  contentDescription: string | null;
+  timeZone: string | null;
 };
 
-export type AiEngineReviewRow = {
+export type ContentCalendarReviewDetail = {
   userId: string;
   name: string;
   email: string;
   activePlan: string;
-  selectedPlatforms: AiEnginePlatform[];
-  cells: Partial<Record<AiEnginePlatform, AiEngineReviewCell>>;
-};
-
-export type AiEngineReviewResponse = {
-  date: string;
-  /** YYYY-MM-DD in `timezone`; the maximum selectable / queryable date. */
+  mode: string | null;
+  autoModeCalendarGenerated: boolean;
   today: string;
-  timezone: string;
-  platforms: AiEnginePlatform[];
-  rows: AiEngineReviewRow[];
+  preferences: ContentCalendarReviewPreferences;
+  from: string;
+  to: string;
+  platforms: ContentCalendarReviewPlatform[];
+  days: AdminContentPlanDay[];
 };
 
-export const getAdminAiEngineReview = async (date?: string) => {
-  return apiGet<ApiEnvelope<AiEngineReviewResponse>>(
-    '/api/v1/admin/ai-engine-review',
-    {
-      params: date ? { date } : undefined,
-    }
+export const getAdminContentCalendarReviewUsers = async () => {
+  return apiGet<ApiEnvelope<{ users: ContentCalendarReviewUser[] }>>(
+    '/api/v1/admin/content-calendar-review'
   );
 };
 
-export const triggerAdminAiEngineGenerate = async (
-  userId: string,
-  platform: AiEnginePlatform,
-  date?: string
-) => {
-  return apiPost<
-    ApiEnvelope<{
-      jobId: string;
-      parentJobId: string;
-      userId: string;
-      platform: AiEnginePlatform;
-      date: string;
-      message: string;
-    }>
-  >('/api/v1/admin/ai-engine-review/generate', {
-    userId,
-    platform,
-    ...(date ? { date } : {}),
-  });
+export const getAdminContentCalendarReviewDetail = async (userId: string) => {
+  return apiGet<ApiEnvelope<ContentCalendarReviewDetail>>(
+    `/api/v1/admin/content-calendar-review/${encodeURIComponent(userId)}`
+  );
 };
 
-export const triggerAdminAiEngineRegenerate = async (
-  userId: string,
-  platform: AiEnginePlatform,
-  scheduledPostId: string
-) => {
+export const postAdminContentCalendarForceRun = async (payload: {
+  userId: string;
+  date: string;
+  platform: ContentCalendarReviewPlatform;
+}) => {
   return apiPost<
     ApiEnvelope<{
-      jobId: string;
-      parentJobId: string;
       userId: string;
-      platform: AiEnginePlatform;
-      scheduledPostId: string;
-      message: string;
+      date: string;
+      platform: ContentCalendarReviewPlatform;
+      calendarKind: string;
+      enqueuedCount: number;
+      outcomes: Array<{ kind: string; reason?: string }>;
     }>
-  >('/api/v1/admin/ai-engine-review/regenerate', {
-    userId,
-    platform,
-    scheduledPostId,
-  });
+  >('/api/v1/admin/content-calendar-review/force-run', payload);
 };

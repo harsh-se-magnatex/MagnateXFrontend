@@ -82,6 +82,7 @@ import {
   type TimestampInput,
 } from '@/lib/user-timezone';
 import { EmailVerificationPurchaseAlert } from '@/components/shared/EmailVerificationPurchaseAlert';
+import { AccountFrozenAlert } from '@/components/shared/AccountFrozenAlert';
 import {
   EMAIL_VERIFICATION_PURCHASE_MESSAGE,
   TOP_UP_REQUIRES_PLAN_MESSAGE,
@@ -804,6 +805,8 @@ export default function BillingsPage() {
           Manage your plan, credits, and billing activity. Personalized AI continues on its own schedule; credits cover on-demand actions only.
         </p>
       </div>
+
+      <AccountFrozenAlert className="mb-8" showBillingLink={false} />
 
       <EmailVerificationPurchaseAlert user={user} className="mb-8" />
 

@@ -386,6 +386,10 @@ export type BudgetAllocationPayload = {
   visible: boolean;
   currency: 'INR';
   monthlyBudget: number;
+  /** Posts published in the current calendar month (UTC). */
+  postsThisMonth: number;
+  /** How many of this month's posts should receive ad budget. */
+  recommendedPostCount: number;
   allocations: PostBudgetAllocation[];
   source: 'openai' | 'fallback';
   reason?: string;

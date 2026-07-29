@@ -107,6 +107,21 @@ export function TopNav() {
           })}
         </nav>
         )}
+        {accountFrozen && (
+        <nav className="flex items-center gap-1">
+          <Link
+            href="/settings/support-legal"
+            className={`flex items-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
+              pathname === '/settings/support-legal'
+                ? 'bg-gradient-primary text-white shadow-sm shadow-primary/20'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+            }`}
+          >
+            <MessageSquare className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Contact Us</span>
+          </Link>
+        </nav>
+        )}
 
         <div className="flex min-w-0 items-center gap-2 justify-end justify-self-end">
           {showUpgradeCta && !accountFrozen && (

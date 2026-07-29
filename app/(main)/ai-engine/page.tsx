@@ -5,18 +5,17 @@ import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useMemo, useCallback } from 'react';
 import {
-  Brain,
-  Sparkles,
   DollarSign,
   BriefcaseBusiness,
   FacebookIcon,
   Instagram,
   Linkedin,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
+  Check,
+  ChevronDown,
   Share2,
   Bot,
+  CheckCircle,
+  Lock,
 } from 'lucide-react';
 import {
   Dialog,
@@ -32,6 +31,11 @@ import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
+import {
+  workspacePageDescriptionClass,
+  workspacePageTitleClass,
+  workspaceSectionCardClass,
+} from '@/lib/workspace-ui';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   getUserAIenginePageContext,
@@ -49,7 +53,6 @@ import {
   selectFacebookPageApi,
   selectLinkedInPageApi,
 } from '@/src/service/api/social.servce';
-import { AnimatePresence, motion } from 'framer-motion';
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? '';
 
@@ -69,7 +72,14 @@ type SelectedPlatforms = {
 };
 
 type UserData = {
-  plan: 'non-subscribed' | 'legacy-AI' | 'legacy-Studio' | 'elite-AI' | 'elite-Studio' | 'prime-AI' | 'prime-Studio';
+  plan:
+    | 'non-subscribed'
+    | 'legacy-AI'
+    | 'legacy-Studio'
+    | 'elite-AI'
+    | 'elite-Studio'
+    | 'prime-AI'
+    | 'prime-Studio';
   onBoarded: boolean;
   socialAccounts: number;
   availableFBPages: {
@@ -104,13 +114,7 @@ type StepId =
 
 type StepMeta = { id: StepId; label: string; icon: React.ElementType };
 
-const BASE_STEP_IDS = new Set<StepId>([
-  'plan',
-  'business',
-  'selectSocial',
-  'automation',
-]);
-/** Connect steps; user may go Next / jump ahead without finishing each link. */
+/** Connect steps; user may open them without finishing each link. */
 const CONNECT_STEP_IDS = new Set<StepId>(['facebook', 'instagram', 'linkedin']);
 
 function isSubscribedPlan(plan: string | undefined | null): boolean {
@@ -121,10 +125,9 @@ function buildStepMeta(selected: SelectedPlatforms): StepMeta[] {
   const steps: StepMeta[] = [
     { id: 'plan', label: 'Plan', icon: DollarSign },
     { id: 'business', label: 'Business', icon: BriefcaseBusiness },
-    { id: 'selectSocial', label: 'Select Accounts', icon: Share2 },
+    { id: 'selectSocial', label: 'Select platforms', icon: Share2 },
+    { id: 'automation', label: 'Automation', icon: Bot },
   ];
-
-  steps.push({ id: 'automation', label: 'Automation', icon: Bot });
 
   if (selected.facebook)
     steps.push({ id: 'facebook', label: 'Facebook', icon: FacebookIcon });
@@ -177,6 +180,46 @@ function isStepComplete(
   }
 }
 
+function stepStatusLabel(
+  stepId: StepId,
+  data: UserData,
+  skipped: Set<StepId>,
+  done: boolean
+): string {
+  if (stepId === 'ready') {
+    return done ? "You're set" : 'Almost there';
+  }
+  if (done) {
+    if (stepId === 'business' && skipped.has('business') && !data.onBoarded) {
+      return 'Optional — skipped';
+    }
+    if (stepId === 'automation' && skipped.has('automation')) {
+      return 'Optional — skipped';
+    }
+    if (stepId === 'plan') return 'Active plan';
+    if (stepId === 'business') return 'Profile ready';
+    if (stepId === 'selectSocial') return 'Platforms selected';
+    if (CONNECT_STEP_IDS.has(stepId)) return 'Connected';
+    return 'Done';
+  }
+  switch (stepId) {
+    case 'plan':
+      return 'Subscribe to continue';
+    case 'business':
+      return 'Add brand details';
+    case 'selectSocial':
+      return 'Choose platforms';
+    case 'automation':
+      return 'Set preferences';
+    case 'facebook':
+    case 'instagram':
+    case 'linkedin':
+      return 'Connect account';
+    default:
+      return 'Action needed';
+  }
+}
+
 function SelectFacebookPageModal({
   open,
   onOpenChange,
@@ -220,7 +263,7 @@ function SelectFacebookPageModal({
         <DialogHeader>
           <DialogTitle>Select Facebook Page</DialogTitle>
           <DialogDescription>
-            Select the Facebook page you want to use for your posts.
+            Choose the Facebook page to use for your posts.
           </DialogDescription>
         </DialogHeader>
         <Select
@@ -300,7 +343,7 @@ function SelectLinkedInPageModal({
         <DialogHeader>
           <DialogTitle>Select LinkedIn Page</DialogTitle>
           <DialogDescription>
-            Select the LinkedIn organization you want to use for your posts.
+            Choose the LinkedIn organization to use for your posts.
           </DialogDescription>
         </DialogHeader>
         <Select
@@ -382,12 +425,11 @@ export default function AIEnginePage() {
     campaignSeedPendingPlatformConfirm: false,
   });
   const [dataLoading, setDataLoading] = React.useState(true);
-  const [currentStep, setCurrentStep] = React.useState(0);
+  const [openStepId, setOpenStepId] = React.useState<StepId | null>(null);
   const [selectFacebookPageModalOpen, setSelectFacebookPageModalOpen] =
     React.useState(false);
   const [selectLinkedInPageModalOpen, setSelectLinkedInPageModalOpen] =
     React.useState(false);
-  const [direction, setDirection] = React.useState(0);
   const [skipped, setSkipped] = React.useState<Set<StepId>>(new Set());
   const [localSelected, setLocalSelected] = React.useState<SelectedPlatforms>({
     facebook: false,
@@ -396,6 +438,8 @@ export default function AIEnginePage() {
   });
   const [savingSelection, setSavingSelection] = React.useState(false);
   const [confirmSelectionOpen, setConfirmSelectionOpen] = React.useState(false);
+  const [stepPositionInitialized, setStepPositionInitialized] =
+    React.useState(false);
   const router = useRouter();
 
   const getDetails = useCallback(async (opts?: { silent?: boolean }) => {
@@ -465,38 +509,47 @@ export default function AIEnginePage() {
     return stepMeta.length - 1;
   }, [stepMeta, stepCompletions]);
 
-  const progressPct = useMemo(() => {
+  const completedCount = useMemo(() => {
     const totalCheckable = stepMeta.length - 1;
     if (totalCheckable <= 0) return 0;
-    const done = stepCompletions
-      .slice(0, totalCheckable)
-      .filter(Boolean).length;
-    return Math.round((done / totalCheckable) * 100);
+    return stepCompletions.slice(0, totalCheckable).filter(Boolean).length;
   }, [stepMeta, stepCompletions]);
 
-  const [stepPositionInitialized, setStepPositionInitialized] =
-    React.useState(false);
+  const totalCheckable = Math.max(0, stepMeta.length - 1);
+  const progressPct =
+    totalCheckable <= 0
+      ? 0
+      : Math.round((completedCount / totalCheckable) * 100);
+
+  const allSetupDone =
+    totalCheckable > 0 && completedCount === totalCheckable;
 
   useEffect(() => {
     if (dataLoading) return;
     if (!stepPositionInitialized) {
-      setCurrentStep(firstStrictIncompleteIdx);
+      const id = stepMeta[firstStrictIncompleteIdx]?.id ?? null;
+      setOpenStepId(id);
       setStepPositionInitialized(true);
       return;
     }
-    setCurrentStep((prev) => {
-      return prev > firstBlockingIncompleteIdx
-        ? firstBlockingIncompleteIdx
-        : prev;
-    });
-  }, [dataLoading, firstStrictIncompleteIdx, firstBlockingIncompleteIdx, stepPositionInitialized]);
-
-  useEffect(() => {
-    setCurrentStep((prev) => {
-      if (prev >= stepMeta.length) return Math.max(0, stepMeta.length - 1);
+    setOpenStepId((prev) => {
+      if (prev == null) return stepMeta[firstBlockingIncompleteIdx]?.id ?? null;
+      const prevIdx = stepMeta.findIndex((s) => s.id === prev);
+      if (prevIdx < 0) {
+        return stepMeta[firstBlockingIncompleteIdx]?.id ?? null;
+      }
+      if (prevIdx > firstBlockingIncompleteIdx) {
+        return stepMeta[firstBlockingIncompleteIdx]?.id ?? null;
+      }
       return prev;
     });
-  }, [stepMeta.length]);
+  }, [
+    dataLoading,
+    firstStrictIncompleteIdx,
+    firstBlockingIncompleteIdx,
+    stepPositionInitialized,
+    stepMeta,
+  ]);
 
   useEffect(() => {
     const onFocus = () => {
@@ -507,36 +560,8 @@ export default function AIEnginePage() {
     return () => window.removeEventListener('focus', onFocus);
   }, [user, getDetails]);
 
-  const currentNavStepId = stepMeta[currentStep]?.id;
-  const canGoNext =
-    currentStep < stepMeta.length - 1 &&
-    (stepCompletions[currentStep] ||
-      (currentNavStepId != null &&
-        CONNECT_STEP_IDS.has(currentNavStepId)));
-  const isLastStep = currentStep === stepMeta.length - 1;
-  const goNext = () => {
-    if (!canGoNext) return;
-    setDirection(1);
-    setCurrentStep((s) => Math.min(stepMeta.length - 1, s + 1));
-  };
-
-  const goBack = () => {
-    if (currentStep <= 0) return;
-    setDirection(-1);
-    setCurrentStep((s) => s - 1);
-  };
-
-  const goToStep = (index: number) => {
-    if (index < 0 || index >= stepMeta.length) return;
-    if (index > firstBlockingIncompleteIdx) return;
-    setDirection(index > currentStep ? 1 : -1);
-    setCurrentStep(index);
-  };
-
-  const skipCurrentStep = () => {
-    const currentId = stepMeta[currentStep]?.id;
-    if (!currentId) return;
-    setSkipped((prev) => new Set(prev).add(currentId));
+  const skipStep = (stepId: StepId) => {
+    setSkipped((prev) => new Set(prev).add(stepId));
   };
 
   const maxAllowed = PLAN_MAX_SOCIAL[data.plan] ?? 0;
@@ -573,7 +598,11 @@ export default function AIEnginePage() {
         next[key] = false;
         return next;
       }
-      const currentCount = [prev.facebook, prev.instagram, prev.linkedin].filter(Boolean).length;
+      const currentCount = [
+        prev.facebook,
+        prev.instagram,
+        prev.linkedin,
+      ].filter(Boolean).length;
       if (currentCount >= maxAllowed) return prev;
       next[key] = true;
       return next;
@@ -599,8 +628,7 @@ export default function AIEnginePage() {
           : undefined;
       if (status === 409) {
         showErrorToast(
-          message ||
-            'Platforms are locked for this billing period.'
+          message || 'Platforms are locked for this billing period.'
         );
         await getDetails({ silent: true });
       } else {
@@ -615,607 +643,404 @@ export default function AIEnginePage() {
   const instagramHref = `${BACKEND_URL}/auth/instagram`;
   const linkedinHref = `${BACKEND_URL}/auth/linkedin`;
 
-  const currentStepMeta = stepMeta[currentStep];
-  const currentStepId = currentStepMeta?.id;
+  const openStep = (index: number) => {
+    if (index < 0 || index >= stepMeta.length) return;
+    if (index > firstBlockingIncompleteIdx) return;
+    const id = stepMeta[index].id;
+    setOpenStepId((prev) => (prev === id ? null : id));
+  };
 
   if (loading) return <PageLoadingState />;
   if (!user) return null;
-
   if (dataLoading) return <PageLoadingState />;
 
-  const slideX = direction >= 0 ? 24 : -24;
-
   return (
-    <div className="max-w-2xl mx-auto page-enter pb-20">
+    <div className="mx-auto max-w-2xl page-enter pb-20">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-purple-400 text-white shadow-sm">
-            <Brain className="h-5 w-5" />
-          </div>
-          AI Engine
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-purple/10 border border-primary-purple/20">
-            <Sparkles className="w-3.5 h-3.5 text-primary-purple" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-primary-purple">
-              Beta
-            </span>
-          </div>
-        </h1>
-        <p className="mt-3 max-w-2xl text-base text-muted-foreground leading-relaxed">
-          Complete each step in order to activate AI-powered posting. Progress
-          is checked against your account automatically.
+        <h1 className={workspacePageTitleClass}>AI Engine</h1>
+        <p className={workspacePageDescriptionClass}>
+          Finish these steps to turn on AI posting.
         </p>
       </header>
 
-      <div className="mb-8">
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className="mb-6">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Setup progress
           </span>
-          <span className="text-xs font-semibold text-foreground">
-            {progressPct}%
+          <span className="text-xs font-semibold text-foreground tabular-nums">
+            {completedCount} of {totalCheckable} complete
+            {progressPct > 0 ? ` · ${progressPct}%` : ''}
           </span>
         </div>
         <Progress value={progressPct} className="h-2" />
       </div>
 
-      <div className="flex flex-col gap-3 mb-6">
-        <div className="flex flex-wrap gap-2">
-          {stepMeta
-            .map((s, i) => ({ s, i }))
-            .filter(({ s }) => BASE_STEP_IDS.has(s.id))
-            .map(({ s, i }) => {
-              const done = stepCompletions[i];
-              const locked = i > firstBlockingIncompleteIdx;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  disabled={locked}
-                  onClick={() => goToStep(i)}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border',
-                    i === currentStep &&
-                      'bg-primary text-primary-foreground border-primary shadow-sm',
-                    i !== currentStep &&
-                      done &&
-                      'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
-                    i !== currentStep &&
-                      !done &&
-                      !locked &&
-                      'bg-muted/50 text-muted-foreground border-border hover:bg-muted',
-                    locked && 'opacity-40 cursor-not-allowed'
-                  )}
-                >
-                  <s.icon className="h-3.5 w-3.5" />
-                  {s.label}
-                </button>
-              );
-            })}
-          {stepMeta
-            .map((s, i) => ({ s, i }))
-            .filter(({ s }) => s.id === 'ready')
-            .map(({ s, i }) => {
-              const done = stepCompletions[i];
-              const locked = i > firstBlockingIncompleteIdx;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  disabled={locked}
-                  onClick={() => goToStep(i)}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border',
-                    i === currentStep &&
-                      'bg-primary text-primary-foreground border-primary shadow-sm',
-                    i !== currentStep &&
-                      done &&
-                      'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
-                    i !== currentStep &&
-                      !done &&
-                      !locked &&
-                      'bg-muted/50 text-muted-foreground border-border hover:bg-muted',
-                    locked && 'opacity-40 cursor-not-allowed'
-                  )}
-                >
-                  <s.icon className="h-3.5 w-3.5" />
-                  {s.label}
-                </button>
-              );
-            })}
-        </div>
-        {stepMeta.some((s) => CONNECT_STEP_IDS.has(s.id)) && (
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide shrink-0">
-              Selected accounts
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {stepMeta
-                .map((s, i) => ({ s, i }))
-                .filter(({ s }) => CONNECT_STEP_IDS.has(s.id))
-                .map(({ s, i }) => {
-                  const done = stepCompletions[i];
-                  const locked = i > firstBlockingIncompleteIdx;
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      disabled={locked}
-                      onClick={() => goToStep(i)}
-                      className={cn(
-                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all border',
-                        i === currentStep &&
-                          'bg-primary text-primary-foreground border-primary shadow-sm',
-                        i !== currentStep &&
-                          done &&
-                          'bg-emerald-500/10 text-emerald-700 border-emerald-500/30',
-                        i !== currentStep &&
-                          !done &&
-                          !locked &&
-                          'bg-muted/50 text-muted-foreground border-border hover:bg-muted',
-                        locked && 'opacity-40 cursor-not-allowed'
-                      )}
-                    >
-                      <s.icon className="h-3.5 w-3.5" />
-                      {s.label}
-                    </button>
-                  );
-                })}
-            </div>
-          </div>
-        )}
-      </div>
+      <div className={cn(workspaceSectionCardClass, 'divide-y divide-border p-0')}>
+        {stepMeta.map((step, index) => {
+          const done =
+            step.id === 'ready' ? allSetupDone : stepCompletions[index];
+          const locked = index > firstBlockingIncompleteIdx;
+          const isOpen = openStepId === step.id;
+          const status = stepStatusLabel(step.id, data, skipped, done);
+          const Icon = step.icon;
 
-      <div className="relative min-h-[320px]">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={currentStep}
-            custom={direction}
-            initial={{ opacity: 0, x: slideX }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -slideX }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="glass-card rounded-2xl p-8 border border-border/40 shadow-sm"
-          >
-            {/* Step: Plan */}
-            {currentStepId === 'plan' && (
-              <div className="space-y-5">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-500 to-purple-400 text-white shadow-sm">
-                  <DollarSign className="h-6 w-6" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">
-                  Subscription
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Use a paid plan to unlock full AI engine features. Confirm
-                  here once you are on Pro or Enterprise, or open billing to
-                  upgrade.
-                </p>
-                {isStepComplete('plan', data, skipped) ? (
-                  <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 shrink-0" />
-                    Subscription step satisfied.
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    On record:{' '}
-                    <span className="font-semibold text-foreground capitalize">
-                      {data.plan}
+          return (
+            <div key={step.id} className="overflow-hidden">
+              <button
+                type="button"
+                disabled={locked}
+                onClick={() => openStep(index)}
+                className={cn(
+                  'flex w-full items-center gap-3 px-5 py-4 text-left transition-colors',
+                  !locked && 'hover:bg-muted/40',
+                  isOpen && 'bg-muted/30',
+                  locked && 'cursor-not-allowed opacity-50'
+                )}
+              >
+                <span
+                  className={cn(
+                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-sm font-semibold',
+                    done &&
+                      'border-emerald-500/40 bg-emerald-500/15 text-emerald-700',
+                    !done &&
+                      !locked &&
+                      'border-border bg-background text-muted-foreground',
+                    locked && 'border-border bg-muted text-muted-foreground'
+                  )}
+                  aria-hidden
+                >
+                  {locked ? (
+                    <Lock className="h-3.5 w-3.5" />
+                  ) : done ? (
+                    <Check className="h-4 w-4" strokeWidth={2.5} />
+                  ) : (
+                    index + 1
+                  )}
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="text-sm font-semibold text-foreground">
+                      {step.label}
                     </span>
-                  </p>
-                )}
-                <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => router.push('/settings/billings')}
+                  </span>
+                  <span
+                    className={cn(
+                      'mt-0.5 block text-xs',
+                      done
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : 'text-muted-foreground'
+                    )}
                   >
-                    Open billing
-                  </Button>
-                </div>
-              </div>
-            )}
+                    {status}
+                  </span>
+                </span>
 
-            {/* Step: Business */}
-            {currentStepId === 'business' && (
-              <div className="space-y-5">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-pink-500 to-rose-400 text-white shadow-sm">
-                  <BriefcaseBusiness className="h-6 w-6" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">
-                  Business data
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Fill in your business DNA so the AI can match your brand
-                  voice, visuals, and positioning.
-                </p>
-                {data.onBoarded ? (
-                  <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 shrink-0" />
-                    Business profile is on file.
-                  </p>
-                ) : skipped.has('business') ? (
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Skipped for now. You can add your business DNA anytime from
-                    Brand DNA.
-                  </p>
-                ) : (
-                  <p className="text-sm text-amber-600">
-                    Business onboarding is not complete yet.
-                  </p>
-                )}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button
-                    className="flex-1"
-                    onClick={() => router.push('/template-dna')}
-                  >
-                    {data.onBoarded
-                      ? 'Review brand profile'
-                      : 'Fill business data'}
-                  </Button>
-                  {!data.onBoarded && !skipped.has('business') && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="flex-1"
-                      onClick={skipCurrentStep}
-                    >
-                      Later
-                    </Button>
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                    isOpen && 'rotate-180'
                   )}
-                </div>
-              </div>
-            )}
+                  aria-hidden
+                />
+              </button>
 
-            {/* Step: Select Social Accounts */}
-            {currentStepId === 'selectSocial' && (
-              <div className="space-y-5">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-blue-400 text-white shadow-sm">
-                  <Share2 className="h-6 w-6" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">
-                  Select Social Accounts
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Choose which social platforms to connect. Your{' '}
-                  <span className="font-semibold text-foreground capitalize">
-                    {data.plan}
-                  </span>{' '}
-                  plan allows up to{' '}
-                  <span className="font-semibold text-foreground">
-                    {maxAllowed}
-                  </span>{' '}
-                  platform{maxAllowed !== 1 ? 's' : ''}.
-                  {platformsLocked
-                    ? ' Platforms are locked for this billing period.'
-                    : ' Once saved, platforms stay locked until a plan change that alters your platform limit.'}
-                </p>
-                {platformsLocked && (
-                  <p className="text-sm text-amber-600">
-                    Platforms locked for this billing period.
-                  </p>
-                )}
-                {maxAllowed === 0 && (
-                  <p className="text-sm text-amber-600">
-                    Subscribe to a plan from the Subscription step to select
-                    platforms.
-                  </p>
-                )}
-
-                <div className="grid gap-3">
-                  {PLATFORM_OPTIONS.map((opt) => {
-                    const isOn = localSelected[opt.key];
-                    const Icon = opt.icon;
-                    const disabledToggle =
-                      platformsLocked ||
-                      (!isOn && localSelectedCount >= maxAllowed);
-                    return (
-                      <button
-                        key={opt.key}
-                        type="button"
-                        disabled={disabledToggle}
-                        onClick={() => togglePlatform(opt.key)}
-                        className={cn(
-                          'flex items-center gap-4 rounded-xl border p-4 transition-all text-left',
-                          isOn
-                            ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                            : 'border-border hover:border-muted-foreground/30',
-                          disabledToggle && 'opacity-40 cursor-not-allowed'
-                        )}
+              {isOpen && !locked && (
+                <div className="border-t border-border/60 bg-background/50 px-5 pb-5 pt-4">
+                  {step.id === 'plan' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        {done
+                          ? `You're on ${data.plan}.`
+                          : 'A paid plan unlocks AI Engine features.'}
+                      </p>
+                      <Button
+                        variant={done ? 'outline' : 'default'}
+                        onClick={() => router.push('/settings/billings')}
                       >
-                        <div
-                          className={cn(
-                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-linear-to-br text-white shadow-sm',
-                            opt.gradient
-                          )}
+                        Open billing
+                      </Button>
+                    </div>
+                  )}
+
+                  {step.id === 'business' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        {data.onBoarded
+                          ? 'Your brand profile is on file.'
+                          : skipped.has('business')
+                            ? 'Skipped for now. You can add Brand DNA anytime.'
+                            : 'Add brand details so AI matches your voice.'}
+                      </p>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button onClick={() => router.push('/template-dna')}>
+                          {data.onBoarded
+                            ? 'Review brand profile'
+                            : 'Add brand details'}
+                        </Button>
+                        {!data.onBoarded && !skipped.has('business') && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => skipStep('business')}
+                          >
+                            Later
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {step.id === 'selectSocial' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Your plan allows up to {maxAllowed} platform
+                        {maxAllowed !== 1 ? 's' : ''}.
+                        {platformsLocked
+                          ? ' Selection is locked for this billing period.'
+                          : ' Saving locks platforms until a plan change alters your limit.'}
+                      </p>
+                      {maxAllowed === 0 && (
+                        <p className="text-sm text-amber-700 dark:text-amber-400">
+                          Subscribe to a plan first.
+                        </p>
+                      )}
+
+                      <div className="grid gap-2">
+                        {PLATFORM_OPTIONS.map((opt) => {
+                          const isOn = localSelected[opt.key];
+                          const OptIcon = opt.icon;
+                          const disabledToggle =
+                            platformsLocked ||
+                            (!isOn && localSelectedCount >= maxAllowed);
+                          return (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              disabled={disabledToggle}
+                              onClick={() => togglePlatform(opt.key)}
+                              className={cn(
+                                'flex items-center gap-3 rounded-xl border p-3 text-left transition-all',
+                                isOn
+                                  ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                                  : 'border-border hover:border-muted-foreground/30',
+                                disabledToggle &&
+                                  'cursor-not-allowed opacity-40'
+                              )}
+                            >
+                              <div
+                                className={cn(
+                                  'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-linear-to-br text-white shadow-sm',
+                                  opt.gradient
+                                )}
+                              >
+                                <OptIcon className="h-4 w-4" />
+                              </div>
+                              <span className="flex-1 text-sm font-semibold text-foreground">
+                                {opt.label}
+                              </span>
+                              <div
+                                className={cn(
+                                  'flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors',
+                                  isOn
+                                    ? 'border-primary bg-primary'
+                                    : 'border-muted-foreground/40'
+                                )}
+                              >
+                                {isOn && (
+                                  <Check
+                                    className="h-3 w-3 text-white"
+                                    strokeWidth={3}
+                                  />
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <p className="text-xs text-muted-foreground tabular-nums">
+                        {localSelectedCount} of {maxAllowed} selected
+                      </p>
+
+                      <Button
+                        className="w-full sm:w-auto"
+                        disabled={
+                          !canSaveSelection ||
+                          savingSelection ||
+                          platformsLocked
+                        }
+                        onClick={() => setConfirmSelectionOpen(true)}
+                      >
+                        {platformsLocked
+                          ? 'Selection locked'
+                          : 'Save selection'}
+                      </Button>
+                    </div>
+                  )}
+
+                  {step.id === 'automation' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        {skipped.has('automation')
+                          ? 'Skipped for now. Fine-tune anytime in Settings → Automation.'
+                          : 'Set tone, cadence, and posting preferences.'}
+                      </p>
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button
+                          onClick={() => router.push('/settings/automation')}
                         >
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <span className="text-sm font-semibold text-foreground flex-1">
-                          {opt.label}
-                        </span>
-                        <div
-                          className={cn(
-                            'h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors',
-                            isOn
-                              ? 'border-primary bg-primary'
-                              : 'border-muted-foreground/40'
-                          )}
+                          Set preferences
+                        </Button>
+                        {!skipped.has('automation') && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => skipStep('automation')}
+                          >
+                            Later
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {step.id === 'facebook' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Connect Facebook and choose the page to post to.
+                      </p>
+                      {!(
+                        data.facebookConnected ??
+                        data.availableFBPages.length > 0
+                      ) ? (
+                        <Button className="w-full sm:w-auto" asChild>
+                          <a href={facebookHref}>Connect Facebook</a>
+                        </Button>
+                      ) : data.selectedPageId == null ? (
+                        <Button
+                          className="w-full sm:w-auto"
+                          onClick={() => setSelectFacebookPageModalOpen(true)}
                         >
-                          {isOn && (
-                            <CheckCircle className="h-3.5 w-3.5 text-white" />
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                          Choose page
+                        </Button>
+                      ) : (
+                        <p className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle className="h-4 w-4 shrink-0" />
+                          {data.availableFBPages.find(
+                            (p) => p.pageId === data.selectedPageId
+                          )?.pageName ?? data.selectedPageId}
+                        </p>
+                      )}
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={() =>
+                          router.push(WORKSPACE_NAV_HREFS.linkedProfiles)
+                        }
+                      >
+                        {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
+                      </Button>
+                    </div>
+                  )}
 
-                <p className="text-xs text-muted-foreground">
-                  {localSelectedCount} of {maxAllowed} selected
-                </p>
+                  {step.id === 'instagram' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Connect Instagram for publishing.
+                      </p>
+                      {!data.instagramConnected ? (
+                        <Button className="w-full sm:w-auto" asChild>
+                          <a href={instagramHref}>Connect Instagram</a>
+                        </Button>
+                      ) : (
+                        <p className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle className="h-4 w-4 shrink-0" />
+                          Instagram connected
+                        </p>
+                      )}
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={() =>
+                          router.push(WORKSPACE_NAV_HREFS.linkedProfiles)
+                        }
+                      >
+                        {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
+                      </Button>
+                    </div>
+                  )}
 
-                <Button
-                  className="w-full"
-                  disabled={!canSaveSelection || savingSelection || platformsLocked}
-                  onClick={() => setConfirmSelectionOpen(true)}
-                >
-                  {platformsLocked ? 'Selection locked' : 'Save selection'}
-                </Button>
+                  {step.id === 'linkedin' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Connect LinkedIn and choose the organization to post to.
+                      </p>
+                      {!(
+                        data.linkedinConnected ??
+                        data.availableLinkedInPages.length > 0
+                      ) ? (
+                        <Button className="w-full sm:w-auto" asChild>
+                          <a href={linkedinHref}>Connect LinkedIn</a>
+                        </Button>
+                      ) : data.selectedLinkedInPageId == null ? (
+                        <Button
+                          className="w-full sm:w-auto"
+                          onClick={() => setSelectLinkedInPageModalOpen(true)}
+                        >
+                          Choose page
+                        </Button>
+                      ) : (
+                        <p className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                          <CheckCircle className="h-4 w-4 shrink-0" />
+                          {data.availableLinkedInPages.find(
+                            (p) => p.pageId === data.selectedLinkedInPageId
+                          )?.pageName ?? data.selectedLinkedInPageId}
+                        </p>
+                      )}
+                      <Button
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                        onClick={() =>
+                          router.push(WORKSPACE_NAV_HREFS.linkedProfiles)
+                        }
+                      >
+                        {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
+                      </Button>
+                    </div>
+                  )}
 
-                {isStepComplete('selectSocial', data, skipped) && (
-                  <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 shrink-0" />
-                    {platformsLocked
-                      ? 'Platforms selected and locked.'
-                      : 'Platforms selected.'}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Step: Automation preferences */}
-            {currentStepId === 'automation' && (
-              <div className="space-y-5">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-amber-500 to-orange-400 text-white shadow-sm">
-                  <Bot className="h-6 w-6" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">
-                  Automation preferences
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Set how the AI engine should write and publish your posts —
-                  tone, caption length, posting cadence, optimal posting time,
-                  and notifications.
-                </p>
-                {skipped.has('automation') ? (
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Skipped for now. You can fine-tune automation anytime from
-                    Settings → Automation.
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Configure all automation fields to match how you want the AI
-                    to run on your behalf.
-                  </p>
-                )}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button
-                    className="flex-1"
-                    onClick={() => router.push('/settings/automation')}
-                  >
-                    Set automation preferences
-                  </Button>
-                  {!skipped.has('automation') && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="flex-1"
-                      onClick={skipCurrentStep}
-                    >
-                      Later
-                    </Button>
+                  {step.id === 'ready' && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        {allSetupDone
+                          ? 'Setup is complete. Head to Home to create and schedule content.'
+                          : 'Finish the steps above to unlock AI posting.'}
+                      </p>
+                      <Button
+                        disabled={!allSetupDone}
+                        onClick={() => router.push('/home')}
+                      >
+                        Go to home
+                      </Button>
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* Step: Facebook */}
-            {currentStepId === 'facebook' && (
-              <div className="space-y-5">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-cyan-400 text-white shadow-sm">
-                  <FacebookIcon className="h-6 w-6" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">Facebook</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Connect Facebook and choose which Page the AI engine should
-                  post to.
-                </p>
-                {!(
-                  data.facebookConnected ?? data.availableFBPages.length > 0
-                ) ? (
-                  <Button className="w-full" asChild>
-                    <a href={facebookHref}>Connect Facebook</a>
-                  </Button>
-                ) : data.selectedPageId == null ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      Facebook is linked. Select the page to use for publishing.
-                    </p>
-                    <Button
-                      className="w-full"
-                      onClick={() => setSelectFacebookPageModalOpen(true)}
-                    >
-                      Select Facebook page
-                    </Button>
-                  </>
-                ) : (
-                  <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 shrink-0" />
-                    Page:{' '}
-                    <span className="text-foreground">
-                      {data.availableFBPages.find(
-                        (p) => p.pageId === data.selectedPageId
-                      )?.pageName ?? data.selectedPageId}
-                    </span>
-                  </p>
-                )}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() =>
-                    router.push(WORKSPACE_NAV_HREFS.linkedProfiles)
-                  }
-                >
-                  {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
-                </Button>
-              </div>
-            )}
-
-            {/* Step: Instagram */}
-            {currentStepId === 'instagram' && (
-              <div className="space-y-5">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white shadow-sm">
-                  <Instagram className="h-6 w-6" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">Instagram</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Connect Instagram. When an account is linked, select it below
-                  to confirm the profile used for this setup.
-                </p>
-                {!data.instagramConnected ? (
-                  <Button className="w-full" asChild>
-                    <a href={instagramHref}>Connect Instagram</a>
-                  </Button>
-                ) : (
-                  <>
-                    <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 shrink-0" />
-                      Instagram is connected.
-                    </p>
-                  </>
-                )}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() =>
-                    router.push(WORKSPACE_NAV_HREFS.linkedProfiles)
-                  }
-                >
-                  {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
-                </Button>
-              </div>
-            )}
-
-            {/* Step: LinkedIn */}
-            {currentStepId === 'linkedin' && (
-              <div className="space-y-5">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-[#0A66C2] to-[#004182] text-white shadow-sm">
-                  <Linkedin className="h-6 w-6" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">LinkedIn</h2>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Connect LinkedIn for professional publishing from the AI
-                  engine.
-                </p>
-                {!(
-                  data.linkedinConnected ??
-                  data.availableLinkedInPages.length > 0
-                ) ? (
-                  <Button className="w-full" asChild>
-                    <a href={linkedinHref}>Connect LinkedIn</a>
-                  </Button>
-                ) : data.selectedLinkedInPageId == null ? (
-                  <>
-                    <p className="text-sm text-muted-foreground">
-                      LinkedIn is linked. Select the organization to use for
-                      publishing.
-                    </p>
-                    <Button
-                      className="w-full"
-                      onClick={() => setSelectLinkedInPageModalOpen(true)}
-                    >
-                      Select LinkedIn page
-                    </Button>
-                  </>
-                ) : (
-                  <p className="text-sm font-medium text-emerald-600 flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 shrink-0" />
-                    Page:{' '}
-                    <span className="text-foreground">
-                      {data.availableLinkedInPages.find(
-                        (p) => p.pageId === data.selectedLinkedInPageId
-                      )?.pageName ?? data.selectedLinkedInPageId}
-                    </span>
-                  </p>
-                )}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() =>
-                    router.push(WORKSPACE_NAV_HREFS.linkedProfiles)
-                  }
-                >
-                  {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
-                </Button>
-              </div>
-            )}
-
-            {/* Step: Ready */}
-            {currentStepId === 'ready' && (
-              <div className="space-y-5 text-center sm:text-left">
-                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-green-500 to-emerald-400 text-white shadow-md mx-auto sm:mx-0">
-                  <CheckCircle className="h-8 w-8" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground">
-                  You are ready
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-                  All setup steps are complete. Open the dashboard to create and
-                  schedule content with the AI engine.
-                </p>
-                <Button
-                  className="w-full sm:w-auto"
-                  onClick={() => router.push('/home')}
-                >
-                  Go to home
-                </Button>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      <div className="flex items-center justify-between gap-3 mt-8">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={goBack}
-          disabled={currentStep === 0}
-          className="gap-2"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back
-        </Button>
-        <Button
-          type="button"
-          onClick={goNext}
-          disabled={!canGoNext}
-          className={`gap-2 ${isLastStep ? 'hidden' : ''}`}
-        >
-          Next
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       <Dialog open={confirmSelectionOpen} onOpenChange={setConfirmSelectionOpen}>
         <DialogContent showCloseButton className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Confirm social accounts</DialogTitle>
+            <DialogTitle>Confirm platforms</DialogTitle>
             <DialogDescription asChild>
               <div className="space-y-3 text-sm text-muted-foreground">
-                <p>
-                  You are about to connect these platforms for the AI Engine:
-                </p>
+                <p>You are about to save these platforms:</p>
                 <ul className="list-disc pl-5 font-medium text-foreground">
                   {PLATFORM_OPTIONS.filter((o) => localSelected[o.key]).map(
                     (o) => (
@@ -1225,8 +1050,8 @@ export default function AIEnginePage() {
                 </ul>
                 <p className="text-amber-700 dark:text-amber-500/90">
                   Your plan allows up to {maxAllowed} platform
-                  {maxAllowed !== 1 ? 's' : ''}. Saving will update which
-                  accounts the AI engine uses.
+                  {maxAllowed !== 1 ? 's' : ''}. Saving updates which accounts
+                  the AI Engine uses.
                 </p>
               </div>
             </DialogDescription>

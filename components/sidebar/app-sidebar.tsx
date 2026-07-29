@@ -24,7 +24,7 @@ import {
   Video,
   LayoutGrid,
   User,
-  Wand2,
+  CalendarDays,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -141,9 +141,9 @@ export function AppSidebar({
       );
     }
     const items = [...workspaceNav];
-    // Content Plan is auto-mode only — append from users/{uid}.mode via
-    // UserPlanCreditsProvider (not a separate auto-mode API gate).
-    if (billing?.mode === 'auto') {
+    // Content Calendar for Auto (AI) and Studio — append from users/{uid}.mode
+    // via UserPlanCreditsProvider.
+    if (billing?.mode === 'auto' || billing?.mode === 'manual') {
       const schedulePostIdx = items.findIndex(
         (item) => item.href === WORKSPACE_NAV_HREFS.schedulePost
       );
@@ -160,7 +160,11 @@ export function AppSidebar({
     return items;
   })();
   const settingsChildItems = isAccountFrozen
-    ? settingsNavItems.filter((child) => child.href === '/settings/billings')
+    ? settingsNavItems.filter(
+        (child) =>
+          child.href === '/settings/billings' ||
+          child.href === '/settings/support-legal'
+      )
     : settingsNavItems;
   const { isMobile, setOpenMobile } = useSidebar();
   const { user, accountName, loading: authLoading } = useAuth();
@@ -365,17 +369,17 @@ export function AppSidebar({
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname?.startsWith('/admin/ai-engine-review') ?? false}
+                    isActive={pathname?.startsWith('/admin/content-calendar-review') ?? false}
                   >
                     <Link
-                      href="/admin/ai-engine-review"
-                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${(pathname?.startsWith('/admin/ai-engine-review') ?? false)
+                      href="/admin/content-calendar-review"
+                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${(pathname?.startsWith('/admin/content-calendar-review') ?? false)
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                         }`}
                     >
-                      <Wand2 className="h-4 w-4 shrink-0" />
-                      <span>AI Engine Review</span>
+                      <CalendarDays className="h-4 w-4 shrink-0" />
+                      <span>Content Calendar Review</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

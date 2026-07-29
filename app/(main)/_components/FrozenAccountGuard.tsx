@@ -2,25 +2,22 @@
 
 import { useLayoutEffect, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { WORKSPACE_NAV_HREFS } from '@/lib/workspace-nav';
 import { useUserPlanCredits } from './UserPlanCreditsProvider';
 
 const REDIRECT_WHEN_FROZEN = '/settings/billings';
 
-import { WORKSPACE_NAV_HREFS } from '@/lib/workspace-nav';
+const FROZEN_ALLOWED_PREFIXES = [
+  '/settings/billings',
+  '/settings/support-legal',
+  WORKSPACE_NAV_HREFS.linkedProfiles,
+] as const;
 
-/** Billing page + connected accounts — only routes accessible when account is frozen. */
+/** Billing, connected accounts, and support & legal — only routes accessible when frozen. */
 export function isPathAllowedWhenFrozen(pathname: string): boolean {
-  if (
-    pathname === '/settings/billings' ||
-    pathname.startsWith('/settings/billings/')
-  ) {
-    return true;
-  }
-  const linked = WORKSPACE_NAV_HREFS.linkedProfiles;
-  if (pathname === linked || pathname.startsWith(`${linked}/`)) {
-    return true;
-  }
-  return false;
+  return FROZEN_ALLOWED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 }
 
 export function FrozenAccountGuard({ children }: { children: ReactNode }) {

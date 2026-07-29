@@ -96,8 +96,8 @@ function AllocationRow({
 /**
  * Growth Studio — Monthly budget allocation.
  *
- * User enters a monthly INR budget; AI (or engagement/recency fallback)
- * suggests how much to put behind each of the last 5 posts.
+ * User enters a monthly INR budget; we use this calendar month's posts,
+ * recommend how many to allot, and split spend across that set.
  */
 export function MonthlyBudgetAllocationSection({
   platform,
@@ -121,7 +121,7 @@ export function MonthlyBudgetAllocationSection({
     try {
       const res = await postBudgetAllocation({ platform, monthlyBudget });
       setState({ status: 'success', payload: res.data });
-    } catch (err: unknown) {
+    } catch {
       setState({
         status: 'error',
         error: 'Something went wrong',
@@ -146,8 +146,8 @@ export function MonthlyBudgetAllocationSection({
 
       <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3 space-y-3">
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Enter your monthly ad budget. We&apos;ll look at your last 5 posts
-          and suggest how much to put behind each one.
+          Enter your monthly ad budget. We&apos;ll use this month&apos;s posts
+          and tell you how many to put budget behind.
         </p>
 
         <div className="flex flex-wrap items-end gap-2">
@@ -208,29 +208,36 @@ export function MonthlyBudgetAllocationSection({
         !state.payload.visible || state.payload.allocations.length === 0 ? (
           <p className="rounded-lg border border-border bg-muted px-3 py-3 text-xs text-muted-foreground">
             {state.payload.reason ??
-              'Couldn’t allocate budget across recent posts.'}
+              'Couldn’t allocate budget across this month’s posts.'}
           </p>
         ) : (
           <div className="space-y-3">
             <div
               className={cn(
-                'flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs',
+                'rounded-lg border px-3 py-2.5 text-sm',
                 'border-emerald-500/30 bg-emerald-500/10 text-foreground'
               )}
             >
-              <span>
+              <p className="font-semibold leading-snug">
+                You have {state.payload.postsThisMonth} post
+                {state.payload.postsThisMonth === 1 ? '' : 's'} this month
+                {' — '}
+                allot budget to {state.payload.recommendedPostCount} of them.
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Total{' '}
-                <strong>
+                <strong className="text-foreground">
                   {formatMoney(
                     state.payload.currency,
                     state.payload.monthlyBudget
                   )}
                 </strong>{' '}
-                across {state.payload.allocations.length} recent posts
-              </span>
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                {state.payload.source === 'openai' ? 'AI' : 'Weighted'}
-              </span>
+                across {state.payload.recommendedPostCount} recommended post
+                {state.payload.recommendedPostCount === 1 ? '' : 's'}
+                <span className="ml-2 text-[10px] uppercase tracking-wide">
+                  {state.payload.source === 'openai' ? 'AI' : 'Weighted'}
+                </span>
+              </p>
             </div>
             {state.payload.summary ? (
               <p className="text-xs leading-relaxed text-muted-foreground">

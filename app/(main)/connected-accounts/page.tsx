@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import { AccountFrozenAlert } from '@/components/shared/AccountFrozenAlert';
 import {
   countEnabledPlatforms,
   isMaxPlatformPlan,
@@ -419,7 +420,7 @@ export default function ConnectedPlatformsPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (isPlanInactive(billing)) {
+  if (isPlanInactive(billing) && billing?.isAccountFrozen !== true) {
     return <NonSubscribedFeatureBlock />;
   }
 
@@ -437,6 +438,8 @@ export default function ConnectedPlatformsPage() {
           approved content automatically.
         </p>
       </header>
+
+      <AccountFrozenAlert className="mb-6" />
 
       {/* ── Notices ───────────────────────────────────────── */}
 

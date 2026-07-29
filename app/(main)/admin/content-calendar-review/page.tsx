@@ -1,0 +1,1049 @@
+'use client';
+
+import {
+  getAdminContentCalendarReviewDetail,
+  getAdminContentCalendarReviewUsers,
+  postAdminContentCalendarForceRun,
+  type AdminContentPlanDay,
+  type AdminContentPlanGeneratedItem,
+  type AdminContentPlanUpcomingItem,
+  type ContentCalendarReviewDetail,
+  type ContentCalendarReviewPlatform,
+  type ContentCalendarReviewPreferences,
+  type ContentCalendarReviewUser,
+} from '@/src/service/api/adminService';
+import { performActionOnScheduledPost } from '@/src/service/api/social.servce';
+import { useUser } from '../../_components/useUser';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { showErrorToast } from '@/lib/show-error-toast';
+import { toast } from 'sonner';
+import {
+  CalendarDays,
+  CheckCircle2,
+  Facebook,
+  Image as ImageIcon,
+  Instagram,
+  Linkedin,
+  Loader2,
+  Play,
+  RefreshCw,
+  Search,
+  X,
+} from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { cn } from '@/lib/utils';
+import {
+  ImagePreviewButton,
+  ImagePreviewOverlay,
+  useImagePreview,
+} from '@/components/image-preview';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { formatTimestampInTz, getBrowserTimeZone } from '@/lib/user-timezone';
+
+const PLATFORM_LABEL: Record<ContentCalendarReviewPlatform, string> = {
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
+};
+
+const PLATFORM_SHORT: Record<ContentCalendarReviewPlatform, string> = {
+  instagram: 'IG',
+  facebook: 'FB',
+  linkedin: 'LI',
+};
+
+const PLATFORM_ICON: Record<
+  ContentCalendarReviewPlatform,
+  React.ComponentType<{ className?: string }>
+> = {
+  instagram: Instagram,
+  facebook: Facebook,
+  linkedin: Linkedin,
+};
+
+function kindLabel(kind: string): string {
+  switch (kind) {
+    case 'campaign':
+      return 'Campaign';
+    case 'ai-engine':
+      return 'AI Engine';
+    case 'bulk-create':
+      return 'Automated';
+    case 'quick-create':
+      return 'Content Studio';
+    case 'product-advert':
+      return 'Product Ads';
+    case 'video-generation':
+      return 'Video';
+    case 'carousel':
+      return 'Carousel';
+    case 'festive':
+    case 'festival':
+      return 'Event Studio';
+    case 'empty':
+      return '—';
+    default:
+      return kind || 'Planned';
+  }
+}
+
+function statusLabel(status: AdminContentPlanGeneratedItem['status']): string {
+  switch (status) {
+    case 'draft':
+      return 'Draft';
+    case 'queued':
+      return 'Generating';
+    case 'scheduled':
+      return 'Scheduled';
+    default:
+      return status;
+  }
+}
+
+function cellToneClass(kind: string): string {
+  switch (kind) {
+    case 'campaign':
+      return 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300';
+    case 'festival':
+    case 'festive':
+      return 'bg-amber-500/25 text-amber-700 dark:text-amber-300';
+    case 'quick-create':
+      return 'bg-sky-500/20 text-sky-600 dark:text-sky-400';
+    case 'product-advert':
+      return 'bg-fuchsia-500/20 text-fuchsia-700 dark:text-fuchsia-300';
+    case 'video-generation':
+      return 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400';
+    case 'carousel':
+      return 'bg-teal-500/20 text-teal-600 dark:text-teal-400';
+    case 'bulk-create':
+    case 'ai-engine':
+      return 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300';
+    case 'empty':
+      return 'bg-muted/50 text-muted-foreground';
+    default:
+      return 'bg-orange-500/15 text-orange-700 dark:text-orange-300';
+  }
+}
+
+function formatDay(date: string): string {
+  try {
+    return format(parseISO(date), 'EEE d MMM');
+  } catch {
+    return date;
+  }
+}
+
+function canForceRunKind(kind: string): boolean {
+  return (
+    kind === 'ai-engine' ||
+    kind === 'quick-create' ||
+    kind === 'video-generation' ||
+    kind === 'carousel' ||
+    kind === 'festival' ||
+    kind === 'festive'
+  );
+}
+
+function optimalTimeForPlatform(
+  prefs: ContentCalendarReviewPreferences,
+  platform: ContentCalendarReviewPlatform
+): string | null {
+  if (platform === 'facebook') return prefs.optimalFacebookTime;
+  if (platform === 'instagram') return prefs.optimalInstagramTime;
+  return prefs.optimalLinkedinTime;
+}
+
+type PreviewTarget = {
+  userId: string;
+  name: string;
+  email: string;
+  platform: ContentCalendarReviewPlatform;
+  date: string;
+  item: AdminContentPlanGeneratedItem;
+  preferences: ContentCalendarReviewPreferences;
+};
+
+export default function AdminContentCalendarReviewPage() {
+  const { user } = useUser();
+  const router = useRouter();
+
+  const [users, setUsers] = useState<ContentCalendarReviewUser[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<ContentCalendarReviewDetail | null>(
+    null
+  );
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [preview, setPreview] = useState<PreviewTarget | null>(null);
+  const [pendingRunKey, setPendingRunKey] = useState<string | null>(null);
+  const [pendingRegen, setPendingRegen] = useState(false);
+
+  useEffect(() => {
+    if (user && !user.admin) {
+      router.replace('/home');
+    }
+  }, [user, router]);
+
+  const loadUsers = useCallback(async () => {
+    setListLoading(true);
+    try {
+      const res = await getAdminContentCalendarReviewUsers();
+      setUsers(res.data.users ?? []);
+    } catch {
+      showErrorToast('Failed to load content calendar users');
+      setUsers([]);
+    } finally {
+      setListLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user?.admin) return;
+    void loadUsers();
+  }, [user?.admin, loadUsers]);
+
+  const loadDetail = useCallback(async (userId: string) => {
+    setSelectedUserId(userId);
+    setDetailLoading(true);
+    setDetail(null);
+    setPreview(null);
+    try {
+      const res = await getAdminContentCalendarReviewDetail(userId);
+      setDetail(res.data);
+    } catch {
+      showErrorToast('Failed to load content calendar');
+      setDetail(null);
+    } finally {
+      setDetailLoading(false);
+    }
+  }, []);
+
+  const refreshDetail = useCallback(async () => {
+    if (!selectedUserId) return;
+    try {
+      const res = await getAdminContentCalendarReviewDetail(selectedUserId);
+      setDetail(res.data);
+      setPreview((prev) => {
+        if (!prev) return prev;
+        for (const day of res.data.days) {
+          if (day.date !== prev.date) continue;
+          const slot = day.byPlatform[prev.platform];
+          const match = slot?.generated.find(
+            (g) =>
+              (prev.item.scheduledPostId &&
+                g.scheduledPostId === prev.item.scheduledPostId) ||
+              (prev.item.draftId && g.draftId === prev.item.draftId)
+          );
+          if (match) {
+            return {
+              ...prev,
+              item: match,
+              preferences: res.data.preferences,
+              name: res.data.name,
+              email: res.data.email,
+            };
+          }
+        }
+        return prev;
+      });
+    } catch {
+      // silent refresh
+    }
+  }, [selectedUserId]);
+
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) =>
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.userId.toLowerCase().includes(q) ||
+        u.activePlan.toLowerCase().includes(q)
+    );
+  }, [users, search]);
+
+  const handleForceRun = async (
+    platform: ContentCalendarReviewPlatform,
+    date: string
+  ) => {
+    if (!detail) return;
+    const key = `${detail.userId}::${platform}::${date}`;
+    setPendingRunKey(key);
+    try {
+      await postAdminContentCalendarForceRun({
+        userId: detail.userId,
+        date,
+        platform,
+      });
+      toast.success(`Run queued for ${PLATFORM_LABEL[platform]} on ${date}`);
+      await refreshDetail();
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : undefined;
+      showErrorToast(message || 'Failed to run this cell');
+    } finally {
+      setPendingRunKey(null);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (!preview?.item.scheduledPostId) {
+      showErrorToast('No scheduled post to regenerate');
+      return;
+    }
+    setPendingRegen(true);
+    try {
+      await performActionOnScheduledPost(
+        preview.item.scheduledPostId,
+        'regenerate',
+        preview.userId,
+        preview.platform
+      );
+      toast.success(`Regeneration queued for ${PLATFORM_LABEL[preview.platform]}`);
+      await refreshDetail();
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response
+              ?.data?.message
+          : undefined;
+      showErrorToast(message || 'Failed to regenerate');
+    } finally {
+      setPendingRegen(false);
+    }
+  };
+
+  if (!user?.admin) return null;
+
+  return (
+    <div className="mx-auto max-w-7xl space-y-6 pb-16 page-enter">
+      <header className="space-y-1">
+        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
+          <CalendarDays className="h-6 w-6 text-primary" aria-hidden />
+          Content Calendar Review
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Browse every auto-mode user&apos;s content plan, including generated
+          images and full post status.
+        </p>
+      </header>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+        <aside className="space-y-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name, email, id…"
+              className="pl-9"
+            />
+          </div>
+          <div className="max-h-[70vh] overflow-y-auto rounded-xl border border-border bg-card/40">
+            {listLoading ? (
+              <div className="flex items-center justify-center gap-2 px-4 py-10 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading users…
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+                No matching users.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {filteredUsers.map((u) => {
+                  const active = selectedUserId === u.userId;
+                  return (
+                    <li key={u.userId}>
+                      <button
+                        type="button"
+                        onClick={() => void loadDetail(u.userId)}
+                        className={cn(
+                          'w-full px-3 py-3 text-left transition-colors',
+                          active ? 'bg-primary/10' : 'hover:bg-muted/50'
+                        )}
+                      >
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {u.name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {u.email}
+                        </p>
+                        <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                          {u.activePlan}
+                          {u.mode ? ` · ${u.mode}` : ''}
+                          {u.autoModeCalendarGenerated ? ' · calendar' : ''}
+                        </p>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            {filteredUsers.length} of {users.length} users
+          </p>
+        </aside>
+
+        <section className="min-w-0 space-y-4">
+          {!selectedUserId ? (
+            <div className="flex min-h-[40vh] items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-6 text-center text-sm text-muted-foreground">
+              Select a user to view their content calendar.
+            </div>
+          ) : detailLoading ? (
+            <div className="flex min-h-[40vh] items-center justify-center gap-2 rounded-xl border border-border bg-card/40 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading calendar…
+            </div>
+          ) : !detail ? (
+            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              Could not load this user&apos;s content calendar.
+            </div>
+          ) : (
+            <>
+              <div className="rounded-xl border border-border bg-card/50 p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-foreground">
+                      {detail.name}
+                    </h2>
+                    <p className="text-sm text-muted-foreground">
+                      {detail.email}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {detail.activePlan}
+                      {detail.mode ? ` · ${detail.mode}` : ''} ·{' '}
+                      <span className="font-mono">{detail.userId}</span>
+                    </p>
+                  </div>
+                  <div className="text-right text-xs text-muted-foreground">
+                    <p>
+                      Plan window:{' '}
+                      <span className="font-medium text-foreground">
+                        {detail.from}
+                      </span>{' '}
+                      →{' '}
+                      <span className="font-medium text-foreground">
+                        {detail.to}
+                      </span>
+                    </p>
+                    <p className="mt-1">
+                      Today ({detail.preferences.timeZone || 'UTC'}):{' '}
+                      <span className="font-medium text-foreground">
+                        {detail.today}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <PreferencesStrip
+                  preferences={detail.preferences}
+                  platforms={detail.platforms}
+                />
+              </div>
+
+              {detail.platforms.length === 0 ? (
+                <p className="rounded-lg border border-border bg-muted px-3 py-3 text-sm text-muted-foreground">
+                  This user has no selected platforms.
+                </p>
+              ) : (
+                <div className="overflow-x-auto rounded-xl border border-border">
+                  <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40">
+                        <th className="sticky left-0 z-10 bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          Date
+                        </th>
+                        {detail.platforms.map((platform) => {
+                          const Icon = PLATFORM_ICON[platform];
+                          return (
+                            <th
+                              key={platform}
+                              className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                            >
+                              <span className="inline-flex items-center gap-1.5">
+                                <Icon className="h-3.5 w-3.5" />
+                                {PLATFORM_SHORT[platform]}
+                              </span>
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detail.days.map((day) => (
+                        <DayRow
+                          key={day.date}
+                          day={day}
+                          platforms={detail.platforms}
+                          isToday={day.date === detail.today}
+                          pendingRunKey={pendingRunKey}
+                          userId={detail.userId}
+                          onOpenPreview={(platform, item) =>
+                            setPreview({
+                              userId: detail.userId,
+                              name: detail.name,
+                              email: detail.email,
+                              platform,
+                              date: day.date,
+                              item,
+                              preferences: detail.preferences,
+                            })
+                          }
+                          onForceRun={(platform) =>
+                            void handleForceRun(platform, day.date)
+                          }
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      </div>
+
+      {preview ? (
+        <PreviewModal
+          target={preview}
+          pendingRegen={pendingRegen}
+          onClose={() => setPreview(null)}
+          onRegenerate={() => void handleRegenerate()}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function PreferencesStrip({
+  preferences,
+  platforms,
+}: {
+  preferences: ContentCalendarReviewPreferences;
+  platforms: ContentCalendarReviewPlatform[];
+}) {
+  const rows = platforms.map((platform) => {
+    const optimal = optimalTimeForPlatform(preferences, platform);
+    const preferred =
+      preferences.preferredTime && !optimal
+        ? preferences.preferredTime
+        : null;
+    return { platform, optimal, preferred };
+  });
+
+  if (
+    rows.every((r) => !r.optimal && !r.preferred) &&
+    preferences.useAnalyticsOptimalPostingTime == null
+  ) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 grid gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs sm:grid-cols-2 lg:grid-cols-3">
+      {rows.map(({ platform, optimal, preferred }) => (
+        <div key={platform}>
+          <span className="font-semibold text-foreground">
+            {PLATFORM_LABEL[platform]}
+          </span>
+          <span className="text-muted-foreground">
+            {': '}
+            {optimal
+              ? `Optimal ${optimal}`
+              : preferred
+                ? `Preferred ${preferred}`
+                : '—'}
+          </span>
+        </div>
+      ))}
+      {preferences.useAnalyticsOptimalPostingTime != null ? (
+        <div className="text-muted-foreground sm:col-span-2 lg:col-span-3">
+          Use analytics optimal posting time:{' '}
+          <span className="font-medium text-foreground">
+            {preferences.useAnalyticsOptimalPostingTime ? 'Yes' : 'No'}
+          </span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function DayRow({
+  day,
+  platforms,
+  isToday,
+  pendingRunKey,
+  userId,
+  onOpenPreview,
+  onForceRun,
+}: {
+  day: AdminContentPlanDay;
+  platforms: ContentCalendarReviewPlatform[];
+  isToday: boolean;
+  pendingRunKey: string | null;
+  userId: string;
+  onOpenPreview: (
+    platform: ContentCalendarReviewPlatform,
+    item: AdminContentPlanGeneratedItem
+  ) => void;
+  onForceRun: (platform: ContentCalendarReviewPlatform) => void;
+}) {
+  return (
+    <tr
+      className={cn(
+        'border-b border-border/70 align-top last:border-b-0',
+        isToday && 'bg-primary/5'
+      )}
+    >
+      <td className="sticky left-0 z-10 bg-background/95 px-3 py-3 text-xs font-medium text-foreground backdrop-blur">
+        <div className="flex items-center gap-1.5">
+          {formatDay(day.date)}
+          {isToday ? (
+            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+              Today
+            </span>
+          ) : null}
+        </div>
+        <div className="font-mono text-[10px] text-muted-foreground">
+          {day.date}
+        </div>
+        {day.festivals.length > 0 ? (
+          <div className="mt-1 space-y-0.5">
+            {day.festivals.map((f) => (
+              <span
+                key={f.id}
+                className="block text-[10px] text-amber-600 dark:text-amber-400"
+              >
+                {f.name}
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </td>
+      {platforms.map((platform) => {
+        const slot = day.byPlatform[platform];
+        const generated = slot?.generated ?? [];
+        const upcoming = slot?.upcoming ?? [];
+        const runnableUpcoming = upcoming.filter((u) =>
+          canForceRunKind(u.kind)
+        );
+        const showRun =
+          isToday &&
+          generated.length === 0 &&
+          runnableUpcoming.length > 0;
+        const runKey = `${userId}::${platform}::${day.date}`;
+        const runPending = pendingRunKey === runKey;
+
+        return (
+          <td key={platform} className="px-2 py-2">
+            <div className="space-y-2">
+              {generated.map((item, idx) => (
+                <GeneratedCard
+                  key={`${item.scheduledPostId ?? item.draftId ?? item.kind}-${idx}`}
+                  item={item}
+                  onOpen={() => onOpenPreview(platform, item)}
+                />
+              ))}
+              {generated.length === 0 &&
+                upcoming.map((item, idx) => (
+                  <UpcomingCard key={`${item.kind}-${idx}`} item={item} />
+                ))}
+              {generated.length === 0 && upcoming.length === 0 ? (
+                <span className="text-[11px] text-muted-foreground">—</span>
+              ) : null}
+              {showRun ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1.5 text-[11px]"
+                  disabled={runPending}
+                  onClick={() => onForceRun(platform)}
+                >
+                  {runPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Play className="h-3 w-3" />
+                  )}
+                  Run
+                </Button>
+              ) : null}
+            </div>
+          </td>
+        );
+      })}
+    </tr>
+  );
+}
+
+function UpcomingCard({ item }: { item: AdminContentPlanUpcomingItem }) {
+  return (
+    <div
+      className={cn(
+        'rounded-lg px-2 py-1.5 text-[11px]',
+        cellToneClass(item.kind)
+      )}
+    >
+      <p className="font-semibold">{kindLabel(item.kind)}</p>
+      <p className="mt-0.5 opacity-90">{item.label}</p>
+      {item.note ? (
+        <p className="mt-0.5 text-[10px] opacity-80">{item.note}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function GeneratedCard({
+  item,
+  onOpen,
+}: {
+  item: AdminContentPlanGeneratedItem;
+  onOpen: () => void;
+}) {
+  const title =
+    item.title?.trim() ||
+    item.captionPreview?.trim() ||
+    kindLabel(item.kind);
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(
+        'w-full rounded-lg border border-border/60 bg-card/60 p-2 text-left transition hover:ring-1 hover:ring-primary/40',
+        cellToneClass(item.kind)
+      )}
+    >
+      <div className="flex gap-2">
+        {item.imageUrl ? (
+          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={item.imageUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <div
+            aria-hidden
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-border/40 bg-muted/40"
+          >
+            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold leading-tight">
+            {kindLabel(item.kind)}
+            <span className="ml-1.5 font-normal opacity-80">
+              · {statusLabel(item.status)}
+            </span>
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-[11px] opacity-90">{title}</p>
+          {item.postStatus ? (
+            <p className="mt-0.5 text-[10px] opacity-70">
+              Admin: {item.postStatus}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function PreviewModal({
+  target,
+  pendingRegen,
+  onClose,
+  onRegenerate,
+}: {
+  target: PreviewTarget;
+  pendingRegen: boolean;
+  onClose: () => void;
+  onRegenerate: () => void;
+}) {
+  const { item, platform, preferences } = target;
+  const Icon = PLATFORM_ICON[platform];
+  const imagePreview = useImagePreview();
+  const optimal = optimalTimeForPlatform(preferences, platform);
+  const showPreferred =
+    Boolean(preferences.preferredTime) && !optimal;
+  const isQueued = item.status === 'queued';
+  const canRegenerate =
+    Boolean(item.scheduledPostId) && item.status === 'scheduled';
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [onClose]);
+
+  if (!mounted) return null;
+
+  const modal = (
+    <div
+      className="pointer-events-auto fixed inset-0 z-[9998] flex items-center justify-center p-4"
+      style={{ minHeight: '100dvh' }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Post details"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        className="absolute inset-0 z-0 h-full w-full border-0 bg-black/75 p-0 backdrop-blur-sm"
+        aria-label="Close dialog"
+        onClick={onClose}
+      />
+      <div
+        className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F162E] text-white shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <Icon className="h-5 w-5 text-[#00D1FF]" />
+            <div>
+              <div className="text-base font-semibold">
+                {target.name} · {PLATFORM_LABEL[platform]}
+              </div>
+              <div className="text-xs text-white/50">
+                {target.email} · {target.date}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white"
+            aria-label="Close"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="grid gap-6 p-6 md:grid-cols-[260px_1fr]">
+            <div className="relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-black/40">
+              {item.imageUrl ? (
+                <div className="relative h-full w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.imageUrl}
+                    alt="Generated post"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute bottom-2 right-2">
+                    <ImagePreviewButton
+                      variant="overlay-icon"
+                      stopPropagation
+                      onClick={() =>
+                        imagePreview.open(item.imageUrl as string)
+                      }
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-white/40">
+                  <ImageIcon className="h-10 w-10" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-4 text-sm">
+              <div>
+                <StatusBadge
+                  status={item.status}
+                  postStatus={item.postStatus}
+                />
+              </div>
+              <KV label="Kind" value={kindLabel(item.kind)} />
+              <KV
+                label="Scheduled post id"
+                value={item.scheduledPostId ?? null}
+              />
+              <KV label="Admin status" value={item.postStatus ?? null} />
+              <KV
+                label="User approval"
+                value={item.UserApprovalStatus ?? null}
+              />
+              {showPreferred ? (
+                <KV
+                  label="Preferred time"
+                  value={preferences.preferredTime}
+                />
+              ) : null}
+              {platform === 'facebook' && optimal ? (
+                <KV label="Optimal Facebook time" value={optimal} />
+              ) : null}
+              {platform === 'instagram' && optimal ? (
+                <KV label="Optimal Instagram time" value={optimal} />
+              ) : null}
+              {platform === 'linkedin' && optimal ? (
+                <KV label="Optimal LinkedIn time" value={optimal} />
+              ) : null}
+              <KV label="Content type" value={item.contentType ?? null} />
+              <KV
+                label="Content description"
+                value={item.contentDescription ?? item.title ?? null}
+                multiline
+              />
+              <KV
+                label="Caption"
+                value={item.caption ?? item.captionPreview ?? null}
+                multiline
+              />
+              {item.error ? (
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-white/50">
+                    Error
+                  </div>
+                  <div className="mt-1 whitespace-pre-wrap rounded-md border border-red-500/30 bg-red-500/10 p-2 text-[12px] text-red-200/90">
+                    {item.error}
+                  </div>
+                </div>
+              ) : null}
+              <div className="grid grid-cols-2 gap-3 text-[11px] text-white/50">
+                <Timestamp
+                  label="Scheduled at"
+                  ms={item.scheduleAtMs ?? null}
+                />
+                <Timestamp label="Updated" ms={item.updatedAtMs ?? null} />
+                <Timestamp label="Created" ms={item.createdAtMs ?? null} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-white/10 bg-black/20 px-6 py-4">
+          {isQueued ? (
+            <span className="inline-flex items-center gap-2 text-sm text-cyan-200/80">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Generation in progress…
+            </span>
+          ) : canRegenerate ? (
+            <button
+              type="button"
+              onClick={onRegenerate}
+              disabled={pendingRegen}
+              className="inline-flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/30 disabled:opacity-50"
+            >
+              {pendingRegen ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Regenerate
+            </button>
+          ) : null}
+        </div>
+      </div>
+      <ImagePreviewOverlay
+        src={imagePreview.previewUrl}
+        alt={imagePreview.previewAlt}
+        onClose={imagePreview.close}
+      />
+    </div>
+  );
+
+  return createPortal(modal, document.body);
+}
+
+function StatusBadge({
+  status,
+  postStatus,
+}: {
+  status: AdminContentPlanGeneratedItem['status'];
+  postStatus?: string | null;
+}) {
+  if (status === 'queued') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-500/15 px-2.5 py-1 text-xs font-semibold text-cyan-100">
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        Generating
+      </span>
+    );
+  }
+  if (status === 'draft') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-100">
+        Draft
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-100">
+      <CheckCircle2 className="h-3.5 w-3.5" />
+      {postStatus ? `Generated · ${postStatus}` : 'Generated'}
+    </span>
+  );
+}
+
+function KV({
+  label,
+  value,
+  multiline,
+}: {
+  label: string;
+  value: string | null;
+  multiline?: boolean;
+}) {
+  return (
+    <div>
+      <div className="text-xs uppercase tracking-wider text-white/50">
+        {label}
+      </div>
+      <div
+        className={`mt-1 text-sm text-white/90 ${
+          multiline ? 'whitespace-pre-wrap' : 'truncate'
+        }`}
+        title={!multiline && value ? value : undefined}
+      >
+        {value || <span className="text-white/30">—</span>}
+      </div>
+    </div>
+  );
+}
+
+function Timestamp({ label, ms }: { label: string; ms: number | null }) {
+  if (ms == null) {
+    return (
+      <div>
+        <div className="uppercase tracking-wider">{label}</div>
+        <div className="mt-0.5 text-white/30">—</div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="uppercase tracking-wider">{label}</div>
+      <div className="mt-0.5 text-white/80">
+        {formatTimestampInTz(ms, getBrowserTimeZone(), {
+          style: 'datetime',
+        })}
+      </div>
+    </div>
+  );
+}

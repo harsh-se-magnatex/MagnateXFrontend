@@ -14,7 +14,8 @@ import { ReplyQueueGroup, ReplyQueueLoadStats } from './replyQueue';
  *   1. Replies waiting (B2)
  *   2. What to post next (A1)
  *   3. Where to spend (A2)
- *   4. Monthly budget split (last 5 posts)
+ *   4. Monthly budget split (this month's posts + recommended allotment)
+
  *
  * The first-hour seeding nudge was removed as part of the analytics
  * page refinement — those checklists are no longer surfaced here.

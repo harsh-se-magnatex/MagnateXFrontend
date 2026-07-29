@@ -119,7 +119,9 @@ function canForceRunKind(kind: string): boolean {
     kind === 'ai-engine' ||
     kind === 'quick-create' ||
     kind === 'video-generation' ||
-    kind === 'carousel'
+    kind === 'carousel' ||
+    kind === 'festival' ||
+    kind === 'festive'
   );
 }
 
@@ -168,6 +170,7 @@ function PlatformCell({
   platform,
   entries,
   todayIso,
+  forceRunEnabled,
   forceRunKey,
   onForceRun,
 }: {
@@ -175,6 +178,7 @@ function PlatformCell({
   platform: ContentPlanPlatform;
   entries: CellEntry[];
   todayIso: string;
+  forceRunEnabled: boolean;
   forceRunKey: string | null;
   onForceRun: (date: string, platform: ContentPlanPlatform) => void;
 }) {
@@ -189,6 +193,7 @@ function PlatformCell({
   const isPast = date < todayIso;
   const hasGenerated = entries.some((e) => e.source === 'generated');
   const showForceRun =
+    forceRunEnabled &&
     !isPast &&
     !hasGenerated &&
     entries.every((e) => e.source === 'upcoming') &&
@@ -263,6 +268,7 @@ function ContentPlanSheet({
   days,
   platforms,
   todayIso,
+  forceRunEnabled,
   forceRunKey,
   onForceRun,
 }: {
@@ -270,6 +276,7 @@ function ContentPlanSheet({
   platforms: ContentPlanPlatform[];
   /** YYYY-MM-DD in the user's timezone — highlighted as Today. */
   todayIso: string;
+  forceRunEnabled: boolean;
   forceRunKey: string | null;
   onForceRun: (date: string, platform: ContentPlanPlatform) => void;
 }) {
@@ -370,6 +377,7 @@ function ContentPlanSheet({
                           platform={platform}
                           entries={entries}
                           todayIso={todayIso}
+                          forceRunEnabled={forceRunEnabled}
                           forceRunKey={forceRunKey}
                           onForceRun={onForceRun}
                         />
@@ -413,6 +421,7 @@ export default function ContentPlanPage() {
   const [forceRunKey, setForceRunKey] = useState<string | null>(null);
 
   const isAuto = billing?.mode === 'auto';
+  const hasAccess = isAuto || billing?.mode === 'manual';
 
   const selectedPlatforms = useMemo((): ContentPlanPlatform[] => {
     const selected = billing?.selected;
@@ -550,27 +559,26 @@ export default function ContentPlanPage() {
   useEffect(() => {
     if (authLoading || creditsLoading) return;
     if (!user) return;
-    if (!isAuto) {
+    if (!hasAccess) {
       setLoading(false);
       return;
     }
     void load();
-  }, [authLoading, creditsLoading, user, isAuto, load]);
+  }, [authLoading, creditsLoading, user, hasAccess, load]);
 
   if (authLoading || creditsLoading) {
     return <PageLoadingState />;
   }
 
-  if (!isAuto) {
+  if (!hasAccess) {
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-4 px-6 py-24 text-center">
         <CalendarRange className="h-10 w-10 text-muted-foreground" />
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Content Plan is for AI plans
+          Content Calendar needs a plan
         </h1>
         <p className="text-sm text-muted-foreground">
-          This overview of upcoming auto-generated posts is available on Auto
-          (AI) plans only.
+          This overview is available on Auto (AI) and Studio plans.
         </p>
         <Link
           href="/settings/billings"
@@ -588,16 +596,16 @@ export default function ContentPlanPage() {
         <div className="flex items-center gap-2 text-primary">
           <CalendarRange className="h-5 w-5" />
           <span className="text-xs font-bold uppercase tracking-wider">
-            Auto mode
+            {isAuto ? 'Auto mode' : 'Studio mode'}
           </span>
         </div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
           Content Calendar
         </h1>
         <p className="max-w-2xl text-sm text-muted-foreground">
-          Your plan calendar from start to end — rows are days, columns are
-          platforms. Colored cells show what is already
-          set or still planned.
+          {isAuto
+            ? 'Your plan calendar from start to end — rows are days, columns are platforms. Colored cells show what is already set or still planned.'
+            : 'Your plan calendar from start to end — rows are days, columns are platforms. Colored cells show content you have created and scheduled.'}
         </p>
         {range?.from && range?.to ? (
           <p className="text-xs font-medium text-foreground">
@@ -616,7 +624,7 @@ export default function ContentPlanPage() {
             Connect a platform to see your plan
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Auto-mode only schedules for platforms you have selected.
+            The calendar only shows platforms you have selected.
           </p>
           <Link
             href={WORKSPACE_NAV_HREFS.linkedProfiles}
@@ -665,16 +673,24 @@ export default function ContentPlanPage() {
               </span>
             ))}
           </div>
-          <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-            Tip: hover over a cell for details. Force Run appears only on
-            planned Content Studio, AI Engine, Video, or Carousel cells — it
-            hides after Force Run or when content is already generating/generated
-            (not available on campaign posts).
-          </p>
+          {isAuto ? (
+            <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              Tip: hover over a cell for details. Force Run appears on planned
+              Content Studio, AI Engine, Video, Carousel, or Event Studio cells —
+              it hides after Force Run or when content is already
+              generating/generated (not available on campaign posts).
+            </p>
+          ) : (
+            <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              Tip: hover over a cell for details. Empty cells mean no content is
+              scheduled yet for that day and platform.
+            </p>
+          )}
           <ContentPlanSheet
             days={visibleDays}
             platforms={platforms}
             todayIso={todayIso}
+            forceRunEnabled={isAuto}
             forceRunKey={forceRunKey}
             onForceRun={handleForceRun}
           />

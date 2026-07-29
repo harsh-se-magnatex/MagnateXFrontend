@@ -724,3 +724,50 @@ export const toggleMemoryLayerPreference = async (opts: {
     }>
   >('/api/v1/user/toggle-memory-layer-preference', opts);
 };
+
+export type SocialTemplateDnaStatus =
+  | 'pending_memory'
+  | 'generating'
+  | 'ready'
+  | 'failed';
+
+export type SocialTemplateDnaPlaybook = {
+  formats: string[];
+  hooks: string[];
+  ctaStyle: string;
+};
+
+export type SocialTemplateDna = {
+  version: 1;
+  status: SocialTemplateDnaStatus;
+  inputHash?: string | null;
+  contentPillars: string[];
+  postingVoice: string;
+  visualDirection: string;
+  platformPlaybooks: {
+    instagram?: SocialTemplateDnaPlaybook;
+    facebook?: SocialTemplateDnaPlaybook;
+    linkedin?: SocialTemplateDnaPlaybook;
+  };
+  improvementPriorities: string[];
+  doNotDo: string[];
+  captionPatterns: string[];
+  hashtagStrategy: string;
+  inputs?: { hasPhotos: boolean; memoryStatus: string } | null;
+  error?: string | null;
+  generatedAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export const getSocialTemplateDna = async () => {
+  return apiGet<ApiEnvelope<{ socialTemplateDna: SocialTemplateDna | null }>>(
+    '/api/v1/user/social-template-dna'
+  );
+};
+
+export const regenerateSocialTemplateDna = async (opts?: { force?: boolean }) => {
+  return apiPost<
+    ApiEnvelope<{ socialTemplateDna: SocialTemplateDna | null; queued: boolean }>
+  >('/api/v1/user/social-template-dna/regenerate', opts ?? { force: true });
+};
