@@ -28,6 +28,9 @@ import {
   type SocialPlatform,
 } from '@/lib/platform-selection';
 import { useTimestampFormatter } from '@/lib/user-timezone';
+import { useUserPlanCredits } from '../../_components/UserPlanCreditsProvider';
+import { isPlanInactive } from '@/lib/plan-access';
+import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 
 type SelectedMap = Record<SocialPlatform, boolean>;
 
@@ -68,6 +71,7 @@ export default function NextPlanPlatformsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const fmtTimestamp = useTimestampFormatter();
+  const { billing, loading: billingLoading } = useUserPlanCredits();
 
   const [data, setData] = useState<NextPlanPlatformsPayload | null>(null);
   const [loadingData, setLoadingData] = useState(true);
@@ -159,7 +163,7 @@ export default function NextPlanPlatformsPage() {
   };
 
   const handleSave = async () => {
-    if (!canSave) return;
+    if (!canSave || isPlanInactive(billing)) return;
     try {
       setSaving(true);
       await selectNextPlanPlatformsApi(localSelected);
@@ -177,24 +181,19 @@ export default function NextPlanPlatformsPage() {
     }
   };
 
-  if (loading || loadingData) return <PageLoadingState />;
+  if (loading || loadingData || (billingLoading && !billing)) {
+    return <PageLoadingState />;
+  }
   if (!user) return null;
 
-  if (!data || !data.targetPlan || data.activePlan === 'non-subscribed') {
-    return (
-      <div className="max-w-2xl mx-auto animate-in fade-in duration-500 pb-12">
-        <h1 className="text-3xl font-bold text-foreground tracking-tight">
-          Next plan platforms
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          An active subscription is required to choose platforms for your next
-          billing cycle.
-        </p>
-        <Button asChild className="mt-6 rounded-xl">
-          <Link href="/settings/billings">Go to Billing</Link>
-        </Button>
-      </div>
-    );
+  if (
+    isPlanInactive(billing) ||
+    !data ||
+    !data.targetPlan ||
+    data.activePlan === 'non-subscribed' ||
+    data.planActive === false
+  ) {
+    return <NonSubscribedFeatureBlock />;
   }
 
   return (

@@ -393,6 +393,11 @@ export default function OnboardingMenu() {
   >(null);
   const formDataRef = useRef(formData);
   const hashtagSuggestStartedRef = useRef(false);
+  const suggestPromiseRef = useRef<Promise<{
+    hashtags: string[];
+    slogans: string[];
+  } | null> | null>(null);
+  const suggestRequestIdRef = useRef(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -422,16 +427,21 @@ export default function OnboardingMenu() {
     };
   }, [router]);
 
-  useEffect(() => {
-    const q = questions[step];
-    const needsAiCopy =
-      (q?.name === 'hashtags' || q?.name === 'brandSlogan') &&
-      !hashtagSuggestStartedRef.current;
-    if (!needsAiCopy) return;
+  const ensureBrandCopySuggestions = (opts?: {
+    from?: Record<string, unknown>;
+    force?: boolean;
+  }): Promise<{ hashtags: string[]; slogans: string[] } | null> => {
+    if (suggestPromiseRef.current && !opts?.force) {
+      return suggestPromiseRef.current;
+    }
+    if (hashtagSuggestStartedRef.current && !opts?.force) {
+      return suggestPromiseRef.current ?? Promise.resolve(null);
+    }
+
     hashtagSuggestStartedRef.current = true;
-    let cancelled = false;
-    const fd = formDataRef.current;
-    (async () => {
+    const fd = opts?.from ?? formDataRef.current;
+    const requestId = ++suggestRequestIdRef.current;
+    const run = (async () => {
       setSuggestLoading(true);
       try {
         const res = await suggestOnboardingBrandCopy({
@@ -445,37 +455,48 @@ export default function OnboardingMenu() {
               ? fd.brandDescription
               : undefined,
         });
-        if (
-          !cancelled &&
-          res.success &&
-          res.data &&
-          typeof res.data === 'object'
-        ) {
+        if (res.success && res.data && typeof res.data === 'object') {
           const { hashtags, slogans } = res.data;
           if (Array.isArray(hashtags) && Array.isArray(slogans)) {
+            const normalized = {
+              hashtags: hashtags.map((t) => String(t)),
+              slogans: slogans.map((s) => String(s)),
+            };
             setFieldSuggestions((prev) =>
               mergeAiCopySuggestions(
                 prev,
-                hashtags.map((t) => String(t)),
-                slogans.map((s) => String(s))
+                normalized.hashtags,
+                normalized.slogans
               )
             );
-            if (!suggestionSource) setSuggestionSource('website');
+            setSuggestionSource((prev) => prev ?? 'website');
+            return normalized;
           }
         }
-      } catch (error) {
+        return null;
+      } catch {
         hashtagSuggestStartedRef.current = false;
+        suggestPromiseRef.current = null;
         showErrorToast(
           'Could not load AI suggestions — you can still type your own.'
         );
+        return null;
       } finally {
-        if (!cancelled) setSuggestLoading(false);
+        if (requestId === suggestRequestIdRef.current) {
+          setSuggestLoading(false);
+        }
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [step, suggestionSource]);
+    suggestPromiseRef.current = run;
+    return run;
+  };
+
+  // Fallback if user reaches hashtag/slogan before extract finished starting AI.
+  useEffect(() => {
+    const q = questions[step];
+    if (q?.name !== 'hashtags' && q?.name !== 'brandSlogan') return;
+    void ensureBrandCopySuggestions();
+  }, [step]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -544,6 +565,22 @@ export default function OnboardingMenu() {
           ?.url;
         if (uploadedUrl) dataToSave.logo = uploadedUrl;
       }
+
+      // Ensure hashtag/slogan recommendations exist even if user raced past those steps.
+      const copy = await ensureBrandCopySuggestions();
+      const recommendedHashtags =
+        copy?.hashtags?.length
+          ? copy.hashtags
+          : fieldSuggestions.hashtags;
+      const recommendedSlogans =
+        copy?.slogans?.length ? copy.slogans : fieldSuggestions.slogans;
+      if (recommendedHashtags.length > 0) {
+        dataToSave.recommendedHashtags = recommendedHashtags;
+      }
+      if (recommendedSlogans.length > 0) {
+        dataToSave.recommendedSlogans = recommendedSlogans;
+      }
+
       const response = await onBoardUser(dataToSave);
       if (response.success) {
         useTourState.getState().markOnboardingComplete();
@@ -557,6 +594,8 @@ export default function OnboardingMenu() {
   };
 
   const skipEntirely = () => {
+    // Persist recommendations in background so Brand DNA can show them later.
+    void ensureBrandCopySuggestions();
     useTourState.getState().queuePlatformTour();
     router.push('/home');
   };
@@ -586,10 +625,37 @@ export default function OnboardingMenu() {
           dnaFields as Record<string, unknown>,
           'website'
         );
-        setFieldSuggestions(suggestions);
+        // Merge so a late scrape does not wipe AI hashtag/slogan suggestions.
+        setFieldSuggestions((prev) => ({
+          logos: suggestions.logos.length > 0 ? suggestions.logos : prev.logos,
+          colors: {
+            primary:
+              suggestions.colors.primary.length > 0
+                ? suggestions.colors.primary
+                : prev.colors.primary,
+            secondary:
+              suggestions.colors.secondary.length > 0
+                ? suggestions.colors.secondary
+                : prev.colors.secondary,
+            accent:
+              suggestions.colors.accent.length > 0
+                ? suggestions.colors.accent
+                : prev.colors.accent,
+          },
+          hashtags: uniqueHashtags([
+            ...prev.hashtags,
+            ...suggestions.hashtags,
+          ]),
+          slogans: uniqueStrings([...prev.slogans, ...suggestions.slogans]),
+        }));
         setSuggestionSource(source);
         setSelectedSuggestionKey(null);
         setFormData((prev) => ({ ...prev, ...formFields }));
+        // Start AI copy with scraped context (force refresh if a weak early run started).
+        void ensureBrandCopySuggestions({
+          from: { ...formDataRef.current, ...formFields, website: url },
+          force: true,
+        });
       } catch (error) {
         showErrorToast('Failed to extract business data');
       } finally {
@@ -613,15 +679,37 @@ export default function OnboardingMenu() {
         dnaFields as Record<string, unknown>,
         'catalog'
       );
-      setFieldSuggestions(suggestions);
+      setFieldSuggestions((prev) => ({
+        logos: suggestions.logos.length > 0 ? suggestions.logos : prev.logos,
+        colors: {
+          primary:
+            suggestions.colors.primary.length > 0
+              ? suggestions.colors.primary
+              : prev.colors.primary,
+          secondary:
+            suggestions.colors.secondary.length > 0
+              ? suggestions.colors.secondary
+              : prev.colors.secondary,
+          accent:
+            suggestions.colors.accent.length > 0
+              ? suggestions.colors.accent
+              : prev.colors.accent,
+        },
+        hashtags: uniqueHashtags([...prev.hashtags, ...suggestions.hashtags]),
+        slogans: uniqueStrings([...prev.slogans, ...suggestions.slogans]),
+      }));
       setSuggestionSource(source);
       setSelectedSuggestionKey(null);
       setFormData((prev) => ({ ...prev, ...formFields }));
-      if (
-        suggestions.hashtags.length > 0 ||
-        suggestions.slogans.length > 0
-      ) {
+      const catalogHasCopy =
+        suggestions.hashtags.length > 0 && suggestions.slogans.length > 0;
+      if (catalogHasCopy) {
         hashtagSuggestStartedRef.current = true;
+      } else {
+        void ensureBrandCopySuggestions({
+          from: { ...formDataRef.current, ...formFields },
+          force: true,
+        });
       }
       const apiWarnings = (payload as { warnings?: string[] }).warnings;
       if (apiWarnings?.length) {
@@ -652,6 +740,10 @@ export default function OnboardingMenu() {
           if (url !== String(formData.website ?? '').trim()) {
             setFormData((prev) => ({ ...prev, website: url }));
           }
+          // Start AI copy immediately; scrape will force-refresh with fuller DNA.
+          void ensureBrandCopySuggestions({
+            from: { ...formDataRef.current, website: url },
+          });
           void fetchOnboarding('website');
         }
       }

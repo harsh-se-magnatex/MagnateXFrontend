@@ -16,14 +16,7 @@ export const loginUser = async (
   method: string,
   options?: { name?: string; timeZone?: string }
 ) => {
-  let timeZone = options?.timeZone;
-  if (!timeZone) {
-    try {
-      timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    } catch {
-      timeZone = undefined;
-    }
-  }
+  const timeZone = options?.timeZone?.trim() || 'Asia/Calcutta';
   return apiPost<
     ApiEnvelope<{ showRecoveryPopup?: boolean; deletedDocId?: string }>
   >('/api/v1/user/login', {
@@ -31,7 +24,7 @@ export const loginUser = async (
     intent,
     method,
     ...(options?.name ? { name: options.name } : {}),
-    ...(timeZone ? { timeZone } : {}),
+    timeZone,
   });
 };
 
@@ -352,9 +345,30 @@ export const refreshOptimalPostingTime = async (
 };
 
 export const getUserAIenginePageContext = async () => {
-  return apiGet<ApiEnvelope<{ onBoarded: boolean }>>(
-    '/api/v1/user/get-user-aiengine-detail'
-  );
+  return apiGet<
+    ApiEnvelope<{
+      onBoarded: boolean;
+      aiEngineSetup?: {
+        automationDone?: boolean;
+        businessDone?: boolean;
+      };
+      [key: string]: unknown;
+    }>
+  >('/api/v1/user/get-user-aiengine-detail');
+};
+
+export const updateAiEngineSetup = async (body: {
+  automationDone?: boolean;
+  businessDone?: boolean;
+}) => {
+  return apiPost<
+    ApiEnvelope<{
+      aiEngineSetup: {
+        automationDone: boolean;
+        businessDone: boolean;
+      };
+    }>
+  >('/api/v1/user/ai-engine-setup', body);
 };
 
 export const logOutFromAllDevices = async () => {
@@ -471,6 +485,20 @@ export const getUserCredits = async () => {
   );
 };
 
+/** Backend clears expired plan fields if the Dodo expire webhook was missed. */
+export const reconcilePlanApi = async () => {
+  return apiPost<
+    ApiEnvelope<{
+      cleared: boolean;
+      reason: string | null;
+      activePlan: string;
+      planExpiresAt: unknown;
+      planStartedAt: unknown;
+      mode: 'auto' | 'manual' | null;
+    }>
+  >('/api/v1/user/reconcile-plan', {});
+};
+
 export const getLogoVariants = async (
   count = 3,
   nonce?: number,
@@ -578,6 +606,9 @@ export const selectSocialPlatformApi = async (selected: {
 
 export type NextPlanPlatformsPayload = {
   activePlan: string;
+  /** False when expired or non-subscribed after server reconcile. */
+  planActive?: boolean;
+  planExpiresAt?: number | null;
   targetPlan: string | null;
   maxAllowed: number;
   currentSelected: {
@@ -648,6 +679,15 @@ export const putMemoryLayer = async (body: {
   status: 'in_progress' | 'complete' | 'skipped';
   answers?: MemoryLayerAnswerPayload[];
   selectedProducts?: string[];
+  /** Persist updated question options (e.g. custom product chips). */
+  questions?: Array<{
+    id: string;
+    prompt: string;
+    type: 'text' | 'textarea' | 'multiselect';
+    options?: string[];
+    suggestions?: string[];
+    multiselectRole?: 'products';
+  }>;
 }) => {
   return apiPut<ApiEnvelope<{ memoryLayer: unknown }>>(
     '/api/v1/user/memory-layer',

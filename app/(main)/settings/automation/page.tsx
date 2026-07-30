@@ -272,7 +272,6 @@ export default function AutomationPreferencePage() {
   });
   const [preferencesLoading, setPreferencesLoading] = useState(true);
 
-  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   useEffect(() => {
     const getPreferences = async () => {
       try {
@@ -289,7 +288,7 @@ export default function AutomationPreferencePage() {
             }
           );
           setNeedApproval(response.data.preferences.Need_Approval ?? true);
-          setTimeZone(response.data.preferences.TimeZone || userTimeZone);
+          setTimeZone(response.data.preferences.TimeZone || 'Asia/Calcutta');
           setPreferredTime(
             normalizePreferredPostingTime(
               response.data.preferences.preferredTime

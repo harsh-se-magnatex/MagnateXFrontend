@@ -5,6 +5,7 @@ import { AppGradientBackground } from '@/components/shared/AppGradientBackground
 import { TopNav } from './_components/TopNav';
 import AuthGuard from './_components/AuthGuard';
 import { FrozenAccountGuard } from './_components/FrozenAccountGuard';
+import { ExpiredPlanGuard } from './_components/ExpiredPlanGuard';
 import { AppSidebarWrapper } from './_components/AppSideBarWrapper';
 import { UserPlanCreditsProvider } from './_components/UserPlanCreditsProvider';
 import { NotificationCountsProvider } from './_components/NotificationCountsProvider';
@@ -32,8 +33,10 @@ export default async function MainLayout({
         <TopNav />
         <AuthGuard>
             <FrozenAccountGuard>
-              <main className="flex-1 px-4 py-6">{children}</main>
-              <AssistantWidget />
+              <ExpiredPlanGuard>
+                <main className="flex-1 px-4 py-6">{children}</main>
+                <AssistantWidget />
+              </ExpiredPlanGuard>
             </FrozenAccountGuard>
         </AuthGuard>
         </div>

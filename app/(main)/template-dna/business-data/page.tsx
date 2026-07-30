@@ -57,6 +57,8 @@ type Question = {
   prompt: string;
   type: 'text' | 'textarea' | 'multiselect';
   options?: string[];
+  /** Two AI sample answers for text/textarea (click to fill). */
+  suggestions?: string[];
   multiselectRole?: 'products';
 };
 
@@ -139,6 +141,10 @@ export default function TemplateDnaMemoryLayerPage() {
   const [memory, setMemory] = useState<MemoryPayload | null>(null);
   const [draft, setDraft] = useState<Record<string, DraftRow>>({});
   const [customTags, setCustomTags] = useState<Record<string, string>>({});
+  /** Custom multiselect lines added in-session (not yet on the question.options). */
+  const [extraOptions, setExtraOptions] = useState<Record<string, string[]>>(
+    {}
+  );
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const [photoDescriptionDrafts, setPhotoDescriptionDrafts] = useState<
     Record<string, string>
@@ -247,6 +253,7 @@ export default function TemplateDnaMemoryLayerPage() {
   useEffect(() => {
     if (!memory?.questions?.length) {
       setDraft({});
+      setExtraOptions({});
       return;
     }
     const answers = memory.answers ?? [];
@@ -270,7 +277,9 @@ export default function TemplateDnaMemoryLayerPage() {
       }
     }
     setDraft(next);
-  }, [memory]);
+    // Drop extras that were already merged into regenerated question options.
+    setExtraOptions({});
+  }, [memory?.answers, memory?.questions]);
 
   /** Revoke blob URLs when clearing pending (after upload) */
   const revokePendingUrls = useCallback((items: PendingImage[]) => {
@@ -317,24 +326,69 @@ export default function TemplateDnaMemoryLayerPage() {
     [questions]
   );
 
-  const handleSaveAnswers = async () => {
-    if (!questions.length) return;
-    try {
-      setSavingAnswers(true);
+  const questionsWithExtras = useCallback((): Question[] => {
+    return questions.map((q) => {
+      if (q.type !== 'multiselect') return q;
+      const extras = extraOptions[q.id] ?? [];
+      if (extras.length === 0) return q;
+      const opts = [...(q.options ?? [])];
+      for (const tag of extras) {
+        if (!opts.some((o) => o.toLowerCase() === tag.toLowerCase())) {
+          opts.push(tag);
+        }
+      }
+      return { ...q, options: opts };
+    });
+  }, [questions, extraOptions]);
+
+  const persistAnswers = useCallback(
+    async (opts?: { complete?: boolean }) => {
+      if (!questions.length) return false;
       const answers = buildAnswers();
       const pr = pq ? rowFor(pq) : null;
       const selectedProducts =
         pr && !pr.skipped && 'multi' in pr ? pr.multi : undefined;
+      const status =
+        opts?.complete || memory?.status === 'complete'
+          ? 'complete'
+          : 'in_progress';
 
       const putRes = await putMemoryLayer({
-        status: 'complete',
+        status,
         answers,
+        questions: questionsWithExtras(),
         ...(selectedProducts?.length ? { selectedProducts } : {}),
       });
       if (!isOk(putRes as { success?: boolean })) {
         throw new Error('Save failed');
       }
-      await load();
+      const ml = parseMemory(
+        (putRes as { data?: { memoryLayer?: unknown } }).data?.memoryLayer
+      );
+      if (ml) {
+        setMemory(ml);
+        setExtraOptions({});
+      } else {
+        await load();
+      }
+      return true;
+    },
+    [
+      questions.length,
+      buildAnswers,
+      pq,
+      rowFor,
+      memory?.status,
+      questionsWithExtras,
+      load,
+    ]
+  );
+
+  const handleSaveAnswers = async () => {
+    if (!questions.length) return;
+    try {
+      setSavingAnswers(true);
+      await persistAnswers({ complete: true });
       toast.success('Answers saved');
     } catch (e) {
       showErrorToast('Save failed');
@@ -384,12 +438,29 @@ export default function TemplateDnaMemoryLayerPage() {
           memoryLayer?: unknown;
           uploaded?: number;
           described?: number;
+          describeAttempted?: number;
+          describeError?: string;
         };
       }).data;
       revokePendingUrls(pendingImages);
       setPendingImages([]);
       if (data?.memoryLayer) setMemory(parseMemory(data.memoryLayer));
-      toast.success('Photos uploaded');
+      if (data?.describeError) {
+        toast.message(
+          'Photos uploaded — AI descriptions unavailable. You can add them manually.'
+        );
+      } else if (
+        typeof data?.described === 'number' &&
+        data.described > 0
+      ) {
+        toast.success(
+          data.described === 1
+            ? 'Photo uploaded with AI description'
+            : `Photos uploaded with ${data.described} AI descriptions`
+        );
+      } else {
+        toast.success('Photos uploaded');
+      }
     } catch (e) {
       showErrorToast('Upload failed');
     } finally {
@@ -505,7 +576,9 @@ export default function TemplateDnaMemoryLayerPage() {
     const r = rowFor(q);
     if (r.skipped) return;
     const cur = 'multi' in r ? [...r.multi] : [];
-    const i = cur.indexOf(option);
+    const i = cur.findIndex(
+      (x) => x.toLowerCase() === option.toLowerCase()
+    );
     if (i === -1) cur.push(option);
     else cur.splice(i, 1);
     setRow(q.id, { skipped: false, multi: cur });
@@ -516,10 +589,102 @@ export default function TemplateDnaMemoryLayerPage() {
     if (!tag) return;
     const r = rowFor(q);
     if (r.skipped) return;
+
+    const inOptions = (q.options ?? []).some(
+      (o) => o.toLowerCase() === tag.toLowerCase()
+    );
+    const nextExtras = { ...extraOptions };
+    if (!inOptions) {
+      const cur = nextExtras[q.id] ?? [];
+      if (!cur.some((o) => o.toLowerCase() === tag.toLowerCase())) {
+        nextExtras[q.id] = [...cur, tag];
+      }
+    }
+    setExtraOptions(nextExtras);
+
     const cur = 'multi' in r ? [...r.multi] : [];
-    if (!cur.includes(tag)) cur.push(tag);
+    if (!cur.some((x) => x.toLowerCase() === tag.toLowerCase())) {
+      cur.push(tag);
+    }
     setRow(q.id, { skipped: false, multi: cur });
     setCustomTags((prev) => ({ ...prev, [q.id]: '' }));
+
+    // Persist immediately so refresh keeps the new chip.
+    void (async () => {
+      try {
+        const mergedQuestions = questions.map((item) => {
+          if (item.id !== q.id || item.type !== 'multiselect') return item;
+          const opts = [
+            ...(item.options ?? []),
+            ...(nextExtras[q.id] ?? []),
+          ];
+          const unique: string[] = [];
+          for (const o of opts) {
+            if (!unique.some((u) => u.toLowerCase() === o.toLowerCase())) {
+              unique.push(o);
+            }
+          }
+          return { ...item, options: unique };
+        });
+        const answers = questions.map((item) => {
+          if (item.id === q.id) {
+            return {
+              questionId: item.id,
+              skipped: false as const,
+              value: cur,
+            };
+          }
+          const row = rowFor(item);
+          if (row.skipped) return { questionId: item.id, skipped: true as const };
+          if (item.type === 'multiselect' && 'multi' in row) {
+            return {
+              questionId: item.id,
+              skipped: false as const,
+              value: row.multi,
+            };
+          }
+          const text =
+            row.skipped === false && 'text' in row ? (row.text ?? '') : '';
+          return {
+            questionId: item.id,
+            skipped: false as const,
+            value: text,
+          };
+        });
+        const pr = mergedQuestions.find(
+          (item) =>
+            item.type === 'multiselect' && item.multiselectRole === 'products'
+        );
+        const selectedProducts =
+          pr && pr.id === q.id
+            ? cur
+            : pr
+              ? (() => {
+                  const row = rowFor(pr);
+                  return !row.skipped && 'multi' in row ? row.multi : undefined;
+                })()
+              : undefined;
+        const putRes = await putMemoryLayer({
+          status:
+            memory?.status === 'complete' ? 'complete' : 'in_progress',
+          answers,
+          questions: mergedQuestions,
+          ...(selectedProducts?.length ? { selectedProducts } : {}),
+        });
+        if (!isOk(putRes as { success?: boolean })) {
+          throw new Error('Save failed');
+        }
+        const ml = parseMemory(
+          (putRes as { data?: { memoryLayer?: unknown } }).data?.memoryLayer
+        );
+        if (ml) {
+          setMemory(ml);
+          setExtraOptions({});
+        }
+      } catch {
+        showErrorToast('Could not save custom line');
+      }
+    })();
   };
 
   const brandPhotos = memory?.brandPhotos ?? [];
@@ -680,25 +845,45 @@ export default function TemplateDnaMemoryLayerPage() {
                         ) : q.type === 'multiselect' && q.options?.length ? (
                           <div className="space-y-3">
                             <div className="flex flex-wrap gap-2">
-                              {q.options.map((opt) => {
-                                const sel =
-                                  'multi' in r ? r.multi.includes(opt) : false;
-                                return (
-                                  <button
-                                    key={opt}
-                                    type="button"
-                                    onClick={() => toggleMulti(q, opt)}
-                                    className={cn(
-                                      'px-3 py-1.5 rounded-lg text-sm border transition-colors',
-                                      sel
-                                        ? 'bg-blue-100 border-blue-300 text-blue-900'
-                                        : 'hover:bg-blue-50 hover:border-blue-300 hover:text-blue-900 border-slate-200 text-slate-700'
-                                    )}
-                                  >
-                                    {opt}
-                                  </button>
-                                );
-                              })}
+                              {(() => {
+                                const selected =
+                                  !r.skipped && 'multi' in r ? r.multi : [];
+                                const baseOptions = [
+                                  ...(q.options ?? []),
+                                  ...(extraOptions[q.id] ?? []),
+                                ];
+                                const optionList = [
+                                  ...baseOptions,
+                                  ...selected.filter(
+                                    (s) =>
+                                      !baseOptions.some(
+                                        (o) =>
+                                          o.toLowerCase() === s.toLowerCase()
+                                      )
+                                  ),
+                                ];
+                                return optionList.map((opt) => {
+                                  const sel = selected.some(
+                                    (s) =>
+                                      s.toLowerCase() === opt.toLowerCase()
+                                  );
+                                  return (
+                                    <button
+                                      key={opt}
+                                      type="button"
+                                      onClick={() => toggleMulti(q, opt)}
+                                      className={cn(
+                                        'px-3 py-1.5 rounded-lg text-sm border transition-colors',
+                                        sel
+                                          ? 'bg-blue-100 border-blue-300 text-blue-900'
+                                          : 'hover:bg-blue-50 hover:border-blue-300 hover:text-blue-900 border-slate-200 text-slate-700'
+                                      )}
+                                    >
+                                      {opt}
+                                    </button>
+                                  );
+                                });
+                              })()}
                             </div>
                             <div className="flex gap-2">
                               <input
@@ -722,45 +907,110 @@ export default function TemplateDnaMemoryLayerPage() {
                               <button
                                 type="button"
                                 onClick={() => addCustomTag(q)}
-                                className="px-3 py-2 rounded-lg bg-slate-100 text-sm font-medium text-slate-800"
+                                disabled={!(customTags[q.id] ?? '').trim()}
+                                className="px-3 py-2 rounded-lg bg-slate-100 text-sm font-medium text-slate-800 disabled:opacity-40"
                               >
                                 Add
                               </button>
                             </div>
                           </div>
-                        ) : q.type === 'textarea' ? (
-                          <textarea
-                            rows={4}
-                            value={
-                              r.skipped === false && 'text' in r
-                                ? (r.text ?? '')
-                                : ''
-                            }
-                            onChange={(e) =>
-                              setRow(q.id, {
-                                skipped: false,
-                                text: e.target.value,
-                              })
-                            }
-                            className={cn(inputBase, 'resize-y min-h-[100px]')}
-                          />
-                        ) : (
-                          <input
-                            type="text"
-                            value={
-                              r.skipped === false && 'text' in r
-                                ? (r.text ?? '')
-                                : ''
-                            }
-                            onChange={(e) =>
-                              setRow(q.id, {
-                                skipped: false,
-                                text: e.target.value,
-                              })
-                            }
-                            className={inputBase}
-                          />
-                        )}
+                        ) : q.type === 'textarea' || q.type === 'text' ? (
+                          <div className="space-y-3">
+                            {(() => {
+                              const answerSuggestions = (q.suggestions ?? [])
+                                .map((s) => String(s ?? '').trim())
+                                .filter(Boolean)
+                                .slice(0, 2);
+                              const currentText =
+                                r.skipped === false && 'text' in r
+                                  ? (r.text ?? '')
+                                  : '';
+                              return (
+                                <>
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                                      Suggestions — click to fill
+                                    </p>
+                                    {answerSuggestions.length > 0 ? (
+                                      <div className="flex flex-col gap-2">
+                                        {answerSuggestions.map((s) => {
+                                          const active =
+                                            currentText.trim().toLowerCase() ===
+                                            s.toLowerCase();
+                                          return (
+                                            <button
+                                              key={`${q.id}-suggest-${s}`}
+                                              type="button"
+                                              onClick={() =>
+                                                setRow(q.id, {
+                                                  skipped: false,
+                                                  text: s,
+                                                })
+                                              }
+                                              className={cn(
+                                                'inline-flex w-full items-start rounded-xl border px-3 py-2.5 text-left text-sm leading-snug transition-colors',
+                                                active
+                                                  ? 'border-indigo-300 bg-indigo-50 text-indigo-900'
+                                                  : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/60'
+                                              )}
+                                            >
+                                              <span className="break-words">
+                                                {s}
+                                              </span>
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    ) : (
+                                      <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500">
+                                        No suggestions yet — regenerate
+                                        questions or type your own answer.
+                                      </p>
+                                    )}
+                                  </div>
+                                  {q.type === 'textarea' ? (
+                                    <textarea
+                                      rows={4}
+                                      value={currentText}
+                                      onChange={(e) =>
+                                        setRow(q.id, {
+                                          skipped: false,
+                                          text: e.target.value,
+                                        })
+                                      }
+                                      placeholder={
+                                        answerSuggestions.length > 0
+                                          ? 'Write your answer or click a suggestion above…'
+                                          : 'Write your answer…'
+                                      }
+                                      className={cn(
+                                        inputBase,
+                                        'resize-y min-h-[100px]'
+                                      )}
+                                    />
+                                  ) : (
+                                    <input
+                                      type="text"
+                                      value={currentText}
+                                      onChange={(e) =>
+                                        setRow(q.id, {
+                                          skipped: false,
+                                          text: e.target.value,
+                                        })
+                                      }
+                                      placeholder={
+                                        answerSuggestions.length > 0
+                                          ? 'Type your answer or click a suggestion above…'
+                                          : 'Type your answer…'
+                                      }
+                                      className={inputBase}
+                                    />
+                                  )}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        ) : null}
                       </div>
                     );
                   })}
@@ -1114,11 +1364,11 @@ export default function TemplateDnaMemoryLayerPage() {
               <label
                 htmlFor={fileInputId}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-3 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-100',
+                  'inline-flex items-center gap-2 rounded-xl border-2  bg-white px-4 py-3 text-sm font-semibold text-indigo-800 cursor-pointer shadow-sm hover:bg-indigo-50 hover:border-indigo-400',
                   isExtracting && 'opacity-60 pointer-events-none'
                 )}
               >
-                <ImagePlus className="w-4 h-4" />
+                <ImagePlus className="w-4 h-4 text-indigo-600" />
                 Choose images
                 <input
                   id={fileInputId}

@@ -153,7 +153,15 @@ export type AdminContentPlanGeneratedItem = {
   scheduledPostId?: string;
   draftId?: string;
   imageUrl?: string | null;
-  mediaType?: 'image' | 'video' | null;
+  videoUrl?: string | null;
+  videoPosterUrl?: string | null;
+  mediaType?: 'image' | 'video' | 'carousel' | null;
+  slideCount?: number | null;
+  carouselSlides?: Array<{
+    index: number;
+    imageUrl: string | null;
+    headline?: string | null;
+  }>;
   postStatus?: string | null;
   UserApprovalStatus?: string | null;
   contentType?: string | null;

@@ -69,8 +69,6 @@ export function LinkCredentialsSection({ user }: Props) {
   const [phoneBusy, setPhoneBusy] = useState(false);
 
   const [linkEmail, setLinkEmail] = useState('');
-  const [linkPassword, setLinkPassword] = useState('');
-  const [linkPassword2, setLinkPassword2] = useState('');
   const [emailBusy, setEmailBusy] = useState(false);
   const [emailLinkSent, setEmailLinkSent] = useState(false);
 
@@ -203,23 +201,13 @@ export function LinkCredentialsSection({ user }: Props) {
       showErrorToast('Enter a valid email address.');
       return;
     }
-    if (linkPassword.length < 6) {
-      showErrorToast('Password must be at least 6 characters.');
-      return;
-    }
-    if (linkPassword !== linkPassword2) {
-      showErrorToast('Passwords do not match.');
-      return;
-    }
     setEmailBusy(true);
     try {
-      await requestEmailLinkToAddEmail(email, linkPassword);
+      await requestEmailLinkToAddEmail(email);
       setEmailLinkSent(true);
       setLinkEmail('');
-      setLinkPassword('');
-      setLinkPassword2('');
       toast.info(
-        'We sent a sign-in link to that address. Open it in this browser while you are signed in here — your email is linked only after you confirm the link.'
+        'We sent a verification link to that address. Open it while signed in — you’ll set a password after the email is verified.'
       );
     } catch (err: unknown) {
       showErrorToast(formatAuthLinkError(firebaseErrorCode(err)));
@@ -456,39 +444,13 @@ export function LinkCredentialsSection({ user }: Props) {
               {!hasEmail && hasPhone && (
                 <form onSubmit={handleRequestEmailLink} className="mt-4 space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    We’ll email you a sign-in link. Your email and password are
-                    added <span className="font-medium">only after you open
-                    that link</span> (same browser, while signed in).
+                    We’ll email you a verification link. Your email is linked
+                    only after you open that link while signed in. You’ll choose
+                    a password on the next step.
                   </p>
-                  <div className="space-y-2">
-                    <label className={workspaceSectionLabelClass}>
-                      Password to use after verification
-                    </label>
-                    <input
-                      type="password"
-                      value={linkPassword}
-                      onChange={(e) => setLinkPassword(e.target.value)}
-                      className={inputBase}
-                      autoComplete="new-password"
-                      placeholder="At least 6 characters"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={workspaceSectionLabelClass}>
-                      Confirm password
-                    </label>
-                    <input
-                      type="password"
-                      value={linkPassword2}
-                      onChange={(e) => setLinkPassword2(e.target.value)}
-                      className={inputBase}
-                      autoComplete="new-password"
-                      placeholder="Confirm password"
-                    />
-                  </div>
                   <Button
                     type="submit"
-                    disabled={emailBusy}
+                    disabled={emailBusy || !linkEmail.trim()}
                     className="w-full bg-primary hover:opacity-95 sm:w-auto"
                   >
                     {emailBusy ? 'Sending…' : 'Send verification link'}

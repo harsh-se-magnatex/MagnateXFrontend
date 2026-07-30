@@ -40,6 +40,7 @@ import { showErrorToast } from '@/lib/show-error-toast';
 import {
   getUserAIenginePageContext,
   selectSocialPlatformApi,
+  updateAiEngineSetup,
 } from '@/features/user/api';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -100,6 +101,10 @@ type UserData = {
   selected: SelectedPlatforms;
   selectedPlatformsLocked?: boolean;
   campaignSeedPendingPlatformConfirm?: boolean;
+  aiEngineSetup?: {
+    automationDone?: boolean;
+    businessDone?: boolean;
+  };
 };
 
 type StepId =
@@ -138,27 +143,6 @@ function buildStepMeta(selected: SelectedPlatforms): StepMeta[] {
 
   steps.push({ id: 'ready', label: 'Ready', icon: CheckCircle });
   return steps;
-}
-
-function automationDoneStorageKey(uid: string): string {
-  return `ai-engine-automation-done:${uid}`;
-}
-
-function readAutomationDone(uid: string | undefined | null): boolean {
-  if (!uid || typeof window === 'undefined') return false;
-  try {
-    return localStorage.getItem(automationDoneStorageKey(uid)) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function writeAutomationDone(uid: string): void {
-  try {
-    localStorage.setItem(automationDoneStorageKey(uid), '1');
-  } catch {
-    /* ignore quota / private mode */
-  }
 }
 
 function isStepComplete(
@@ -212,7 +196,7 @@ function stepStatusLabel(
   }
   if (done) {
     if (stepId === 'business' && skipped.has('business') && !data.onBoarded) {
-      return 'Optional — skipped';
+      return 'Done';
     }
     if (stepId === 'automation' && skipped.has('automation')) {
       return 'Done';
@@ -465,13 +449,53 @@ export default function AIEnginePage() {
 
   useEffect(() => {
     if (!user?.uid) return;
-    if (readAutomationDone(user.uid)) {
-      setSkipped((prev) => {
-        if (prev.has('automation')) return prev;
-        return new Set(prev).add('automation');
-      });
+    // Legacy localStorage → DB one-time migrate (keys no longer written).
+    try {
+      const autoKey = `ai-engine-automation-done:${user.uid}`;
+      const bizKey = `ai-engine-business-done:${user.uid}`;
+      const autoLocal = localStorage.getItem(autoKey) === '1';
+      const bizLocal = localStorage.getItem(bizKey) === '1';
+      if (!autoLocal && !bizLocal) return;
+
+      const setup = data.aiEngineSetup;
+      const needAuto = autoLocal && setup?.automationDone !== true;
+      const needBiz = bizLocal && setup?.businessDone !== true;
+      if (!needAuto && !needBiz) {
+        localStorage.removeItem(autoKey);
+        localStorage.removeItem(bizKey);
+        return;
+      }
+
+      void updateAiEngineSetup({
+        ...(needAuto ? { automationDone: true } : {}),
+        ...(needBiz ? { businessDone: true } : {}),
+      })
+        .then(() => {
+          localStorage.removeItem(autoKey);
+          localStorage.removeItem(bizKey);
+          setSkipped((prev) => {
+            const next = new Set(prev);
+            if (needAuto) next.add('automation');
+            if (needBiz) next.add('business');
+            return next;
+          });
+          setData((prev) => ({
+            ...prev,
+            aiEngineSetup: {
+              automationDone:
+                needAuto || prev.aiEngineSetup?.automationDone === true,
+              businessDone:
+                needBiz || prev.aiEngineSetup?.businessDone === true,
+            },
+          }));
+        })
+        .catch(() => {
+          /* keep local flags until next successful migrate */
+        });
+    } catch {
+      /* ignore */
     }
-  }, [user?.uid]);
+  }, [user?.uid, data.aiEngineSetup]);
 
   const getDetails = useCallback(async (opts?: { silent?: boolean }) => {
     try {
@@ -482,6 +506,10 @@ export default function AIEnginePage() {
         facebook: false,
         instagram: false,
         linkedin: false,
+      };
+      const aiEngineSetup = {
+        automationDone: raw.aiEngineSetup?.automationDone === true,
+        businessDone: raw.aiEngineSetup?.businessDone === true,
       };
       setData({
         socialAccounts: raw.socialAccounts,
@@ -501,8 +529,20 @@ export default function AIEnginePage() {
         selectedPlatformsLocked: raw.selectedPlatformsLocked === true,
         campaignSeedPendingPlatformConfirm:
           raw.campaignSeedPendingPlatformConfirm === true,
+        aiEngineSetup,
       });
       setLocalSelected(selected);
+      setSkipped((prev) => {
+        let next: Set<StepId> | null = null;
+        const ensure = (id: StepId) => {
+          if (prev.has(id) || (next && next.has(id))) return;
+          if (!next) next = new Set(prev);
+          next.add(id);
+        };
+        if (aiEngineSetup.automationDone) ensure('automation');
+        if (aiEngineSetup.businessDone) ensure('business');
+        return next ?? prev;
+      });
     } catch {
       showErrorToast('Failed to fetch AI Engine Details');
     } finally {
@@ -604,13 +644,34 @@ export default function AIEnginePage() {
     return () => window.removeEventListener('focus', onFocus);
   }, [user, getDetails]);
 
-  const skipStep = (stepId: StepId) => {
-    setSkipped((prev) => new Set(prev).add(stepId));
+  const markAutomationDone = () => {
+    setSkipped((prev) => new Set(prev).add('automation'));
+    setData((prev) => ({
+      ...prev,
+      aiEngineSetup: {
+        ...prev.aiEngineSetup,
+        automationDone: true,
+        businessDone: prev.aiEngineSetup?.businessDone === true,
+      },
+    }));
+    void updateAiEngineSetup({ automationDone: true }).catch(() => {
+      showErrorToast('Could not save automation step');
+    });
   };
 
-  const markAutomationDone = () => {
-    if (user?.uid) writeAutomationDone(user.uid);
-    setSkipped((prev) => new Set(prev).add('automation'));
+  const markBusinessDone = () => {
+    setSkipped((prev) => new Set(prev).add('business'));
+    setData((prev) => ({
+      ...prev,
+      aiEngineSetup: {
+        ...prev.aiEngineSetup,
+        businessDone: true,
+        automationDone: prev.aiEngineSetup?.automationDone === true,
+      },
+    }));
+    void updateAiEngineSetup({ businessDone: true }).catch(() => {
+      showErrorToast('Could not save business step');
+    });
   };
 
   const maxAllowed = PLAN_MAX_SOCIAL[data.plan] ?? 0;
@@ -923,10 +984,10 @@ export default function AIEnginePage() {
                         {data.onBoarded
                           ? 'Your brand profile is on file.'
                           : skipped.has('business')
-                            ? 'Skipped for now. You can add Brand DNA anytime.'
+                            ? 'Marked done. Add Brand DNA anytime from Template DNA.'
                             : 'Add brand details so AI matches your voice.'}
                       </p>
-                      <div className="flex flex-col gap-2 sm:flex-row">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <Button onClick={() => router.push('/template-dna')}>
                           {data.onBoarded
                             ? 'Review brand profile'
@@ -935,10 +996,10 @@ export default function AIEnginePage() {
                         {!data.onBoarded && !skipped.has('business') && (
                           <Button
                             type="button"
-                            variant="ghost"
-                            onClick={() => skipStep('business')}
+                            variant="secondary"
+                            onClick={markBusinessDone}
                           >
-                            Later
+                            Done
                           </Button>
                         )}
                       </div>

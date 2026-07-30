@@ -26,6 +26,8 @@ type Question = {
   prompt: string;
   type: 'text' | 'textarea' | 'multiselect';
   options?: string[];
+  /** Two AI sample answers for text/textarea (click to fill). */
+  suggestions?: string[];
   multiselectRole?: 'products';
 };
 
@@ -143,8 +145,33 @@ export default function BrandMemoryPage() {
           Array.isArray(gPayload?.brandPhotos) ? gPayload.brandPhotos : []
         );
       } else {
-        setQuestions(ml.questions);
-        setBrandPhotosMeta(ml.brandPhotos ?? []);
+        const missingSuggestions = ml.questions.some(
+          (q) =>
+            q.type !== 'multiselect' &&
+            (!Array.isArray(q.suggestions) ||
+              q.suggestions.map((s) => String(s ?? '').trim()).filter(Boolean)
+                .length < 2)
+        );
+        // Always backfill suggestions for in-progress questionnaires so chips
+        // are visible (older caches / stale generator builds).
+        if (missingSuggestions && ml.status !== 'complete') {
+          const gen = await generateMemoryLayerQuestions({ force: true });
+          if (!isEnvelopeOk(gen as { success?: boolean })) {
+            throw new Error('Failed to generate questions');
+          }
+          const gPayload = parseMemory(
+            (gen as { data?: { memoryLayer?: unknown } }).data?.memoryLayer
+          );
+          setQuestions(gPayload?.questions ?? ml.questions);
+          setBrandPhotosMeta(
+            Array.isArray(gPayload?.brandPhotos)
+              ? gPayload.brandPhotos
+              : (ml.brandPhotos ?? [])
+          );
+        } else {
+          setQuestions(ml.questions);
+          setBrandPhotosMeta(ml.brandPhotos ?? []);
+        }
       }
     } catch (e) {
       showErrorToast('Something went wrong');
@@ -223,33 +250,20 @@ export default function BrandMemoryPage() {
     []
   );
 
-  // Keep the input in sync with selected product-line chips.
-  useEffect(() => {
-    if (!current || current.type !== 'multiselect') return;
-    const r = draft[current.id];
-    if (!r || r.skipped || !('multi' in r)) {
-      setCustomTag('');
-      return;
-    }
-    setCustomTag(r.multi.join(', '));
-  }, [current, draft]);
+  /** Suggestion chip → put that label in the input (does not toggle selection). */
+  const fillInputFromSuggestion = useCallback((option: string) => {
+    setCustomTag(option);
+  }, []);
 
   const addCustomProduct = useCallback((q: Question) => {
     const t = customTagRef.current.trim();
-    if (!t) return;
+    if (!t) return false;
 
-    // Ignore the mirrored "a, b" selection string — that is not a new custom line.
-    const existing = draft[q.id];
-    const selected =
-      existing && !existing.skipped && 'multi' in existing ? existing.multi : [];
-    if (t === selected.join(', ')) return;
-
-    // If the user typed several comma-separated values, add each new one.
     const parts = t
       .split(',')
       .map((p) => p.trim())
       .filter(Boolean);
-    if (parts.length === 0) return;
+    if (parts.length === 0) return false;
 
     setQuestions((prev) =>
       prev.map((item) => {
@@ -275,7 +289,9 @@ export default function BrandMemoryPage() {
       }
       return { ...prev, [q.id]: { skipped: false, multi: cur } };
     });
-  }, [draft]);
+    setCustomTag('');
+    return true;
+  }, []);
 
   const buildAnswers = useCallback((): MemoryLayerAnswerPayload[] => {
     return questions.map((q) => {
@@ -479,6 +495,7 @@ export default function BrandMemoryPage() {
       const res = await putMemoryLayer({
         status: 'complete',
         answers,
+        questions,
         ...(selectedProducts?.length ? { selectedProducts } : {}),
       });
       if (!isEnvelopeOk(res as { success?: boolean })) {
@@ -506,6 +523,7 @@ export default function BrandMemoryPage() {
       const res = await putMemoryLayer({
         status: 'complete',
         answers,
+        questions,
         ...(selectedProducts?.length ? { selectedProducts } : {}),
       });
       if (!isEnvelopeOk(res as { success?: boolean })) {
@@ -531,95 +549,201 @@ export default function BrandMemoryPage() {
     const r = rowFor(current);
     if (current.type === 'multiselect') {
       const selected = !r.skipped && 'multi' in r ? r.multi : [];
-      const optionSet = new Set(current.options ?? []);
-      const displayOptions = [
+      const selectedLower = new Set(selected.map((s) => s.toLowerCase()));
+      const suggestions = [
         ...(current.options ?? []),
-        ...selected.filter((s) => !optionSet.has(s)),
+        ...selected.filter(
+          (s) =>
+            !(current.options ?? []).some(
+              (o) => o.toLowerCase() === s.toLowerCase()
+            )
+        ),
       ];
+      const typed = customTag.trim();
+      const canAddCustom = typed.length > 0;
       return (
-        <div className="space-y-4">
-          {displayOptions.length > 0 ? (
-            <div className="flex flex-wrap content-start items-center gap-2">
-              {displayOptions.map((opt) => {
-                const isOn = selected.includes(opt);
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => toggleMulti(current, opt)}
-                    className={cn(
-                      'inline-flex max-w-full items-center rounded-full border px-3 py-1.5 text-left text-sm leading-snug transition-colors',
-                      isOn
-                        ? 'border-[#00D1FF]/70 bg-[#6C5CE7]/90 text-white shadow-[0_0_0_1px_rgba(0,209,255,0.25)]'
-                        : 'border-white/15 bg-white/5 text-white/85 hover:border-white/30 hover:bg-white/10'
-                    )}
-                  >
-                    <span className="truncate">{opt}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-          <div className="flex items-center gap-2">
+        <div className="flex min-h-0 flex-col gap-4">
+          <div className="flex shrink-0 items-stretch gap-2">
             <input
               type="text"
               value={customTag}
               onChange={(e) => setCustomTag(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const t = customTag.trim();
-                  const selectedJoin = selected.join(', ');
-                  if (!t || t === selectedJoin) goNext();
-                  else addCustomProduct(current);
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                if (canAddCustom) {
+                  addCustomProduct(current);
+                  return;
                 }
+                goNext();
               }}
-              placeholder="Select chips or type a custom product line"
-              className="h-10 min-w-0 flex-1 rounded-lg border border-white/15 bg-white/10 px-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/45"
+              placeholder="Click a suggestion or type, then Enter"
+              className="h-11 min-w-0 flex-1 rounded-xl border border-white/15 bg-white/10 px-3.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/45"
             />
             <button
               type="button"
               onClick={() => {
-                const t = customTag.trim();
-                const selectedJoin = selected.join(', ');
-                if (!t || t === selectedJoin) goNext();
-                else addCustomProduct(current);
+                if (canAddCustom) addCustomProduct(current);
+                else goNext();
               }}
-              className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-linear-to-r from-[#6C5CE7] to-[#00D1FF] px-4 text-sm font-semibold text-white transition hover:opacity-90"
+              className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-r from-[#6C5CE7] to-[#00D1FF] px-5 text-sm font-semibold text-white transition hover:opacity-90"
             >
-              {(() => {
-                const t = customTag.trim();
-                const selectedJoin = selected.join(', ');
-                return t && t !== selectedJoin ? 'Add' : 'Next';
-              })()}
+              {canAddCustom ? 'Add' : 'Next'}
             </button>
           </div>
+
+          {selected.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-white/45">
+                Selected ({selected.length})
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {selected.map((opt) => (
+                  <button
+                    key={`selected-${opt}`}
+                    type="button"
+                    onClick={() => toggleMulti(current, opt)}
+                    title="Remove"
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-[#00D1FF]/50 bg-[#6C5CE7]/85 px-3 py-1.5 text-left text-sm text-white transition hover:bg-[#6C5CE7]"
+                  >
+                    <span className="break-words">{opt}</span>
+                    <span className="text-white/70" aria-hidden>
+                      ×
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {suggestions.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-white/45">
+                Suggestions — click to fill the box
+              </p>
+              <div className="max-h-[min(36vh,12rem)] overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-black/20 p-3">
+                <div className="flex flex-wrap content-start gap-2">
+                  {suggestions.map((opt) => {
+                    const alreadyIn = selectedLower.has(opt.toLowerCase());
+                    return (
+                      <button
+                        key={`suggest-${opt}`}
+                        type="button"
+                        onClick={() => fillInputFromSuggestion(opt)}
+                        className={cn(
+                          'inline-flex max-w-full items-center rounded-full border px-3 py-1.5 text-left text-sm leading-snug transition-colors',
+                          alreadyIn
+                            ? 'border-white/10 bg-white/5 text-white/40'
+                            : 'border-white/20 bg-white/5 text-white/90 hover:border-[#00D1FF]/50 hover:bg-white/10'
+                        )}
+                      >
+                        <span className="break-words">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-white/50">
+              No suggestions yet — type your own product lines above.
+            </p>
+          )}
+
+          <p className="text-xs leading-relaxed text-white/45">
+            Click a suggestion to put it in the box, then Add / Enter. Empty box
+            + Enter continues.
+          </p>
         </div>
       );
     }
     const textVal =
       r.skipped === false && 'text' in r ? r.text ?? '' : '';
+    const answerSuggestions = (current.suggestions ?? [])
+      .map((s) => String(s ?? '').trim())
+      .filter(Boolean)
+      .slice(0, 2);
+    const suggestionBlock = (
+      <div className="space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-white/45">
+          Suggestions — click to fill
+        </p>
+        {answerSuggestions.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            {answerSuggestions.map((s) => (
+              <button
+                key={`ans-suggest-${s}`}
+                type="button"
+                onClick={() =>
+                  setRow(current.id, { skipped: false, text: s })
+                }
+                className={cn(
+                  'inline-flex w-full items-start rounded-xl border border-white/20 bg-white/5 px-3 py-2.5 text-left text-sm leading-snug text-white/90 transition-colors hover:border-[#00D1FF]/50 hover:bg-white/10',
+                  textVal.trim().toLowerCase() === s.toLowerCase() &&
+                    'border-[#00D1FF]/50 bg-[#6C5CE7]/30'
+                )}
+              >
+                <span className="break-words">{s}</span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-xl border border-dashed border-white/15 bg-white/5 px-3 py-2.5 text-sm text-white/50">
+            Suggestions are loading — you can still type your own answer below.
+          </p>
+        )}
+      </div>
+    );
+
     if (current.type === 'textarea') {
       return (
-        <textarea
-          rows={4}
+        <div className="flex min-h-0 flex-col gap-4">
+          {suggestionBlock}
+          <textarea
+            rows={4}
+            value={textVal}
+            onChange={(e) =>
+              setRow(current.id, { skipped: false, text: e.target.value })
+            }
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                e.preventDefault();
+                goNext();
+              }
+            }}
+            placeholder={
+              answerSuggestions.length > 0
+                ? 'Write your answer or tap a suggestion above…'
+                : 'Write your answer…'
+            }
+            className="min-h-[7.5rem] w-full shrink-0 resize-y rounded-xl border border-white/15 bg-white/10 p-3.5 text-sm leading-relaxed text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/50"
+          />
+        </div>
+      );
+    }
+    return (
+      <div className="flex min-h-0 flex-col gap-4">
+        {suggestionBlock}
+        <input
+          type="text"
           value={textVal}
           onChange={(e) =>
             setRow(current.id, { skipped: false, text: e.target.value })
           }
-          className="w-full rounded-lg border border-white/15 bg-white/10 p-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/50"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              goNext();
+            }
+          }}
+          placeholder={
+            answerSuggestions.length > 0
+              ? 'Type your answer or tap a suggestion above, then Enter'
+              : 'Type your answer, then Enter'
+          }
+          className="h-11 w-full shrink-0 rounded-xl border border-white/15 bg-white/10 px-3.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/50"
         />
-      );
-    }
-    return (
-      <input
-        type="text"
-        value={textVal}
-        onChange={(e) =>
-          setRow(current.id, { skipped: false, text: e.target.value })
-        }
-        className="w-full rounded-lg border border-white/15 bg-white/10 p-3 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/50"
-      />
+      </div>
     );
   };
 
@@ -663,11 +787,15 @@ export default function BrandMemoryPage() {
 
         {phase === 'qa' && current && (
           <>
-            <div className={cn(photosScrollClass, 'mt-4 space-y-4')}>
-              <p className="text-sm text-gray-100">
-                Question {qIndex + 1} of {questions.length}
-              </p>
-              <p className="text-gray-200 font-medium">{current.prompt}</p>
+            <div className={cn(photosScrollClass, 'mt-5 flex flex-col gap-5')}>
+              <div className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-white/45">
+                  Question {qIndex + 1} of {questions.length}
+                </p>
+                <p className="text-base font-medium leading-snug text-white/95">
+                  {current.prompt}
+                </p>
+              </div>
               {renderQuestionBody()}
             </div>
             <div className={actionBarClass}>
@@ -676,9 +804,9 @@ export default function BrandMemoryPage() {
                 onClick={goBack}
                 disabled={qIndex === 0}
                 className={cn(
-                  'px-4 py-2 rounded-lg text-sm',
+                  'rounded-lg px-4 py-2 text-sm',
                   qIndex === 0
-                    ? 'opacity-40 cursor-not-allowed'
+                    ? 'cursor-not-allowed opacity-40'
                     : 'bg-white/10 hover:bg-white/15'
                 )}
               >
@@ -687,14 +815,14 @@ export default function BrandMemoryPage() {
               <button
                 type="button"
                 onClick={skipQuestion}
-                className="px-4 py-2 rounded-lg text-sm text-gray-500 hover:text-gray-700"
+                className="rounded-lg px-4 py-2 text-sm text-white/55 hover:bg-white/10 hover:text-white/85"
               >
                 Skip question
               </button>
               <button
                 type="button"
                 onClick={goNext}
-                className="px-6 py-2 rounded-lg text-sm bg-linear-to-r from-[#00D1FF] to-[#6C5CE7] text-white"
+                className="rounded-lg bg-linear-to-r from-[#00D1FF] to-[#6C5CE7] px-6 py-2 text-sm text-white"
               >
                 {qIndex < questions.length - 1 ? 'Next' : 'Continue to photos'}
               </button>

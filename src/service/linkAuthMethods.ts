@@ -52,9 +52,6 @@ async function syncBackendAfterLink(user: User, method: 'phone' | 'password') {
 /** Persisted so the completion page can read the same address the link was sent to. */
 export const LINK_EMAIL_STORAGE_KEY = 'magnatex:emailForLink';
 
-/** Same browser session: password is applied only after a successful link (verify-first). */
-export const LINK_EMAIL_PASSWORD_SESSION_KEY = 'magnatex:pendingLinkPassword';
-
 function linkEmailCompleteUrl(): string {
   if (typeof window !== 'undefined' && window.location?.origin) {
     return `${window.location.origin}/settings/account/complete-email-link`;
@@ -72,6 +69,10 @@ function linkEmailCompleteUrl(): string {
  * Step 1: send a sign-in link to the address. The email is not linked to the account until
  * the user opens the link while signed in; then {@link completeAccountEmailLink} runs.
  * Requires "Email link" enabled for Email/Password in Firebase Auth.
+ *
+ * Password is intentionally not collected here — email links open in a new tab, and
+ * `sessionStorage` is per-tab, so any password saved on the account page would be
+ * missing on the completion page. Collect the password once after verification instead.
  */
 function continueUrlForEmailLink(pendingEmail: string): string {
   const u = new URL(linkEmailCompleteUrl());
@@ -92,10 +93,7 @@ function readPendingLinkEmailFromClient(): string | null {
   }
 }
 
-export async function requestEmailLinkToAddEmail(
-  email: string,
-  password: string
-): Promise<void> {
+export async function requestEmailLinkToAddEmail(email: string): Promise<void> {
   const trimmed = email.trim();
   const actionCodeSettings = {
     url: continueUrlForEmailLink(trimmed),
@@ -104,7 +102,6 @@ export async function requestEmailLinkToAddEmail(
   await sendSignInLinkToEmail(auth, trimmed, actionCodeSettings);
   if (typeof window !== 'undefined') {
     window.localStorage.setItem(LINK_EMAIL_STORAGE_KEY, trimmed);
-    window.sessionStorage.setItem(LINK_EMAIL_PASSWORD_SESSION_KEY, password);
   }
 }
 
@@ -120,9 +117,9 @@ async function syncPasswordProviderAfterLink(user: User): Promise<void> {
 }
 
 /**
- * Step 2: after the user opens the email link, link by proving inbox access first.
- * Optional password from {@link requestEmailLinkToAddEmail} (same session); otherwise
- * {@link setPasswordAndFinishAccountEmailLink} must be used.
+ * Step 2: after the user opens the email link, prove inbox access and link the email.
+ * Always returns `needsPassword` so the password is set once on the completion page
+ * (works across tabs / devices; email-link auth itself is passwordless).
  */
 export async function completeAccountEmailLink(
   currentUser: User,
@@ -150,25 +147,12 @@ export async function completeAccountEmailLink(
   }
   await u.reload();
 
-  const pwd =
-    typeof window !== 'undefined'
-      ? window.sessionStorage.getItem(LINK_EMAIL_PASSWORD_SESSION_KEY)
-      : null;
-  if (pwd && pwd.length >= 6) {
-    await updatePassword(u, pwd);
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem(LINK_EMAIL_PASSWORD_SESSION_KEY);
-    }
-    await u.reload();
-    await syncPasswordProviderAfterLink(auth.currentUser!);
-    return { status: 'done' };
-  }
+  // Email-link credential proves inbox ownership but does not set a password.
   return { status: 'needsPassword' };
 }
 
 /**
- * If the user opened the link on another device or session storage was cleared, collect the
- * password here and register the password provider with the backend.
+ * Step 3: set the email/password credential after the link is verified, then sync backend.
  */
 export async function setPasswordAndFinishAccountEmailLink(
   user: User,

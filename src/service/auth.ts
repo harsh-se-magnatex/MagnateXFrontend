@@ -350,7 +350,7 @@ export function appContinueUrl(path = '/'): string {
 export const forgotPassword = async (email: string, url?: string) => {
   try {
     const continueUrl =
-      url && /^https?:\/\//i.test(url) ? url : appContinueUrl('/reset-password');
+      url && /^https?:\/\//i.test(url) ? url : appContinueUrl('/sign-in');
     await sendPasswordResetEmail(auth, email, {
       url: continueUrl,
       handleCodeInApp: true,

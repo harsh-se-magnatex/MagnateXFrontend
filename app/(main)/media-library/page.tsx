@@ -47,6 +47,7 @@ import {
   useImagePreview,
 } from '@/components/image-preview';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import { isPlanInactive } from '@/lib/plan-access';
 import {
   galleryItemCanSchedule,
   galleryItemToPrefillPost,
@@ -646,6 +647,7 @@ function CampaignDraftScheduleModal({
 export default function MediaLibraryPage() {
   const router = useRouter();
   const { billing } = useUserPlanCredits();
+  const planActionsAllowed = !isPlanInactive(billing);
   const fmtTimestamp = useTimestampFormatter();
   // 24-hour, in the user's preferred timezone (DST handled automatically).
   // Format mirrors the previous "MMM d, yyyy · h:mm a" but in HH:mm.
@@ -741,6 +743,10 @@ export default function MediaLibraryPage() {
 
   const handleScheduleFromGallery = useCallback(
     (item: GeneratedMediaLibraryItem) => {
+      if (!planActionsAllowed) {
+        showErrorToast('Your plan has expired. Renew to schedule posts.');
+        return;
+      }
       // Campaign drafts have their own scheduling endpoint and the date is
       // fixed by the campaign generator. Open the inline modal instead of
       // routing to the generic post scheduler.
@@ -760,7 +766,7 @@ export default function MediaLibraryPage() {
       setSelectedItem(null);
       router.push(`${WORKSPACE_NAV_HREFS.schedulePost}?prefill=gallery`);
     },
-    [router]
+    [router, planActionsAllowed]
   );
 
   const handleDraftScheduled = useCallback(() => {
@@ -919,8 +925,9 @@ export default function MediaLibraryPage() {
             const captionLabel = mediaCaptionLabel(item.caption);
             const contentTypeLabel = contentTypeDisplayLabel(item);
             const canSchedule =
-              galleryItemCanSchedule(item) ||
-              isSchedulableCampaignDraft(item);
+              planActionsAllowed &&
+              (galleryItemCanSchedule(item) ||
+                isSchedulableCampaignDraft(item));
             const whenLabel = formatWhen(item.scheduleAt ?? item.createdAt);
             const slideCount =
               item.mediaType === 'carousel' ||
@@ -1059,14 +1066,15 @@ export default function MediaLibraryPage() {
           onClose={() => setSelectedItem(null)}
           formatWhen={formatWhen}
           canSchedule={
-            galleryItemCanSchedule(selectedItem) ||
-            isSchedulableCampaignDraft(selectedItem)
+            planActionsAllowed &&
+            (galleryItemCanSchedule(selectedItem) ||
+              isSchedulableCampaignDraft(selectedItem))
           }
           onSchedule={() => handleScheduleFromGallery(selectedItem)}
           onPreviewImage={imagePreview.open}
         />
       ) : null}
-      {schedulingDraft ? (
+      {schedulingDraft && planActionsAllowed ? (
         <CampaignDraftScheduleModal
           draftId={schedulingDraft.campaignDraftId}
           targetDate={schedulingDraft.targetCalendarDate}

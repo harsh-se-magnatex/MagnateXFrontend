@@ -8,6 +8,7 @@ import {
   useState,
   type MouseEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { Calendar, ExternalLink, Info, Loader2, Search, Sparkles } from 'lucide-react';
 import { performActionByUserOnScheduledPost } from '@/src/service/api/userService';
@@ -17,6 +18,7 @@ import {
   parseGenerationResearchFromProof,
 } from '@/lib/generation-research';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import { isPlanInactive } from '@/lib/plan-access';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
 import {
@@ -184,6 +186,7 @@ function PendingPostCard({
   actionDisabled,
   onPreviewImage,
   isRegenerating,
+  actionsAllowed = true,
 }: {
   post: PendingScheduledPost;
   scheduleAt: string;
@@ -198,13 +201,15 @@ function PendingPostCard({
    *  grid so the user knows the click landed, but actions + click-to-open are
    *  disabled and a spinner overlay covers the (now stale) image. */
   isRegenerating: boolean;
+  /** False when plan is expired / non-subscribed — hide mutative actions. */
+  actionsAllowed?: boolean;
 }) {
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showRegenerate =
     post.generatedByAiEngine === true && canScheduledPostRegenerate(post);
-  const showActions = status.variant !== 'failed';
+  const showActions = status.variant !== 'failed' && actionsAllowed;
   const mediaPreview = resolveSchedulableMediaPreview(post);
   const hasMedia = hasSchedulableMediaPreview(mediaPreview);
   const previewUrl = mediaPreview.isVideo
@@ -379,6 +384,7 @@ function DetailModal({
   onAction,
   formatTimestamp,
   onPreviewImage,
+  actionsAllowed = true,
 }: {
   post: PendingScheduledPost;
   actionLoading: boolean;
@@ -390,6 +396,8 @@ function DetailModal({
   ) => void | Promise<unknown>;
   formatTimestamp: (ts: TimestampInput) => string;
   onPreviewImage: (url: string, alt?: string) => void;
+  /** False when plan is expired / non-subscribed — hide mutative actions. */
+  actionsAllowed?: boolean;
 }) {
   const [researchOpen, setResearchOpen] = useState(false);
   const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
@@ -399,7 +407,7 @@ function DetailModal({
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showRegenerate =
     post.generatedByAiEngine === true && canScheduledPostRegenerate(post);
-  const showActions = status.variant !== 'failed';
+  const showActions = status.variant !== 'failed' && actionsAllowed;
   const research = parseGenerationResearchFromProof(post.generationProof);
   const showResearch = hasViewableResearch(research);
   const mediaPreview = resolveSchedulableMediaPreview(post);
@@ -407,16 +415,42 @@ function DetailModal({
   const openUrl = mediaPreview.isVideo
     ? mediaPreview.videoUrl
     : mediaPreview.imageUrl;
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [onClose]);
+
+  if (!mounted) return null;
+
+  // Portal above the chat launcher (z-50) so action buttons receive clicks.
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="pointer-events-auto fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      style={{ minHeight: '100dvh' }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="detail-modal-title"
     >
       <div
-        className="rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="relative z-10 rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
@@ -576,7 +610,8 @@ function DetailModal({
         onClose={() => setResearchOpen(false)}
         research={research}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -591,6 +626,7 @@ export default function ApprovalPage() {
   const [hasMore, setHasMore] = useState(true);
   const [actingPostId, setActingPostId] = useState<string | null>(null);
   const { billing } = useUserPlanCredits();
+  const planActionsAllowed = !isPlanInactive(billing);
   const fmtTimestamp = useTimestampFormatter();
   const observerRef = useRef<IntersectionObserver | null>(null);
   const fetchingRef = useRef(false);
@@ -726,6 +762,10 @@ export default function ApprovalPage() {
 
   const handleAction = useCallback(
     async (postId: string, action: ApprovalAction, platform: string) => {
+      if (!planActionsAllowed) {
+        showErrorToast('Your plan has expired. Renew to approve or reject posts.');
+        return;
+      }
       if (!postId) {
         showErrorToast('Missing post id');
         return;
@@ -793,6 +833,7 @@ export default function ApprovalPage() {
       silentRefresh,
       markRegenerating,
       cancelRegeneration,
+      planActionsAllowed,
     ]
   );
 
@@ -893,6 +934,7 @@ export default function ApprovalPage() {
                       handleAction(post.postId, 'reject', post.platform)
                     }
                     actionDisabled={actionDisabled}
+                    actionsAllowed={planActionsAllowed}
                     onPreviewImage={imagePreview.open}
                     isRegenerating={isRegenerating}
                   />
@@ -928,6 +970,7 @@ export default function ApprovalPage() {
           }
           formatTimestamp={fmtTimestamp}
           onPreviewImage={imagePreview.open}
+          actionsAllowed={planActionsAllowed}
         />
       )}
 

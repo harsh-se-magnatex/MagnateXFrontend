@@ -4,6 +4,7 @@ import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import {
   getProfile,
   setLogoVariantsForImagesPreference,
+  suggestOnboardingBrandCopy,
   updateProfile,
   uploadLogo,
 } from '@/src/service/api/userService';
@@ -108,6 +109,36 @@ function normalizeHashtagKey(t: string): string {
 function toStringArray(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   return raw.map((x) => String(x ?? '').trim()).filter(Boolean);
+}
+
+function uniqueStringList(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of items) {
+    const t = String(item ?? '').trim();
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+  }
+  return out;
+}
+
+function uniqueHashtagList(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of items) {
+    const t = String(item ?? '')
+      .replace(/^#+/, '')
+      .trim();
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+  }
+  return out;
 }
 
 
@@ -232,6 +263,71 @@ export default function BusinessProfilePage() {
     e.target.value = '';
   };
 
+  const suggestPayloadFromFields = (fields: {
+    businessName?: unknown;
+    industry?: unknown;
+    location?: unknown;
+    website?: unknown;
+    brandDescription?: unknown;
+  }) => ({
+    businessName:
+      typeof fields.businessName === 'string' ? fields.businessName : undefined,
+    industry: typeof fields.industry === 'string' ? fields.industry : undefined,
+    location: typeof fields.location === 'string' ? fields.location : undefined,
+    website: typeof fields.website === 'string' ? fields.website : undefined,
+    brandDescription:
+      typeof fields.brandDescription === 'string'
+        ? fields.brandDescription
+        : undefined,
+  });
+
+  const hasSuggestContext = (fields: {
+    businessName?: unknown;
+    industry?: unknown;
+    location?: unknown;
+    website?: unknown;
+    brandDescription?: unknown;
+  }) => {
+    const p = suggestPayloadFromFields(fields);
+    return Boolean(
+      p.businessName?.trim() ||
+        p.industry?.trim() ||
+        p.location?.trim() ||
+        p.website?.trim() ||
+        p.brandDescription?.trim()
+    );
+  };
+
+  /** Generates + persists recommended hashtags/slogans; returns them or null. */
+  const fetchBrandCopySuggestions = async (fields: {
+    businessName?: unknown;
+    industry?: unknown;
+    location?: unknown;
+    website?: unknown;
+    brandDescription?: unknown;
+  }) => {
+    if (!hasSuggestContext(fields)) return null;
+    try {
+      const res = await suggestOnboardingBrandCopy(
+        suggestPayloadFromFields(fields)
+      );
+      if (
+        res.success &&
+        res.data &&
+        Array.isArray(res.data.hashtags) &&
+        Array.isArray(res.data.slogans)
+      ) {
+        return {
+          hashtags: res.data.hashtags.map((t) => String(t)),
+          slogans: res.data.slogans.map((s) => String(s)),
+        };
+      }
+    } catch {
+      // Soft-fail: DNA fields still usable without suggestions.
+    }
+    return null;
+  };
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -248,8 +344,8 @@ export default function BusinessProfilePage() {
                 ? String(brandSloganRaw)
                 : '';
           const hashtagsJoined = parseHashtagTokens(p.hashtags).join(', ');
-          const recommendedHashtags = toStringArray(p.recommendedHashtags);
-          const recommendedSlogans = toStringArray(p.recommendedSlogans);
+          let recommendedHashtags = toStringArray(p.recommendedHashtags);
+          let recommendedSlogans = toStringArray(p.recommendedSlogans);
           setCommittedHashtagsSaved(
             parseHashtagTokens(hashtagsJoined).length > 0
           );
@@ -264,6 +360,28 @@ export default function BusinessProfilePage() {
             useLogoVariantsForImages: p.useLogoVariantsForImages === true,
           }));
           applyStoredPhone(p.businesscontact);
+
+          // Skipped onboarding / raced past suggest → backfill recommendations.
+          if (
+            (recommendedHashtags.length === 0 ||
+              recommendedSlogans.length === 0) &&
+            hasSuggestContext(p)
+          ) {
+            const copy = await fetchBrandCopySuggestions(p);
+            if (copy) {
+              recommendedHashtags =
+                copy.hashtags.length > 0
+                  ? copy.hashtags
+                  : recommendedHashtags;
+              recommendedSlogans =
+                copy.slogans.length > 0 ? copy.slogans : recommendedSlogans;
+              setFormData((prev) => ({
+                ...prev,
+                recommendedHashtags,
+                recommendedSlogans,
+              }));
+            }
+          }
         }
       } finally {
         setProfileLoading(false);
@@ -296,9 +414,30 @@ export default function BusinessProfilePage() {
           response?.data?.colorTemplatesGenerationStarted === true;
         setFormData((prev: any) => ({ ...prev, logo: finalLogoForVariants }));
       }
+
+      let recommendedHashtags = formData.recommendedHashtags;
+      let recommendedSlogans = formData.recommendedSlogans;
+      if (
+        (recommendedHashtags.length === 0 || recommendedSlogans.length === 0) &&
+        hasSuggestContext(formData)
+      ) {
+        const copy = await fetchBrandCopySuggestions(formData);
+        if (copy) {
+          if (copy.hashtags.length > 0) recommendedHashtags = copy.hashtags;
+          if (copy.slogans.length > 0) recommendedSlogans = copy.slogans;
+          setFormData((prev) => ({
+            ...prev,
+            recommendedHashtags,
+            recommendedSlogans,
+          }));
+        }
+      }
+
       await updateProfile({
         ...formData,
         logo: finalLogoForVariants,
+        recommendedHashtags,
+        recommendedSlogans,
         website:
           typeof formData.website === 'string' && formData.website.trim()
             ? normalizeWebsiteUrl(formData.website)
@@ -341,14 +480,49 @@ export default function BusinessProfilePage() {
       const payload = (response as any).data ?? response;
       const dnaFields = payload.dna ?? payload;
       const flat: Record<string, unknown> = { ...dnaFields };
+      // Don't auto-fill committed hashtags/slogan from scrape — AI suggestions below.
+      delete flat.hashtags;
+      delete flat.brandSlogan;
+      delete flat.recommendedHashtags;
+      delete flat.recommendedSlogans;
+
       setFormData((prev) => ({
         ...prev,
         ...flat,
-        recommendedHashtags: prev.recommendedHashtags,
-        recommendedSlogans: prev.recommendedSlogans,
+        website:
+          typeof flat.website === 'string' && flat.website.trim()
+            ? String(flat.website)
+            : websiteUrl,
+        // Clear stale suggestions until the new AI copy arrives.
+        recommendedHashtags: [],
+        recommendedSlogans: [],
       }));
       if (flat.businesscontact != null) {
         applyStoredPhone(flat.businesscontact);
+      }
+
+      const suggestFields = {
+        businessName: flat.businessName,
+        industry: flat.industry,
+        location: flat.location,
+        website:
+          typeof flat.website === 'string' && flat.website.trim()
+            ? flat.website
+            : websiteUrl,
+        brandDescription: flat.brandDescription,
+      };
+      const copy = await fetchBrandCopySuggestions(suggestFields);
+      if (copy) {
+        // Replace (do not merge with previous brand's recommendations).
+        setFormData((prev) => ({
+          ...prev,
+          recommendedHashtags: uniqueHashtagList(copy.hashtags),
+          recommendedSlogans: uniqueStringList(copy.slogans),
+        }));
+        // Show suggestion chips for the newly fetched brand even if the form
+        // still has old committed hashtags/slogan values.
+        setCommittedHashtagsSaved(false);
+        setCommittedSloganSaved(false);
       }
     } catch (error: unknown) {
       showErrorToast('Failed to extract business data');
@@ -620,11 +794,11 @@ export default function BusinessProfilePage() {
                       />
                     </div>
                     {showRecommendedHashtags ? (
-                      <div className="sm:col-span-2 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-                        <p className="text-sm font-semibold text-indigo-950 mb-1">
+                      <div className="sm:col-span-2 rounded-xl border border-white/15 bg-white/5 p-4">
+                        <p className="mb-1 text-sm font-semibold text-white">
                           Suggested hashtags
                         </p>
-                        <p className="text-xs text-slate-600 mb-3">
+                        <p className="mb-3 text-xs text-white/65">
                           Tap chips to add or remove hashtags in the field above.
                           After you save with at least one hashtag, these
                           suggestions stay hidden.
@@ -639,10 +813,10 @@ export default function BusinessProfilePage() {
                                 key={tag}
                                 onClick={() => toggleRecommendedHashtag(tag)}
                                 className={cn(
-                                  'rounded-full px-3 py-1 text-sm border transition-all',
+                                  'rounded-full border px-3 py-1 text-sm transition-all',
                                   on
-                                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                                    : 'bg-white border-slate-200 text-slate-800 hover:border-indigo-400'
+                                    ? 'border-indigo-400 bg-indigo-600 text-white'
+                                    : 'border-white/20 bg-white/10 text-white hover:border-indigo-400/80'
                                 )}
                               >
                                 #{tag.replace(/^#+/, '')}
@@ -660,11 +834,11 @@ export default function BusinessProfilePage() {
                         Brand slogan
                       </label>
                       {showRecommendedSlogans ? (
-                        <div className="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-                          <p className="text-sm font-semibold text-indigo-950 mb-1">
+                        <div className="mb-3 rounded-xl border border-white/15 bg-white/5 p-4">
+                          <p className="mb-1 text-sm font-semibold text-white">
                             Suggested slogans
                           </p>
-                          <p className="text-xs text-slate-600 mb-3">
+                          <p className="mb-3 text-xs text-white/65">
                             Pick one line — choosing another replaces it. After
                             you save with a slogan, these suggestions stay hidden.
                             You can still edit or type your own below.
@@ -685,10 +859,10 @@ export default function BusinessProfilePage() {
                                     }))
                                   }
                                   className={cn(
-                                    'text-left rounded-lg px-3 py-2 text-sm border transition-all',
+                                    'rounded-lg border px-3 py-2 text-left text-sm transition-all',
                                     picked
-                                      ? 'bg-indigo-600/15 border-indigo-500 text-indigo-950'
-                                      : 'bg-white border-slate-200 text-slate-800 hover:border-indigo-400'
+                                      ? 'border-indigo-400 bg-indigo-600/30 text-white'
+                                      : 'border-white/20 bg-white/10 text-white/90 hover:border-indigo-400/80'
                                   )}
                                 >
                                   {line}

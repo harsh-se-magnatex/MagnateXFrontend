@@ -27,6 +27,7 @@ import {
   useState,
   type MouseEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import {
   performActionByUserOnScheduledPost,
   removeScheduledPost,
@@ -83,6 +84,7 @@ import {
   willScheduledPostRegenChargeCredits,
 } from '@/lib/scheduled-post-regenerate';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import { isPlanInactive } from '@/lib/plan-access';
 import {
   useTimestampFormatter,
   useUserTimezone,
@@ -261,6 +263,7 @@ function DetailModal({
   actionDisabled,
   onPreviewImage,
   isRegenerating,
+  actionsAllowed = true,
 }: {
   post: ScheduledPost;
   onClose: () => void;
@@ -270,6 +273,8 @@ function DetailModal({
   actionDisabled: boolean;
   onPreviewImage: (url: string, alt?: string) => void;
   isRegenerating: boolean;
+  /** False when plan is expired / non-subscribed — hide mutative actions. */
+  actionsAllowed?: boolean;
 }) {
   const [researchOpen, setResearchOpen] = useState(false);
   const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
@@ -277,7 +282,7 @@ function DetailModal({
   const showRegenerate =
     post.generatedByAiEngine === true && canScheduledPostRegenerate(post);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
-  const showPostActions = isUpcomingPost(post);
+  const showPostActions = isUpcomingPost(post) && actionsAllowed;
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   const research = parseGenerationResearchFromProof(post.generationProof);
@@ -295,9 +300,36 @@ function DetailModal({
     : [];
   const isCarousel =
     post.mediaType === 'carousel' || carouselSlides.length >= 2;
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown, true);
+    };
+  }, [onClose]);
+
+  if (!mounted) return null;
+
+  // Portal above the chat launcher (also z-50) so Regenerate/Remove clicks
+  // actually hit the buttons — same pattern as admin content-calendar review.
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="pointer-events-auto fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      style={{ minHeight: '100dvh' }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -305,7 +337,7 @@ function DetailModal({
       aria-busy={isRegenerating || undefined}
     >
       <div
-        className="rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="relative z-10 rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
@@ -534,7 +566,8 @@ function DetailModal({
         onClose={() => setResearchOpen(false)}
         research={research}
       />
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -569,6 +602,7 @@ function ScheduledPostCard({
   actionDisabled,
   onPreviewImage,
   isRegenerating,
+  actionsAllowed = true,
 }: {
   post: ScheduledPost;
   scheduleAt: string;
@@ -579,11 +613,13 @@ function ScheduledPostCard({
   actionDisabled: boolean;
   onPreviewImage: (url: string, alt?: string) => void;
   isRegenerating: boolean;
+  /** False when plan is expired / non-subscribed — hide mutative actions. */
+  actionsAllowed?: boolean;
 }) {
   const showRegenerate =
     post.generatedByAiEngine === true && canScheduledPostRegenerate(post);
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
-  const showPostActions = isUpcomingPost(post);
+  const showPostActions = isUpcomingPost(post) && actionsAllowed;
   const status = getDisplayStatus(post);
   const generatedBy = generatedByLabel(post.GeneratedBy);
   const mediaPreview = resolveSchedulableMediaPreview(post);
@@ -1265,6 +1301,7 @@ function CalendarView({
 export default function SchedulePostPage() {
   const { user, loading } = useAuth();
   const { billing } = useUserPlanCredits();
+  const planActionsAllowed = !isPlanInactive(billing);
   const fmtTimestamp = useTimestampFormatter();
   const userTz = useUserTimezone();
   const router = useRouter();
@@ -1497,6 +1534,10 @@ export default function SchedulePostPage() {
 
   const handlePostAction = useCallback(
     async (post: ScheduledPost, action: 'regenerate' | 'remove') => {
+      if (!planActionsAllowed) {
+        showErrorToast('Your plan has expired. Renew to manage scheduled posts.');
+        return;
+      }
       const postId = post.postId;
       const platform = post.platform ?? '';
       if (!postId) {
@@ -1606,6 +1647,7 @@ export default function SchedulePostPage() {
       }
     },
     [
+      planActionsAllowed,
       scheduledPosts,
       selectedPost,
       silentRefreshScheduledPosts,
@@ -2023,6 +2065,7 @@ export default function SchedulePostPage() {
                     onRegenerate={() => handlePostAction(post, 'regenerate')}
                     onRemove={() => handlePostAction(post, 'remove')}
                     actionDisabled={!post.postId || postActionDisabled}
+                    actionsAllowed={planActionsAllowed}
                     onPreviewImage={imagePreview.open}
                     isRegenerating={isRegenerating}
                   />
@@ -2078,6 +2121,7 @@ export default function SchedulePostPage() {
           onRegenerate={() => handlePostAction(selectedPost, 'regenerate')}
           onRemove={() => handlePostAction(selectedPost, 'remove')}
           actionDisabled={!selectedPost.postId || postActionDisabled}
+          actionsAllowed={planActionsAllowed}
           onPreviewImage={imagePreview.open}
           isRegenerating={
             !!selectedPost.postId &&

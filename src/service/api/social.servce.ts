@@ -142,14 +142,21 @@ export const disconnectSocialAccountApi = async (platform: string) => {
 };
 
 export const performActionOnScheduledPost = async (
-  postId: string,
+  postId: string | null,
   action: string,
   userId: string,
-  platform: string
+  platform: string,
+  draftId?: string | null
 ) => {
   const response = await axiosClient.post(
     '/api/v1/admin/perform-action-on-scheduled-post',
-    { postId, action, userId, platform }
+    {
+      ...(postId ? { postId } : {}),
+      ...(draftId ? { draftId } : {}),
+      action,
+      userId,
+      platform,
+    }
   );
   return response.data;
 };

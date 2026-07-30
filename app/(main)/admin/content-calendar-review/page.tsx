@@ -23,8 +23,10 @@ import {
   CalendarDays,
   CheckCircle2,
   Facebook,
+  Film,
   Image as ImageIcon,
   Instagram,
+  Layers,
   Linkedin,
   Loader2,
   Play,
@@ -42,6 +44,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { formatTimestampInTz, getBrowserTimeZone } from '@/lib/user-timezone';
+import { resolveSchedulableMediaPreview } from '@/lib/post-media-preview';
+import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
+import { CarouselSwipePreview } from '@/components/shared/CarouselSwipePreview';
 
 const PLATFORM_LABEL: Record<ContentCalendarReviewPlatform, string> = {
   instagram: 'Instagram',
@@ -138,6 +143,7 @@ function formatDay(date: string): string {
 
 function canForceRunKind(kind: string): boolean {
   return (
+    kind === 'campaign' ||
     kind === 'ai-engine' ||
     kind === 'quick-create' ||
     kind === 'video-generation' ||
@@ -166,6 +172,14 @@ type PreviewTarget = {
   preferences: ContentCalendarReviewPreferences;
 };
 
+function itemRegenKey(
+  userId: string,
+  platform: ContentCalendarReviewPlatform,
+  item: Pick<AdminContentPlanGeneratedItem, 'scheduledPostId' | 'draftId'>
+): string {
+  return `${userId}::${item.scheduledPostId || item.draftId || ''}::${platform}`;
+}
+
 export default function AdminContentCalendarReviewPage() {
   const { user } = useUser();
   const router = useRouter();
@@ -180,7 +194,18 @@ export default function AdminContentCalendarReviewPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
   const [pendingRunKey, setPendingRunKey] = useState<string | null>(null);
-  const [pendingRegen, setPendingRegen] = useState(false);
+  /** Keys currently queuing the regenerate API call. */
+  const [pendingRegenKeys, setPendingRegenKeys] = useState<Set<string>>(
+    () => new Set()
+  );
+  /** Keys with a regenerate job in flight (kept until content refreshes). */
+  const [regeneratingKeys, setRegeneratingKeys] = useState<Set<string>>(
+    () => new Set()
+  );
+  /** updatedAtMs snapshot when regen was queued — used to detect completion. */
+  const [regenBaselineMs, setRegenBaselineMs] = useState<
+    Record<string, number>
+  >({});
 
   useEffect(() => {
     if (user && !user.admin) {
@@ -211,6 +236,9 @@ export default function AdminContentCalendarReviewPage() {
     setDetailLoading(true);
     setDetail(null);
     setPreview(null);
+    setRegeneratingKeys(new Set());
+    setPendingRegenKeys(new Set());
+    setRegenBaselineMs({});
     try {
       const res = await getAdminContentCalendarReviewDetail(userId);
       setDetail(res.data);
@@ -220,6 +248,21 @@ export default function AdminContentCalendarReviewPage() {
     } finally {
       setDetailLoading(false);
     }
+  }, []);
+
+  const clearRegenKey = useCallback((key: string) => {
+    setRegeneratingKeys((prev) => {
+      if (!prev.has(key)) return prev;
+      const next = new Set(prev);
+      next.delete(key);
+      return next;
+    });
+    setRegenBaselineMs((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
   }, []);
 
   const refreshDetail = useCallback(async () => {
@@ -250,10 +293,63 @@ export default function AdminContentCalendarReviewPage() {
         }
         return prev;
       });
+
+      // Detect finished regenerations by comparing updatedAtMs to baseline.
+      setRegenBaselineMs((baselines) => {
+        const keys = Object.keys(baselines);
+        if (keys.length === 0) return baselines;
+        const finished: Array<{
+          key: string;
+          platform: ContentCalendarReviewPlatform;
+        }> = [];
+        const nextBaselines = { ...baselines };
+        for (const key of keys) {
+          const baseline = baselines[key] ?? 0;
+          for (const day of res.data.days) {
+            for (const platform of res.data.platforms) {
+              const slot = day.byPlatform[platform];
+              if (!slot) continue;
+              for (const item of slot.generated) {
+                const k = itemRegenKey(selectedUserId, platform, item);
+                if (k !== key) continue;
+                if ((item.updatedAtMs ?? 0) > baseline) {
+                  finished.push({ key, platform });
+                  delete nextBaselines[key];
+                }
+              }
+            }
+          }
+        }
+        if (finished.length > 0) {
+          queueMicrotask(() => {
+            setRegeneratingKeys((prev) => {
+              const next = new Set(prev);
+              for (const f of finished) next.delete(f.key);
+              return next;
+            });
+            for (const f of finished) {
+              toast.success(
+                `Regeneration finished for ${PLATFORM_LABEL[f.platform]}`
+              );
+            }
+          });
+          return nextBaselines;
+        }
+        return baselines;
+      });
     } catch {
       // silent refresh
     }
   }, [selectedUserId]);
+
+  // Poll while regenerations are in flight so cards/modals clear when done.
+  useEffect(() => {
+    if (regeneratingKeys.size === 0) return;
+    const id = window.setInterval(() => {
+      void refreshDetail();
+    }, 4000);
+    return () => window.clearInterval(id);
+  }, [regeneratingKeys.size, refreshDetail]);
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -272,6 +368,14 @@ export default function AdminContentCalendarReviewPage() {
     date: string
   ) => {
     if (!detail) return;
+    if (String(detail.mode ?? '').trim().toLowerCase() !== 'auto') {
+      showErrorToast('Force Run is available on Auto (AI) plans only');
+      return;
+    }
+    if (date < detail.today) {
+      showErrorToast('Force Run is not available for past dates');
+      return;
+    }
     const key = `${detail.userId}::${platform}::${date}`;
     setPendingRunKey(key);
     try {
@@ -280,7 +384,48 @@ export default function AdminContentCalendarReviewPage() {
         date,
         platform,
       });
-      toast.success(`Run queued for ${PLATFORM_LABEL[platform]} on ${date}`);
+      toast.success(
+        `Force Run queued for ${PLATFORM_LABEL[platform]} on ${date}`
+      );
+      // Optimistic: mark cell queued so Force Run hides without a full reload.
+      setDetail((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          days: prev.days.map((day) => {
+            if (day.date !== date) return day;
+            const slot = day.byPlatform[platform];
+            if (!slot) return day;
+            const queuedFromUpcoming = slot.upcoming
+              .filter((u) => canForceRunKind(u.kind))
+              .map((u) => ({
+                kind: u.kind,
+                status: 'queued' as const,
+                title: u.label,
+                captionPreview: u.note,
+              }));
+            return {
+              ...day,
+              byPlatform: {
+                ...day.byPlatform,
+                [platform]: {
+                  generated:
+                    queuedFromUpcoming.length > 0
+                      ? queuedFromUpcoming
+                      : [
+                          {
+                            kind: 'other',
+                            status: 'queued' as const,
+                            title: 'Queued',
+                          },
+                        ],
+                  upcoming: [],
+                },
+              },
+            };
+          }),
+        };
+      });
       await refreshDetail();
     } catch (err: unknown) {
       const message =
@@ -288,28 +433,57 @@ export default function AdminContentCalendarReviewPage() {
           ? (err as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : undefined;
-      showErrorToast(message || 'Failed to run this cell');
+      showErrorToast(message || 'Force Run failed');
     } finally {
       setPendingRunKey(null);
     }
   };
 
   const handleRegenerate = async () => {
-    if (!preview?.item.scheduledPostId) {
-      showErrorToast('No scheduled post to regenerate');
+    if (!preview || !detail) return;
+    if (String(detail.mode ?? '').trim().toLowerCase() !== 'auto') {
+      showErrorToast('Regenerate is available on Auto (AI) plans only');
       return;
     }
-    setPendingRegen(true);
+    const scheduledPostId = preview.item.scheduledPostId?.trim() || '';
+    const draftId = preview.item.draftId?.trim() || '';
+    if (!scheduledPostId && !draftId) {
+      showErrorToast('No draft or scheduled post to regenerate');
+      return;
+    }
+    const regenKey = itemRegenKey(
+      preview.userId,
+      preview.platform,
+      preview.item
+    );
+    setPendingRegenKeys((prev) => {
+      const next = new Set(prev);
+      next.add(regenKey);
+      return next;
+    });
     try {
       await performActionOnScheduledPost(
-        preview.item.scheduledPostId,
+        scheduledPostId || null,
         'regenerate',
         preview.userId,
-        preview.platform
+        preview.platform,
+        draftId || null
       );
-      toast.success(`Regeneration queued for ${PLATFORM_LABEL[preview.platform]}`);
-      await refreshDetail();
+      setRegeneratingKeys((prev) => {
+        const next = new Set(prev);
+        next.add(regenKey);
+        return next;
+      });
+      setRegenBaselineMs((prev) => ({
+        ...prev,
+        [regenKey]: preview.item.updatedAtMs ?? Date.now(),
+      }));
+      toast.success(
+        `Regeneration started for ${PLATFORM_LABEL[preview.platform]}`
+      );
+      void refreshDetail();
     } catch (err: unknown) {
+      clearRegenKey(regenKey);
       const message =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { message?: string } } }).response
@@ -317,7 +491,11 @@ export default function AdminContentCalendarReviewPage() {
           : undefined;
       showErrorToast(message || 'Failed to regenerate');
     } finally {
-      setPendingRegen(false);
+      setPendingRegenKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(regenKey);
+        return next;
+      });
     }
   };
 
@@ -455,56 +633,78 @@ export default function AdminContentCalendarReviewPage() {
                   This user has no selected platforms.
                 </p>
               ) : (
-                <div className="overflow-x-auto rounded-xl border border-border">
-                  <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/40">
-                        <th className="sticky left-0 z-10 bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          Date
-                        </th>
-                        {detail.platforms.map((platform) => {
-                          const Icon = PLATFORM_ICON[platform];
-                          return (
-                            <th
-                              key={platform}
-                              className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                            >
-                              <span className="inline-flex items-center gap-1.5">
-                                <Icon className="h-3.5 w-3.5" />
-                                {PLATFORM_SHORT[platform]}
-                              </span>
-                            </th>
-                          );
-                        })}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {detail.days.map((day) => (
-                        <DayRow
-                          key={day.date}
-                          day={day}
-                          platforms={detail.platforms}
-                          isToday={day.date === detail.today}
-                          pendingRunKey={pendingRunKey}
-                          userId={detail.userId}
-                          onOpenPreview={(platform, item) =>
-                            setPreview({
-                              userId: detail.userId,
-                              name: detail.name,
-                              email: detail.email,
-                              platform,
-                              date: day.date,
-                              item,
-                              preferences: detail.preferences,
-                            })
-                          }
-                          onForceRun={(platform) =>
-                            void handleForceRun(platform, day.date)
-                          }
-                        />
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="space-y-3">
+                  {String(detail.mode ?? '')
+                    .trim()
+                    .toLowerCase() === 'auto' ? (
+                    <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                      Force Run appears on planned Campaign, Content Studio, AI
+                      Engine, Video, Carousel, or Event Studio cells for today
+                      and future dates — it hides after Force Run or when content
+                      is already generating/generated.
+                    </p>
+                  ) : (
+                    <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                      Force Run is available on Auto (AI) plans only.
+                    </p>
+                  )}
+                  <div className="overflow-x-auto rounded-xl border border-border">
+                    <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-border bg-muted/40">
+                          <th className="sticky left-0 z-10 bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Date
+                          </th>
+                          {detail.platforms.map((platform) => {
+                            const Icon = PLATFORM_ICON[platform];
+                            return (
+                              <th
+                                key={platform}
+                                className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                              >
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Icon className="h-3.5 w-3.5" />
+                                  {PLATFORM_SHORT[platform]}
+                                </span>
+                              </th>
+                            );
+                          })}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detail.days.map((day) => (
+                          <DayRow
+                            key={day.date}
+                            day={day}
+                            platforms={detail.platforms}
+                            todayIso={detail.today}
+                            forceRunEnabled={
+                              String(detail.mode ?? '')
+                                .trim()
+                                .toLowerCase() === 'auto'
+                            }
+                            pendingRunKey={pendingRunKey}
+                            regeneratingKeys={regeneratingKeys}
+                            userId={detail.userId}
+                            onOpenPreview={(platform, item) =>
+                              setPreview({
+                                userId: detail.userId,
+                                name: detail.name,
+                                email: detail.email,
+                                platform,
+                                date: day.date,
+                                item,
+                                preferences: detail.preferences,
+                              })
+                            }
+                            onForceRun={(platform) =>
+                              void handleForceRun(platform, day.date)
+                            }
+                          />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               )}
             </>
@@ -515,7 +715,17 @@ export default function AdminContentCalendarReviewPage() {
       {preview ? (
         <PreviewModal
           target={preview}
-          pendingRegen={pendingRegen}
+          regenerateEnabled={
+            String(detail?.mode ?? '').trim().toLowerCase() === 'auto'
+          }
+          isRegenerating={
+            pendingRegenKeys.has(
+              itemRegenKey(preview.userId, preview.platform, preview.item)
+            ) ||
+            regeneratingKeys.has(
+              itemRegenKey(preview.userId, preview.platform, preview.item)
+            )
+          }
           onClose={() => setPreview(null)}
           onRegenerate={() => void handleRegenerate()}
         />
@@ -579,16 +789,20 @@ function PreferencesStrip({
 function DayRow({
   day,
   platforms,
-  isToday,
+  todayIso,
+  forceRunEnabled,
   pendingRunKey,
+  regeneratingKeys,
   userId,
   onOpenPreview,
   onForceRun,
 }: {
   day: AdminContentPlanDay;
   platforms: ContentCalendarReviewPlatform[];
-  isToday: boolean;
+  todayIso: string;
+  forceRunEnabled: boolean;
   pendingRunKey: string | null;
+  regeneratingKeys: Set<string>;
   userId: string;
   onOpenPreview: (
     platform: ContentCalendarReviewPlatform,
@@ -596,6 +810,9 @@ function DayRow({
   ) => void;
   onForceRun: (platform: ContentCalendarReviewPlatform) => void;
 }) {
+  const isToday = day.date === todayIso;
+  const isPast = day.date < todayIso;
+
   return (
     <tr
       className={cn(
@@ -635,8 +852,9 @@ function DayRow({
         const runnableUpcoming = upcoming.filter((u) =>
           canForceRunKind(u.kind)
         );
-        const showRun =
-          isToday &&
+        const showForceRun =
+          forceRunEnabled &&
+          !isPast &&
           generated.length === 0 &&
           runnableUpcoming.length > 0;
         const runKey = `${userId}::${platform}::${day.date}`;
@@ -649,6 +867,9 @@ function DayRow({
                 <GeneratedCard
                   key={`${item.scheduledPostId ?? item.draftId ?? item.kind}-${idx}`}
                   item={item}
+                  isRegenerating={regeneratingKeys.has(
+                    itemRegenKey(userId, platform, item)
+                  )}
                   onOpen={() => onOpenPreview(platform, item)}
                 />
               ))}
@@ -659,7 +880,7 @@ function DayRow({
               {generated.length === 0 && upcoming.length === 0 ? (
                 <span className="text-[11px] text-muted-foreground">—</span>
               ) : null}
-              {showRun ? (
+              {showForceRun ? (
                 <Button
                   type="button"
                   size="sm"
@@ -673,7 +894,7 @@ function DayRow({
                   ) : (
                     <Play className="h-3 w-3" />
                   )}
-                  Run
+                  {runPending ? 'Running…' : 'Force Run'}
                 </Button>
               ) : null}
             </div>
@@ -703,51 +924,110 @@ function UpcomingCard({ item }: { item: AdminContentPlanUpcomingItem }) {
 
 function GeneratedCard({
   item,
+  isRegenerating,
   onOpen,
 }: {
   item: AdminContentPlanGeneratedItem;
+  isRegenerating?: boolean;
   onOpen: () => void;
 }) {
   const title =
     item.title?.trim() ||
     item.captionPreview?.trim() ||
     kindLabel(item.kind);
+  const carouselSlides = Array.isArray(item.carouselSlides)
+    ? item.carouselSlides.filter((s) => String(s.imageUrl ?? '').trim())
+    : [];
+  const isCarousel =
+    item.mediaType === 'carousel' ||
+    item.kind === 'carousel' ||
+    carouselSlides.length >= 2;
+  const isVideo =
+    !isCarousel &&
+    (item.mediaType === 'video' ||
+      item.kind === 'video-generation' ||
+      Boolean(item.videoUrl));
+  const thumbUrl =
+    item.imageUrl ||
+    item.videoPosterUrl ||
+    carouselSlides[0]?.imageUrl ||
+    null;
+  const slideCount =
+    item.slideCount ??
+    (carouselSlides.length > 0 ? carouselSlides.length : null);
 
   return (
     <button
       type="button"
       onClick={onOpen}
       className={cn(
-        'w-full rounded-lg border border-border/60 bg-card/60 p-2 text-left transition hover:ring-1 hover:ring-primary/40',
-        cellToneClass(item.kind)
+        'relative w-full rounded-lg border border-border/60 bg-card/60 p-2 text-left transition hover:ring-1 hover:ring-primary/40',
+        cellToneClass(item.kind),
+        isRegenerating && 'ring-1 ring-amber-400/50'
       )}
     >
+      {isRegenerating ? (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 rounded-lg bg-background/75 backdrop-blur-[1px]">
+          <Loader2 className="h-4 w-4 animate-spin text-amber-600 dark:text-amber-300" />
+          <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-200">
+            Regenerating…
+          </span>
+        </div>
+      ) : null}
       <div className="flex gap-2">
-        {item.imageUrl ? (
-          <div className="h-14 w-14 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
+        {thumbUrl ? (
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={item.imageUrl}
+              src={thumbUrl}
               alt=""
               className="h-full w-full object-cover"
             />
+            {isVideo ? (
+              <span className="absolute inset-0 flex items-center justify-center bg-black/35">
+                <Play className="h-4 w-4 text-white" fill="currentColor" />
+              </span>
+            ) : null}
+            {isCarousel && slideCount && slideCount > 1 ? (
+              <span className="absolute bottom-0.5 right-0.5 inline-flex items-center gap-0.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-semibold text-white">
+                <Layers className="h-2.5 w-2.5" />
+                {slideCount}
+              </span>
+            ) : null}
+            {isVideo ? (
+              <span className="absolute bottom-0.5 left-0.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-semibold text-white">
+                <Film className="h-2.5 w-2.5" />
+              </span>
+            ) : null}
           </div>
         ) : (
           <div
             aria-hidden
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-border/40 bg-muted/40"
           >
-            <ImageIcon className="h-4 w-4 text-muted-foreground" />
+            {isVideo ? (
+              <Film className="h-4 w-4 text-muted-foreground" />
+            ) : isCarousel ? (
+              <Layers className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+            )}
           </div>
         )}
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold leading-tight">
             {kindLabel(item.kind)}
             <span className="ml-1.5 font-normal opacity-80">
-              · {statusLabel(item.status)}
+              · {isRegenerating ? 'Regenerating' : statusLabel(item.status)}
             </span>
           </p>
           <p className="mt-0.5 line-clamp-2 text-[11px] opacity-90">{title}</p>
+          {isCarousel && slideCount && slideCount > 1 ? (
+            <p className="mt-0.5 text-[10px] opacity-70">{slideCount} slides</p>
+          ) : null}
+          {isVideo ? (
+            <p className="mt-0.5 text-[10px] opacity-70">Video</p>
+          ) : null}
           {item.postStatus ? (
             <p className="mt-0.5 text-[10px] opacity-70">
               Admin: {item.postStatus}
@@ -761,12 +1041,14 @@ function GeneratedCard({
 
 function PreviewModal({
   target,
-  pendingRegen,
+  regenerateEnabled,
+  isRegenerating,
   onClose,
   onRegenerate,
 }: {
   target: PreviewTarget;
-  pendingRegen: boolean;
+  regenerateEnabled: boolean;
+  isRegenerating: boolean;
   onClose: () => void;
   onRegenerate: () => void;
 }) {
@@ -777,8 +1059,33 @@ function PreviewModal({
   const showPreferred =
     Boolean(preferences.preferredTime) && !optimal;
   const isQueued = item.status === 'queued';
+  // Admin regenerate is Auto-plan only (manual users own their own review).
   const canRegenerate =
-    Boolean(item.scheduledPostId) && item.status === 'scheduled';
+    regenerateEnabled &&
+    !isQueued &&
+    !isRegenerating &&
+    (Boolean(item.scheduledPostId) ||
+      (item.kind === 'campaign' && Boolean(item.draftId)));
+  const carouselSlides = Array.isArray(item.carouselSlides)
+    ? item.carouselSlides
+        .map((s, i) => ({
+          index: s.index ?? i + 1,
+          imageUrl: String(s.imageUrl ?? '').trim(),
+          headline: s.headline ?? null,
+        }))
+        .filter((s) => s.imageUrl)
+    : [];
+  const isCarousel =
+    item.mediaType === 'carousel' ||
+    item.kind === 'carousel' ||
+    carouselSlides.length >= 2;
+  const mediaPreview = resolveSchedulableMediaPreview({
+    mediaType: item.mediaType,
+    imageUrl: item.imageUrl,
+    videoUrl: item.videoUrl,
+    videoPosterUrl: item.videoPosterUrl,
+  });
+  const isVideo = !isCarousel && mediaPreview.isVideo && Boolean(mediaPreview.videoUrl);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -845,9 +1152,64 @@ function PreviewModal({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="grid gap-6 p-6 md:grid-cols-[260px_1fr]">
-            <div className="relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-black/40">
-              {item.imageUrl ? (
+          <div
+            className={cn(
+              'grid gap-6 p-6',
+              isCarousel || isVideo
+                ? 'md:grid-cols-1'
+                : 'md:grid-cols-[260px_1fr]'
+            )}
+          >
+            <div
+              className={cn(
+                'relative overflow-hidden rounded-xl border border-white/10 bg-black/40',
+                isCarousel || isVideo ? 'w-full' : 'relative aspect-square'
+              )}
+            >
+              {isRegenerating ? (
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/55 backdrop-blur-[2px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-amber-300" />
+                  <p className="text-sm font-semibold text-amber-100">
+                    Regenerating content…
+                  </p>
+                  <p className="text-xs text-white/60">
+                    This may take a minute. You can close this and keep browsing.
+                  </p>
+                </div>
+              ) : null}
+              {isCarousel && carouselSlides.length > 0 ? (
+                <div className="p-3">
+                  <p className="mb-2 text-xs font-medium text-white/60">
+                    Carousel
+                    {item.slideCount
+                      ? ` · ${item.slideCount} slides`
+                      : ` · ${carouselSlides.length} slides`}
+                  </p>
+                  <CarouselSwipePreview
+                    slides={carouselSlides}
+                    showCaptions
+                    imageClassName="bg-black/40"
+                    onImageClick={(url, alt) => imagePreview.open(url, alt)}
+                  />
+                </div>
+              ) : isVideo && mediaPreview.videoUrl ? (
+                <div className="p-3">
+                  <p className="mb-2 text-xs font-medium text-white/60">Video</p>
+                  <PostMediaPreview
+                    preview={mediaPreview}
+                    controls
+                    muted={false}
+                    videoClassName="w-full max-h-[28rem] rounded-xl bg-black"
+                  />
+                  <a
+                    href={mediaPreview.videoUrl}
+                    download={`admin-calendar-${item.scheduledPostId ?? 'post'}.mp4`}
+                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-white/10"
+                  >
+                    Download video
+                  </a>
+                </div>
+              ) : item.imageUrl ? (
                 <div className="relative h-full w-full">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -866,7 +1228,7 @@ function PreviewModal({
                   </div>
                 </div>
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-white/40">
+                <div className="flex aspect-square h-full w-full items-center justify-center text-white/40">
                   <ImageIcon className="h-10 w-10" />
                 </div>
               )}
@@ -874,12 +1236,29 @@ function PreviewModal({
 
             <div className="space-y-4 text-sm">
               <div>
-                <StatusBadge
-                  status={item.status}
-                  postStatus={item.postStatus}
-                />
+                {isRegenerating ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-100">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Regenerating
+                  </span>
+                ) : (
+                  <StatusBadge
+                    status={item.status}
+                    postStatus={item.postStatus}
+                  />
+                )}
               </div>
               <KV label="Kind" value={kindLabel(item.kind)} />
+              <KV
+                label="Media"
+                value={
+                  isCarousel
+                    ? `Carousel · ${item.slideCount ?? carouselSlides.length} slides`
+                    : isVideo
+                      ? 'Video'
+                      : item.mediaType ?? 'Image'
+                }
+              />
               <KV
                 label="Scheduled post id"
                 value={item.scheduledPostId ?? null}
@@ -943,18 +1322,18 @@ function PreviewModal({
               <Loader2 className="h-4 w-4 animate-spin" />
               Generation in progress…
             </span>
+          ) : isRegenerating ? (
+            <span className="inline-flex items-center gap-2 text-sm text-amber-200/90">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Regenerating…
+            </span>
           ) : canRegenerate ? (
             <button
               type="button"
               onClick={onRegenerate}
-              disabled={pendingRegen}
               className="inline-flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/30 disabled:opacity-50"
             >
-              {pendingRegen ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
+              <RefreshCw className="h-4 w-4" />
               Regenerate
             </button>
           ) : null}

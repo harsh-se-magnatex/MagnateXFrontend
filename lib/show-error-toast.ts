@@ -23,7 +23,7 @@ export function showErrorToast(message: ErrorMessage, data?: ExternalToast) {
     classNames: {
       ...classNames,
       toast: cn(
-        '!flex !flex-col !items-stretch !rounded-[1.5rem] !border !border-gray-200 !bg-gray-50 !p-8 !shadow-md sm:!max-w-md',
+        '!flex !flex-col !items-stretch !rounded-[1.5rem] !border !border-white/15 !bg-[#12141c] !p-8 !text-white !shadow-[0_0_40px_rgba(0,0,0,0.45)] sm:!max-w-md',
         classNames?.toast
       ),
       content: cn(
@@ -31,15 +31,15 @@ export function showErrorToast(message: ErrorMessage, data?: ExternalToast) {
         classNames?.content
       ),
       title: cn(
-        '!text-lg !font-semibold !leading-snug !text-gray-900',
+        '!text-lg !font-semibold !leading-snug !text-white',
         classNames?.title
       ),
       description: cn(
-        '!mt-3 !text-left !text-base !font-normal !leading-relaxed !text-gray-600',
+        '!mt-3 !text-left !text-base !font-normal !leading-relaxed !text-white/70',
         classNames?.description
       ),
       actionButton: cn(
-        '!ml-auto !mt-8 !h-auto !min-h-0 !rounded-full !border-0 !bg-blue-600 !px-10 !py-2.5 !text-sm !font-semibold !uppercase !tracking-wide !text-white !shadow-none hover:!bg-blue-700',
+        '!ml-auto !mt-8 !h-auto !min-h-0 !rounded-full !border-0 !bg-linear-to-r !from-[#6C5CE7] !to-[#00D1FF] !px-10 !py-2.5 !text-sm !font-semibold !uppercase !tracking-wide !text-white !shadow-none hover:!opacity-90',
         classNames?.actionButton
       ),
     },

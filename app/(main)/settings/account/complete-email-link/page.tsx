@@ -176,8 +176,8 @@ export default function CompleteEmailLinkPage() {
           Set a password
         </h1>
         <p className="mt-2 text-sm text-slate-600">
-          Your email is verified and linked. Choose a password for signing in
-          with email.
+          Your email is verified and linked. Choose a password once — this is
+          how you&apos;ll sign in with email later.
         </p>
         <form onSubmit={handleSetPassword} className="mt-6 space-y-4">
           <div className="space-y-2">

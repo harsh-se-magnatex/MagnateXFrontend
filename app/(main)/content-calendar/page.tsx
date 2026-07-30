@@ -113,9 +113,10 @@ type CellEntry = {
   source: 'generated' | 'upcoming';
 };
 
-/** Kinds that Force Run can enqueue (never campaign). */
+/** Kinds that Force Run can enqueue (including campaign). */
 function canForceRunKind(kind: string): boolean {
   return (
+    kind === 'campaign' ||
     kind === 'ai-engine' ||
     kind === 'quick-create' ||
     kind === 'video-generation' ||
@@ -676,9 +677,9 @@ export default function ContentPlanPage() {
           {isAuto ? (
             <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
               Tip: hover over a cell for details. Force Run appears on planned
-              Content Studio, AI Engine, Video, Carousel, or Event Studio cells —
-              it hides after Force Run or when content is already
-              generating/generated (not available on campaign posts).
+              Campaign, Content Studio, AI Engine, Video, Carousel, or Event
+              Studio cells — it hides after Force Run or when content is already
+              generating/generated.
             </p>
           ) : (
             <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">

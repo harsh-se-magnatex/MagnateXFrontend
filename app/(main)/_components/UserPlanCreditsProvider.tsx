@@ -5,12 +5,14 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
+import { reconcilePlanApi } from '@/src/service/api/userService';
 
 export type UserPlanCredits = {
   planCredits: number;
@@ -217,6 +219,19 @@ export function UserPlanCreditsProvider({ children }: { children: ReactNode }) {
     );
 
     return () => unsubscribe();
+  }, [user?.uid, authLoading]);
+
+  // Backend-only write: clear expired plan fields if the expire webhook
+  // was missed. Snapshot above picks up the result. Deduped per uid.
+  const reconciledUidRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (authLoading || !user?.uid) return;
+    if (reconciledUidRef.current === user.uid) return;
+    reconciledUidRef.current = user.uid;
+    void reconcilePlanApi().catch(() => {
+      // Non-fatal — /auth/me and checkCredits also run the same guard.
+      reconciledUidRef.current = null;
+    });
   }, [user?.uid, authLoading]);
 
   const loading =
