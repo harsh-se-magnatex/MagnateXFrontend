@@ -1510,26 +1510,25 @@ export default function SchedulePostPage() {
   const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(
     () => new Set()
   );
+  // Synchronous lock — React state updaters run async, so reading `accepted`
+  // from inside setState always returned false and skipped the API call.
+  const regeneratingPostIdsRef = useRef<Set<string>>(new Set());
 
   const markRegenerating = useCallback((postId: string) => {
-    let accepted = false;
-    setRegeneratingPostIds((prev) => {
-      if (prev.has(postId)) return prev;
-      accepted = true;
-      const next = new Set(prev);
-      next.add(postId);
-      return next;
-    });
-    return accepted;
+    if (regeneratingPostIdsRef.current.has(postId)) return false;
+    const next = new Set(regeneratingPostIdsRef.current);
+    next.add(postId);
+    regeneratingPostIdsRef.current = next;
+    setRegeneratingPostIds(next);
+    return true;
   }, []);
 
   const cancelRegeneration = useCallback((postId: string) => {
-    setRegeneratingPostIds((prev) => {
-      if (!prev.has(postId)) return prev;
-      const next = new Set(prev);
-      next.delete(postId);
-      return next;
-    });
+    if (!regeneratingPostIdsRef.current.has(postId)) return;
+    const next = new Set(regeneratingPostIdsRef.current);
+    next.delete(postId);
+    regeneratingPostIdsRef.current = next;
+    setRegeneratingPostIds(next);
   }, []);
 
   const handlePostAction = useCallback(
