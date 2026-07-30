@@ -36,6 +36,7 @@ import {
   ImagePreviewOverlay,
   useImagePreview,
 } from '@/components/image-preview';
+import { Button } from '@/components/ui/button';
 import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
 import {
   hasSchedulableMediaPreview,
@@ -364,12 +365,14 @@ function DetailRow({
   long?: boolean;
 }) {
   return (
-    <div>
-      <p className="text-xs font-medium text-slate-500 mb-0.5">{label}</p>
+    <div className={long ? 'min-w-0' : undefined}>
+      <p className="text-xs font-medium text-muted-foreground mb-0.5">{label}</p>
       <p
-        className={`text-sm text-slate-800${
-          long ? ' whitespace-pre-wrap wrap-break-word' : ''
-        }`}
+        className={
+          long
+            ? 'text-sm text-foreground min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
+            : 'text-sm text-foreground'
+        }
       >
         {value}
       </p>
@@ -450,17 +453,17 @@ function DetailModal({
       aria-labelledby="detail-modal-title"
     >
       <div
-        className="relative z-10 rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="relative z-10 rounded-2xl border border-border bg-card text-foreground shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+        <div className="shrink-0 p-4 border-b border-border flex items-center justify-between gap-3">
           <h2 id="detail-modal-title" className="text-lg font-semibold">
             Scheduled post details
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/40"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             aria-label="Close"
           >
             <svg
@@ -478,17 +481,17 @@ function DetailModal({
             </svg>
           </button>
         </div>
-        <div className="p-4 space-y-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-10 space-y-4 overscroll-contain">
           {hasMedia ? (
             <div>
-              <p className="text-xs font-medium text-slate-500 mb-1">
+              <p className="text-xs font-medium text-muted-foreground mb-1">
                 {mediaPreview.isVideo ? 'Video' : 'Image'}
               </p>
               {mediaPreview.isVideo ? (
                 <PostMediaPreview
                   preview={mediaPreview}
-                  className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200"
-                  videoClassName="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200"
+                  className="w-full max-h-64 object-contain rounded-xl bg-muted border border-border"
+                  videoClassName="w-full max-h-64 object-contain rounded-xl bg-black border border-border"
                   controls
                   muted={false}
                 />
@@ -501,12 +504,12 @@ function DetailModal({
                       'Scheduled post image'
                     )
                   }
-                  className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4A8FF6]"
+                  className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   aria-label="Open image preview"
                 >
                   <PostMediaPreview
                     preview={mediaPreview}
-                    className="w-full max-h-64 object-contain rounded-xl bg-slate-100 border border-slate-200 transition-transform duration-200 group-hover:scale-[1.01]"
+                    className="w-full max-h-64 object-contain rounded-xl bg-muted border border-border transition-transform duration-200 group-hover:scale-[1.01]"
                   />
                 </button>
               )}
@@ -516,7 +519,7 @@ function DetailModal({
                     onClick={() =>
                       onPreviewImage(openUrl, 'Scheduled post image')
                     }
-                    className="rounded-lg bg-white border border-[#4A8FF6]/30 text-[#1e40af] hover:bg-[#4A8FF6]/10 hover:opacity-100 px-4 py-2"
+                    className="rounded-lg border border-primary/30 bg-card text-primary hover:bg-primary/10 hover:opacity-100 px-4 py-2"
                   />
                 </div>
               ) : null}
@@ -526,7 +529,7 @@ function DetailModal({
                     href={openUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-[#4A8FF6]/20"
+                    className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-primary/20"
                   >
                     Open in new tab
                     <ExternalLink className="h-4 w-4" />
@@ -539,7 +542,7 @@ function DetailModal({
           <DetailRow label="Schedule at" value={scheduleAt} />
           <DetailRow label="Created at" value={createdAt} />
           <div>
-            <p className="text-xs font-medium text-slate-500 mb-1">Status</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">Status</p>
             <span
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold',
@@ -550,7 +553,7 @@ function DetailModal({
               {status.label}
             </span>
             {status.variant === 'failed' ? (
-              <p className="mt-2 whitespace-pre-wrap break-words rounded-lg border border-red-100 bg-red-500/30 p-2 text-xs text-red-700">
+              <p className="mt-2 whitespace-pre-wrap break-words rounded-lg border border-destructive/30 bg-destructive/15 p-2 text-xs text-destructive">
                 <span className="font-semibold">Reason: </span>
                 {status.reason ?? 'No failure reason recorded.'}
               </p>
@@ -562,23 +565,28 @@ function DetailModal({
           ) : null}
           {showResearch ? (
             <div>
-              <p className="text-xs font-medium text-slate-500 mb-2">Research</p>
-              <button
+              <p className="text-xs font-medium text-muted-foreground mb-2">
+                Research
+              </p>
+              <Button
                 type="button"
+                variant="outline"
+                className="rounded-lg border-primary/30 text-primary hover:bg-primary/10"
                 onClick={() => setResearchOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#4A8FF6]/30 bg-[#4A8FF6]/5 px-3 py-2 text-sm font-medium text-[#1e40af] hover:bg-[#4A8FF6]/10 focus:outline-none focus:ring-2 focus:ring-[#4A8FF6]/40"
               >
-                <Search className="h-4 w-4" aria-hidden />
+                <Search className="mr-2 h-4 w-4" />
                 View research
-              </button>
+              </Button>
             </div>
           ) : null}
           {showActions ? (
-            <div className="pt-4 border-t border-slate-200">
-              <p className="text-xs font-medium text-slate-500 mb-3">Actions</p>
+            <div className="pt-4 border-t border-border">
+              <p className="text-xs font-medium text-muted-foreground mb-3">
+                Actions
+              </p>
               {regenChargesCredits ? (
                 <div
-                  className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                  className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200"
                   role="note"
                 >
                   <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
