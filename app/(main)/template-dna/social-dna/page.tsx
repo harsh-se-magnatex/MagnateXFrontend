@@ -137,8 +137,10 @@ export default function SocialTemplateDnaPage() {
         .data?.socialTemplateDna;
       if (raw) setDna(raw);
       else await load();
-    } catch {
-      showErrorToast('Failed to regenerate Social DNA');
+    } catch (e) {
+      showErrorToast(
+        e instanceof Error ? e.message : 'Failed to regenerate Social DNA'
+      );
     } finally {
       setRegenerating(false);
     }
@@ -166,8 +168,8 @@ export default function SocialTemplateDnaPage() {
             <div>
               <h1 className="text-2xl font-bold text-slate-900">Social DNA</h1>
               <p className="text-sm text-slate-500">
-                AI strategy for improving your social page — built after Business
-                Data is complete.
+                AI strategy for your social page — built from Brand DNA and, when
+                available, the Business Data questionnaire.
               </p>
             </div>
           </div>
@@ -200,15 +202,18 @@ export default function SocialTemplateDnaPage() {
 
         {dna?.status === 'pending_memory' || !dna ? (
           <p className="text-sm text-slate-600">
-            Complete{' '}
+            Regenerate uses your{' '}
+            <Link href="/template-dna" className="text-indigo-600 font-medium hover:underline">
+              Brand DNA
+            </Link>{' '}
+            profile. For richer strategy, also complete the{' '}
             <Link
               href="/template-dna/business-data"
               className="text-indigo-600 font-medium hover:underline"
             >
               Business Data
             </Link>{' '}
-            to generate your Social DNA. If you skipped it during onboarding, fill
-            it anytime — generation starts automatically.
+            questionnaire (Q&amp;A, photos, products).
           </p>
         ) : null}
 

@@ -30,6 +30,7 @@ import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
+import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
 
 type BusinessProfileForm = {
   businessEmail: string;
@@ -899,6 +900,24 @@ export default function BusinessProfilePage() {
                       onChange={handleChange}
                       className={cn(inputBase, 'resize-y min-h-[100px]')}
                       placeholder="Describe your brand's mission, tone of voice, and target audience..."
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <p className="mb-1.5 block text-sm font-semibold text-slate-700">
+                      Page look & visual style
+                    </p>
+                    <p className="mb-3 text-xs text-slate-500">
+                      Choose how your social page should feel — used for Content
+                      Studio, carousels, Event Studio, and AI Engine generations.
+                    </p>
+                    <PageLookSelector
+                      value={formData.imageStyle}
+                      onChange={(next) =>
+                        setFormData((prev) => ({ ...prev, imageStyle: next }))
+                      }
+                      idPrefix="template-dna-page-look"
+                      // businessName={formData.businessName}
                     />
                   </div>
 

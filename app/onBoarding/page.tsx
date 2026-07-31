@@ -12,6 +12,7 @@ import {
   Globe,
   Hash,
   Image as ImageIcon,
+  LayoutGrid,
   MapPin,
   Palette,
   Phone,
@@ -44,6 +45,7 @@ import {
   type OnboardingColorSuggestions,
 } from '@/components/onboarding/OnboardingSuggestionsPanel';
 import { OnboardingAiLogoSection } from '@/components/onboarding/OnboardingAiLogoSection';
+import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
 
 type QuestionType =
   | 'text'
@@ -53,7 +55,8 @@ type QuestionType =
   | 'color'
   | 'textarea'
   | 'hashtags'
-  | 'brandSlogan';
+  | 'brandSlogan'
+  | 'pageLook';
 
 type Question = {
   name: string;
@@ -198,6 +201,14 @@ const questions: Question[] = [
       'We make small-batch cold brew for office breakrooms — bold flavor, no jitters.',
     type: 'textarea',
     icon: FileText,
+  },
+  {
+    name: 'imageStyle',
+    label: 'How should your page look?',
+    description:
+      'Pick one visual style for your social page — we use this across images, carousels, videos, and event posts.',
+    type: 'pageLook',
+    icon: LayoutGrid,
   },
 ];
 
@@ -872,6 +883,18 @@ export default function OnboardingMenu() {
   const renderField = () => {
     if (current.type === 'hashtags') return renderHashtagsStep();
     if (current.type === 'brandSlogan') return renderBrandSloganStep();
+    if (current.type === 'pageLook') {
+      return (
+        <PageLookSelector
+          value={String(formData.imageStyle ?? '')}
+          onChange={(next) =>
+            setFormData((prev) => ({ ...prev, imageStyle: next }))
+          }
+          idPrefix="onboarding-page-look"
+          // businessName={String(formData.businessName ?? '')}
+        />
+      );
+    }
 
     if (current.name === 'website') {
       return (
@@ -1214,6 +1237,8 @@ export default function OnboardingMenu() {
           className={cn(
             'mx-auto flex w-full flex-col gap-6',
             showSuggestionsPanel ? 'max-w-5xl' : 'max-w-xl'
+            // Wider layout when page-look preview panel is enabled:
+            // showSuggestionsPanel || current.type === 'pageLook' ? 'max-w-5xl' : 'max-w-xl'
           )}
         >
           <header className="flex items-center justify-between gap-3">
