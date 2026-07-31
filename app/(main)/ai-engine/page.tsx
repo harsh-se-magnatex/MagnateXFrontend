@@ -16,6 +16,8 @@ import {
   Bot,
   CheckCircle,
   Lock,
+  Sparkles,
+  Loader2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -38,9 +40,17 @@ import {
 } from '@/lib/workspace-ui';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
+  ImagePreviewButton,
+  ImagePreviewOverlay,
+  useImagePreview,
+} from '@/components/image-preview';
+import {
+  generateExamplePostsApi,
   getUserAIenginePageContext,
   selectSocialPlatformApi,
   updateAiEngineSetup,
+  type ExamplePostItem,
+  type ExamplePostsMeta,
 } from '@/features/user/api';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -105,6 +115,8 @@ type UserData = {
     automationDone?: boolean;
     businessDone?: boolean;
   };
+  examplePostsMeta?: ExamplePostsMeta;
+  examplePosts?: ExamplePostItem[];
 };
 
 type StepId =
@@ -445,6 +457,14 @@ export default function AIEnginePage() {
   const [confirmSelectionOpen, setConfirmSelectionOpen] = React.useState(false);
   const [stepPositionInitialized, setStepPositionInitialized] =
     React.useState(false);
+  const [examplePosts, setExamplePosts] = React.useState<ExamplePostItem[]>(
+    []
+  );
+  const [examplePostsMeta, setExamplePostsMeta] =
+    React.useState<ExamplePostsMeta | null>(null);
+  const [exampleGenerating, setExampleGenerating] = React.useState(false);
+  const [examplesOpen, setExamplesOpen] = React.useState(true);
+  const imagePreview = useImagePreview();
   const router = useRouter();
 
   useEffect(() => {
@@ -511,6 +531,12 @@ export default function AIEnginePage() {
         automationDone: raw.aiEngineSetup?.automationDone === true,
         businessDone: raw.aiEngineSetup?.businessDone === true,
       };
+      const nextExampleMeta = raw.examplePostsMeta ?? null;
+      const nextExamplePosts = Array.isArray(raw.examplePosts)
+        ? raw.examplePosts
+        : [];
+      setExamplePostsMeta(nextExampleMeta);
+      setExamplePosts(nextExamplePosts);
       setData({
         socialAccounts: raw.socialAccounts,
         onBoarded: raw.onBoarded,
@@ -530,6 +556,8 @@ export default function AIEnginePage() {
         campaignSeedPendingPlatformConfirm:
           raw.campaignSeedPendingPlatformConfirm === true,
         aiEngineSetup,
+        examplePostsMeta: nextExampleMeta ?? undefined,
+        examplePosts: nextExamplePosts,
       });
       setLocalSelected(selected);
       setSkipped((prev) => {
@@ -643,6 +671,55 @@ export default function AIEnginePage() {
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
   }, [user, getDetails]);
+
+  useEffect(() => {
+    if (examplePostsMeta?.status !== 'running') return;
+    const id = window.setInterval(() => {
+      void getDetails({ silent: true });
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [examplePostsMeta?.status, getDetails]);
+
+  // Auto-open when generation starts or posts arrive.
+  useEffect(() => {
+    if (
+      examplePostsMeta?.status === 'running' ||
+      exampleGenerating ||
+      examplePosts.length > 0
+    ) {
+      setExamplesOpen(true);
+    }
+  }, [
+    examplePostsMeta?.status,
+    exampleGenerating,
+    examplePosts.length,
+  ]);
+
+  const handleGenerateExamples = async () => {
+    if (!data.onBoarded || examplePostsMeta?.used || exampleGenerating) return;
+    try {
+      setExampleGenerating(true);
+      const res = await generateExamplePostsApi();
+      const payload = res.data;
+      setExamplePostsMeta({
+        status: 'running',
+        used: true,
+        expectedCount: payload.expectedCount,
+        completedCount: 0,
+        platforms: payload.platforms,
+        postsPerPlatform: payload.postsPerPlatform,
+      });
+      void getDetails({ silent: true });
+    } catch (err: unknown) {
+      showErrorToast(
+        err instanceof Error && err.message
+          ? err.message
+          : 'Failed to start example generation'
+      );
+    } finally {
+      setExampleGenerating(false);
+    }
+  };
 
   const markAutomationDone = () => {
     setSkipped((prev) => new Set(prev).add('automation'));
@@ -869,6 +946,144 @@ export default function AIEnginePage() {
         </div>
         <Progress value={progressPct} className="h-2" />
       </div>
+
+      {data.onBoarded && (
+        <div
+          className={cn(workspaceSectionCardClass, 'mb-6 divide-y divide-border p-0')}
+        >
+          <div
+            className={cn(
+              'flex w-full items-center gap-3 px-5 py-4',
+              examplesOpen && 'bg-muted/30'
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => setExamplesOpen((open) => !open)}
+              className="flex w-full min-w-0 items-center gap-3 text-left transition-colors hover:opacity-90"
+            >
+              <span
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground"
+                aria-hidden
+              >
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-foreground">
+                  Free example posts
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  {examplePostsMeta?.status === 'running' || exampleGenerating
+                    ? 'Generating…'
+                    : examplePosts.length > 0
+                      ? `${examplePosts.length} example${examplePosts.length === 1 ? '' : 's'} ready`
+                      : examplePostsMeta?.used ||
+                          examplePostsMeta?.status === 'completed'
+                        ? 'One-time examples used'
+                        : 'One free preview — no credits, not scheduled'}
+                </span>
+              </span>
+              <ChevronDown
+                className={cn(
+                  'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                  examplesOpen && 'rotate-180'
+                )}
+                aria-hidden
+              />
+            </button>
+          </div>
+
+          {examplesOpen && (
+            <div className="space-y-4 border-t border-border/60 bg-background/50 px-5 pb-5 pt-4">
+              <p className="text-sm text-muted-foreground">
+                See how the AI Engine writes for your brand — one post each for
+                Facebook, Instagram, and LinkedIn (with captions). One-time
+                only, no credits, and nothing gets scheduled.
+              </p>
+
+              {examplePostsMeta?.status === 'running' || exampleGenerating ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating examples
+                  {examplePostsMeta?.expectedCount
+                    ? ` · ${examplePosts.length} of ${examplePostsMeta.expectedCount}`
+                    : ''}
+                  …
+                </div>
+              ) : examplePostsMeta?.used ||
+                examplePostsMeta?.status === 'completed' ? (
+                <p className="text-sm text-muted-foreground">
+                  {examplePosts.length > 0
+                    ? 'Your free examples are ready. These were never scheduled.'
+                    : 'Free examples already used.'}
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {examplePostsMeta?.status === 'failed' && (
+                    <p className="text-sm text-amber-700 dark:text-amber-400">
+                      The last attempt failed before any posts were saved. You
+                      can try again.
+                    </p>
+                  )}
+                  <Button
+                    type="button"
+                    onClick={() => void handleGenerateExamples()}
+                    disabled={exampleGenerating}
+                  >
+                    Generate example posts
+                  </Button>
+                </div>
+              )}
+
+              {examplePosts.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {examplePosts.map((post) => (
+                    <article
+                      key={post.id}
+                      className="overflow-hidden rounded-xl border border-border bg-background"
+                    >
+                      {post.imageUrl ? (
+                        <div className="relative aspect-square w-full">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={post.imageUrl}
+                            alt={`${post.platform} example`}
+                            className="h-full w-full object-cover"
+                          />
+                          <div className="absolute bottom-2 right-2">
+                            <ImagePreviewButton
+                              variant="overlay-icon"
+                              stopPropagation
+                              onClick={() =>
+                                imagePreview.open(
+                                  post.imageUrl as string,
+                                  `${post.platform} example`
+                                )
+                              }
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex aspect-square w-full items-center justify-center bg-muted text-xs text-muted-foreground">
+                          Image unavailable
+                        </div>
+                      )}
+                      <div className="space-y-2 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {post.platform}
+                        </p>
+                        <p className="whitespace-pre-wrap text-sm text-foreground">
+                          {post.caption || 'No caption'}
+                        </p>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={cn(workspaceSectionCardClass, 'divide-y divide-border p-0')}>
         {stepMeta.map((step, index) => {
@@ -1232,6 +1447,14 @@ export default function AIEnginePage() {
                           ? 'Setup is complete. Head to Home to create and schedule content.'
                           : 'Finish the steps above to unlock AI posting.'}
                       </p>
+                      {data.onBoarded &&
+                        !examplePostsMeta?.used &&
+                        examplePostsMeta?.status !== 'running' && (
+                          <p className="text-sm text-muted-foreground">
+                            Want a preview first? Use Free example posts above —
+                            one free run, captions included, nothing scheduled.
+                          </p>
+                        )}
                       <Button
                         disabled={!allSetupDone}
                         onClick={() => router.push('/home')}
@@ -1298,6 +1521,11 @@ export default function AIEnginePage() {
         onOpenChange={setSelectLinkedInPageModalOpen}
         data={data.availableLinkedInPages}
         onSuccess={() => void getDetails({ silent: true })}
+      />
+      <ImagePreviewOverlay
+        src={imagePreview.previewUrl}
+        alt={imagePreview.previewAlt}
+        onClose={imagePreview.close}
       />
     </div>
   );

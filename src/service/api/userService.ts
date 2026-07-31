@@ -344,6 +344,23 @@ export const refreshOptimalPostingTime = async (
   );
 };
 
+export type ExamplePostItem = {
+  id: string;
+  platform: string;
+  caption: string;
+  imageUrl: string | null;
+  index: number;
+};
+
+export type ExamplePostsMeta = {
+  status: 'running' | 'completed' | 'failed' | null;
+  used: boolean;
+  expectedCount: number;
+  completedCount: number;
+  platforms: string[];
+  postsPerPlatform: number;
+};
+
 export const getUserAIenginePageContext = async () => {
   return apiGet<
     ApiEnvelope<{
@@ -352,9 +369,24 @@ export const getUserAIenginePageContext = async () => {
         automationDone?: boolean;
         businessDone?: boolean;
       };
+      examplePostsMeta?: ExamplePostsMeta;
+      examplePosts?: ExamplePostItem[];
       [key: string]: unknown;
     }>
   >('/api/v1/user/get-user-aiengine-detail');
+};
+
+export const generateExamplePostsApi = async () => {
+  return apiPost<
+    ApiEnvelope<{
+      status: 'running';
+      platforms: string[];
+      expectedCount: number;
+      totalJobs: number;
+      jobIds: string[];
+      postsPerPlatform: number;
+    }>
+  >('/api/v1/user/generate-example-posts');
 };
 
 export const updateAiEngineSetup = async (body: {
