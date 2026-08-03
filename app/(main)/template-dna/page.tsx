@@ -21,16 +21,21 @@ import {
   ImagePlus,
   Smartphone,
   WandSparkles,
+  Globe,
+  FileText,
+  Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FieldSeparator } from '@/components/ui/field';
 import { Switch } from '@/components/ui/switch';
-import { scrapeUrl } from '@/src/service/api/scrape';
+import { scrapeUrl, extractCatalogPdf } from '@/src/service/api/scrape';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
 import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
+
+type SourceMode = 'website' | 'catalog';
 
 type BusinessProfileForm = {
   businessEmail: string;
@@ -173,10 +178,12 @@ export default function BusinessProfilePage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [fetchingBusinessData, setFetchingBusinessData] = useState(false);
   const [websiteUrl, setWebsiteUrl] = useState('');
+  const [sourceMode, setSourceMode] = useState<SourceMode>('website');
+  const [catalogFile, setCatalogFile] = useState<File | null>(null);
   /** Mirrors last-loaded / last-saved profile: hide AI blocks once user has committed values. */
   const [committedHashtagsSaved, setCommittedHashtagsSaved] = useState(false);
   const [committedSloganSaved, setCommittedSloganSaved] = useState(false);
-  const [phoneCountryCode, setPhoneCountryCode] = useState('');
+  const [phoneCountryCode, setPhoneCountryCode] = useState('91');
   const [phoneNationalNumber, setPhoneNationalNumber] = useState('');
 
   const activePlan = billing?.activePlan;
@@ -215,7 +222,7 @@ export default function BusinessProfilePage() {
   const updatePhone = (countryCode: string, nationalNumber: string) => {
     const cc = digitsOnly(countryCode);
     const nat = digitsOnly(nationalNumber);
-    setPhoneCountryCode(cc);
+    setPhoneCountryCode('91');
     setPhoneNationalNumber(nat);
     setFormData((prev) => ({
       ...prev,
@@ -225,7 +232,7 @@ export default function BusinessProfilePage() {
 
   const applyStoredPhone = (stored: unknown) => {
     const { countryCode, nationalNumber } = splitStoredPhone(stored);
-    setPhoneCountryCode(countryCode);
+    setPhoneCountryCode('91');
     setPhoneNationalNumber(nationalNumber);
   };
 
@@ -471,6 +478,64 @@ export default function BusinessProfilePage() {
     }
   };
 
+  const applyExtractedDna = async (
+    dnaFields: Record<string, unknown>,
+    fallbackWebsite?: string
+  ) => {
+    const flat: Record<string, unknown> = { ...dnaFields };
+    // Don't auto-fill committed hashtags/slogan from scrape — AI suggestions below.
+    delete flat.hashtags;
+    delete flat.brandSlogan;
+    delete flat.recommendedHashtags;
+    delete flat.recommendedSlogans;
+    delete flat.suggestedLogos;
+    delete flat.suggestedColors;
+    delete flat.warnings;
+    delete flat.logo;
+
+    if (typeof flat.businesscontact === 'number') {
+      flat.businesscontact = String(flat.businesscontact);
+    }
+
+    const resolvedWebsite =
+      typeof flat.website === 'string' && flat.website.trim()
+        ? String(flat.website)
+        : fallbackWebsite || undefined;
+
+    setFormData((prev) => ({
+      ...prev,
+      ...flat,
+      ...(resolvedWebsite ? { website: resolvedWebsite } : {}),
+      // Clear stale suggestions until the new AI copy arrives.
+      recommendedHashtags: [],
+      recommendedSlogans: [],
+    }));
+    if (flat.businesscontact != null) {
+      applyStoredPhone(flat.businesscontact);
+    }
+
+    const suggestFields = {
+      businessName: flat.businessName,
+      industry: flat.industry,
+      location: flat.location,
+      website: resolvedWebsite,
+      brandDescription: flat.brandDescription,
+    };
+    const copy = await fetchBrandCopySuggestions(suggestFields);
+    if (copy) {
+      // Replace (do not merge with previous brand's recommendations).
+      setFormData((prev) => ({
+        ...prev,
+        recommendedHashtags: uniqueHashtagList(copy.hashtags),
+        recommendedSlogans: uniqueStringList(copy.slogans),
+      }));
+      // Show suggestion chips for the newly fetched brand even if the form
+      // still has old committed hashtags/slogan values.
+      setCommittedHashtagsSaved(false);
+      setCommittedSloganSaved(false);
+    }
+  };
+
   const fetchOnboarding = async (rawWebsiteUrl: string) => {
     const websiteUrl = normalizeWebsiteUrl(rawWebsiteUrl.trim());
     if (!websiteUrl) return;
@@ -480,56 +545,53 @@ export default function BusinessProfilePage() {
       const response = await scrapeUrl(websiteUrl);
       const payload = (response as any).data ?? response;
       const dnaFields = payload.dna ?? payload;
-      const flat: Record<string, unknown> = { ...dnaFields };
-      // Don't auto-fill committed hashtags/slogan from scrape — AI suggestions below.
-      delete flat.hashtags;
-      delete flat.brandSlogan;
-      delete flat.recommendedHashtags;
-      delete flat.recommendedSlogans;
-
-      setFormData((prev) => ({
-        ...prev,
-        ...flat,
-        website:
-          typeof flat.website === 'string' && flat.website.trim()
-            ? String(flat.website)
-            : websiteUrl,
-        // Clear stale suggestions until the new AI copy arrives.
-        recommendedHashtags: [],
-        recommendedSlogans: [],
-      }));
-      if (flat.businesscontact != null) {
-        applyStoredPhone(flat.businesscontact);
-      }
-
-      const suggestFields = {
-        businessName: flat.businessName,
-        industry: flat.industry,
-        location: flat.location,
-        website:
-          typeof flat.website === 'string' && flat.website.trim()
-            ? flat.website
-            : websiteUrl,
-        brandDescription: flat.brandDescription,
-      };
-      const copy = await fetchBrandCopySuggestions(suggestFields);
-      if (copy) {
-        // Replace (do not merge with previous brand's recommendations).
-        setFormData((prev) => ({
-          ...prev,
-          recommendedHashtags: uniqueHashtagList(copy.hashtags),
-          recommendedSlogans: uniqueStringList(copy.slogans),
-        }));
-        // Show suggestion chips for the newly fetched brand even if the form
-        // still has old committed hashtags/slogan values.
-        setCommittedHashtagsSaved(false);
-        setCommittedSloganSaved(false);
-      }
+      await applyExtractedDna(dnaFields as Record<string, unknown>, websiteUrl);
     } catch (error: unknown) {
       showErrorToast('Failed to extract business data');
     } finally {
       setFetchingBusinessData(false);
     }
+  };
+
+  const fetchFromCatalog = async () => {
+    if (!catalogFile) return;
+    setFetchingBusinessData(true);
+    try {
+      const response = await extractCatalogPdf(catalogFile);
+      const envelope = response as {
+        data?: { dna?: Record<string, unknown>; warnings?: string[] };
+        dna?: Record<string, unknown>;
+        warnings?: string[];
+      };
+      const payload = envelope.data ?? envelope;
+      const dnaFields =
+        (payload as { dna?: Record<string, unknown> }).dna ?? payload;
+      await applyExtractedDna(dnaFields as Record<string, unknown>);
+      const apiWarnings = (payload as { warnings?: string[] }).warnings;
+      if (apiWarnings?.length) {
+        console.warn('[template-dna] catalog extract warnings:', apiWarnings);
+      }
+      toast.success('Business data extracted from catalog');
+    } catch (error: unknown) {
+      showErrorToast('Failed to extract business data from catalog');
+    } finally {
+      setFetchingBusinessData(false);
+    }
+  };
+
+  const handleCatalogFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (file.type !== 'application/pdf') {
+      showErrorToast('Please upload a PDF file');
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      showErrorToast('PDF must be 50 MB or smaller');
+      return;
+    }
+    setCatalogFile(file);
   };
 
   const handleGenerateVariants = () => {
@@ -616,27 +678,128 @@ export default function BusinessProfilePage() {
             ) : (
               <div className="flex flex-col gap-y-4">
                 <h3 className="text-center">
-                  Enter your website URL to fetch business DNA
+                  Fetch business DNA from your website or catalog PDF
                 </h3>
-                <div className="sm:flex-row sm:gap-2 space-y-2 sm:space-y-0 flex flex-col">
-                  <input
-                    type="text"
-                    value={websiteUrl}
-                    onChange={(e) => setWebsiteUrl(e.target.value)}
-                    onBlur={handleWebsiteFetchBlur}
-                    placeholder="example.com or https://example.com"
-                    className={inputBase}
-                  />
+
+                <div className="flex rounded-xl border border-white/15 bg-white/5 p-1">
                   <button
-                    className="bg-gradient-primary text-white px-4 py-2 rounded-xl text-sm cursor-pointer"
-                    onClick={() => fetchOnboarding(websiteUrl)}
-                    disabled={!websiteUrl || fetchingBusinessData}
+                    type="button"
+                    onClick={() => setSourceMode('website')}
+                    className={cn(
+                      'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      sourceMode === 'website'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    )}
                   >
-                    {fetchingBusinessData
-                      ? 'Fetching...'
-                      : 'Fetch Business DNA'}
+                    <Globe className="h-4 w-4" />
+                    Website
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSourceMode('catalog')}
+                    className={cn(
+                      'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      sourceMode === 'catalog'
+                        ? 'bg-primary text-slate-900 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    )}
+                  >
+                    <FileText className="h-4 w-4" />
+                    Catalog PDF
                   </button>
                 </div>
+
+                {sourceMode === 'website' ? (
+                  <div className="sm:flex-row sm:gap-2 space-y-2 sm:space-y-0 flex flex-col">
+                    <input
+                      type="text"
+                      value={websiteUrl}
+                      onChange={(e) => setWebsiteUrl(e.target.value)}
+                      onBlur={handleWebsiteFetchBlur}
+                      placeholder="example.com or https://example.com"
+                      className={inputBase}
+                    />
+                    <button
+                      type="button"
+                      className="bg-gradient-primary text-white px-4 py-2 rounded-xl text-sm cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                      onClick={() => fetchOnboarding(websiteUrl)}
+                      disabled={!websiteUrl || fetchingBusinessData}
+                    >
+                      {fetchingBusinessData
+                        ? 'Fetching...'
+                        : 'Fetch Business DNA'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <label
+                      htmlFor="template-dna-catalog-upload"
+                      className={cn(
+                        'group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 px-6 py-8 text-center transition-all',
+                        'hover:border-indigo-400/60 hover:bg-indigo-50/40'
+                      )}
+                    >
+                      {catalogFile ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <FileText className="h-10 w-10 text-indigo-600" />
+                          <p className="text-sm font-medium text-slate-900">
+                            {catalogFile.name}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {(catalogFile.size / (1024 * 1024)).toFixed(1)} MB ·
+                            Click to replace
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-primary text-white shadow-sm transition-transform group-hover:scale-105">
+                            <Upload className="h-5 w-5" />
+                          </span>
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium text-slate-900">
+                              Upload your catalog or brochure PDF
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              PDF only · up to 50 MB
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      <input
+                        id="template-dna-catalog-upload"
+                        type="file"
+                        accept="application/pdf"
+                        onChange={handleCatalogFileChange}
+                        className="sr-only"
+                      />
+                    </label>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      {catalogFile ? (
+                        <button
+                          type="button"
+                          onClick={() => setCatalogFile(null)}
+                          className="text-sm text-slate-500 hover:text-slate-800"
+                        >
+                          Remove file
+                        </button>
+                      ) : (
+                        <span />
+                      )}
+                      <button
+                        type="button"
+                        className="bg-gradient-primary text-white px-4 py-2 rounded-xl text-sm cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={() => void fetchFromCatalog()}
+                        disabled={!catalogFile || fetchingBusinessData}
+                      >
+                        {fetchingBusinessData
+                          ? 'Reading catalog…'
+                          : 'Extract from PDF'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex"></div>
                 <FieldSeparator className="px-0">
                   <p className="bg-transparent">OR</p>
@@ -694,6 +857,7 @@ export default function BusinessProfilePage() {
                           <input
                             id="businesscontact-country"
                             type="tel"
+                            disabled
                             inputMode="numeric"
                             autoComplete="tel-country-code"
                             maxLength={4}

@@ -28,13 +28,11 @@ export async function generateCarousel(params: {
   prompt?: string;
   platform: SocialPlatform;
   slideCount: number;
-  useMemoryLayer?: boolean;
   image?: File | null;
 }): Promise<GenerateCarouselResponse> {
   const form = new FormData();
   form.append('platforms', JSON.stringify([params.platform]));
   form.append('slideCount', String(params.slideCount));
-  form.append('useMemoryLayer', params.useMemoryLayer === false ? 'false' : 'true');
   if (params.prompt?.trim()) form.append('prompt', params.prompt.trim());
   if (params.image) form.append('image', params.image);
 

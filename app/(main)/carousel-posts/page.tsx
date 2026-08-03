@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Calendar, Layers, Loader2, Sparkles } from 'lucide-react';
+import { Calendar, ImagePlus, Layers, Loader2, Sparkles, X } from 'lucide-react';
 import { useAuth } from '@/src/hooks/useAuth';
 import { generateCarousel, type CarouselSlideResult } from '@/src/service/api/carousel';
 import { useUserPlanCredits } from '@/app/(main)/_components/UserPlanCreditsProvider';
@@ -30,6 +30,7 @@ import {
   type PostSchedulerPrefillPayload,
   type PostSchedulerPrefillPost,
 } from '@/lib/post-scheduler-prefill-store';
+import { cn } from '@/lib/utils';
 
 const CREDIT_PER_SLIDE = 3;
 
@@ -55,11 +56,27 @@ export default function CarouselGenerationPage() {
   const [prompt, setPrompt] = useState('');
   const [slideCount, setSlideCount] = useState(5);
   const [platform, setPlatform] = useState<SocialPlatform>('instagram');
-  const [useMemoryLayer, setUseMemoryLayer] = useState(true);
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [slides, setSlides] = useState<CarouselSlideResult[]>([]);
   const [caption, setCaption] = useState('');
+  const referenceInputRef = useRef<HTMLInputElement>(null);
+
+  const referencePreviewUrl = useMemo(() => {
+    if (!referenceFile) return null;
+    return URL.createObjectURL(referenceFile);
+  }, [referenceFile]);
+
+  useEffect(() => {
+    return () => {
+      if (referencePreviewUrl) URL.revokeObjectURL(referencePreviewUrl);
+    };
+  }, [referencePreviewUrl]);
+
+  const clearReferenceFile = useCallback(() => {
+    setReferenceFile(null);
+    if (referenceInputRef.current) referenceInputRef.current.value = '';
+  }, []);
 
   const selectedAccounts = billing?.selected;
 
@@ -116,7 +133,6 @@ export default function CarouselGenerationPage() {
         prompt: prompt.trim() || undefined,
         platform,
         slideCount,
-        useMemoryLayer,
         image: referenceFile,
       });
       setSlides(res.slides ?? []);
@@ -133,7 +149,6 @@ export default function CarouselGenerationPage() {
     platform,
     prompt,
     slideCount,
-    useMemoryLayer,
     referenceFile,
   ]);
 
@@ -274,25 +289,69 @@ export default function CarouselGenerationPage() {
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={useMemoryLayer}
-            onChange={(e) => setUseMemoryLayer(e.target.checked)}
-            disabled={isGenerating}
-          />
-          Use brand photos from Business Data when relevant
-        </label>
-
         <div className="space-y-2">
-          <label className="text-sm font-medium">Reference image (optional)</label>
+          <span className="text-sm font-medium">Reference image (optional)</span>
           <input
+            ref={referenceInputRef}
             type="file"
             accept="image/*"
-            onChange={(e) => setReferenceFile(e.target.files?.[0] ?? null)}
+            className="sr-only"
             disabled={isGenerating}
-            className="text-sm"
+            onChange={(e) => {
+              setReferenceFile(e.target.files?.[0] ?? null);
+              e.target.value = '';
+            }}
           />
+          {referencePreviewUrl && referenceFile ? (
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative inline-block overflow-hidden rounded-xl border border-border/60 bg-muted/30">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={referencePreviewUrl}
+                  alt="Reference preview"
+                  className="mx-auto max-h-56 max-w-full object-contain"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="absolute right-2 top-2 opacity-70 hover:opacity-100 h-8 w-8 rounded-full"
+                  disabled={isGenerating}
+                  aria-label="Remove reference image"
+                  onClick={clearReferenceFile}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <button
+                type="button"
+                disabled={isGenerating}
+                onClick={() => referenceInputRef.current?.click()}
+                className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+              >
+                Replace image
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={isGenerating}
+              onClick={() => referenceInputRef.current?.click()}
+              className={cn(
+                'flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center transition',
+                'hover:border-primary/40 hover:bg-muted/50',
+                'disabled:pointer-events-none disabled:opacity-50'
+              )}
+            >
+              <ImagePlus className="h-6 w-6 text-primary" aria-hidden />
+              <span className="text-sm font-medium text-foreground">
+                Choose a reference image
+              </span>
+              <span className="text-xs text-muted-foreground">
+                JPEG, PNG, or WebP · optional
+              </span>
+            </button>
+          )}
         </div>
 
         {isGenerating && (

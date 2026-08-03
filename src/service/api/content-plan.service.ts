@@ -54,6 +54,9 @@ export type ContentPlanResponse = {
   to: string;
   platforms: ContentPlanPlatform[];
   days: ContentPlanDay[];
+  calendarSeeded: boolean;
+  initialCalendarGenerationPending: boolean;
+  canGenerateCalendar: boolean;
 };
 
 export async function getContentPlanApi(): Promise<ContentPlanResponse> {
@@ -62,6 +65,17 @@ export async function getContentPlanApi(): Promise<ContentPlanResponse> {
     data: ContentPlanResponse;
     message?: string;
   }>('/api/v1/user/content-plan');
+  return response.data.data;
+}
+
+export async function generateContentPlanApi(): Promise<{
+  status: 'generated' | 'already-generated';
+}> {
+  const response = await axiosClient.post<{
+    success: boolean;
+    data: { status: 'generated' | 'already-generated' };
+    message?: string;
+  }>('/api/v1/user/content-plan/generate');
   return response.data.data;
 }
 

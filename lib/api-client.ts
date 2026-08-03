@@ -1,18 +1,24 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import axiosClient from './axios';
+import { CONTENT_TOO_LARGE_MESSAGE } from './show-error-toast';
 
 const GENERIC_API_ERROR = 'Something went wrong. Please try again.';
 
 function toErrorMessage(err: unknown, fallback: string = GENERIC_API_ERROR) {
-  if (axios.isAxiosError(err) && !err.response) {
-    const code = err.code;
-    const msg = err.message || '';
-    if (
-      code === 'ERR_NETWORK' ||
-      code === 'ECONNREFUSED' ||
-      msg === 'Network Error'
-    ) {
-      return 'Try again later';
+  if (axios.isAxiosError(err)) {
+    if (err.response?.status === 413) {
+      return CONTENT_TOO_LARGE_MESSAGE;
+    }
+    if (!err.response) {
+      const code = err.code;
+      const msg = err.message || '';
+      if (
+        code === 'ERR_NETWORK' ||
+        code === 'ECONNREFUSED' ||
+        msg === 'Network Error'
+      ) {
+        return 'Try again later';
+      }
     }
   }
 

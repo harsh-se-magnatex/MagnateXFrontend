@@ -4,7 +4,22 @@ import { cn } from '@/lib/utils';
 /** Matches the `<Toaster id={…} />` in `@/components/ui/sonner`. */
 export const ERROR_TOASTER_ID = 'error-center';
 
+/** Shown when an upload/save request fails with HTTP 413. */
+export const CONTENT_TOO_LARGE_MESSAGE =
+  'Content Too Large. Upload less than 50 MB';
+
 type ErrorMessage = Parameters<typeof toast.error>[0];
+
+/**
+ * Prefer the Content Too Large message when the thrown error is a 413;
+ * otherwise show `fallback`.
+ */
+export function showCaughtErrorToast(err: unknown, fallback: ErrorMessage) {
+  if (err instanceof Error && err.message === CONTENT_TOO_LARGE_MESSAGE) {
+    return showErrorToast(CONTENT_TOO_LARGE_MESSAGE);
+  }
+  return showErrorToast(fallback);
+}
 
 /**
  * Modal-style error feedback: centered card (billing dialog look), no icon or

@@ -12,6 +12,7 @@ import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useUserTimezone } from '@/lib/user-timezone';
 import {
   forceRunContentPlanApi,
+  generateContentPlanApi,
   getContentPlanApi,
   type ContentPlanDay,
   type ContentPlanGeneratedItem,
@@ -432,6 +433,11 @@ export default function ContentPlanPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [forceRunKey, setForceRunKey] = useState<string | null>(null);
+  const [calendarSeeded, setCalendarSeeded] = useState(false);
+  const [initialGenerationPending, setInitialGenerationPending] =
+    useState(false);
+  const [canGenerateCalendar, setCanGenerateCalendar] = useState(false);
+  const [generatingCalendar, setGeneratingCalendar] = useState(false);
 
   const isAuto = billing?.mode === 'auto';
   const hasAccess = isAuto || billing?.mode === 'manual';
@@ -473,6 +479,9 @@ export default function ContentPlanPage() {
       const data = await getContentPlanApi();
       setDays(data.days);
       setRange({ from: data.from, to: data.to });
+      setCalendarSeeded(data.calendarSeeded);
+      setInitialGenerationPending(data.initialCalendarGenerationPending);
+      setCanGenerateCalendar(data.canGenerateCalendar);
       if (silent) setError('');
     } catch (err) {
       const message =
@@ -498,6 +507,32 @@ export default function ContentPlanPage() {
       if (!silent) setLoading(false);
     }
   }, []);
+
+  const handleGenerateCalendar = useCallback(async () => {
+    setGeneratingCalendar(true);
+    try {
+      await generateContentPlanApi();
+      toast.success('Your content calendar is ready');
+      await load({ silent: true });
+    } catch (err) {
+      const message =
+        err &&
+        typeof err === 'object' &&
+        'response' in err &&
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message
+          ? String(
+              (err as { response?: { data?: { message?: string } } }).response
+                ?.data?.message
+            )
+          : err instanceof Error
+            ? err.message
+            : 'Failed to generate content calendar';
+      toast.error(message);
+    } finally {
+      setGeneratingCalendar(false);
+    }
+  }, [load]);
 
   const handleForceRun = useCallback(
     async (date: string, platform: ContentPlanPlatform) => {
@@ -572,10 +607,9 @@ export default function ContentPlanPage() {
   useEffect(() => {
     if (authLoading || creditsLoading) return;
     if (!user) return;
-    if (!hasAccess) {
-      setLoading(false);
-      return;
-    }
+    if (!hasAccess) return;
+    // Initial API hydration intentionally owns this page's loading state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [authLoading, creditsLoading, user, hasAccess, load]);
 
@@ -634,16 +668,16 @@ export default function ContentPlanPage() {
         <div className="border border-border bg-card px-5 py-8 text-center">
           <Share2 className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
           <p className="text-sm font-medium text-foreground">
-            Connect a platform to see your plan
+            Select a platform to see your plan
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             The calendar only shows platforms you have selected.
           </p>
           <Link
-            href={WORKSPACE_NAV_HREFS.linkedProfiles}
+            href="/ai-engine"
             className="mt-4 inline-flex rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
           >
-            {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
+            Select Platforms
           </Link>
         </div>
       ) : null}
@@ -668,7 +702,45 @@ export default function ContentPlanPage() {
         </div>
       ) : null}
 
-      {!loading && !error && platforms.length > 0 ? (
+      {!loading &&
+      !error &&
+      isAuto &&
+      initialGenerationPending &&
+      platforms.length > 0 ? (
+        <div className="flex min-h-[360px] flex-col items-center justify-center border border-border bg-card px-6 text-center">
+          <CalendarRange className="mb-4 h-10 w-10 text-primary" />
+          <h2 className="text-xl font-bold text-foreground">
+            Generate your content calendar
+          </h2>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            We’ll allocate AI Engine, Content Studio, Video, Carousel, Event,
+            and Campaign days across your current plan.
+          </p>
+          <button
+            type="button"
+            onClick={() => void handleGenerateCalendar()}
+            disabled={!canGenerateCalendar || generatingCalendar}
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {generatingCalendar ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : null}
+            {generatingCalendar
+              ? 'Generating content calendar…'
+              : 'Generate Content Calendar'}
+          </button>
+          {!canGenerateCalendar ? (
+            <p className="mt-3 text-xs text-muted-foreground">
+              Complete your business profile and platform selection first.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {!loading &&
+      !error &&
+      platforms.length > 0 &&
+      (!isAuto || calendarSeeded) ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 px-0.5">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

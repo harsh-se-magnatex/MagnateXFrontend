@@ -240,35 +240,11 @@ export default function AutomatedPostPage() {
         toast.success('Event Studio posts processed.');
       }
     } catch (error: unknown) {
-      showErrorToast('Failed to schedule automated posts.');
+      showErrorToast('Failed to schedule Event Studio posts.');
     } finally {
       setIsSubmitting(false);
       setTimeout(() => setMessage(''), 5000);
     }
-  };
-
-  const handleDeleteCustomEvent = (id: string) => {
-    removeCustomEvent(id);
-    if (editingId === id) setEditingId(null);
-  };
-
-  const handleEditCustomEvent = (event: FestiveEventItem) => {
-    setEditingId(event.id);
-    setEditName(event.name);
-    setEditDate(event.date);
-    setEditDescription(event.description);
-    setEditReason(event.reason);
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingId) return;
-    updateCustomEvent(editingId, {
-      name: editName,
-      date: editDate,
-      description: editDescription,
-      reason: editReason,
-    });
-    setEditingId(null);
   };
 
   const allEvents = useMemo(

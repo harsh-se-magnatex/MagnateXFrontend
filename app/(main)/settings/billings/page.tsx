@@ -881,7 +881,10 @@ export default function BillingsPage() {
                         Started
                       </dt>
                       <dd className="mt-1 font-semibold text-slate-900">
-                        {formatTxnDate(subscriptionSummary.createdAt)}
+                        {formatTxnDate(
+                          subscriptionSummary.createdAt ??
+                            billing?.planStartedAt
+                        )}
                       </dd>
                     </div>
                     <div className="border-b border-border px-4 py-3 sm:border-b-0">
@@ -891,7 +894,10 @@ export default function BillingsPage() {
                           : 'Next billing'}
                       </dt>
                       <dd className="mt-1 font-semibold text-slate-900">
-                        {formatTxnDate(subscriptionSummary.nextBillingDate)}
+                        {formatTxnDate(
+                          subscriptionSummary.nextBillingDate ??
+                            billing?.planExpiresAt
+                        )}
                       </dd>
                     </div>
                   </dl>
@@ -997,6 +1003,38 @@ export default function BillingsPage() {
                     </div>
                   ) : null}
                 </>
+              ) : isSubscribed &&
+                (billing?.planStartedAt || billing?.planExpiresAt) ? (
+                <dl className="mt-5 grid overflow-hidden rounded-2xl border border-border bg-muted text-sm sm:grid-cols-3 sm:divide-x sm:divide-border">
+                  <div className="border-b border-border px-4 py-3 sm:border-b-0">
+                    <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      Billing cycle
+                    </dt>
+                    <dd className="mt-1 font-semibold text-slate-900">
+                      Monthly
+                    </dd>
+                  </div>
+                  <div className="border-b border-border px-4 py-3 sm:border-b-0">
+                    <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Started
+                    </dt>
+                    <dd className="mt-1 font-semibold text-slate-900">
+                      {billing?.planStartedAt
+                        ? formatFirestoreDate(billing.planStartedAt)
+                        : '—'}
+                    </dd>
+                  </div>
+                  <div className="border-b border-border px-4 py-3 sm:border-b-0">
+                    <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Access until
+                    </dt>
+                    <dd className="mt-1 font-semibold text-slate-900">
+                      {billing?.planExpiresAt
+                        ? formatFirestoreDate(billing.planExpiresAt)
+                        : '—'}
+                    </dd>
+                  </div>
+                </dl>
               ) : null}
             </div>
             <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
@@ -1007,7 +1045,7 @@ export default function BillingsPage() {
               >
                 Manage plan
               </Button>
-              {isSubscribed && (
+              {isSubscribed && subscriptionSummary?.subscriptionId ? (
                 <Button
                   type="button"
                   variant="outline"
@@ -1032,7 +1070,7 @@ export default function BillingsPage() {
                     ? 'Revoke cancellation'
                     : 'Cancel subscription'}
                 </Button>
-              )}
+              ) : null}
             </div>
           </div>
           {subscriptionSummary?.cancelAtNextBillingDate ? (

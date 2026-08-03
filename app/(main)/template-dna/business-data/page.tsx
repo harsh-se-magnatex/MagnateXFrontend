@@ -13,7 +13,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
 import { toast } from 'sonner';
-import { showErrorToast } from '@/lib/show-error-toast';
+import {
+  showCaughtErrorToast,
+  showErrorToast,
+} from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
 import {
   deleteMemoryLayerBrandPhoto,
@@ -414,7 +417,7 @@ export default function TemplateDnaMemoryLayerPage() {
       if (raw) setMemory(parseMemory(raw));
       toast.success('Image description saved');
     } catch (e) {
-      showErrorToast('Save failed');
+      showCaughtErrorToast(e, 'Save failed');
     } finally {
       setSavingDescriptionPath(null);
     }
@@ -462,7 +465,7 @@ export default function TemplateDnaMemoryLayerPage() {
         toast.success('Photos uploaded');
       }
     } catch (e) {
-      showErrorToast('Upload failed');
+      showCaughtErrorToast(e, 'Upload failed');
     } finally {
       setUploadingPhotos(false);
     }
@@ -490,7 +493,7 @@ export default function TemplateDnaMemoryLayerPage() {
       setPendingPdf(null);
       toast.success('PDF uploaded');
     } catch (e) {
-      showErrorToast('PDF upload failed');
+      showCaughtErrorToast(e, 'PDF upload failed');
     } finally {
       setUploadingPdf(false);
     }

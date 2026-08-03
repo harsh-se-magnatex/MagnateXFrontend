@@ -91,7 +91,20 @@ export function MediaLibraryImagePickerDialog({
         source: 'all',
         cursor: nextCursor,
       });
-      setItems((prev) => [...prev, ...(data?.items ?? [])]);
+      setItems((prev) => {
+        const next = data?.items ?? [];
+        if (!next.length) return prev;
+        const seen = new Set(
+          prev.map((item) => `${item.collection}-${item.id}`)
+        );
+        const appended = next.filter((item) => {
+          const key = `${item.collection}-${item.id}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+        return appended.length ? [...prev, ...appended] : prev;
+      });
       setNextCursor(data?.nextCursor ?? null);
       setHasMore(data?.hasMore ?? false);
     } catch {

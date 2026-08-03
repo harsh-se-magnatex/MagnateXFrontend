@@ -5,7 +5,10 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { showErrorToast } from '@/lib/show-error-toast';
+import {
+  showCaughtErrorToast,
+  showErrorToast,
+} from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
 import {
   BRAND_PHOTO_DESCRIPTION_MAX,
@@ -183,19 +186,6 @@ export default function BrandMemoryPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  const refreshBrandPhotos = useCallback(async () => {
-    try {
-      const res = await getMemoryLayer();
-      if (!isEnvelopeOk(res as { success?: boolean })) return;
-      const ml = parseMemory(
-        (res as { data?: { memoryLayer?: unknown } }).data?.memoryLayer
-      );
-      if (ml?.brandPhotos) setBrandPhotosMeta(ml.brandPhotos);
-    } catch {
-      /* ignore silent refresh errors */
-    }
-  }, []);
 
   useEffect(() => {
     const m: Record<string, string> = {};
@@ -412,7 +402,7 @@ export default function BrandMemoryPage() {
       setPendingPdf(null);
       toast.success('PDF uploaded');
     } catch (e) {
-      showErrorToast('PDF upload failed');
+      showCaughtErrorToast(e, 'PDF upload failed');
     } finally {
       setUploadingPdf(false);
     }
@@ -448,7 +438,7 @@ export default function BrandMemoryPage() {
         if (ml?.brandPhotos) setBrandPhotosMeta(ml.brandPhotos);
         toast.success('Image description saved');
       } catch (e) {
-        showErrorToast('Save failed');
+        showCaughtErrorToast(e, 'Save failed');
       }
     },
     [brandPhotosMeta, serverDescDrafts]
@@ -504,7 +494,7 @@ export default function BrandMemoryPage() {
       toast.success('Saved');
       goHomeWithPlatformTour();
     } catch (e) {
-      showErrorToast('Failed to finish');
+      showCaughtErrorToast(e, 'Failed to finish');
     } finally {
       setSubmitting(false);
     }

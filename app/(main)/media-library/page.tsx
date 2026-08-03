@@ -673,13 +673,32 @@ export default function MediaLibraryPage() {
     | null
   >(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const loadingMoreRef = useRef(false);
   const imagePreview = useImagePreview();
   /** Bumped on every fresh `load` so late responses cannot overwrite a newer tab. */
   const loadGenerationRef = useRef(0);
 
+  const mergeLibraryItems = (
+    prev: GeneratedMediaLibraryItem[],
+    next: GeneratedMediaLibraryItem[]
+  ): GeneratedMediaLibraryItem[] => {
+    if (!next.length) return prev;
+    const seen = new Set(prev.map((item) => `${item.collection}-${item.id}`));
+    const appended: GeneratedMediaLibraryItem[] = [];
+    for (const item of next) {
+      const key = `${item.collection}-${item.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      appended.push(item);
+    }
+    return appended.length ? [...prev, ...appended] : prev;
+  };
+
   const load = useCallback(async () => {
     const generation = ++loadGenerationRef.current;
+    loadingMoreRef.current = false;
     setLoading(true);
+    setLoadingMore(false);
     setError('');
     setItems([]);
     setNextCursor(null);
@@ -705,9 +724,10 @@ export default function MediaLibraryPage() {
   }, [load]);
 
   const loadMore = useCallback(async () => {
-    if (!hasMore || !nextCursor || loadingMore) return;
+    if (!hasMore || !nextCursor || loadingMoreRef.current) return;
     const generation = loadGenerationRef.current;
     const cursor = nextCursor;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
       const data = await getGeneratedMediaLibraryApi({
@@ -715,7 +735,7 @@ export default function MediaLibraryPage() {
         cursor,
       });
       if (generation !== loadGenerationRef.current) return;
-      setItems((prev) => [...prev, ...(data?.items ?? [])]);
+      setItems((prev) => mergeLibraryItems(prev, data?.items ?? []));
       setNextCursor(data?.nextCursor ?? null);
       setHasMore(data?.hasMore ?? false);
     } catch (e) {
@@ -723,14 +743,15 @@ export default function MediaLibraryPage() {
       setError('Could not load more items.');
     } finally {
       if (generation === loadGenerationRef.current) {
+        loadingMoreRef.current = false;
         setLoadingMore(false);
       }
     }
-  }, [source, nextCursor, hasMore, loadingMore]);
+  }, [source, nextCursor, hasMore]);
 
   useEffect(() => {
     const el = sentinelRef.current;
-    if (!el) return;
+    if (!el || !hasMore) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) void loadMore();
@@ -739,7 +760,7 @@ export default function MediaLibraryPage() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [loadMore, hasMore]);
 
   const handleScheduleFromGallery = useCallback(
     (item: GeneratedMediaLibraryItem) => {
@@ -939,7 +960,7 @@ export default function MediaLibraryPage() {
                 : null;
             return (
               <li
-                key={item.id}
+                key={`${item.collection}-${item.id}`}
                 role="button"
                 tabIndex={0}
                 onClick={() => setSelectedItem(item)}
@@ -1082,7 +1103,7 @@ export default function MediaLibraryPage() {
           onScheduled={handleDraftScheduled}
         />
       ) : null}
-      <div ref={sentinelRef} style={{ height: 1 }} />
+      {hasMore ? <div ref={sentinelRef} style={{ height: 1 }} /> : null}
       <ImagePreviewOverlay
         src={imagePreview.previewUrl}
         alt={imagePreview.previewAlt}
