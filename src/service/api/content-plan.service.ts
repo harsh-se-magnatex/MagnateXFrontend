@@ -15,7 +15,7 @@ export type ContentPlanGeneratedKind =
 
 export type ContentPlanGeneratedItem = {
   kind: ContentPlanGeneratedKind;
-  status: 'draft' | 'scheduled' | 'queued';
+  status: 'draft' | 'scheduled' | 'queued' | 'removed' | 'rejected';
   title?: string;
   captionPreview?: string;
   scheduledPostId?: string;

@@ -147,7 +147,7 @@ export type ContentCalendarReviewUser = {
 
 export type AdminContentPlanGeneratedItem = {
   kind: string;
-  status: 'draft' | 'scheduled' | 'queued';
+  status: 'draft' | 'scheduled' | 'queued' | 'removed' | 'rejected';
   title?: string;
   captionPreview?: string;
   scheduledPostId?: string;

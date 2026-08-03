@@ -74,6 +74,10 @@ function statusLabel(status: ContentPlanGeneratedItem['status']): string {
       return 'Generating';
     case 'scheduled':
       return 'Scheduled';
+    case 'removed':
+      return 'Removed by user';
+    case 'rejected':
+      return 'Rejected by user';
     default:
       return status;
   }
@@ -130,18 +134,26 @@ function entriesForSlot(args: {
   generated: ContentPlanGeneratedItem[];
   upcoming: ContentPlanUpcomingItem[];
 }): CellEntry[] {
-  const generated: CellEntry[] = args.generated.map((item) => ({
-    kind: item.kind,
-    label: kindLabel(item.kind),
-    status: statusLabel(item.status),
-    note: item.title?.trim() || item.captionPreview?.trim() || undefined,
-    href: item.scheduledPostId
-      ? WORKSPACE_NAV_HREFS.postQueue
-      : item.draftId
-        ? WORKSPACE_NAV_HREFS.createCampaign
-        : null,
-    source: 'generated',
-  }));
+  const generated: CellEntry[] = args.generated.map((item) => {
+    const isTerminal =
+      item.status === 'removed' || item.status === 'rejected';
+    return {
+      kind: item.kind,
+      label: kindLabel(item.kind),
+      status: statusLabel(item.status),
+      note: isTerminal
+        ? undefined
+        : item.title?.trim() || item.captionPreview?.trim() || undefined,
+      href: isTerminal
+        ? null
+        : item.scheduledPostId
+          ? WORKSPACE_NAV_HREFS.postQueue
+          : item.draftId
+            ? WORKSPACE_NAV_HREFS.createCampaign
+            : null,
+      source: 'generated' as const,
+    };
+  });
 
   if (generated.length > 0) return generated;
 
@@ -678,8 +690,9 @@ export default function ContentPlanPage() {
             <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
               Tip: hover over a cell for details. Force Run appears on planned
               Campaign, Content Studio, AI Engine, Video, Carousel, or Event
-              Studio cells — it hides after Force Run or when content is already
-              generating/generated.
+              Studio cells — it hides after Force Run, when content is already
+              generating/generated, or when the post was removed or rejected by
+              the user.
             </p>
           ) : (
             <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">

@@ -103,6 +103,10 @@ function statusLabel(status: AdminContentPlanGeneratedItem['status']): string {
       return 'Generating';
     case 'scheduled':
       return 'Scheduled';
+    case 'removed':
+      return 'Removed by user';
+    case 'rejected':
+      return 'Rejected by user';
     default:
       return status;
   }
@@ -640,8 +644,9 @@ export default function AdminContentCalendarReviewPage() {
                     <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
                       Force Run appears on planned Campaign, Content Studio, AI
                       Engine, Video, Carousel, or Event Studio cells for today
-                      and future dates — it hides after Force Run or when content
-                      is already generating/generated.
+                      and future dates — it hides after Force Run, when content
+                      is already generating/generated, or when the post was
+                      removed or rejected by the user.
                     </p>
                   ) : (
                     <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
@@ -931,6 +936,8 @@ function GeneratedCard({
   isRegenerating?: boolean;
   onOpen: () => void;
 }) {
+  const isTerminal =
+    item.status === 'removed' || item.status === 'rejected';
   const title =
     item.title?.trim() ||
     item.captionPreview?.trim() ||
@@ -1021,7 +1028,9 @@ function GeneratedCard({
               · {isRegenerating ? 'Regenerating' : statusLabel(item.status)}
             </span>
           </p>
-          <p className="mt-0.5 line-clamp-2 text-[11px] opacity-90">{title}</p>
+          {!isTerminal ? (
+            <p className="mt-0.5 line-clamp-2 text-[11px] opacity-90">{title}</p>
+          ) : null}
           {isCarousel && slideCount && slideCount > 1 ? (
             <p className="mt-0.5 text-[10px] opacity-70">{slideCount} slides</p>
           ) : null}
@@ -1059,10 +1068,13 @@ function PreviewModal({
   const showPreferred =
     Boolean(preferences.preferredTime) && !optimal;
   const isQueued = item.status === 'queued';
+  const isTerminal =
+    item.status === 'removed' || item.status === 'rejected';
   // Admin regenerate is Auto-plan only (manual users own their own review).
   const canRegenerate =
     regenerateEnabled &&
     !isQueued &&
+    !isTerminal &&
     !isRegenerating &&
     (Boolean(item.scheduledPostId) ||
       (item.kind === 'campaign' && Boolean(item.draftId)));
@@ -1357,6 +1369,20 @@ function StatusBadge({
   status: AdminContentPlanGeneratedItem['status'];
   postStatus?: string | null;
 }) {
+  if (status === 'removed') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-xs font-semibold text-rose-100">
+        Removed by user
+      </span>
+    );
+  }
+  if (status === 'rejected') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-xs font-semibold text-rose-100">
+        Rejected by user
+      </span>
+    );
+  }
   if (status === 'queued') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-500/15 px-2.5 py-1 text-xs font-semibold text-cyan-100">
