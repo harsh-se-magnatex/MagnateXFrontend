@@ -130,8 +130,9 @@ export type CreateCampaignParams = {
   suggestionId?: string;
 };
 
-/** Sync response from `POST /api/v1/campaign/create`. */
+/** Response from `POST /api/v1/campaign/create` (queued to Cloud Tasks). */
 export type CreateCampaignResponse = {
+  accepted?: boolean;
   successCount: number;
   failedCount: number;
   dayCount: number;

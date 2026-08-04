@@ -664,6 +664,11 @@ export default function CreateCampaignPage() {
         platforms: genPlatforms,
         suggestionId: selectedSuggestionId ?? undefined,
       });
+      if (response.accepted || (response.successCount === 0 && response.failedCount === 0)) {
+        void refreshDraftsRef.current?.();
+        // Stay on Generating drafts… while workers run in the background.
+        return;
+      }
       if (response.successCount > 0 && response.failedCount === 0) {
         toast.success(
           `Drafts ready — ${response.successCount} post(s) saved. Open Drafts to schedule them.`
@@ -674,13 +679,11 @@ export default function CreateCampaignPage() {
         );
       } else if (response.failedCount > 0) {
         showErrorToast('Campaign generation failed. Please try again.');
-      } else {
-        toast.success('Campaign processed.');
       }
       void refreshDraftsRef.current?.();
+      setIsSubmitting(false);
     } catch {
       showErrorToast('Could not create the campaign.');
-    } finally {
       setIsSubmitting(false);
     }
   }, [

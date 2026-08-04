@@ -21,7 +21,6 @@ import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
-import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   setPostSchedulerPrefill,
@@ -515,15 +514,14 @@ export default function VideoGenerationPage() {
       setResult({
         platform,
         videoGenerationDocId: response.videoGenerationDocId,
-        posterUrl: response.posterUrl ?? lastFrame.previewUrl ?? '',
-        posterFilePath: response.posterFilePath,
-        videoUrl: response.videoUrl ?? null,
-        videoFilePath: response.videoFilePath ?? null,
-        videoCaption: response.caption ?? null,
-        videoAspectRatio: response.aspectRatio ?? null,
+        posterUrl: lastFrame.previewUrl ?? '',
+        posterFilePath: undefined,
+        videoUrl: null,
+        videoFilePath: null,
+        videoCaption: null,
+        videoAspectRatio: null,
       });
-      setPipelinePhase('ready');
-      toast.success('Video is ready');
+      // Stay on Generating… while the worker runs in the background.
     } catch (err) {
       setPipelinePhase('failed');
       showErrorToast('Failed to generate video.');

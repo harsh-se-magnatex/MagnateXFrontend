@@ -6,7 +6,6 @@ import { Expand } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import {
   generateProductAdvertApi,
-  type ProductAdvertGenerateResponse,
   type ProductGenerationMode,
 } from '@/src/service/api/product-advert.service';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
@@ -16,7 +15,6 @@ import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
-import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   setPostSchedulerPrefill,
@@ -68,66 +66,6 @@ const BACKGROUND_OPTIONS = [
 ];
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
-
-function mapWorkerResultToAdvertResult(
-  platform: string,
-  r: Record<string, unknown>
-): AdvertResult | null {
-  if (typeof r.url !== 'string') return null;
-  const copyRaw =
-    r.copy && typeof r.copy === 'object'
-      ? (r.copy as Record<string, unknown>)
-      : null;
-  return {
-    platform,
-    chosenContentType:
-      typeof r.chosenContentType === 'string' ? r.chosenContentType : undefined,
-    contentFormatLabel:
-      typeof r.contentFormatLabel === 'string' ? r.contentFormatLabel : undefined,
-    analysis:
-      r.analysis && typeof r.analysis === 'object'
-        ? (r.analysis as Record<string, unknown>)
-        : null,
-    copy: copyRaw
-      ? {
-          headline: String(copyRaw.headline ?? ''),
-          primary_text: String(copyRaw.primary_text ?? ''),
-          cta: String(copyRaw.cta ?? ''),
-          hashtags: Array.isArray(copyRaw.hashtags)
-            ? (copyRaw.hashtags as unknown[]).map((t) => String(t ?? ''))
-            : [],
-        }
-      : null,
-    imageUrl: String(r.url ?? ''),
-    imageFilePath: typeof r.filePath === 'string' ? r.filePath : undefined,
-    logoPosition: typeof r.logoPosition === 'string' ? r.logoPosition : undefined,
-    selectedLogoVariantIndex:
-      typeof r.selectedLogoVariantIndex === 'number'
-        ? r.selectedLogoVariantIndex
-        : undefined,
-    logoVariantSource:
-      typeof r.logoVariantSource === 'string' ? r.logoVariantSource : undefined,
-    logoVariantCount:
-      typeof r.logoVariantCount === 'number' ? r.logoVariantCount : undefined,
-    marketingTagline:
-      typeof r.marketingTagline === 'string' ? r.marketingTagline : undefined,
-    productAdvertDocId: typeof r.postId === 'string' ? r.postId : null,
-  };
-}
-
-function mapProductAdvertResponse(
-  response: ProductAdvertGenerateResponse
-): { generationMode: ProductGenerationMode; platformResults: AdvertResult[] } {
-  const platformResults = response.platformResults
-    .map(({ platform, result }) =>
-      mapWorkerResultToAdvertResult(platform, result)
-    )
-    .filter((row): row is AdvertResult => row != null);
-  return {
-    generationMode: response.generationMode,
-    platformResults,
-  };
-}
 
 function platformLabel(platform: SocialPlatform): string {
   if (platform === 'instagram') return 'Instagram';
@@ -315,17 +253,13 @@ export default function ProductAdvertPage() {
         campaignContext,
         useIndustryResearch,
       });
-      const mapped = mapProductAdvertResponse(response);
-      setFinalResult(mapped);
-      setLastGenerationMode(mapped.generationMode);
-      if (mapped.platformResults.length) {
-        toast.success('Advert generated successfully');
-      }
+      setFinalResult(null);
+      setLastGenerationMode(response.generationMode);
+      // Stay on Generating… while the worker runs in the background.
     } catch (e: unknown) {
       const message = 'Failed to generate advert. Please try again.';
       showErrorToast(message);
       console.log(e);
-    } finally {
       setIsGenerating(false);
     }
   }

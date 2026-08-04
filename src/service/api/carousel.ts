@@ -8,19 +8,10 @@ type ApiEnvelope<T> = {
   data: T;
 };
 
-export type CarouselSlideResult = {
-  index: number;
-  headline: string;
-  imageUrl: string;
-  imageFilePath?: string;
-  purpose?: string;
-  visualType?: string;
-};
-
 export type GenerateCarouselResponse = {
-  slides: CarouselSlideResult[];
-  caption: string;
-  galleryDocId: string | null;
+  accepted: true;
+  platform: SocialPlatform;
+  slideCount: number;
   creditCost: number;
 };
 

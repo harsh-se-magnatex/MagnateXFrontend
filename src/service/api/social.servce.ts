@@ -110,11 +110,14 @@ export type AutomatedPostEventPayload = {
   reason: string;
 };
 
-/** Sync response from `POST /api/v1/automated-post/create-automated-post`. */
+/** Response from `POST /api/v1/automated-post/create-automated-post` (queued). */
 export type CreateAutomatedPostResponse = {
-  successCount: number;
-  failedCount: number;
+  accepted?: boolean;
+  platforms?: string[];
   eventCount: number;
+  creditCost?: number;
+  successCount?: number;
+  failedCount?: number;
 };
 
 export const createAutomatedPost = async (

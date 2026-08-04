@@ -40,7 +40,6 @@ import {
   VIDEO_EDIT_SCENE_PRESETS,
   VIDEO_EDIT_TOOLS,
   type SchedulePostPayload,
-  type StudioVideoEditResult,
   type VideoEditIntentId,
   type VideoEditPlacementPresetId,
   type VideoEditScenePresetId,
@@ -262,9 +261,7 @@ export default function AIContentPage() {
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
-  const [videoResult, setVideoResult] = useState<StudioVideoEditResult | null>(
-    null
-  );
+  const [isGenerating, setIsGenerating] = useState(false);
   const [editTool, setEditTool] = useState<VideoEditToolId>('enhance');
   const [editIntent, setEditIntent] =
     useState<VideoEditIntentId>('professional');
@@ -278,8 +275,6 @@ export default function AIContentPage() {
     () => VIDEO_EDIT_TOOLS.find((t) => t.id === editTool) ?? VIDEO_EDIT_TOOLS[0],
     [editTool]
   );
-
-  const [isGenerating, setIsGenerating] = useState(false);
 
   // Session state: in-memory Zustand, survives SPA navigation within the tab.
   const prompt = useInstantGeneratedState((s) => s.prompt);
@@ -659,7 +654,6 @@ export default function AIContentPage() {
     if (isGenerating || mode === createMode) return;
     setCreateMode(mode);
     setGenerateError(null);
-    setVideoResult(null);
     if (mode === 'image') {
       setSelectedVideo(null);
       setVideoError(null);
@@ -679,7 +673,6 @@ export default function AIContentPage() {
 
     if (createMode === 'video') {
       if (!selectedVideo) return;
-      setVideoResult(null);
       setGenerateError(null);
       promptForRunRef.current = prompt.trim();
       setIsGenerating(true);
@@ -697,18 +690,14 @@ export default function AIContentPage() {
           productImages:
             editTool === 'add_product' ? productImages : undefined,
         });
-        if (!response.videoUrl?.trim()) {
-          throw new Error(
-            'The video model did not return a video. Try again.'
-          );
+        if (!response.accepted) {
+          throw new Error('Could not generate video.');
         }
-        setVideoResult(response);
-        toast.success('Edited video is ready');
+        // Stay on Generating… while the worker runs in the background.
       } catch (e: unknown) {
         const message = 'Failed to edit video.';
         showErrorToast(message);
         setGenerateError(message);
-      } finally {
         setIsGenerating(false);
       }
       return;
@@ -732,75 +721,18 @@ export default function AIContentPage() {
         image: imageToSend,
       });
 
-      const renderedImages = response.renderedImages.filter((r) =>
-        r.imageUrl?.trim()
-      );
-
-      if (renderedImages.length === 0) {
-        throw new Error(
-          'The image model did not return an image. Try again or pick another platform.'
-        );
+      if (!response.accepted) {
+        throw new Error('Could not generate content.');
       }
-
-      const item: CreatedContent = {
-        id: crypto.randomUUID(),
-        promptSummary:
-          promptForRunRef.current ||
-          (response.inferredImageContext
-            ? response.inferredImageContext
-            : 'Image-only'),
-        inferredImageContext: response.inferredImageContext,
-        renderedImages,
-        createdAt: new Date().toISOString(),
-      };
-
-      setGenerated(item);
-      pushHistory(item);
-
-      if (renderedImages.length === 1 && renderedImages[0].imageUrl) {
-        setSelectedRenderedImage(renderedImages[0]);
-        setPlatform(renderedImages[0].platform);
-      } else if (renderedImages.length > 1) {
-        setPlatform('all_platforms');
-      }
-
-      toast.success('Content generated successfully');
+      setGenerated(null);
+      setSelectedRenderedImage(null);
+      // Stay on Generating… while the worker runs in the background.
     } catch (e: unknown) {
       const message = 'Failed to generate content.';
       showErrorToast(message);
       setGenerateError(message);
-    } finally {
       setIsGenerating(false);
     }
-  };
-
-  const handleSendVideoToScheduler = () => {
-    if (!videoResult?.videoUrl || !videoResult.videoFilePath) return;
-    const targetPlatform = (
-      isSocialPlatform(videoResult.platform)
-        ? videoResult.platform
-        : genPlatforms[0]
-    ) as SocialPlatform | undefined;
-    if (!targetPlatform) return;
-    const payload: PostSchedulerPrefillPayload = {
-      source: 'gallery',
-      createdAt: Date.now(),
-      lockedPlatform: targetPlatform,
-      posts: [
-        {
-          imageUrl: videoResult.videoUrl,
-          imageFilePath: '',
-          mediaType: 'video',
-          videoUrl: videoResult.videoUrl,
-          videoFilePath: videoResult.videoFilePath,
-          message: videoResult.caption?.trim() ?? '',
-          platform: targetPlatform,
-          source: 'instant-generation',
-        },
-      ],
-    };
-    setPostSchedulerPrefill(payload);
-    router.push(`${WORKSPACE_NAV_HREFS.schedulePost}?prefill=gallery`);
   };
 
   const handleSchedule = async () => {
@@ -1385,62 +1317,11 @@ export default function AIContentPage() {
               <Sparkles className="h-4 w-4" />
             )}
             {isGenerating
-              ? createMode === 'video'
-                ? 'Editing video with AI…'
-                : 'Generating...'
+              ? 'Generating...'
               : createMode === 'video'
                 ? `Edit video ${credits !== undefined && credits >= generationCreditCost ? '' : '(Insufficient credits)'}`
                 : `Generate content ${credits !== undefined && credits >= generationCreditCost ? '' : '(Insufficient credits)'}`}
           </button>
-
-          {createMode === 'video' && videoResult?.videoUrl && (
-            <div className="mt-2 rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-4">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
-                Edited video
-                {videoResult.platform ? ` · ${videoResult.platform}` : ''}
-                {videoResult.aspectRatio
-                  ? ` · ${videoResult.aspectRatio}`
-                  : ''}
-              </p>
-              <video
-                src={videoResult.videoUrl}
-                controls
-                playsInline
-                className="max-h-[420px] w-full rounded-xl bg-black object-contain border border-slate-200"
-              />
-              <div className="flex flex-wrap gap-3">
-                <a
-                  href={videoResult.videoUrl}
-                  download={`quick-create-video-${Date.now()}.mp4`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-full border border-indigo-200 bg-white px-5 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
-                >
-                  Download
-                </a>
-                <button
-                  type="button"
-                  onClick={handleSendVideoToScheduler}
-                  className="inline-flex items-center justify-center rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
-                >
-                  Schedule
-                </button>
-              </div>
-              {videoResult.caption ? (
-                <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
-                  {videoResult.caption}
-                </p>
-              ) : null}
-              {videoResult.omniPrompt ? (
-                <p className="text-xs text-slate-500 rounded-lg bg-white/80 border border-slate-100 px-3 py-2">
-                  <span className="font-medium text-slate-600">
-                    Omni prompt:{' '}
-                  </span>
-                  {videoResult.omniPrompt}
-                </p>
-              ) : null}
-            </div>
-          )}
 
           {createMode === 'image' && generated && (
             <div className="mt-2 rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-4">

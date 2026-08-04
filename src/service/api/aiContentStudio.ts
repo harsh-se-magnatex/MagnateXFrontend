@@ -19,11 +19,9 @@ export type StudioRenderedImage = {
 };
 
 export type StudioGenerateResult = {
-  contentDescription?: string;
-  contentType?: string;
-  instantGenerationDocId?: string | null;
-  inferredImageContext: string | null;
-  renderedImages: StudioRenderedImage[];
+  accepted: true;
+  platforms: string[];
+  creditCost: number;
 };
 
 export async function generateAiContentStudio(params: {
@@ -44,14 +42,9 @@ export async function generateAiContentStudio(params: {
 }
 
 export type StudioVideoEditResult = {
+  accepted: true;
   platform: string;
-  videoUrl: string;
-  videoFilePath: string;
-  caption: string;
-  omniPrompt?: string | null;
-  aspectRatio?: string | null;
-  instantGenerationDocId?: string | null;
-  generatedAt?: string | null;
+  creditCost: number;
 };
 
 export const VIDEO_EDIT_TOOLS = [
@@ -138,11 +131,7 @@ export async function editVideoAiContentStudio(params: {
 
   const res = await axiosClient.post<ApiEnvelope<StudioVideoEditResult>>(
     '/api/v1/ai-content-studio/edit-video',
-    form,
-    {
-      // Omni edit can take several minutes
-      timeout: 35 * 60 * 1000,
-    }
+    form
   );
   return res.data.data;
 }

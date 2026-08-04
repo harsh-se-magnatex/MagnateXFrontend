@@ -30,7 +30,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import Link from 'next/link';
-import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
@@ -217,32 +216,22 @@ export default function AutomatedPostPage() {
       setTimeout(() => setMessage(''), 5000);
       return;
     }
-    const platformsUsed = [...genPlatforms];
     setIsSubmitting(true);
     try {
       const response = await createAutomatedPost(selectedEvents, genPlatforms);
       clearSelected();
-      if (response.successCount > 0) {
-        const platformSummary =
-          platformsUsed.length === 1
-            ? platformLabel(platformsUsed[0])
-            : `${platformsUsed.length} platforms`;
-        toast.success(
-          `Scheduled ${response.successCount} event(s) on ${platformSummary} successfully.`
+      if ((response.failedCount ?? 0) > 0) {
+        showErrorToast(
+          `${response.successCount ?? 0} scheduled, ${response.failedCount} failed.`
         );
+        setIsSubmitting(false);
+        return;
       }
-      if (response.failedCount > 0) {
-        toast.success(
-          `${response.successCount} scheduled, ${response.failedCount} failed.`
-        );
-      }
-      if (response.successCount === 0 && response.failedCount === 0) {
-        toast.success('Event Studio posts processed.');
-      }
+      // Stay on Generating… while workers run in the background.
     } catch (error: unknown) {
       showErrorToast('Failed to schedule Event Studio posts.');
-    } finally {
       setIsSubmitting(false);
+    } finally {
       setTimeout(() => setMessage(''), 5000);
     }
   };
@@ -610,7 +599,7 @@ export default function AutomatedPostPage() {
                 {isSubmitting ? (
                   <span className="inline-flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    Scheduling...
+                    Generating...
                   </span>
                 ) : (
                   `Confirm & Schedule${insufficientCredits ? ' (insufficient credits)' : ''}`
@@ -618,7 +607,7 @@ export default function AutomatedPostPage() {
               </button>
               {isSubmitting && (
                 <p className="mt-4 text-xs font-medium text-indigo-700">
-                  Generating Event Studio posts…
+                  Generating...
                 </p>
               )}
             </div>

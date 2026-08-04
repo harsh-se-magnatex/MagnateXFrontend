@@ -19,21 +19,17 @@ export type ProductAdvertPlatformResult = {
 };
 
 export type ProductAdvertGenerateResponse = {
+  accepted: true;
   generationMode: ProductGenerationMode;
-  platformResults: ProductAdvertPlatformResult[];
+  platforms: string[];
+  creditCost: number;
 };
 
 export type ProductAdvertVideoGenerateResponse = {
+  accepted: true;
   videoGenerationDocId: string;
   platform: string;
-  videoUrl?: string;
-  videoFilePath?: string;
-  posterUrl?: string;
-  posterFilePath?: string;
-  caption?: string | null;
-  aspectRatio?: string;
-  durationSeconds?: number;
-  [key: string]: unknown;
+  creditCost: number;
 };
 
 function appendPlatforms(form: FormData, platforms?: string[]) {
