@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ImagePlus, Layers, Loader2, Sparkles, X } from 'lucide-react';
+import { CreditCard, ImagePlus, Layers, Loader2, Sparkles, X } from 'lucide-react';
 import { useAuth } from '@/src/hooks/useAuth';
 import { generateCarousel } from '@/src/service/api/carousel';
 import { useUserPlanCredits } from '@/app/(main)/_components/UserPlanCreditsProvider';
@@ -24,6 +24,7 @@ import {
 import Link from 'next/link';
 import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import { cn } from '@/lib/utils';
+import axios from 'axios';
 
 const CREDIT_PER_SLIDE = 3;
 
@@ -40,6 +41,18 @@ function firstEnabledPlatform(
   return PLATFORM_ORDER.find((p) => accounts[p] === true);
 }
 
+function apiErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data as
+      | { message?: string; error?: string }
+      | undefined;
+    const msg = data?.message || data?.error;
+    if (typeof msg === 'string' && msg.trim()) return msg.trim();
+  }
+  if (err instanceof Error && err.message.trim()) return err.message.trim();
+  return fallback;
+}
+
 export default function CarouselGenerationPage() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
@@ -51,6 +64,11 @@ export default function CarouselGenerationPage() {
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const referenceInputRef = useRef<HTMLInputElement>(null);
+
+  const credits = billing?.credits;
+  const creditCost = slideCount * CREDIT_PER_SLIDE;
+  const creditOk =
+    typeof credits === 'number' && Number.isFinite(credits) && credits >= creditCost;
 
   const referencePreviewUrl = useMemo(() => {
     if (!referenceFile) return null;
@@ -106,12 +124,16 @@ export default function CarouselGenerationPage() {
     }
   }, [billingLoading, selectedAccounts, platform]);
 
-  const creditCost = slideCount * CREDIT_PER_SLIDE;
-
   const handleGenerate = useCallback(async () => {
     if (isGenerating) return;
     if (!enabledPlatforms.includes(platform)) {
       showErrorToast('Connect and select this platform first.');
+      return;
+    }
+    if (!creditOk) {
+      showErrorToast(
+        `Not enough credits. This carousel costs ${creditCost} credits.`
+      );
       return;
     }
     try {
@@ -123,14 +145,16 @@ export default function CarouselGenerationPage() {
         image: referenceFile,
       });
       // Stay on Generating… while the worker runs in the background.
-    } catch {
-      showErrorToast('Could not generate carousel');
+    } catch (err) {
+      showErrorToast(apiErrorMessage(err, 'Could not generate carousel'));
       setIsGenerating(false);
     }
   }, [
     isGenerating,
     enabledPlatforms,
     platform,
+    creditOk,
+    creditCost,
     prompt,
     slideCount,
     referenceFile,
@@ -148,15 +172,34 @@ export default function CarouselGenerationPage() {
 
   return (
     <div className="max-w-4xl mx-auto page-enter pb-16 space-y-8">
-      <header className="space-y-2">
-        <div className="flex items-center gap-2 text-primary">
-          <Layers className="h-6 w-6" />
-          <h1 className={workspacePageTitleClass}>Carousel Posts</h1>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-primary">
+            <Layers className="h-6 w-6" />
+            <h1 className={workspacePageTitleClass}>Carousel Posts</h1>
+          </div>
+          <p className={workspacePageDescriptionClass}>
+            Generate a 2–7 slide portrait carousel (1080×1350) with storyboarding
+            and brand asset selection.
+          </p>
         </div>
-        <p className={workspacePageDescriptionClass}>
-          Generate a 2–7 slide portrait carousel (1080×1350) with storyboarding
-          and brand asset selection.
-        </p>
+        <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+            <CreditCard className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+              Credits:{' '}
+              <span className="font-semibold text-black text-sm">
+                {billingLoading ? '…' : (credits ?? '—')}
+              </span>
+            </p>
+            <span className="text-xs font-normal text-slate-500">
+              Cost:
+              <span className="font-semibold">&nbsp;{creditCost}</span>
+            </span>
+          </div>
+        </div>
       </header>
 
       <section className="glass-card rounded-2xl border border-border/40 p-6 space-y-5">
@@ -310,11 +353,15 @@ export default function CarouselGenerationPage() {
         <Button
           type="button"
           className="w-full"
-          disabled={isGenerating || showSelectAccountsFirst}
+          disabled={isGenerating || showSelectAccountsFirst || !creditOk}
           onClick={() => void handleGenerate()}
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          {isGenerating ? 'Generating…' : 'Generate carousel'}
+          {isGenerating
+            ? 'Generating…'
+            : !creditOk
+              ? 'Generate carousel (Insufficient credits)'
+              : 'Generate carousel'}
         </Button>
       </section>
     </div>
