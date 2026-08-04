@@ -16,7 +16,7 @@ export type WaitForParentJobResult = {
   docIds: string[];
   matchedDocs: Array<{ id: string; data: Record<string, unknown> }>;
   timedOut: boolean;
-  /** `generated` if every slot succeeded; `failed` if any failure stub; `timedOut` otherwise. */
+  /** `generated` if any slot succeeded; `failed` if all slots failed; `timedOut` otherwise. */
   outcome: GenerationWaitOutcome;
   failedCount: number;
   successCount: number;
@@ -139,7 +139,9 @@ export function waitForParentJobDocs(args: {
               docIds,
               matchedDocs,
               timedOut: false,
-              outcome: failedCount > 0 ? 'failed' : 'generated',
+              // Partial multi-platform success still counts as generated so the
+              // UI can hydrate the platforms that finished.
+              outcome: successCount > 0 ? 'generated' : 'failed',
               failedCount,
               successCount,
             });

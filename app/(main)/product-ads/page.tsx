@@ -16,7 +16,6 @@ import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
-import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   setPostSchedulerPrefill,
@@ -46,6 +45,7 @@ import {
   validateGenerationPlatformSelection,
 } from '@/lib/platform-selection';
 import { useTourDemo } from '@/src/stores/tourState';
+import { toast } from 'sonner';
 
 const BACKGROUND_OPTIONS = [
   '',
@@ -164,12 +164,6 @@ export default function ProductAdvertPage() {
   const setGenerationMode = useProductAdvertState((s) => s.setGenerationMode);
   const campaignContext = useProductAdvertState((s) => s.campaignContext);
   const setCampaignContext = useProductAdvertState((s) => s.setCampaignContext);
-  const useIndustryResearch = useProductAdvertState(
-    (s) => s.useIndustryResearch
-  );
-  const setUseIndustryResearch = useProductAdvertState(
-    (s) => s.setUseIndustryResearch
-  );
   const prompt = useProductAdvertState((s) => s.prompt);
   const setPrompt = useProductAdvertState((s) => s.setPrompt);
   const genPlatforms = useProductAdvertState((s) => s.genPlatforms);
@@ -322,7 +316,7 @@ export default function ProductAdvertPage() {
         platforms: genPlatforms,
         generationMode,
         campaignContext,
-        useIndustryResearch,
+        useIndustryResearch: generationMode === 'social_full' ? true : false,
       });
       setFinalResult(null);
       setLastGenerationMode(response.generationMode);
@@ -361,12 +355,15 @@ export default function ProductAdvertPage() {
         .join(' ')
       : '';
 
-    const fallbackCaption = String(resultItem.caption ?? '').trim();
-
-    return [headline, primary, cta, hashtags, fallbackCaption]
+    const assembled = [headline, primary, cta, hashtags]
       .filter(Boolean)
       .join('\n\n')
       .trim();
+    // Prefer structured copy; fall back to top-level caption only when empty.
+    // Social-full stores the same string in both primary_text and caption —
+    // joining both duplicated the whole post (including Website/Contact).
+    if (assembled) return assembled;
+    return String(resultItem.caption ?? '').trim();
   }
 
   function resolveSchedulerCaption(resultItem: AdvertResult) {
@@ -488,14 +485,15 @@ export default function ProductAdvertPage() {
             className="w-full bg-white border border-slate-200 text-slate-900 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
           />
         </div>
-
+                {generationMode==="social_full" &&
+                
         <div className="flex items-center gap-2 mb-6">
           <input
             id="useIndustryResearch"
             type="checkbox"
-            checked={useIndustryResearch}
-            onChange={(e) => setUseIndustryResearch(e.target.checked)}
-            className="accent-indigo-600 rounded"
+            checked={true}
+            onChange={() => {}}
+            className="accent-indigo-600 rounded disabled:opacity-50"
           />
           <label
             htmlFor="useIndustryResearch"
@@ -504,6 +502,7 @@ export default function ProductAdvertPage() {
             Use industry research (full social mode; skipped when off)
           </label>
         </div>
+}
         <div id="tour-pa-upload" className="space-y-3 mb-6">
           <label className="block text-slate-700 font-medium">
             Upload product PNG (transparent background)
@@ -532,25 +531,6 @@ export default function ProductAdvertPage() {
             </div>
           </div>
         )}
-
-        <div className="space-y-2 mb-4">
-          <label className="text-slate-700 font-medium">
-            {generationMode === 'social_full'
-              ? 'Creative direction (optional)'
-              : 'Your prompt (optional)'}
-          </label>
-          <input
-            type="text"
-            placeholder={
-              generationMode === 'social_full'
-                ? 'Merged with campaign context for the full post'
-                : 'e.g. Perfume bottle handed by a man, photoshoot image'
-            }
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            className="w-full bg-white border border-slate-200 text-slate-900 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
 
         {generationMode === 'advert_asset' && (
           <div className="space-y-2 mb-8">

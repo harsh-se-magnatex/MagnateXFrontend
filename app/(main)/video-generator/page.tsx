@@ -22,7 +22,6 @@ import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
-import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   setPostSchedulerPrefill,
@@ -41,6 +40,7 @@ import {
   detectVideoFramePreviewMode,
   type VideoFramePreviewMode,
 } from '@/lib/video-frame-preview';
+import { toast } from 'sonner';
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 type SocialPlatform = (typeof PLATFORM_ORDER)[number];

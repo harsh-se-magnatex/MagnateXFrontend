@@ -18,6 +18,7 @@ import {
   Instagram,
   Linkedin,
   Plug,
+  Phone,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -258,6 +259,7 @@ export default function AutomationPreferencePage() {
   const [logoPreference, setLogoPreference] = useState('top-left');
   const [emojiUsage, setEmojiUsage] = useState(true);
   const [socialSalesEmailUsage, setSocialSalesEmailUsage] = useState(true);
+  const [socialSalesContactUsage, setSocialSalesContactUsage] = useState(true);
   const [needApproval, setNeedApproval] = useState(true);
   const [timeZone, setTimeZone] = useState('');
   const [preferredTime, setPreferredTime] = useState(DEFAULT_PREFERRED_POSTING_TIME);
@@ -427,6 +429,7 @@ export default function AutomationPreferencePage() {
     currentLogoPreference = logoPreference,
     currentEmojiUsage = emojiUsage,
     currentSalesEmailUsage = socialSalesEmailUsage,
+    currentSalesContactUsage = socialSalesContactUsage,
     currentApproval = needApproval,
     curentTimeZone = timeZone,
     currentCaptionObject = captionObject,
@@ -443,6 +446,7 @@ export default function AutomationPreferencePage() {
         currentLogoPreference,
         currentEmojiUsage,
         currentSalesEmailUsage,
+        currentSalesContactUsage,
         currentCaptionObject,
         currentApproval,
         curentTimeZone,
@@ -514,6 +518,7 @@ export default function AutomationPreferencePage() {
                       logoPreference,
                       newValue,
                       socialSalesEmailUsage,
+                      socialSalesContactUsage,
                       needApproval,
                       timeZone,
                       captionObject,
@@ -559,6 +564,7 @@ export default function AutomationPreferencePage() {
                       value,
                       emojiUsage,
                       socialSalesEmailUsage,
+                      socialSalesContactUsage,
                       needApproval,
                       timeZone,
                       captionObject,
@@ -581,12 +587,13 @@ export default function AutomationPreferencePage() {
               </div>
             </div>
           </div>
+          <div className='flex justify-between'>
           <div className="mt-8">
             <label className="text-sm font-semibold text-slate-700 block mb-2">
-              Social Sales Email and contact number Usage
+              Social Sales Email Usage
             </label>
             <p className="text-xs text-slate-500 mb-3">
-              Include your social sales email and contact number in the
+              Include your social sales email in the
               generated captions automatically.
             </p>
             <div className="mt-4 flex items-center gap-3">
@@ -601,6 +608,7 @@ export default function AutomationPreferencePage() {
                     logoPreference,
                     emojiUsage,
                     newValue,
+                    socialSalesContactUsage,
                     needApproval,
                     timeZone,
                     captionObject,
@@ -629,6 +637,57 @@ export default function AutomationPreferencePage() {
                 )}
               />
             </div>
+          </div>
+          <div className="mt-8">
+            <label className="text-sm font-semibold text-slate-700 block mb-2">
+              Social Sales Contact Usage
+            </label>
+            <p className="text-xs text-slate-500 mb-3 ">
+              Include your social sales contact number in the
+              generated captions automatically.
+            </p>
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={socialSalesContactUsage}
+                onClick={() => {
+                  const newValue = !socialSalesContactUsage;
+                  setSocialSalesContactUsage(newValue);
+                  handleSubmit(
+                    logoPreference,
+                    emojiUsage,
+                    socialSalesEmailUsage,
+                    newValue,
+                    needApproval,
+                    timeZone,
+                    captionObject,
+                    preferredTime
+                  );
+                }}
+                className={cn(
+                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+                  socialSalesContactUsage ? 'bg-indigo-600' : 'bg-slate-200'
+                )}
+              >
+                <span
+                  className={cn(
+                    'pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-sm transition-transform',
+                    socialSalesContactUsage ? 'translate-x-5' : 'translate-x-0'
+                  )}
+                />
+              </button>
+              <span className="text-sm font-medium text-slate-700">
+                {socialSalesEmailUsage ? 'Enabled' : 'Disabled'}
+              </span>
+              <Phone
+                className={cn(
+                  'h-4 w-4 ml-1',
+                  socialSalesEmailUsage ? 'text-indigo-500' : 'text-slate-400'
+                )}
+              />
+            </div>
+          </div>
           </div>
         </section>
 
@@ -664,6 +723,7 @@ export default function AutomationPreferencePage() {
                       logoPreference,
                       emojiUsage,
                       socialSalesEmailUsage,
+                      socialSalesContactUsage,
                       needApproval,
                       timeZone,
                       {
@@ -716,6 +776,7 @@ export default function AutomationPreferencePage() {
                       logoPreference,
                       emojiUsage,
                       socialSalesEmailUsage,
+                      socialSalesContactUsage,
                       needApproval,
                       timeZone,
                       {
@@ -768,6 +829,7 @@ export default function AutomationPreferencePage() {
                       logoPreference,
                       emojiUsage,
                       socialSalesEmailUsage,
+                      socialSalesContactUsage,
                       needApproval,
                       timeZone,
                       {
@@ -847,6 +909,7 @@ export default function AutomationPreferencePage() {
                         logoPreference,
                         emojiUsage,
                         socialSalesEmailUsage,
+                        socialSalesContactUsage,
                         true,
                         timeZone,
                         captionObject,
@@ -878,6 +941,7 @@ export default function AutomationPreferencePage() {
                         logoPreference,
                         emojiUsage,
                         socialSalesEmailUsage,
+                        socialSalesContactUsage,
                         false,
                         timeZone,
                         captionObject,
@@ -915,6 +979,7 @@ export default function AutomationPreferencePage() {
                     logoPreference,
                     emojiUsage,
                     socialSalesEmailUsage,
+                    socialSalesContactUsage,
                     needApproval,
                     e.target.value,
                     captionObject,
@@ -953,6 +1018,7 @@ export default function AutomationPreferencePage() {
                       logoPreference,
                       emojiUsage,
                       socialSalesEmailUsage,
+                      socialSalesContactUsage,
                       needApproval,
                       timeZone,
                       captionObject,
@@ -1123,6 +1189,7 @@ export default function AutomationPreferencePage() {
                       logoPreference,
                       emojiUsage,
                       socialSalesEmailUsage,
+                      socialSalesContactUsage,
                       needApproval,
                       timeZone,
                       captionObject,

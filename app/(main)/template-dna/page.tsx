@@ -34,6 +34,11 @@ import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
 import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
+import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
+import {
+  joinPhone,
+  splitStoredPhone,
+} from '@/lib/country-codes';
 
 type SourceMode = 'website' | 'catalog';
 
@@ -66,31 +71,15 @@ function digitsOnly(value: string): string {
   return value.replace(/\D/g, '');
 }
 
-function splitStoredPhone(stored: unknown): {
-  countryCode: string;
-  nationalNumber: string;
-} {
-  const digits = digitsOnly(String(stored ?? '').replace(/^\+/, ''));
-  if (!digits) return { countryCode: '', nationalNumber: '' };
-
-  if (digits.startsWith('1') && digits.length >= 11) {
-    return { countryCode: '1', nationalNumber: digits.slice(1) };
-  }
-  if (digits.startsWith('91') && digits.length >= 12) {
-    return { countryCode: '91', nationalNumber: digits.slice(2) };
-  }
-  if (digits.startsWith('44') && digits.length >= 12) {
-    return { countryCode: '44', nationalNumber: digits.slice(2) };
-  }
-  if (digits.length <= 10) {
-    return { countryCode: '', nationalNumber: digits };
-  }
-  return { countryCode: digits.slice(0, 2), nationalNumber: digits.slice(2) };
-}
-
-function joinPhone(countryCode: string, nationalNumber: string): string {
-  const combined = `${digitsOnly(countryCode)}${digitsOnly(nationalNumber)}`;
-  return combined ? `+${combined}` : '';
+/** Already in our bucket — re-upload would rotate the download token and 403 old URLs. */
+function isAppStoredLogoUrl(url: string): boolean {
+  if (!url.includes('firebasestorage.googleapis.com')) return false;
+  return (
+    url.includes('/logos') ||
+    url.includes('%2Flogos') ||
+    url.includes('/ai-generated-logos') ||
+    url.includes('%2Fai-generated-logos')
+  );
 }
 
 function parseHashtagTokens(raw: unknown): string[] {
@@ -220,13 +209,11 @@ export default function BusinessProfilePage() {
   };
 
   const updatePhone = (countryCode: string, nationalNumber: string) => {
-    const cc = digitsOnly(countryCode);
-    const nat = digitsOnly(nationalNumber);
-    setPhoneCountryCode(cc),
-    setPhoneNationalNumber(nat);
+    setPhoneCountryCode(countryCode);
+    setPhoneNationalNumber(nationalNumber);
     setFormData((prev) => ({
       ...prev,
-      businesscontact: joinPhone(cc, nat),
+      businesscontact: joinPhone(countryCode, nationalNumber),
     }));
   };
 
@@ -234,6 +221,10 @@ export default function BusinessProfilePage() {
     const { countryCode, nationalNumber } = splitStoredPhone(stored);
     setPhoneCountryCode(countryCode);
     setPhoneNationalNumber(nationalNumber);
+    const e164 = joinPhone(countryCode, nationalNumber);
+    if (e164) {
+      setFormData((prev) => ({ ...prev, businesscontact: e164 }));
+    }
   };
 
   const showRecommendedHashtags =
@@ -411,14 +402,18 @@ export default function BusinessProfilePage() {
         );
         colorTemplatesGenerationStarted =
           uploaded?.data?.colorTemplatesGenerationStarted === true;
-      }
-      if (formData.logo && typeof formData.logo === 'string') {
+          setFormData((prev) => ({ ...prev, logo: finalLogoForVariants }));
+          setSelectedImage(null);
+      }else if (
+        typeof formData.logo === 'string' &&
+        formData.logo.trim() &&
+        !isAppStoredLogoUrl(formData.logo)
+      ) {
         const response = await uploadLogo(formData.logo);
         finalLogoForVariants = String(
           response?.data?.url || finalLogoForVariants || ''
         );
         colorTemplatesGenerationStarted =
-          colorTemplatesGenerationStarted ||
           response?.data?.colorTemplatesGenerationStarted === true;
         setFormData((prev: any) => ({ ...prev, logo: finalLogoForVariants }));
       }
@@ -443,6 +438,7 @@ export default function BusinessProfilePage() {
 
       await updateProfile({
         ...formData,
+        businesscontact: joinPhone(phoneCountryCode, phoneNationalNumber),
         logo: finalLogoForVariants,
         recommendedHashtags,
         recommendedSlogans,
@@ -468,9 +464,6 @@ export default function BusinessProfilePage() {
       }
       setWebsiteUrl('');
       toast.success('Profile updated successfully');
-      if (colorTemplatesGenerationStarted) {
-        toast.message('Analyzing logo colors for image generation…');
-      }
     } catch (error: any) {
       showErrorToast('Failed to update profile');
     } finally {
@@ -849,44 +842,15 @@ export default function BusinessProfilePage() {
                       >
                         Business Contact
                       </label>
-                      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
-                        <div className="relative w-full shrink-0 sm:w-[6.5rem]">
-                          <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-slate-500">
-                            +
-                          </span>
-                          <input
-                            id="businesscontact-country"
-                            type="tel"
-                            inputMode="numeric"
-                            autoComplete="tel-country-code"
-                            maxLength={4}
-                            value={phoneCountryCode}
-                            onChange={(e) =>
-                              updatePhone(e.target.value, phoneNationalNumber)
-                            }
-                            placeholder="91"
-                            aria-label="Country code"
-                            className={cn(inputBase, 'pl-7')}
-                          />
-                        </div>
-                        <div className="relative min-w-0 flex-1">
-                          <Smartphone className="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                          <input
-                            id="businesscontact"
-                            name="businesscontact"
-                            type="tel"
-                            inputMode="numeric"
-                            autoComplete="tel-national"
-                            maxLength={12}
-                            value={phoneNationalNumber}
-                            onChange={(e) =>
-                              updatePhone(phoneCountryCode, e.target.value)
-                            }
-                            placeholder="98765 43210"
-                            className={cn(inputBase, 'pl-10')}
-                          />
-                        </div>
-                      </div>
+                      <CountryCodePhoneField
+                      id="businesscontact"
+                      countryCode={phoneCountryCode}
+                      nationalNumber={phoneNationalNumber}
+                      onChange={updatePhone}
+                      selectClassName={inputBase}
+                      customInputClassName={inputBase}
+                      numberInputClassName={inputBase}
+                      />
                     </div>
                     <div>
                       <label

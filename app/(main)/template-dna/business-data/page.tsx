@@ -1309,7 +1309,7 @@ export default function TemplateDnaMemoryLayerPage() {
                         <button
                           type="button"
                           onClick={() => void handleRemovePhoto(p.path)}
-                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                          className="absolute top-2 right-2 z-10 p-1.5 rounded-lg bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity hover:bg-red-600"
                           aria-label="Remove photo"
                         >
                           <Trash2 className="w-4 h-4" />

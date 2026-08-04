@@ -31,7 +31,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import Link from 'next/link';
-import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { auth } from '@/lib/firebase';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
@@ -46,6 +45,7 @@ import {
 } from '@/lib/platform-selection';
 import type { SocialPlatform } from '@/src/stores/festivePostState';
 import { useTourDemo } from '@/src/stores/tourState';
+import { toast } from 'sonner';
 
 const CREDIT_PER_EVENT = 2;
 
