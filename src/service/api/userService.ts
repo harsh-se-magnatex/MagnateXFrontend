@@ -796,9 +796,3 @@ export const toggleMemoryLayerPreference = async (opts: {
     }>
   >('/api/v1/user/toggle-memory-layer-preference', opts);
 };
-
-export type SocialTemplateDnaStatus =
-  | 'pending_memory'
-  | 'generating'
-  | 'ready'
-  | 'failed';

@@ -16,6 +16,7 @@ export type AdvertCopy = {
 
 export type AdvertResult = {
   platform: string;
+  caption?: string | null;
   chosenContentType?: string;
   contentFormatLabel?: string;
   analysis?: Record<string, unknown> | null;

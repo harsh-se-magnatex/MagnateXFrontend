@@ -1274,25 +1274,6 @@ export default function BusinessProfilePage() {
                 </div>
                 <div className="absolute inset-0 bg-slate-50/50 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
-              <Link
-                href="/template-dna/social-dna"
-                className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white p-4 transition-all hover:-translate-y-0.5 shadow-sm hover:shadow-indigo-500/15"
-              >
-                <div className="flex items-center justify-between relative z-10">
-                  <div>
-                    <span className="font-semibold text-slate-800 transition-colors group-hover:text-slate-900 block">
-                      Social DNA
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      AI social-page improvement strategy
-                    </span>
-                  </div>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-tr from-indigo-600 to-sky-500 text-white shadow-sm transition-transform group-hover:scale-110">
-                    <Fingerprint className="w-4 h-4" />
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-slate-50/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Link>
             </nav>
           </section>
         </div>

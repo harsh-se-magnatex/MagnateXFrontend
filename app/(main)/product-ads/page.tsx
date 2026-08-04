@@ -88,6 +88,12 @@ function mapProductAdvertDocsToResults(
           : null;
       return {
         platform: String(doc.data.platform ?? ''),
+        caption:
+          typeof doc.data.caption === 'string'
+            ? doc.data.caption
+            : typeof output.caption === 'string'
+              ? output.caption
+              : null,
         imageUrl: String(output.imageUrl ?? doc.data.imageUrl ?? ''),
         imageFilePath:
           typeof doc.data.imageFilePath === 'string'
@@ -355,7 +361,9 @@ export default function ProductAdvertPage() {
         .join(' ')
       : '';
 
-    return [headline, primary, cta, hashtags]
+    const fallbackCaption = String(resultItem.caption ?? '').trim();
+
+    return [headline, primary, cta, hashtags, fallbackCaption]
       .filter(Boolean)
       .join('\n\n')
       .trim();
@@ -721,7 +729,7 @@ export default function ProductAdvertPage() {
                     </p>
                   )}
 
-                  {item.copy && (
+                  {buildAdvertCaption(item) && (
                     <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
                       <div className="flex items-center justify-between gap-3 mb-2">
                         <h3 className="text-sm font-semibold text-slate-800">
