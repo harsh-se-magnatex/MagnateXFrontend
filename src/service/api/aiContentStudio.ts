@@ -20,6 +20,7 @@ export type StudioRenderedImage = {
 
 export type StudioGenerateResult = {
   accepted: true;
+  parentJobId: string;
   platforms: string[];
   creditCost: number;
 };
@@ -43,6 +44,7 @@ export async function generateAiContentStudio(params: {
 
 export type StudioVideoEditResult = {
   accepted: true;
+  parentJobId: string;
   platform: string;
   creditCost: number;
 };

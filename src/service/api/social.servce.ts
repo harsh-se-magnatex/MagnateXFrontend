@@ -113,6 +113,7 @@ export type AutomatedPostEventPayload = {
 /** Response from `POST /api/v1/automated-post/create-automated-post` (queued). */
 export type CreateAutomatedPostResponse = {
   accepted?: boolean;
+  parentJobId?: string;
   platforms?: string[];
   eventCount: number;
   creditCost?: number;

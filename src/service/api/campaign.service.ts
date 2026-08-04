@@ -133,12 +133,15 @@ export type CreateCampaignParams = {
 /** Response from `POST /api/v1/campaign/create` (queued to Cloud Tasks). */
 export type CreateCampaignResponse = {
   accepted?: boolean;
+  parentJobId?: string;
   successCount: number;
   failedCount: number;
   dayCount: number;
   platforms: string[];
   /** Total credits charged when every (day × platform) succeeds. */
   requiredCredits: number;
+  /** Number of draft docs expected for this enqueue (platform × day). */
+  expectedDraftCount?: number;
 };
 
 export async function createCampaignApi(
@@ -234,15 +237,17 @@ export async function scheduleCampaignDraftApi(params: {
 }
 
 export type RegenerateCampaignDraftResponse = {
+  accepted?: boolean;
+  parentJobId?: string;
   draftId: string;
-  /** Exact credit amount the worker deducted on success. `0` for the
+  /** Exact credit amount the worker will deduct on success. `0` for the
    *  user's free first regen. */
   chargeCredits: number;
   /** `regenerationCount` BEFORE this run — UI shows it for transparency. */
   regenerationCountBefore: number;
-  successCount: number;
-  failedCount: number;
-  regeneratedDraftId: string;
+  successCount?: number;
+  failedCount?: number;
+  regeneratedDraftId?: string;
 };
 
 /**

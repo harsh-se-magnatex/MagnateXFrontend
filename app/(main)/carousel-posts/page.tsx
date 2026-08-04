@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CreditCard, ImagePlus, Layers, Loader2, Sparkles, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '@/src/hooks/useAuth';
 import { generateCarousel } from '@/src/service/api/carousel';
+import { waitForParentJobDocs } from '@/src/lib/wait-for-parent-job';
 import { useUserPlanCredits } from '@/app/(main)/_components/UserPlanCreditsProvider';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
@@ -136,17 +138,30 @@ export default function CarouselGenerationPage() {
       );
       return;
     }
+    const uid = user?.uid;
+    if (!uid) {
+      showErrorToast('You must be signed in to generate.');
+      return;
+    }
     try {
       setIsGenerating(true);
-      await generateCarousel({
+      const response = await generateCarousel({
         prompt: prompt.trim() || undefined,
         platform,
         slideCount,
         image: referenceFile,
       });
-      // Stay on Generating… while the worker runs in the background.
+      const wait = await waitForParentJobDocs({
+        uid,
+        collectionName: 'carouselGeneratedPosts',
+        parentJobId: response.parentJobId,
+        expectedCount: 1,
+      });
+      if (wait.outcome === 'generated') toast.success('Generated');
+      else showErrorToast('Failed');
+      setIsGenerating(false);
     } catch (err) {
-      showErrorToast(apiErrorMessage(err, 'Could not generate carousel'));
+      showErrorToast('Failed');
       setIsGenerating(false);
     }
   }, [
@@ -158,6 +173,7 @@ export default function CarouselGenerationPage() {
     prompt,
     slideCount,
     referenceFile,
+    user?.uid,
   ]);
 
   if (authLoading || billingLoading) {

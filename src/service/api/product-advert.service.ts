@@ -20,6 +20,7 @@ export type ProductAdvertPlatformResult = {
 
 export type ProductAdvertGenerateResponse = {
   accepted: true;
+  parentJobId: string;
   generationMode: ProductGenerationMode;
   platforms: string[];
   creditCost: number;
@@ -27,6 +28,7 @@ export type ProductAdvertGenerateResponse = {
 
 export type ProductAdvertVideoGenerateResponse = {
   accepted: true;
+  parentJobId: string;
   videoGenerationDocId: string;
   platform: string;
   creditCost: number;

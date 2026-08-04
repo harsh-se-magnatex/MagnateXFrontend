@@ -15,12 +15,14 @@ import {
   resolveFrameFile,
   startVideoGeneration,
 } from '@/src/service/api/video-generation.service';
+import { waitForVideoGenerationDoc } from '@/src/lib/wait-for-parent-job';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
+import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   setPostSchedulerPrefill,
@@ -521,10 +523,34 @@ export default function VideoGenerationPage() {
         videoCaption: null,
         videoAspectRatio: null,
       });
-      // Stay on Generating… while the worker runs in the background.
+      const wait = await waitForVideoGenerationDoc({
+        uid: user.uid,
+        docId: response.videoGenerationDocId,
+      });
+      if (wait.timedOut || wait.outcome !== 'generated' || !wait.data) {
+        setPipelinePhase('failed');
+        showErrorToast('Failed');
+        return;
+      }
+      const data = wait.data;
+      setResult({
+        platform,
+        videoGenerationDocId: response.videoGenerationDocId,
+        posterUrl:
+          String(data.videoPosterUrl ?? '').trim() ||
+          lastFrame.previewUrl ||
+          '',
+        posterFilePath: String(data.videoPosterPath ?? '').trim() || undefined,
+        videoUrl: String(data.videoUrl ?? '').trim() || null,
+        videoFilePath: String(data.videoFilePath ?? '').trim() || null,
+        videoCaption: String(data.caption ?? '').trim() || null,
+        videoAspectRatio: String(data.videoAspectRatio ?? '').trim() || null,
+      });
+      setPipelinePhase('ready');
+      toast.success('Generated');
     } catch (err) {
       setPipelinePhase('failed');
-      showErrorToast('Failed to generate video.');
+      showErrorToast('Failed');
     }
   };
 

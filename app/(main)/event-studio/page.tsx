@@ -1,6 +1,7 @@
 'use client';
 
 import { createAutomatedPost } from '@/src/service/api/social.servce';
+import { waitForParentJobDocs } from '@/src/lib/wait-for-parent-job';
 import { useEffect, useMemo, useState } from 'react';
 import {
   useFestivePostState,
@@ -30,7 +31,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
+import { auth } from '@/lib/firebase';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { isPlanInactive } from '@/lib/plan-access';
@@ -218,18 +221,37 @@ export default function AutomatedPostPage() {
     }
     setIsSubmitting(true);
     try {
-      const response = await createAutomatedPost(selectedEvents, genPlatforms);
-      clearSelected();
-      if ((response.failedCount ?? 0) > 0) {
-        showErrorToast(
-          `${response.successCount ?? 0} scheduled, ${response.failedCount} failed.`
-        );
+      const uid = auth.currentUser?.uid;
+      if (!uid) {
+        showErrorToast('You must be signed in to schedule events.');
         setIsSubmitting(false);
         return;
       }
-      // Stay on Generating… while workers run in the background.
+      const response = await createAutomatedPost(selectedEvents, genPlatforms);
+      clearSelected();
+      if ((response.failedCount ?? 0) > 0) {
+        showErrorToast('Failed');
+        setIsSubmitting(false);
+        return;
+      }
+      const expected =
+        (response.eventCount || selectedEvents.length) *
+        Math.max(1, response.platforms?.length ?? genPlatforms.length);
+      if (response.parentJobId) {
+        const wait = await waitForParentJobDocs({
+          uid,
+          collectionName: 'eventPosts',
+          parentJobId: response.parentJobId,
+          expectedCount: expected,
+        });
+        if (wait.outcome === 'generated') toast.success('Generated');
+        else showErrorToast('Failed');
+      } else {
+        showErrorToast('Failed');
+      }
+      setIsSubmitting(false);
     } catch (error: unknown) {
-      showErrorToast('Failed to schedule Event Studio posts.');
+      showErrorToast('Failed');
       setIsSubmitting(false);
     } finally {
       setTimeout(() => setMessage(''), 5000);

@@ -86,6 +86,8 @@ import {
   type CampaignDraft,
   type CampaignSuggestion,
 } from '@/src/service/api/campaign.service';
+import { waitForParentJobDocs } from '@/src/lib/wait-for-parent-job';
+import { auth } from '@/lib/firebase';
 import {
   useCampaignState,
   type CampaignDayDraft,
@@ -666,24 +668,35 @@ export default function CreateCampaignPage() {
       });
       if (response.accepted || (response.successCount === 0 && response.failedCount === 0)) {
         void refreshDraftsRef.current?.();
-        // Stay on Generating drafts… while workers run in the background.
+        const uid = auth.currentUser?.uid;
+        const expected =
+          response.expectedDraftCount ||
+          Math.max(1, response.dayCount * (response.platforms?.length || 1));
+        if (uid && response.parentJobId && expected > 0) {
+          const wait = await waitForParentJobDocs({
+            uid,
+            collectionName: 'campaignDrafts',
+            parentJobId: response.parentJobId,
+            expectedCount: expected,
+          });
+          void refreshDraftsRef.current?.();
+          if (wait.outcome === 'generated') toast.success('Generated');
+          else showErrorToast('Failed');
+        }
+        setIsSubmitting(false);
         return;
       }
       if (response.successCount > 0 && response.failedCount === 0) {
-        toast.success(
-          `Drafts ready — ${response.successCount} post(s) saved. Open Drafts to schedule them.`
-        );
+        toast.success('Generated');
       } else if (response.successCount > 0) {
-        toast.success(
-          `${response.successCount} drafts saved, ${response.failedCount} failed. Open Drafts to review.`
-        );
+        showErrorToast('Failed');
       } else if (response.failedCount > 0) {
-        showErrorToast('Campaign generation failed. Please try again.');
+        showErrorToast('Failed');
       }
       void refreshDraftsRef.current?.();
       setIsSubmitting(false);
     } catch {
-      showErrorToast('Could not create the campaign.');
+      showErrorToast('Failed');
       setIsSubmitting(false);
     }
   }, [
@@ -1707,14 +1720,27 @@ function DraftsDrawer(props: DraftsDrawerProps) {
       }
       try {
         setRegeneratingDraftId(draftId);
-        await regenerateCampaignDraftApi({ draftId });
-        toast.success('Draft regenerated');
+        const response = await regenerateCampaignDraftApi({ draftId });
+        const uid = auth.currentUser?.uid;
+        if (uid && response.parentJobId) {
+          const wait = await waitForParentJobDocs({
+            uid,
+            collectionName: 'campaignDrafts',
+            parentJobId: response.parentJobId,
+            expectedCount: 1,
+          });
+          if (wait.outcome === 'generated') toast.success('Generated');
+          else showErrorToast('Failed');
+        } else {
+          showErrorToast('Failed');
+        }
         await refresh();
+        setRegeneratingDraftId(null);
       } catch {
         // Roll back the spinner so the user can retry; the toast already
         // tells them what went wrong.
         setRegeneratingDraftId(null);
-        showErrorToast('Could not start the regeneration.');
+        showErrorToast('Failed');
       }
     },
     [isCampaignJobRunning, regeneratingDraftId, refresh]

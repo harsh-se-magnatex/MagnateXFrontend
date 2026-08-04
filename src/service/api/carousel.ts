@@ -10,6 +10,7 @@ type ApiEnvelope<T> = {
 
 export type GenerateCarouselResponse = {
   accepted: true;
+  parentJobId: string;
   platform: SocialPlatform;
   slideCount: number;
   creditCost: number;

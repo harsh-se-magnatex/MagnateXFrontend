@@ -45,6 +45,7 @@ import {
   type VideoEditScenePresetId,
   type VideoEditToolId,
 } from '@/src/service/api/aiContentStudio';
+import { waitForParentJobDocs } from '@/src/lib/wait-for-parent-job';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import { normalizePreferredPostingTime } from '@/utils/preferredPostingTime';
@@ -670,6 +671,11 @@ export default function AIContentPage() {
   const handleGenerate = async () => {
     if (isTourDemo) return;
     if (!canGenerate) return;
+    const uid = user?.uid;
+    if (!uid) {
+      showErrorToast('You must be signed in to generate.');
+      return;
+    }
 
     if (createMode === 'video') {
       if (!selectedVideo) return;
@@ -693,11 +699,18 @@ export default function AIContentPage() {
         if (!response.accepted) {
           throw new Error('Could not generate video.');
         }
-        // Stay on Generating… while the worker runs in the background.
+        const wait = await waitForParentJobDocs({
+          uid,
+          collectionName: 'instant-generation',
+          parentJobId: response.parentJobId,
+          expectedCount: 1,
+        });
+        if (wait.outcome === 'generated') toast.success('Generated');
+        else showErrorToast('Failed');
+        setIsGenerating(false);
       } catch (e: unknown) {
-        const message = 'Failed to edit video.';
-        showErrorToast(message);
-        setGenerateError(message);
+        showErrorToast('Failed');
+        setGenerateError('Failed');
         setIsGenerating(false);
       }
       return;
@@ -726,11 +739,18 @@ export default function AIContentPage() {
       }
       setGenerated(null);
       setSelectedRenderedImage(null);
-      // Stay on Generating… while the worker runs in the background.
+      const wait = await waitForParentJobDocs({
+        uid,
+        collectionName: 'instant-generation',
+        parentJobId: response.parentJobId,
+        expectedCount: Math.max(1, response.platforms?.length ?? genPlatforms.length),
+      });
+      if (wait.outcome === 'generated') toast.success('Generated');
+      else showErrorToast('Failed');
+      setIsGenerating(false);
     } catch (e: unknown) {
-      const message = 'Failed to generate content.';
-      showErrorToast(message);
-      setGenerateError(message);
+      showErrorToast('Failed');
+      setGenerateError('Failed');
       setIsGenerating(false);
     }
   };

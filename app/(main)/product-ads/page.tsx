@@ -8,6 +8,7 @@ import {
   generateProductAdvertApi,
   type ProductGenerationMode,
 } from '@/src/service/api/product-advert.service';
+import { waitForParentJobDocs } from '@/src/lib/wait-for-parent-job';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import Link from 'next/link';
@@ -15,6 +16,7 @@ import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
+import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   setPostSchedulerPrefill,
@@ -255,10 +257,17 @@ export default function ProductAdvertPage() {
       });
       setFinalResult(null);
       setLastGenerationMode(response.generationMode);
-      // Stay on Generating… while the worker runs in the background.
+      const wait = await waitForParentJobDocs({
+        uid: user.uid,
+        collectionName: 'productadvert',
+        parentJobId: response.parentJobId,
+        expectedCount: Math.max(1, response.platforms?.length ?? genPlatforms.length),
+      });
+      if (wait.outcome === 'generated') toast.success('Generated');
+      else showErrorToast('Failed');
+      setIsGenerating(false);
     } catch (e: unknown) {
-      const message = 'Failed to generate advert. Please try again.';
-      showErrorToast(message);
+      showErrorToast('Failed');
       console.log(e);
       setIsGenerating(false);
     }
