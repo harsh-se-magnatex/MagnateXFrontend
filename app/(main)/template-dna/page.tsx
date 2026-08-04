@@ -183,7 +183,7 @@ export default function BusinessProfilePage() {
   /** Mirrors last-loaded / last-saved profile: hide AI blocks once user has committed values. */
   const [committedHashtagsSaved, setCommittedHashtagsSaved] = useState(false);
   const [committedSloganSaved, setCommittedSloganSaved] = useState(false);
-  const [phoneCountryCode, setPhoneCountryCode] = useState('91');
+  const [phoneCountryCode, setPhoneCountryCode] = useState('');
   const [phoneNationalNumber, setPhoneNationalNumber] = useState('');
 
   const activePlan = billing?.activePlan;
@@ -222,7 +222,7 @@ export default function BusinessProfilePage() {
   const updatePhone = (countryCode: string, nationalNumber: string) => {
     const cc = digitsOnly(countryCode);
     const nat = digitsOnly(nationalNumber);
-    setPhoneCountryCode('91');
+    setPhoneCountryCode(cc),
     setPhoneNationalNumber(nat);
     setFormData((prev) => ({
       ...prev,
@@ -232,7 +232,7 @@ export default function BusinessProfilePage() {
 
   const applyStoredPhone = (stored: unknown) => {
     const { countryCode, nationalNumber } = splitStoredPhone(stored);
-    setPhoneCountryCode('91');
+    setPhoneCountryCode(countryCode);
     setPhoneNationalNumber(nationalNumber);
   };
 
@@ -857,7 +857,6 @@ export default function BusinessProfilePage() {
                           <input
                             id="businesscontact-country"
                             type="tel"
-                            disabled
                             inputMode="numeric"
                             autoComplete="tel-country-code"
                             maxLength={4}

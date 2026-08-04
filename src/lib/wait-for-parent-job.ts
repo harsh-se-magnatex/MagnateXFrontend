@@ -14,6 +14,7 @@ export type GenerationWaitOutcome = 'generated' | 'failed' | 'timedOut';
 
 export type WaitForParentJobResult = {
   docIds: string[];
+  matchedDocs: Array<{ id: string; data: Record<string, unknown> }>;
   timedOut: boolean;
   /** `generated` if every slot succeeded; `failed` if any failure stub; `timedOut` otherwise. */
   outcome: GenerationWaitOutcome;
@@ -57,6 +58,7 @@ export function waitForParentJobDocs(args: {
   if (!parentJobId || expectedCount <= 0) {
     return Promise.resolve({
       docIds: [],
+      matchedDocs: [],
       timedOut: false,
       outcome: 'generated',
       failedCount: 0,
@@ -102,6 +104,7 @@ export function waitForParentJobDocs(args: {
     const timer = window.setTimeout(() => {
       finish({
         docIds: [],
+        matchedDocs: [],
         timedOut: true,
         outcome: 'timedOut',
         failedCount: 0,
@@ -121,11 +124,12 @@ export function waitForParentJobDocs(args: {
           let failedCount = 0;
           let totalSlots = 0;
           const docIds: string[] = [];
+          const matchedDocs: Array<{ id: string; data: Record<string, unknown> }> = [];
           for (const d of snap.docs) {
             docIds.push(d.id);
-            const { slots, failed } = slotWeight(
-              d.data() as Record<string, unknown>
-            );
+            const data = d.data() as Record<string, unknown>;
+            matchedDocs.push({ id: d.id, data });
+            const { slots, failed } = slotWeight(data);
             totalSlots += slots;
             if (failed) failedCount += slots;
             else successCount += slots;
@@ -133,6 +137,7 @@ export function waitForParentJobDocs(args: {
           if (totalSlots >= expectedCount) {
             finish({
               docIds,
+              matchedDocs,
               timedOut: false,
               outcome: failedCount > 0 ? 'failed' : 'generated',
               failedCount,

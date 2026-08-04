@@ -35,6 +35,7 @@ import {
   editVideoAiContentStudio,
   generateAiContentStudio,
   scheduleAiContentStudioPost,
+  type StudioRenderedImage,
   VIDEO_EDIT_INTENTS,
   VIDEO_EDIT_PLACEMENT_PRESETS,
   VIDEO_EDIT_SCENE_PRESETS,
@@ -107,6 +108,40 @@ const VIDEO_EDIT_CREDIT_COST = 4;
 // const ACCEPTED_TYPES=ACCEPTED_IMAGE_TYPES.concat(ACCEPTED_VIDEO_TYPES);
 const ACCEPTED_TYPES=ACCEPTED_IMAGE_TYPES;
 type CreateMode = 'image' | 'video';
+
+function mapInstantDocsToCreatedContent(args: {
+  parentJobId: string;
+  promptSummary: string;
+  docs: Array<{ id: string; data: Record<string, unknown> }>;
+}): CreatedContent {
+  const renderedImages: StudioRenderedImage[] = args.docs
+    .filter(
+      (doc) =>
+        String(doc.data.generationStatus ?? '').toLowerCase() !== 'failed' &&
+        typeof doc.data.imageUrl === 'string' &&
+        doc.data.imageUrl.trim().length > 0
+    )
+    .map((doc) => ({
+      platform: String(doc.data.platform ?? ''),
+      caption: String(doc.data.caption ?? ''),
+      imageUrl: String(doc.data.imageUrl ?? ''),
+      imageFilePath:
+        typeof doc.data.imageFilePath === 'string'
+          ? doc.data.imageFilePath
+          : undefined,
+      generatedAt:
+        typeof doc.data.createdAtIso === 'string'
+          ? doc.data.createdAtIso
+          : new Date().toISOString(),
+    }));
+
+  return {
+    id: args.parentJobId,
+    promptSummary: args.promptSummary,
+    renderedImages,
+    createdAt: new Date().toISOString(),
+  };
+}
 
 async function compressToWebP(file: File, maxBytes: number): Promise<File> {
   const bitmap = await createImageBitmap(file);
@@ -745,8 +780,22 @@ export default function AIContentPage() {
         parentJobId: response.parentJobId,
         expectedCount: Math.max(1, response.platforms?.length ?? genPlatforms.length),
       });
-      if (wait.outcome === 'generated') toast.success('Generated');
-      else showErrorToast('Failed');
+      if (wait.outcome === 'generated') {
+        const createdContent = mapInstantDocsToCreatedContent({
+          parentJobId: response.parentJobId,
+          promptSummary: prompt.trim(),
+          docs: wait.matchedDocs,
+        });
+        setGenerated(createdContent);
+        setSelectedRenderedImage(
+          createdContent.renderedImages.length === 1
+            ? createdContent.renderedImages[0]
+            : null
+        );
+        toast.success('Generated');
+      } else {
+        showErrorToast('Failed');
+      }
       setIsGenerating(false);
     } catch (e: unknown) {
       showErrorToast('Failed');

@@ -69,6 +69,69 @@ const BACKGROUND_OPTIONS = [
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 
+function mapProductAdvertDocsToResults(
+  docs: Array<{ id: string; data: Record<string, unknown> }>
+): AdvertResult[] {
+  return docs
+    .filter(
+      (doc) =>
+        String(doc.data.generationStatus ?? '').toLowerCase() !== 'failed'
+    )
+    .map((doc) => {
+      const output =
+        doc.data.output && typeof doc.data.output === 'object'
+          ? (doc.data.output as Record<string, unknown>)
+          : {};
+      const copy =
+        output.copy && typeof output.copy === 'object'
+          ? (output.copy as AdvertResult['copy'])
+          : null;
+      return {
+        platform: String(doc.data.platform ?? ''),
+        imageUrl: String(output.imageUrl ?? doc.data.imageUrl ?? ''),
+        imageFilePath:
+          typeof doc.data.imageFilePath === 'string'
+            ? doc.data.imageFilePath
+            : typeof output.imageFilePath === 'string'
+              ? output.imageFilePath
+              : undefined,
+        chosenContentType:
+          typeof output.chosenContentType === 'string'
+            ? output.chosenContentType
+            : undefined,
+        contentFormatLabel:
+          typeof output.contentFormatLabel === 'string'
+            ? output.contentFormatLabel
+            : undefined,
+        copy,
+        logoPosition:
+          typeof output.logoPosition === 'string' ? output.logoPosition : undefined,
+        selectedLogoVariantIndex:
+          typeof output.selectedLogoVariantIndex === 'number'
+            ? output.selectedLogoVariantIndex
+            : undefined,
+        logoVariantSource:
+          typeof output.logoVariantSource === 'string'
+            ? output.logoVariantSource
+            : undefined,
+        logoVariantCount:
+          typeof output.logoVariantCount === 'number'
+            ? output.logoVariantCount
+            : undefined,
+        marketingTagline:
+          typeof output.marketingTagline === 'string'
+            ? output.marketingTagline
+            : undefined,
+        analysis:
+          output.analysis && typeof output.analysis === 'object'
+            ? (output.analysis as Record<string, unknown>)
+            : null,
+        productAdvertDocId: doc.id,
+      };
+    })
+    .filter((item) => item.imageUrl.trim().length > 0);
+}
+
 function platformLabel(platform: SocialPlatform): string {
   if (platform === 'instagram') return 'Instagram';
   if (platform === 'facebook') return 'Facebook';
@@ -263,8 +326,16 @@ export default function ProductAdvertPage() {
         parentJobId: response.parentJobId,
         expectedCount: Math.max(1, response.platforms?.length ?? genPlatforms.length),
       });
-      if (wait.outcome === 'generated') toast.success('Generated');
-      else showErrorToast('Failed');
+      if (wait.outcome === 'generated') {
+        const platformResults = mapProductAdvertDocsToResults(wait.matchedDocs);
+        setFinalResult({
+          generationMode: response.generationMode,
+          platformResults,
+        });
+        toast.success('Generated');
+      } else {
+        showErrorToast('Failed');
+      }
       setIsGenerating(false);
     } catch (e: unknown) {
       showErrorToast('Failed');

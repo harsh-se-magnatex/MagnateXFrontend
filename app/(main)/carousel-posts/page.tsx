@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { CreditCard, ImagePlus, Layers, Loader2, Sparkles, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/src/hooks/useAuth';
@@ -19,6 +19,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
+  setPostSchedulerPrefill,
+  type PostSchedulerPrefillPayload,
+} from '@/lib/post-scheduler-prefill-store';
+import {
   PLATFORM_ORDER,
   listEnabledPlatforms,
   type SocialPlatform,
@@ -27,8 +31,29 @@ import Link from 'next/link';
 import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import { cn } from '@/lib/utils';
 import axios from 'axios';
+import { CarouselSwipePreview } from '@/components/shared/CarouselSwipePreview';
+import {
+  ImagePreviewOverlay,
+  useImagePreview,
+} from '@/components/image-preview';
 
 const CREDIT_PER_SLIDE = 3;
+
+type CarouselResult = {
+  platform: SocialPlatform;
+  caption: string;
+  slideCount: number;
+  imageUrl: string;
+  imageFilePath: string;
+  carouselSlides: Array<{
+    index: number;
+    headline?: string | null;
+    purpose?: string | null;
+    visualType?: string | null;
+    imageUrl: string;
+    imageFilePath: string;
+  }>;
+};
 
 function platformLabel(platform: SocialPlatform): string {
   if (platform === 'instagram') return 'Instagram';
@@ -55,16 +80,71 @@ function apiErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
+function mapCarouselResult(
+  docs: Array<{ id: string; data: Record<string, unknown> }>
+): CarouselResult | null {
+  const first = docs.find(
+    (doc) =>
+      String(doc.data.generationStatus ?? '').toLowerCase() !== 'failed'
+  );
+  if (!first) return null;
+
+  const rawSlides = Array.isArray(first.data.carouselSlides)
+    ? first.data.carouselSlides
+    : [];
+  const carouselSlides = rawSlides
+    .map((slide, index) => {
+      const row = slide as Record<string, unknown>;
+      const imageUrl = String(row.imageUrl ?? '').trim();
+      const imageFilePath = String(row.imageFilePath ?? '').trim();
+      if (!imageUrl || !imageFilePath) return null;
+      return {
+        index:
+          typeof row.index === 'number' && Number.isFinite(row.index)
+            ? row.index
+            : index + 1,
+        headline: typeof row.headline === 'string' ? row.headline : null,
+        purpose: typeof row.purpose === 'string' ? row.purpose : null,
+        visualType: typeof row.visualType === 'string' ? row.visualType : null,
+        imageUrl,
+        imageFilePath,
+      };
+    })
+    .filter((slide): slide is NonNullable<typeof slide> => Boolean(slide));
+
+  if (carouselSlides.length === 0) return null;
+
+  const platform = String(first.data.platform ?? '').toLowerCase();
+  if (platform !== 'instagram' && platform !== 'facebook' && platform !== 'linkedin') {
+    return null;
+  }
+
+  return {
+    platform,
+    caption: String(first.data.caption ?? '').trim(),
+    slideCount:
+      typeof first.data.slideCount === 'number' && Number.isFinite(first.data.slideCount)
+        ? first.data.slideCount
+        : carouselSlides.length,
+    imageUrl: carouselSlides[0].imageUrl,
+    imageFilePath: carouselSlides[0].imageFilePath,
+    carouselSlides,
+  };
+}
+
 export default function CarouselGenerationPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { billing, loading: billingLoading } = useUserPlanCredits();
+  const imagePreview = useImagePreview();
 
   const [prompt, setPrompt] = useState('');
   const [slideCount, setSlideCount] = useState(5);
   const [platform, setPlatform] = useState<SocialPlatform>('instagram');
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedCarousel, setGeneratedCarousel] = useState<CarouselResult | null>(null);
   const referenceInputRef = useRef<HTMLInputElement>(null);
 
   const credits = billing?.credits;
@@ -145,6 +225,7 @@ export default function CarouselGenerationPage() {
     }
     try {
       setIsGenerating(true);
+      setGeneratedCarousel(null);
       const response = await generateCarousel({
         prompt: prompt.trim() || undefined,
         platform,
@@ -157,8 +238,17 @@ export default function CarouselGenerationPage() {
         parentJobId: response.parentJobId,
         expectedCount: 1,
       });
-      if (wait.outcome === 'generated') toast.success('Generated');
-      else showErrorToast('Failed');
+      if (wait.outcome === 'generated') {
+        const result = mapCarouselResult(wait.matchedDocs);
+        if (!result) {
+          showErrorToast('Failed');
+        } else {
+          setGeneratedCarousel(result);
+          toast.success('Generated');
+        }
+      } else {
+        showErrorToast('Failed');
+      }
       setIsGenerating(false);
     } catch (err) {
       showErrorToast('Failed');
@@ -175,6 +265,28 @@ export default function CarouselGenerationPage() {
     referenceFile,
     user?.uid,
   ]);
+
+  const handleSendToScheduler = useCallback(() => {
+    if (!generatedCarousel) return;
+    const payload: PostSchedulerPrefillPayload = {
+      source: 'carousel',
+      createdAt: Date.now(),
+      lockedPlatform: generatedCarousel.platform,
+      posts: [
+        {
+          imageUrl: generatedCarousel.imageUrl,
+          imageFilePath: generatedCarousel.imageFilePath,
+          mediaType: 'carousel',
+          carouselSlides: generatedCarousel.carouselSlides,
+          message: generatedCarousel.caption,
+          platform: generatedCarousel.platform,
+          source: 'carouselGeneratedPosts',
+        },
+      ],
+    };
+    setPostSchedulerPrefill(payload);
+    router.push(`${WORKSPACE_NAV_HREFS.schedulePost}?prefill=carousel`);
+  }, [generatedCarousel, router]);
 
   if (authLoading || billingLoading) {
     return <PageLoadingState message="Loading carousel create…" />;
@@ -379,7 +491,44 @@ export default function CarouselGenerationPage() {
               ? 'Generate carousel (Insufficient credits)'
               : 'Generate carousel'}
         </Button>
+
+        {generatedCarousel ? (
+          <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Generated output
+              </p>
+              <p className="text-xs text-indigo-600 font-medium">
+                {generatedCarousel.slideCount} slides
+              </p>
+            </div>
+
+            <CarouselSwipePreview
+              slides={generatedCarousel.carouselSlides}
+              showCaptions
+              onImageClick={(url, alt) =>
+                imagePreview.open(url, alt || 'Generated carousel slide')
+              }
+            />
+
+            {generatedCarousel.caption ? (
+              <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
+                {generatedCarousel.caption}
+              </p>
+            ) : null}
+
+            <Button type="button" className="w-full" onClick={handleSendToScheduler}>
+              Continue to Post Scheduler
+            </Button>
+          </div>
+        ) : null}
       </section>
+
+      <ImagePreviewOverlay
+        src={imagePreview.previewUrl}
+        alt={imagePreview.previewAlt}
+        onClose={imagePreview.close}
+      />
     </div>
   );
 }
