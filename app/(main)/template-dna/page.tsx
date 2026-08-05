@@ -37,6 +37,7 @@ import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
 import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
 import {
   joinPhone,
+  normalizeBusinessContactValue,
   splitStoredPhone,
 } from '@/lib/country-codes';
 
@@ -209,11 +210,12 @@ export default function BusinessProfilePage() {
   };
 
   const updatePhone = (countryCode: string, nationalNumber: string) => {
+    const nextNationalNumber = digitsOnly(nationalNumber);
     setPhoneCountryCode(countryCode);
-    setPhoneNationalNumber(nationalNumber);
+    setPhoneNationalNumber(nextNationalNumber);
     setFormData((prev) => ({
       ...prev,
-      businesscontact: joinPhone(countryCode, nationalNumber),
+      businesscontact: joinPhone(countryCode, nextNationalNumber),
     }));
   };
 
@@ -222,9 +224,7 @@ export default function BusinessProfilePage() {
     setPhoneCountryCode(countryCode);
     setPhoneNationalNumber(nationalNumber);
     const e164 = joinPhone(countryCode, nationalNumber);
-    if (e164) {
-      setFormData((prev) => ({ ...prev, businesscontact: e164 }));
-    }
+    setFormData((prev) => ({ ...prev, businesscontact: e164 }));
   };
 
   const showRecommendedHashtags =
@@ -436,9 +436,13 @@ export default function BusinessProfilePage() {
         }
       }
 
+      const normalizedBusinessContact = normalizeBusinessContactValue(
+        joinPhone(phoneCountryCode, phoneNationalNumber)
+      );
+
       await updateProfile({
         ...formData,
-        businesscontact: joinPhone(phoneCountryCode, phoneNationalNumber),
+        businesscontact: normalizedBusinessContact,
         logo: finalLogoForVariants,
         recommendedHashtags,
         recommendedSlogans,
@@ -447,6 +451,7 @@ export default function BusinessProfilePage() {
             ? normalizeWebsiteUrl(formData.website)
             : formData.website,
       });
+      applyStoredPhone(normalizedBusinessContact);
       setCommittedHashtagsSaved(
         parseHashtagTokens(formData.hashtags).length > 0
       );

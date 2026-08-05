@@ -177,20 +177,29 @@ export default function PostSchedulePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [postLoading, setPostLoading] = useState(false);
+  const [schedulingPlatform, setSchedulingPlatform] =
+    useState<SchedulerPlatform | null>(null);
 
   const selectedMediaType = selectedMediaFile
     ? getUploadMediaType(selectedMediaFile)
     : null;
-  const singlePrefilledPost = isPrefilledFlow && prefilledPosts.length === 1
-    ? prefilledPosts[0]
-    : null;
+  const singlePrefilledPost =
+    isPrefilledFlow && prefilledPosts.length === 1 ? prefilledPosts[0] : null;
   const prefilledMediaType = singlePrefilledPost?.mediaType;
   const hasMedia =
     selectedMediaFile !== null ||
     Boolean(prefilledImageUrl) ||
     Boolean(singlePrefilledPost?.videoUrl) ||
     (singlePrefilledPost?.mediaType === 'carousel' &&
-      (singlePrefilledPost.carouselSlides?.length ?? 0) >= 2);
+      (singlePrefilledPost.carouselSlides?.length ?? 0) >= 2) ||
+    (isPrefilledFlow &&
+      prefilledPosts.some(
+        (post) =>
+          Boolean(post.imageUrl) ||
+          Boolean(post.videoUrl) ||
+          (post.mediaType === 'carousel' &&
+            (post.carouselSlides?.length ?? 0) >= 2)
+      ));
   const hasMessageOnly = !hasMedia && message.trim().length > 0;
   const imageAreaDisabled = hasMessageOnly;
   const formattedToday = getTodatDate();
@@ -437,6 +446,7 @@ export default function PostSchedulePage() {
     setPlatformSchedules({});
     setGenPlatforms([]);
     setImageError(null);
+    setSchedulingPlatform(null);
   };
 
   const previewUrl = useMemo(() => {
@@ -464,38 +474,68 @@ export default function PostSchedulePage() {
   const isSinglePrefilledSchedule = isPrefilledFlow && prefilledPosts.length === 1;
   /** Gallery / product-advert prefills carry a fixed image — no clearing it. */
   const canRemoveImage = !isPrefilledFlow;
-  const hasValidPlatformTarget = isPrefilledFlow
-    ? prefilledPosts.length > 0 &&
-    prefilledPosts.every((post) => PLATFORM_ORDER.includes(post.platform))
-    : platformSelection.ok;
-  const hasCompletePlatformSchedules =
-    schedulePlatforms.length > 0 &&
-    schedulePlatforms.every((platform) => getScheduledAtIso(platform).length > 0);
-  const hasPastPlatformSchedules =
-    hasCompletePlatformSchedules &&
-    schedulePlatforms.some((platform) => {
+
+  const canSchedulePlatform = useCallback(
+    (platform: SchedulerPlatform) => {
+      if (isTourDemo) return false;
+      if (!hasSelectablePlatforms || showSelectAccountsFirst) return false;
+      if (hasInvalidVideoPlatformSelection) return false;
+      if (!selectedAccounts?.[platform]) return false;
+
+      const scheduledAtIso = getScheduledAtIso(platform);
+      if (!scheduledAtIso) return false;
       const slot = platformSchedules[platform];
-      return Boolean(
-        slot?.date && slot?.time && isScheduleTimeInPast(slot.date, slot.time)
-      );
-    });
-  const pastScheduleTimeError = hasPastPlatformSchedules
+      if (
+        slot?.date &&
+        slot?.time &&
+        isScheduleTimeInPast(slot.date, slot.time)
+      ) {
+        return false;
+      }
+
+      if (isPrefilledFlow) {
+        const post = prefilledPosts.find((p) => p.platform === platform);
+        if (!post) return false;
+        const captionOk =
+          post.message.trim().length > 0 || message.trim().length > 0;
+        if (!captionOk) return false;
+        const mediaOk =
+          post.mediaType === 'carousel'
+            ? (post.carouselSlides?.length ?? 0) >= 2
+            : post.mediaType === 'video'
+              ? Boolean(post.videoUrl && post.videoFilePath)
+              : Boolean(post.imageUrl && post.imageFilePath);
+        return mediaOk;
+      }
+
+      if (!message.trim() || !hasMedia) return false;
+      if (!genPlatforms.includes(platform)) return false;
+      return true;
+    },
+    [
+      genPlatforms,
+      getScheduledAtIso,
+      hasInvalidVideoPlatformSelection,
+      hasMedia,
+      hasSelectablePlatforms,
+      isPrefilledFlow,
+      isTourDemo,
+      message,
+      platformSchedules,
+      prefilledPosts,
+      selectedAccounts,
+      showSelectAccountsFirst,
+    ]
+  );
+
+  const pastScheduleTimeError = schedulePlatforms.some((platform) => {
+    const slot = platformSchedules[platform];
+    return Boolean(
+      slot?.date && slot?.time && isScheduleTimeInPast(slot.date, slot.time)
+    );
+  })
     ? PAST_SCHEDULE_TIME_MESSAGE
     : null;
-  const hasAllPlatformCaptions =
-    !isMultiPrefilledSchedule ||
-    prefilledPosts.some((post) => post.message.trim().length > 0);
-  const canSchedule =
-    (isPrefilledFlow
-      ? hasAllPlatformCaptions || message.trim().length > 0
-      : message.trim().length > 0) &&
-    hasMedia &&
-    hasValidPlatformTarget &&
-    hasCompletePlatformSchedules &&
-    !hasPastPlatformSchedules &&
-    !hasInvalidVideoPlatformSelection &&
-    hasSelectablePlatforms &&
-    !showSelectAccountsFirst;
 
   useEffect(() => {
     if (!loading && !user) router.replace('/sign-in');
@@ -517,65 +557,65 @@ export default function PostSchedulePage() {
 
     const parsedPosts = Array.isArray(payload.posts)
       ? payload.posts
-        .map((item) => {
-          const rawSource = item?.source;
-          const source: PostSchedulerPrefillSource | undefined =
-            rawSource === 'instant-generation' ||
-            rawSource === 'productadvert' ||
-            rawSource === 'videoGeneration' ||
-            rawSource === 'carouselGeneratedPosts'
-              ? rawSource
+          .map((item) => {
+            const rawSource = item?.source;
+            const source: PostSchedulerPrefillSource | undefined =
+              rawSource === 'instant-generation' ||
+              rawSource === 'productadvert' ||
+              rawSource === 'videoGeneration' ||
+              rawSource === 'carouselGeneratedPosts'
+                ? rawSource
+                : undefined;
+            const carouselSlides = Array.isArray(item?.carouselSlides)
+              ? item.carouselSlides
+                  .map((slide, i) => ({
+                    index:
+                      typeof slide?.index === 'number' ? slide.index : i + 1,
+                    imageUrl: String(slide?.imageUrl ?? '').trim(),
+                    imageFilePath: String(slide?.imageFilePath ?? '').trim(),
+                    headline:
+                      typeof slide?.headline === 'string' ? slide.headline : null,
+                    purpose:
+                      typeof slide?.purpose === 'string' ? slide.purpose : null,
+                    visualType:
+                      typeof slide?.visualType === 'string'
+                        ? slide.visualType
+                        : null,
+                  }))
+                  .filter((s) => s.imageUrl && s.imageFilePath)
               : undefined;
-          const carouselSlides = Array.isArray(item?.carouselSlides)
-            ? item.carouselSlides
-                .map((slide, i) => ({
-                  index:
-                    typeof slide?.index === 'number' ? slide.index : i + 1,
-                  imageUrl: String(slide?.imageUrl ?? '').trim(),
-                  imageFilePath: String(slide?.imageFilePath ?? '').trim(),
-                  headline:
-                    typeof slide?.headline === 'string' ? slide.headline : null,
-                  purpose:
-                    typeof slide?.purpose === 'string' ? slide.purpose : null,
-                  visualType:
-                    typeof slide?.visualType === 'string'
-                      ? slide.visualType
-                      : null,
-                }))
-                .filter((s) => s.imageUrl && s.imageFilePath)
-            : undefined;
-          return {
-            imageUrl: String(item?.imageUrl ?? '').trim(),
-            imageFilePath: String(item?.imageFilePath ?? '').trim(),
-            mediaType:
-              item?.mediaType === 'video' ||
-              item?.mediaType === 'image' ||
-              item?.mediaType === 'carousel'
-                ? item.mediaType
-                : carouselSlides && carouselSlides.length >= 2
-                  ? ('carousel' as const)
-                  : undefined,
-            videoUrl: String(item?.videoUrl ?? '').trim(),
-            videoFilePath: String(item?.videoFilePath ?? '').trim(),
-            videoPosterUrl: String(item?.videoPosterUrl ?? '').trim(),
-            videoPosterPath: String(item?.videoPosterPath ?? '').trim(),
-            ...(carouselSlides && carouselSlides.length >= 2
-              ? { carouselSlides }
-              : {}),
-            message: String(item?.message ?? '').trim(),
-            platform: String(item?.platform ?? '').toLowerCase() as SchedulerPlatform,
-            source,
-          };
-        })
-        .filter(
-          (item) =>
-            (item.mediaType === 'carousel'
-              ? (item.carouselSlides?.length ?? 0) >= 2
-              : item.mediaType === 'video'
-                ? !!item.videoUrl && !!item.videoFilePath
-                : !!item.imageUrl) &&
-            PLATFORM_ORDER.includes(item.platform)
-        )
+            return {
+              imageUrl: String(item?.imageUrl ?? '').trim(),
+              imageFilePath: String(item?.imageFilePath ?? '').trim(),
+              mediaType:
+                item?.mediaType === 'video' ||
+                item?.mediaType === 'image' ||
+                item?.mediaType === 'carousel'
+                  ? item.mediaType
+                  : carouselSlides && carouselSlides.length >= 2
+                    ? ('carousel' as const)
+                    : undefined,
+              videoUrl: String(item?.videoUrl ?? '').trim(),
+              videoFilePath: String(item?.videoFilePath ?? '').trim(),
+              videoPosterUrl: String(item?.videoPosterUrl ?? '').trim(),
+              videoPosterPath: String(item?.videoPosterPath ?? '').trim(),
+              ...(carouselSlides && carouselSlides.length >= 2
+                ? { carouselSlides }
+                : {}),
+              message: String(item?.message ?? '').trim(),
+              platform: String(item?.platform ?? '').toLowerCase() as SchedulerPlatform,
+              source,
+            };
+          })
+          .filter(
+            (item) =>
+              (item.mediaType === 'carousel'
+                ? (item.carouselSlides?.length ?? 0) >= 2
+                : item.mediaType === 'video'
+                  ? !!item.videoUrl && !!item.videoFilePath
+                  : !!item.imageUrl) &&
+              PLATFORM_ORDER.includes(item.platform)
+          )
       : [];
     if (parsedPosts.length > 0) {
       const first = parsedPosts[0];
@@ -602,17 +642,58 @@ export default function PostSchedulePage() {
 
   if (loading || creditsLoading) return <PageLoadingState message="Loading your account..." />;
   if (!user) return null;
-  const handleSchedulePost = async () => {
+
+  const removeScheduledPlatform = (platform: SchedulerPlatform) => {
+    setPlatformSchedules((current) => {
+      const next = { ...current };
+      delete next[platform];
+      return next;
+    });
+
+    if (isPrefilledFlow) {
+      const remaining = prefilledPosts.filter((post) => post.platform !== platform);
+      if (remaining.length === 0) {
+        clearPostSchedulerPrefill();
+        setPrefilledPosts([]);
+        setIsPrefilledFlow(false);
+        setPrefilledImageUrl('');
+        setPrefilledImageFilePath('');
+        setPrefilledSource(undefined);
+        setMessage('');
+        return;
+      }
+      const next = remaining[0];
+      const previewUrl =
+        next.mediaType === 'video'
+          ? next.videoPosterUrl || next.imageUrl || next.videoUrl || ''
+          : next.mediaType === 'carousel'
+            ? next.carouselSlides?.[0]?.imageUrl || next.imageUrl
+            : next.imageUrl;
+      setPrefilledPosts(remaining);
+      setPrefilledImageUrl(previewUrl);
+      setPrefilledImageFilePath(
+        next.mediaType === 'video'
+          ? ''
+          : next.mediaType === 'carousel'
+            ? next.carouselSlides?.[0]?.imageFilePath || next.imageFilePath
+            : next.imageFilePath
+      );
+      setPrefilledSource(next.source);
+      setMessage(next.message);
+      return;
+    }
+
+    setGenPlatforms((current) => current.filter((p) => p !== platform));
+  };
+
+  const handleSchedulePlatform = async (platform: SchedulerPlatform) => {
     if (isTourDemo) return;
-    if (!canSchedule) return;
-    // Tracks whether this run consumed a Product Advert prefill so we can
-    // wipe the product-advert form state on success (prompt, platforms,
-    // generated result, etc.). Without this, navigating back to
-    // /product-advert after scheduling would still show the stale inputs
-    // and result until a hard refresh.
+    if (!canSchedulePlatform(platform)) return;
+
     let didConsumeProductAdvert = false;
     try {
       setPostLoading(true);
+      setSchedulingPlatform(platform);
       const buildFileFromImageUrl = async (imageUrl: string, index: number) => {
         const response = await fetch(imageUrl);
         const blob = await response.blob();
@@ -621,167 +702,153 @@ export default function PostSchedulePage() {
         });
       };
 
-      if (isPrefilledFlow && prefilledPosts.length > 0) {
-        const postsToSchedule = prefilledPosts.filter(
-          (post) => selectedAccounts?.[post.platform]
+      const scheduledAtIso = getScheduledAtIso(platform);
+      if (!scheduledAtIso) {
+        throw new Error(
+          `Choose a schedule time for ${formatPlatformLabel(platform)}.`
         );
-        if (postsToSchedule.length === 0) {
+      }
+
+      if (isPrefilledFlow) {
+        const post = prefilledPosts.find((p) => p.platform === platform);
+        if (!post) {
+          throw new Error(
+            `No prefilled post found for ${formatPlatformLabel(platform)}.`
+          );
+        }
+        if (!selectedAccounts?.[post.platform]) {
           throw new Error('No connected platforms available for scheduling.');
         }
-        didConsumeProductAdvert = postsToSchedule.some(
-          (post) => post.source === 'productadvert'
-        );
-        await Promise.all(
-          postsToSchedule.map(async (post) => {
-            const scheduledAtIso = getScheduledAtIso(post.platform);
-            if (!scheduledAtIso) {
-              throw new Error(
-                `Choose a schedule time for ${formatPlatformLabel(post.platform)}.`
-              );
-            }
-            const isVideoPost = post.mediaType === 'video';
-            const isCarouselPost = post.mediaType === 'carousel';
-            const videoFilePath = String(post.videoFilePath ?? '').trim();
-            const videoUrl = String(post.videoUrl ?? '').trim();
-            const carouselSlides = Array.isArray(post.carouselSlides)
-              ? post.carouselSlides.filter(
-                  (s) =>
-                    String(s.imageUrl ?? '').trim() &&
-                    String(s.imageFilePath ?? '').trim()
-                )
-              : [];
-            const pathReady = isCarouselPost
-              ? carouselSlides.length >= 2
-              : isVideoPost
-                ? videoFilePath.length > 0 && videoUrl.length > 0
-                : post.imageFilePath.trim().length > 0;
-            if (isCarouselPost && carouselSlides.length < 2) {
-              throw new Error(
-                'Carousel posts need at least 2 slides with saved image paths.'
-              );
-            }
-            if (!pathReady) {
-              throw new Error(
-                isVideoPost
-                  ? 'Video post is missing videoFilePath / videoUrl. Re-open from the gallery or generate again.'
-                  : isCarouselPost
-                    ? 'Carousel posts need at least 2 slides with saved image paths.'
-                    : 'Image post is missing imageFilePath / imageUrl.'
-              );
-            }
-            return scheduleUserPost({
-              ...(isCarouselPost
-                ? {
-                    mediaType: 'carousel' as const,
-                    carouselSlides,
-                    imageFilePath:
-                      carouselSlides[0]?.imageFilePath || post.imageFilePath,
-                    imageUrl: carouselSlides[0]?.imageUrl || post.imageUrl,
-                  }
-                : isVideoPost
-                  ? {
-                      mediaType: 'video' as const,
-                      videoFilePath,
-                      videoUrl,
-                      ...(post.videoPosterPath
-                        ? { videoPosterPath: post.videoPosterPath }
-                        : {}),
-                      ...(post.videoPosterUrl
-                        ? { videoPosterUrl: post.videoPosterUrl }
-                        : {}),
-                    }
-                  : {
-                      imageFilePath: post.imageFilePath,
-                      imageUrl: post.imageUrl,
-                    }),
-              message: post.message || message,
-              time: scheduledAtIso,
-              platform: post.platform,
-              ...(post.source ? { source: post.source } : {}),
-            });
-          })
-        );
-        toast.success(
-          postsToSchedule.length > 1
-            ? 'Posts scheduled successfully'
-            : 'Post scheduled successfully'
-        );
-        if (didConsumeProductAdvert) {
-          useProductAdvertState.getState().resetForm();
+        didConsumeProductAdvert = post.source === 'productadvert';
+
+        const isVideoPost = post.mediaType === 'video';
+        const isCarouselPost = post.mediaType === 'carousel';
+        const videoFilePath = String(post.videoFilePath ?? '').trim();
+        const videoUrl = String(post.videoUrl ?? '').trim();
+        const carouselSlides = Array.isArray(post.carouselSlides)
+          ? post.carouselSlides.filter(
+              (s) =>
+                String(s.imageUrl ?? '').trim() &&
+                String(s.imageFilePath ?? '').trim()
+            )
+          : [];
+        const pathReady = isCarouselPost
+          ? carouselSlides.length >= 2
+          : isVideoPost
+            ? videoFilePath.length > 0 && videoUrl.length > 0
+            : post.imageFilePath.trim().length > 0;
+        if (isCarouselPost && carouselSlides.length < 2) {
+          throw new Error(
+            'Carousel posts need at least 2 slides with saved image paths.'
+          );
         }
-        resetSchedulerForm();
-        return;
-      }
+        if (!pathReady) {
+          throw new Error(
+            isVideoPost
+              ? 'Video post is missing videoFilePath / videoUrl. Re-open from the gallery or generate again.'
+              : isCarouselPost
+                ? 'Carousel posts need at least 2 slides with saved image paths.'
+                : 'Image post is missing imageFilePath / imageUrl.'
+          );
+        }
 
-      const pathReady =
-        prefilledImageFilePath.trim().length > 0 &&
-        prefilledImageUrl.trim().length > 0;
+        await scheduleUserPost({
+          ...(isCarouselPost
+            ? {
+                mediaType: 'carousel' as const,
+                carouselSlides,
+                imageFilePath:
+                  carouselSlides[0]?.imageFilePath || post.imageFilePath,
+                imageUrl: carouselSlides[0]?.imageUrl || post.imageUrl,
+              }
+            : isVideoPost
+              ? {
+                  mediaType: 'video' as const,
+                  videoFilePath,
+                  videoUrl,
+                  ...(post.videoPosterPath
+                    ? { videoPosterPath: post.videoPosterPath }
+                    : {}),
+                  ...(post.videoPosterUrl
+                    ? { videoPosterUrl: post.videoPosterUrl }
+                    : {}),
+                }
+              : {
+                  imageFilePath: post.imageFilePath,
+                  imageUrl: post.imageUrl,
+                }),
+          message: post.message || message,
+          time: scheduledAtIso,
+          platform: post.platform,
+          ...(post.source ? { source: post.source } : {}),
+        });
+      } else {
+        if (!selectedAccounts?.[platform]) {
+          throw new Error('No connected platforms available for scheduling.');
+        }
+        if (prefilledSource === 'productadvert') {
+          didConsumeProductAdvert = true;
+        }
 
-      const platformsToSchedule = genPlatforms.filter(
-        (p) => selectedAccounts?.[p]
-      );
-      if (platformsToSchedule.length === 0) {
-        throw new Error('No connected platforms available for scheduling.');
-      }
-      if (prefilledSource === 'productadvert') {
-        didConsumeProductAdvert = true;
-      }
+        const pathReady =
+          prefilledImageFilePath.trim().length > 0 &&
+          prefilledImageUrl.trim().length > 0;
 
-      await Promise.all(
-        platformsToSchedule.map(async (platformKey) => {
-          const scheduledAtIso = getScheduledAtIso(platformKey);
-          if (!scheduledAtIso) {
-            throw new Error(
-              `Choose a schedule time for ${formatPlatformLabel(platformKey)}.`
-            );
-          }
-          if (selectedMediaFile) {
-            return scheduleUserPost({
-              file: selectedMediaFile,
-              mediaType: selectedMediaType ?? 'image',
-              message,
-              time: scheduledAtIso,
-              platform: platformKey,
-            });
-          }
-          if (pathReady) {
-            return scheduleUserPost({
-              imageFilePath: prefilledImageFilePath,
-              imageUrl: prefilledImageUrl,
-              message,
-              time: scheduledAtIso,
-              platform: platformKey,
-              ...(prefilledSource ? { source: prefilledSource } : {}),
-            });
-          }
-          if (prefilledImageUrl.trim().length > 0) {
-            const fileFromUrl = await buildFileFromImageUrl(
-              prefilledImageUrl.trim(),
-              0
-            );
-            return scheduleUserPost({
-              file: fileFromUrl,
-              message,
-              time: scheduledAtIso,
-              platform: platformKey,
-            });
-          }
+        if (selectedMediaFile) {
+          await scheduleUserPost({
+            file: selectedMediaFile,
+            mediaType: selectedMediaType ?? 'image',
+            message,
+            time: scheduledAtIso,
+            platform,
+          });
+        } else if (pathReady) {
+          await scheduleUserPost({
+            imageFilePath: prefilledImageFilePath,
+            imageUrl: prefilledImageUrl,
+            message,
+            time: scheduledAtIso,
+            platform,
+            ...(prefilledSource ? { source: prefilledSource } : {}),
+          });
+        } else if (prefilledImageUrl.trim().length > 0) {
+          const fileFromUrl = await buildFileFromImageUrl(
+            prefilledImageUrl.trim(),
+            0
+          );
+          await scheduleUserPost({
+            file: fileFromUrl,
+            message,
+            time: scheduledAtIso,
+            platform,
+          });
+        } else {
           throw new Error('Please attach media before scheduling.');
-        })
-      );
+        }
+      }
+
       toast.success(
-        platformsToSchedule.length > 1
-          ? 'Posts scheduled successfully'
-          : 'Post scheduled successfully'
+        `${formatPlatformLabel(platform)} post scheduled successfully`
       );
       if (didConsumeProductAdvert) {
         useProductAdvertState.getState().resetForm();
       }
-      resetSchedulerForm();
+
+      const remainingPlatforms = schedulePlatforms.filter((p) => p !== platform);
+      if (remainingPlatforms.length === 0) {
+        resetSchedulerForm();
+      } else {
+        removeScheduledPlatform(platform);
+      }
     } catch (error) {
-      showErrorToast('Failed to schedule post');
+      showErrorToast(
+        error instanceof Error
+          ? error.message
+          : `Failed to schedule ${formatPlatformLabel(platform)} post`
+      );
     } finally {
       setPostLoading(false);
+      setSchedulingPlatform(null);
     }
   };
 
@@ -851,7 +918,7 @@ export default function PostSchedulePage() {
                           />
                         ) : prefilledMediaType === 'carousel' &&
                           (singlePrefilledPost?.carouselSlides?.length ?? 0) >=
-                            2 ? (
+                          2 ? (
                           <div className="w-full max-w-sm">
                             <CarouselSwipePreview
                               slides={(
@@ -955,9 +1022,9 @@ export default function PostSchedulePage() {
                           {imageAreaDisabled
                             ? "You're creating a text-only post"
                             : acceptsVideoUpload && selectedSinglePlatform === 'facebook'
-                                ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is Facebook-only here.'
-                                : acceptsVideoUpload && selectedSinglePlatform === 'instagram'
-                                  ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is Instagram-only here.'
+                              ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is Facebook-only here.'
+                              : acceptsVideoUpload && selectedSinglePlatform === 'instagram'
+                                ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is Instagram-only here.'
                                 : acceptsVideoUpload && selectedSinglePlatform === 'linkedin'
                                   ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is LinkedIn-only here.'
                                   : 'SVG, PNG, JPG or GIF'}
@@ -1125,10 +1192,10 @@ export default function PostSchedulePage() {
                     ) : (
                       <p className="mt-2 text-xs text-slate-500">
                         {allPlatformsSelected
-                          ? `Schedules this post on each connected platform (${allowedPlatforms.length}).`
+                          ? `Each connected platform (${allowedPlatforms.length}) gets its own schedule button below.`
                           : genPlatforms.length > 1
-                            ? `Schedules this post on each selected platform (${genPlatforms.length}).`
-                            : 'Select one or more platforms for this post.'}
+                            ? `Each selected platform (${genPlatforms.length}) gets its own schedule button below.`
+                            : 'Select one or more platforms, then schedule each one separately.'}
                       </p>
                     )}
                   </>
@@ -1147,7 +1214,7 @@ export default function PostSchedulePage() {
                   return (
                     <div
                       key={platform}
-                      className="rounded-2xl border border-slate-200 bg-white/80 p-3 space-y-3"
+                      className="rounded-2xl border border-slate-200 bg-white/80 p-3 space-y-3 flex flex-col justify-between"
                     >
                       <div className="flex items-center gap-2">
                         {isPrefilledFlow ? (
@@ -1204,11 +1271,10 @@ export default function PostSchedulePage() {
                             }
                             aria-label={`Use suggested time ${suggestedTime}`}
                             title="Tap to apply this suggested time"
-                            className={`group mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 ${
-                              slot.time === suggestedTime
+                            className={`group mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1 ${slot.time === suggestedTime
                                 ? 'cursor-default border-indigo-200 bg-indigo-100 text-indigo-700'
                                 : 'cursor-pointer border-indigo-200 bg-indigo-50 text-indigo-700 hover:border-indigo-600 hover:bg-indigo-600 hover:text-white hover:shadow-sm'
-                            }`}
+                              }`}
                           >
                             <Sparkles className="h-3 w-3" />
                             <span>
@@ -1224,6 +1290,16 @@ export default function PostSchedulePage() {
                           Will publish on: {slot.date} at {slot.time}
                         </p>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => handleSchedulePlatform(platform)}
+                        disabled={!canSchedulePlatform(platform) || postLoading}
+                        className="w-full rounded-xl bg-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+                      >
+                        {postLoading && schedulingPlatform === platform
+                          ? 'Scheduling...'
+                          : `Schedule ${formatPlatformLabel(platform)}`}
+                      </button>
                     </div>
                   );
                 })}
@@ -1244,18 +1320,7 @@ export default function PostSchedulePage() {
             <p className="text-sm text-red-600">{pastScheduleTimeError}</p>
           )}
 
-          <button
-            type="button"
-            onClick={handleSchedulePost}
-            disabled={!canSchedule || postLoading}
-            className="w-full rounded-xl bg-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
-          >
-            {postLoading
-              ? 'Scheduling...'
-              : !isPrefilledFlow && genPlatforms.length > 1
-                ? 'Schedule posts'
-                : 'Schedule Post'}
-          </button>
+
         </section>
       </div>
       <ImagePreviewOverlay

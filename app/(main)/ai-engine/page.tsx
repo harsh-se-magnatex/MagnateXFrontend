@@ -467,56 +467,6 @@ export default function AIEnginePage() {
   const imagePreview = useImagePreview();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!user?.uid) return;
-    // Legacy localStorage → DB one-time migrate (keys no longer written).
-    try {
-      const autoKey = `ai-engine-automation-done:${user.uid}`;
-      const bizKey = `ai-engine-business-done:${user.uid}`;
-      const autoLocal = localStorage.getItem(autoKey) === '1';
-      const bizLocal = localStorage.getItem(bizKey) === '1';
-      if (!autoLocal && !bizLocal) return;
-
-      const setup = data.aiEngineSetup;
-      const needAuto = autoLocal && setup?.automationDone !== true;
-      const needBiz = bizLocal && setup?.businessDone !== true;
-      if (!needAuto && !needBiz) {
-        localStorage.removeItem(autoKey);
-        localStorage.removeItem(bizKey);
-        return;
-      }
-
-      void updateAiEngineSetup({
-        ...(needAuto ? { automationDone: true } : {}),
-        ...(needBiz ? { businessDone: true } : {}),
-      })
-        .then(() => {
-          localStorage.removeItem(autoKey);
-          localStorage.removeItem(bizKey);
-          setSkipped((prev) => {
-            const next = new Set(prev);
-            if (needAuto) next.add('automation');
-            if (needBiz) next.add('business');
-            return next;
-          });
-          setData((prev) => ({
-            ...prev,
-            aiEngineSetup: {
-              automationDone:
-                needAuto || prev.aiEngineSetup?.automationDone === true,
-              businessDone:
-                needBiz || prev.aiEngineSetup?.businessDone === true,
-            },
-          }));
-        })
-        .catch(() => {
-          /* keep local flags until next successful migrate */
-        });
-    } catch {
-      /* ignore */
-    }
-  }, [user?.uid, data.aiEngineSetup]);
-
   const getDetails = useCallback(async (opts?: { silent?: boolean }) => {
     try {
       if (!opts?.silent) setDataLoading(true);

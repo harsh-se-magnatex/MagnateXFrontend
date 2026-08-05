@@ -51,8 +51,14 @@ export function splitStoredPhone(stored: unknown): {
   countryCode: string;
   nationalNumber: string;
 } {
-  const digits = digitsOnly(String(stored ?? '').replace(/^\+/, ''));
+  const raw = String(stored ?? '').trim();
+  const hasExplicitPlus = raw.startsWith('+');
+  const digits = digitsOnly(raw.replace(/^\+/, ''));
   if (!digits) return { countryCode: '', nationalNumber: '' };
+
+  if (!hasExplicitPlus) {
+    return { countryCode: '', nationalNumber: digits };
+  }
 
   for (const dial of DIAL_DIGITS_LONGEST_FIRST) {
     if (digits.startsWith(dial) && digits.length > dial.length) {
@@ -74,15 +80,37 @@ export function splitStoredPhone(stored: unknown): {
 }
 
 export function joinPhone(countryCode: string, nationalNumber: string): string {
-  const combined = `${normalizeDialDigits(countryCode)}${digitsOnly(nationalNumber)}`;
+  const nationalDigits = digitsOnly(nationalNumber);
+  if (!nationalDigits) return '';
+
+  const dialDigits = normalizeDialDigits(countryCode);
+  if (!dialDigits) return nationalDigits;
+
+  const combined = `${dialDigits}${nationalDigits}`;
   return combined ? `+${combined}` : '';
 }
 
-/** Normalize any stored/scraped contact to E.164-style `+digits` (or ''). */
+/** Normalize any stored/scraped contact using the same local-vs-international rule as `joinPhone()`. */
 export function toE164BusinessContact(raw: unknown): string {
   if (raw == null) return '';
-  const digits = digitsOnly(String(raw));
-  return digits ? `+${digits}` : '';
+
+  const text = String(raw).trim();
+  const digits = digitsOnly(text);
+  if (!digits) return '';
+
+  return text.startsWith('+') ? `+${digits}` : digits;
+}
+
+/** Match profile-save behavior: invalid / placeholder contact values become ''. */
+export function normalizeBusinessContactValue(raw: unknown): string {
+  const text = String(raw ?? '').trim();
+  if (!text) return '';
+
+  const digits = digitsOnly(text);
+  if (!digits || /^0+$/.test(digits)) return '';
+  if (digits.length < 6) return '';
+
+  return text.startsWith('+') ? `+${digits}` : digits;
 }
 
 export function formatCountryOptionLabel(row: CountryDialCode): string {

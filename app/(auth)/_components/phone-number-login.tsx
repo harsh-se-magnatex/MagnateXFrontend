@@ -22,12 +22,8 @@ import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { trackLogin, trackSignUp } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
-
-const IN_PREFIX = '+91';
-
-function digitsOnly(value: string): string {
-  return value.replace(/\D/g, '');
-}
+import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
+import { joinPhone } from '@/lib/country-codes';
 
 export type PhoneNumberLoginProps = {
   intent: 'signin' | 'signup';
@@ -48,7 +44,8 @@ export function PhoneNumberLogin({
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const router = useRouter();
 
-  const [localDigits, setLocalDigits] = useState('');
+  const [phoneCountryCode, setPhoneCountryCode] = useState('');
+  const [phoneNationalNumber, setPhoneNationalNumber] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [otp, setOtp] = useState('');
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(
@@ -84,7 +81,7 @@ export function PhoneNumberLogin({
     };
   }, []);
 
-  const e164 = `${IN_PREFIX}${localDigits}`;
+  const e164 = joinPhone(phoneCountryCode, phoneNationalNumber);
 
   const resetToPhoneStep = () => {
     setStep('phone');
@@ -93,8 +90,12 @@ export function PhoneNumberLogin({
   };
 
   const handleSendCode = async () => {
-    if (localDigits.length !== 10) {
-      showErrorToast('Enter a valid 10-digit mobile number.');
+    if (!phoneCountryCode) {
+      showErrorToast('Select a country code.');
+      return;
+    }
+    if (phoneNationalNumber.length < 6) {
+      showErrorToast('Enter a valid mobile number.');
       return;
     }
     if (intent === 'signup') {
@@ -235,26 +236,21 @@ export function PhoneNumberLogin({
             <label className="mb-2 block text-xs font-semibold tracking-wider text-muted-foreground uppercase">
               Mobile number
             </label>
-            <div className="flex min-h-11 w-full items-stretch gap-2 rounded-xl border border-border bg-accent/30 transition-colors focus-within:border-primary-blue focus-within:ring-2 focus-within:ring-primary-blue/20">
-              <span className="flex shrink-0 items-center border-r border-border px-3 text-sm font-medium text-muted-foreground">
-                {IN_PREFIX}
-              </span>
-              <div className="relative flex min-w-0 flex-1 items-center">
-                <Smartphone className="pointer-events-none absolute left-0 h-5 w-5 text-muted-foreground/60" />
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  maxLength={10}
-                  value={localDigits}
-                  onChange={(e) => setLocalDigits(digitsOnly(e.target.value))}
-                  placeholder="98765 43210"
-                  className="h-11 w-full min-w-0 rounded-r-xl bg-transparent py-3 pr-4 pl-9 text-base text-foreground outline-none placeholder:text-muted-foreground/50 sm:text-sm"
-                />
-              </div>
-            </div>
+            <CountryCodePhoneField
+              id="auth-phone-number"
+              countryCode={phoneCountryCode}
+              nationalNumber={phoneNationalNumber}
+              onChange={(countryCode, nationalNumber) => {
+                setPhoneCountryCode(countryCode);
+                setPhoneNationalNumber(nationalNumber);
+              }}
+              selectClassName="h-11 rounded-xl border-border bg-accent/30 px-3 text-base text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
+              customInputClassName="h-11 rounded-xl border-border bg-accent/30 px-3 text-base text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
+              numberInputClassName="h-11 rounded-xl border-border bg-accent/30 px-3 text-base text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
+              nationalPlaceholder="98765 43210"
+            />
             <p className="mt-1.5 text-xs text-muted-foreground">
-              India (+91) only · SMS rates may apply
+              Select your country code, then enter your mobile number. SMS rates may apply.
             </p>
           </div>
           <Button
@@ -265,7 +261,8 @@ export function PhoneNumberLogin({
             onClick={() => void handleSendCode()}
             disabled={
               loading ||
-              localDigits.length !== 10 ||
+              !phoneCountryCode ||
+              phoneNationalNumber.length < 6 ||
               (intent === 'signup' && displayName.trim().length < 2)
             }
           >

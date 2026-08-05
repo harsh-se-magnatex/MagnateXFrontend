@@ -80,8 +80,8 @@ export function CountryCodePhoneField({
             onChange={(e) => handleSelectChange(e.target.value)}
             className={cn(selectClassName, 'appearance-none pr-9')}
           >
-            <option value="" disabled>
-              Country code
+            <option value="">
+              No country code
             </option>
             {COUNTRY_DIAL_CODES.map((row) => {
               const digits = normalizeDialDigits(row.dial_code);

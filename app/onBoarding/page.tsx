@@ -46,6 +46,12 @@ import {
 } from '@/components/onboarding/OnboardingSuggestionsPanel';
 import { OnboardingAiLogoSection } from '@/components/onboarding/OnboardingAiLogoSection';
 import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
+import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
+import {
+  joinPhone,
+  normalizeBusinessContactValue,
+  splitStoredPhone,
+} from '@/lib/country-codes';
 
 type QuestionType =
   | 'text'
@@ -390,6 +396,8 @@ function normalizeHashtagKey(t: string): string {
 export default function OnboardingMenu() {
   const [step, setStep] = useState<number>(0);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const [phoneCountryCode, setPhoneCountryCode] = useState('');
+  const [phoneNationalNumber, setPhoneNationalNumber] = useState('');
   const [sourceMode, setSourceMode] = useState<SourceMode>('website');
   const [catalogFile, setCatalogFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -538,6 +546,25 @@ export default function OnboardingMenu() {
     }
   };
 
+  const updatePhone = (countryCode: string, nationalNumber: string) => {
+    setPhoneCountryCode(countryCode);
+    setPhoneNationalNumber(nationalNumber);
+    setFormData((prev) => ({
+      ...prev,
+      businesscontact: joinPhone(countryCode, nationalNumber),
+    }));
+  };
+
+  const applyStoredPhone = (stored: unknown) => {
+    const { countryCode, nationalNumber } = splitStoredPhone(stored);
+    setPhoneCountryCode(countryCode);
+    setPhoneNationalNumber(nationalNumber);
+    setFormData((prev) => ({
+      ...prev,
+      businesscontact: joinPhone(countryCode, nationalNumber),
+    }));
+  };
+
   const toggleHashtagChip = (tag: string) => {
     const clean = tag.replace(/^#+/, '').trim();
     if (!clean) return;
@@ -554,6 +581,9 @@ export default function OnboardingMenu() {
   const handleNext = async () => {
     if (step < questions.length - 1) return setStep(step + 1);
     const dataToSave = { ...formData };
+    dataToSave.businesscontact = normalizeBusinessContactValue(
+      joinPhone(phoneCountryCode, phoneNationalNumber)
+    );
     if (typeof dataToSave.website === 'string' && dataToSave.website.trim()) {
       dataToSave.website = normalizeWebsiteUrl(dataToSave.website);
     }
@@ -594,6 +624,7 @@ export default function OnboardingMenu() {
 
       const response = await onBoardUser(dataToSave);
       if (response.success) {
+        applyStoredPhone(dataToSave.businesscontact);
         useTourState.getState().markOnboardingComplete();
         router.push('/brand-memory');
       }
@@ -662,6 +693,9 @@ export default function OnboardingMenu() {
         setSuggestionSource(source);
         setSelectedSuggestionKey(null);
         setFormData((prev) => ({ ...prev, ...formFields }));
+        if ('businesscontact' in formFields) {
+          applyStoredPhone(formFields.businesscontact);
+        }
         // Start AI copy with scraped context (force refresh if a weak early run started).
         void ensureBrandCopySuggestions({
           from: { ...formDataRef.current, ...formFields, website: url },
@@ -712,6 +746,9 @@ export default function OnboardingMenu() {
       setSuggestionSource(source);
       setSelectedSuggestionKey(null);
       setFormData((prev) => ({ ...prev, ...formFields }));
+      if ('businesscontact' in formFields) {
+        applyStoredPhone(formFields.businesscontact);
+      }
       const catalogHasCopy =
         suggestions.hashtags.length > 0 && suggestions.slogans.length > 0;
       if (catalogHasCopy) {
@@ -1021,6 +1058,21 @@ export default function OnboardingMenu() {
           rows={5}
           placeholder={current.placeholder}
           className="min-h-[140px] rounded-xl bg-card px-3 py-3 text-base shadow-sm"
+        />
+      );
+    }
+
+    if (current.name === 'businesscontact') {
+      return (
+        <CountryCodePhoneField
+          id="businesscontact"
+          countryCode={phoneCountryCode}
+          nationalNumber={phoneNationalNumber}
+          onChange={updatePhone}
+          selectClassName="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+          customInputClassName="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+          numberInputClassName="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+          nationalPlaceholder="98765 43210"
         />
       );
     }

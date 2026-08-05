@@ -62,6 +62,7 @@ type InstantGeneratedState = {
     platform: SocialPlatform,
     patch: Partial<{ date: string; time: string }>
   ) => void;
+  clearPlatformScheduleSlot: (platform: SocialPlatform) => void;
   schedulePlatform: string;
   setSchedulePlatform: (schedulePlatform: string) => void;
   cropForPlatform: boolean;
@@ -75,6 +76,7 @@ type InstantGeneratedState = {
   resetScheduleInputs: () => void;
   clearCreatedContent: () => void;
   clearOutput: () => void;
+  removeRenderedPlatform: (platform: string) => void;
 };
 
 export const useInstantGeneratedState = create<InstantGeneratedState>()(
@@ -127,6 +129,12 @@ export const useInstantGeneratedState = create<InstantGeneratedState>()(
           },
         },
       })),
+    clearPlatformScheduleSlot: (platform) =>
+      set((state) => {
+        const next = { ...state.platformSchedule };
+        delete next[platform];
+        return { platformSchedule: next };
+      }),
     schedulePlatform: '',
     setSchedulePlatform: (schedulePlatform) => set({ schedulePlatform }),
     cropForPlatform: true,
@@ -176,6 +184,32 @@ export const useInstantGeneratedState = create<InstantGeneratedState>()(
         scheduleTime: '',
         platformSchedule: {},
         schedulePlatform: '',
+      }),
+
+    removeRenderedPlatform: (platform) =>
+      set((state) => {
+        const content = state.createdContent;
+        if (!content) return state;
+        const remaining = content.renderedImages.filter(
+          (image) => image.platform !== platform
+        );
+        if (remaining.length === 0) {
+          return {
+            createdContent: null,
+            selectedRenderedImage: null,
+            generatedAt: null,
+          };
+        }
+        const nextSelected =
+          state.selectedRenderedImage?.platform === platform
+            ? remaining[0] ?? null
+            : state.selectedRenderedImage;
+        return {
+          createdContent: { ...content, renderedImages: remaining },
+          selectedRenderedImage: nextSelected,
+          schedulePlatform:
+            remaining.length === 1 ? remaining[0].platform : state.schedulePlatform,
+        };
       }),
   })
 );

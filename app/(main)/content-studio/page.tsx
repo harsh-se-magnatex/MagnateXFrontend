@@ -296,6 +296,8 @@ export default function AIContentPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [isScheduling, setIsScheduling] = useState(false);
+  const [schedulingPlatform, setSchedulingPlatform] =
+    useState<SocialPlatform | null>(null);
   const [scheduleError, setScheduleError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editTool, setEditTool] = useState<VideoEditToolId>('enhance');
@@ -320,6 +322,12 @@ export default function AIContentPage() {
   const platformSchedule = useInstantGeneratedState((s) => s.platformSchedule);
   const setPlatformScheduleValue = useInstantGeneratedState(
     (s) => s.setPlatformScheduleValue
+  );
+  const clearPlatformScheduleSlot = useInstantGeneratedState(
+    (s) => s.clearPlatformScheduleSlot
+  );
+  const removeRenderedPlatform = useInstantGeneratedState(
+    (s) => s.removeRenderedPlatform
   );
   const platform = useInstantGeneratedState((s) => s.schedulePlatform);
   const setPlatform = useInstantGeneratedState((s) => s.setSchedulePlatform)
@@ -569,31 +577,18 @@ export default function AIContentPage() {
     return [];
   }, [generated, isAllPlatforms, activeRenderedImage]);
 
-  const hasCompletePlatformSchedules =
-    scheduleTargets.length > 0 &&
-    scheduleTargets.every((target) => {
-      const slot = platformSchedule[target.platform];
-      return Boolean(slot?.date && slot?.time);
-    });
-
-  const hasPastPlatformSchedules =
-    hasCompletePlatformSchedules &&
-    scheduleTargets.some((target) => {
-      const slot = platformSchedule[target.platform];
-      return Boolean(
-        slot?.date && slot?.time && isScheduleTimeInPast(slot.date, slot.time)
-      );
-    });
-
-  const pastScheduleTimeError = hasPastPlatformSchedules
-    ? PAST_SCHEDULE_TIME_MESSAGE
-    : null;
-
-  const canSchedule =
-    !!generated &&
-    !isScheduling &&
-    hasCompletePlatformSchedules &&
-    !hasPastPlatformSchedules;
+  const canSchedulePlatform = useCallback(
+    (targetPlatform: SocialPlatform) => {
+      if (!generated || isScheduling) return false;
+      const target = scheduleTargets.find((t) => t.platform === targetPlatform);
+      if (!target?.asset.imageUrl?.trim()) return false;
+      const slot = platformSchedule[targetPlatform];
+      if (!slot?.date || !slot?.time) return false;
+      if (isScheduleTimeInPast(slot.date, slot.time)) return false;
+      return true;
+    },
+    [generated, isScheduling, platformSchedule, scheduleTargets]
+  );
 
   const preferredTimeForPlatform = useCallback(
     (targetPlatform: SocialPlatform) => {
@@ -804,49 +799,66 @@ export default function AIContentPage() {
     }
   };
 
-  const handleSchedule = async () => {
-    if (!canSchedule || !generated) return;
+  const handleSchedulePlatform = async (targetPlatform: SocialPlatform) => {
+    if (!canSchedulePlatform(targetPlatform) || !generated) return;
+    const target = scheduleTargets.find((t) => t.platform === targetPlatform);
+    if (!target) return;
+
     setScheduleError(null);
     setIsScheduling(true);
+    setSchedulingPlatform(targetPlatform);
     try {
-      const posts: SchedulePostPayload[] = scheduleTargets.map(
-        ({ asset, platform }) => {
-          const slot = platformSchedule[platform];
-          const when = new Date(`${slot?.date}T${slot?.time}:00`);
-          return {
-            platform,
-            scheduleAt: when.toISOString(),
-            message: asset.caption,
-            imageUrl: asset.imageUrl,
-            imageFilePath: asset.imageFilePath,
-          };
-        }
+      const slot = platformSchedule[targetPlatform];
+      if (!slot?.date || !slot?.time) {
+        throw new Error(
+          `Choose a schedule time for ${platformLabel(targetPlatform)}.`
+        );
+      }
+      const when = new Date(`${slot.date}T${slot.time}:00`);
+      const post: SchedulePostPayload = {
+        platform: targetPlatform,
+        scheduleAt: when.toISOString(),
+        message: target.asset.caption,
+        imageUrl: target.asset.imageUrl,
+        imageFilePath: target.asset.imageFilePath,
+      };
+      const { scheduledPostId } = await scheduleAiContentStudioPost(post);
+      const item: ScheduledItem = {
+        id: crypto.randomUUID(),
+        contentId: generated.id,
+        scheduledPostId,
+        summary: target.asset.caption.slice(0, 120),
+        scheduledAt: `${slot.date} at ${slot.time}`,
+        platform: targetPlatform,
+      };
+      pushScheduled(item);
+      toast.success(
+        `${platformLabel(targetPlatform)} post scheduled successfully`
       );
-      const { scheduledPostId } = await scheduleAiContentStudioPost(
-        posts.length === 1 ? posts[0] : posts
-      );
-      scheduleTargets.forEach(({ asset, platform }) => {
-        const slot = platformSchedule[platform];
-        const item: ScheduledItem = {
-          id: crypto.randomUUID(),
-          contentId: generated.id,
-          scheduledPostId,
-          summary: asset.caption.slice(0, 120),
-          scheduledAt: `${slot?.date} at ${slot?.time}`,
-          platform,
-        };
-        pushScheduled(item);
-      });
 
-      clearOutput();
-      toast.success('Content scheduled successfully');
+      const remainingCount = scheduleTargets.filter(
+        (t) => t.platform !== targetPlatform
+      ).length;
+      clearPlatformScheduleSlot(targetPlatform);
+      if (remainingCount === 0) {
+        clearOutput();
+        setSelectedImage(null);
+        setImageError(null);
+      } else {
+        removeRenderedPlatform(targetPlatform);
+      }
     } catch (e) {
-      showErrorToast('Failed to schedule content.');
+      showErrorToast(
+        e instanceof Error
+          ? e.message
+          : `Failed to schedule ${platformLabel(targetPlatform)} content.`
+      );
+      setScheduleError(
+        e instanceof Error ? e.message : 'Failed to schedule content.'
+      );
     } finally {
       setIsScheduling(false);
-      clearOutput();
-      setSelectedImage(null);
-      setImageError(null);
+      setSchedulingPlatform(null);
     }
   };
   const handleToggleGenPlatform = (platformToToggle: SocialPlatform) => {
@@ -1400,8 +1412,8 @@ export default function AIContentPage() {
                 </p>
                 {generated.renderedImages.length > 1 && (
                   <p className="text-xs text-indigo-600 font-medium">
-                    {generated.renderedImages.length} platforms · all will be
-                    scheduled together
+                    {generated.renderedImages.length} platforms · schedule each
+                    one separately below
                   </p>
                 )}
               </div>
@@ -1622,10 +1634,14 @@ export default function AIContentPage() {
                     };
                     const suggestedTime =
                       preferredTimeForPlatform(targetPlatform);
+                    const isPast =
+                      Boolean(slot.date) &&
+                      Boolean(slot.time) &&
+                      isScheduleTimeInPast(slot.date, slot.time);
                     return (
                       <div
                         key={targetPlatform}
-                        className="rounded-2xl border border-slate-200 bg-white/80 p-3 space-y-3"
+                        className="rounded-2xl border border-slate-200 bg-white/80 p-3 space-y-3 flex flex-col justify-between"
                       >
                         <div className="flex items-center gap-2">
                           <input
@@ -1700,25 +1716,31 @@ export default function AIContentPage() {
                             Will schedule on: {slot.date} at {slot.time}
                           </p>
                         )}
+                        {isPast && (
+                          <p className="text-xs text-red-600">
+                            {PAST_SCHEDULE_TIME_MESSAGE}
+                          </p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleSchedulePlatform(targetPlatform)}
+                          disabled={
+                            !canSchedulePlatform(targetPlatform) || isScheduling
+                          }
+                          className={scheduleButtonClass}
+                        >
+                          {isScheduling && schedulingPlatform === targetPlatform
+                            ? 'Scheduling…'
+                            : `Schedule ${platformLabel(targetPlatform)}`}
+                        </button>
                       </div>
                     );
                   })}
                 </div>
 
-                {(scheduleError || pastScheduleTimeError) && (
-                  <p className="text-sm text-red-600">
-                    {scheduleError || pastScheduleTimeError}
-                  </p>
+                {scheduleError && (
+                  <p className="text-sm text-red-600">{scheduleError}</p>
                 )}
-
-                <button
-                  type="button"
-                  onClick={handleSchedule}
-                  disabled={!canSchedule}
-                  className={scheduleButtonClass}
-                >
-                  {isScheduling ? 'Scheduling…' : 'Schedule this content'}
-                </button>
               </>
             ) : !activeRenderedImage ? (
               <p className="text-sm text-slate-500">
@@ -1774,6 +1796,10 @@ export default function AIContentPage() {
                     time: '',
                   };
                   const suggestedTime = preferredTimeForPlatform(targetPlatform);
+                  const isPast =
+                    Boolean(slot.date) &&
+                    Boolean(slot.time) &&
+                    isScheduleTimeInPast(slot.date, slot.time);
                   return (
                     <div
                       key={targetPlatform}
@@ -1853,24 +1879,30 @@ export default function AIContentPage() {
                           Will schedule on: {slot.date} at {slot.time}
                         </p>
                       )}
+                      {isPast && (
+                        <p className="text-xs text-red-600">
+                          {PAST_SCHEDULE_TIME_MESSAGE}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleSchedulePlatform(targetPlatform)}
+                        disabled={
+                          !canSchedulePlatform(targetPlatform) || isScheduling
+                        }
+                        className={scheduleButtonClass}
+                      >
+                        {isScheduling && schedulingPlatform === targetPlatform
+                          ? 'Scheduling…'
+                          : `Schedule ${platformLabel(targetPlatform)}`}
+                      </button>
                     </div>
                   );
                 })}
 
-                {(scheduleError || pastScheduleTimeError) && (
-                  <p className="text-sm text-red-600">
-                    {scheduleError || pastScheduleTimeError}
-                  </p>
+                {scheduleError && (
+                  <p className="text-sm text-red-600">{scheduleError}</p>
                 )}
-
-                <button
-                  type="button"
-                  onClick={handleSchedule}
-                  disabled={!canSchedule}
-                  className={scheduleButtonClass}
-                >
-                  {isScheduling ? 'Scheduling…' : 'Schedule this content'}
-                </button>
               </>
             )}
           </div>

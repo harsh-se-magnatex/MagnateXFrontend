@@ -17,6 +17,8 @@ import { Mail, Smartphone, User as UserIcon, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
+import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
+import { joinPhone, splitStoredPhone } from '@/lib/country-codes';
 import {
   confirmPhoneLink,
   formatAuthLinkError,
@@ -24,8 +26,6 @@ import {
   startPhoneLink,
   syncPasswordProviderAfterEmailVerified,
 } from '@/src/service/linkAuthMethods';
-
-const IN_PREFIX = '+91';
 
 import {
   workspaceInputClass,
@@ -36,10 +36,6 @@ import {
 } from '@/lib/workspace-ui';
 
 const inputBase = workspaceInputClass;
-
-function digitsOnly(value: string): string {
-  return value.replace(/\D/g, '');
-}
 
 function firebaseErrorCode(err: unknown): string {
   if (err && typeof err === 'object' && 'code' in err) {
@@ -60,7 +56,8 @@ export function LinkCredentialsSection({ user }: Props) {
   const showEmailOnlyAddPhone = hasEmail && !hasPhone;
 
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-  const [phoneDigits, setPhoneDigits] = useState('');
+  const [phoneCountryCode, setPhoneCountryCode] = useState('');
+  const [phoneNationalNumber, setPhoneNationalNumber] = useState('');
   const [phoneStep, setPhoneStep] = useState<'idle' | 'otp'>('idle');
   const [otp, setOtp] = useState('');
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(
@@ -140,7 +137,7 @@ export function LinkCredentialsSection({ user }: Props) {
     };
   }, []);
 
-  const e164 = `${IN_PREFIX}${phoneDigits}`;
+  const e164 = joinPhone(phoneCountryCode, phoneNationalNumber);
 
   const resetPhoneFlow = () => {
     setPhoneStep('idle');
@@ -148,9 +145,19 @@ export function LinkCredentialsSection({ user }: Props) {
     setConfirmation(null);
   };
 
+  useEffect(() => {
+    const { countryCode, nationalNumber } = splitStoredPhone(user.phoneNumber);
+    setPhoneCountryCode(countryCode);
+    setPhoneNationalNumber(nationalNumber);
+  }, [user.phoneNumber]);
+
   const handleSendPhoneLinkSms = async () => {
-    if (phoneDigits.length !== 10) {
-      showErrorToast('Enter a valid 10-digit mobile number.');
+    if (!phoneCountryCode) {
+      showErrorToast('Select a country code.');
+      return;
+    }
+    if (phoneNationalNumber.length < 6) {
+      showErrorToast('Enter a valid mobile number.');
       return;
     }
     const verifier = (
@@ -305,8 +312,8 @@ export function LinkCredentialsSection({ user }: Props) {
                   Add mobile number
                 </p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  India (+91). We’ll text you a code — enter it in the field below
-                  on this page to verify and link.
+                  We&apos;ll text you a code. Enter it below on this page to verify
+                  and link your mobile number.
                 </p>
               </div>
               <div className="space-y-3">
@@ -316,32 +323,26 @@ export function LinkCredentialsSection({ user }: Props) {
                 >
                   Mobile number
                 </label>
-                <div className="flex min-h-11 w-full items-stretch gap-2 rounded-xl border border-border bg-muted transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
-                  <span className="flex shrink-0 items-center border-r border-border px-3 text-sm font-medium text-muted-foreground">
-                    {IN_PREFIX}
-                  </span>
-                  <div className="relative flex min-w-0 flex-1 items-center">
-                    <Smartphone className="pointer-events-none absolute left-0 h-5 w-5 text-muted-foreground" />
-                    <input
-                      id="link-phone-digits"
-                      type="tel"
-                      inputMode="numeric"
-                      maxLength={10}
-                      value={phoneDigits}
-                      onChange={(e) =>
-                        setPhoneDigits(digitsOnly(e.target.value))
-                      }
-                      disabled={phoneStep === 'otp'}
-                      className="h-11 w-full min-w-0 rounded-r-xl bg-transparent py-3 pr-4 pl-9 text-foreground outline-none placeholder:text-muted-foreground"
-                      placeholder="9876543210"
-                      autoComplete="tel-national"
-                    />
-                  </div>
-                </div>
+                <CountryCodePhoneField
+                  id="link-phone-digits"
+                  countryCode={phoneCountryCode}
+                  nationalNumber={phoneNationalNumber}
+                  onChange={(countryCode, nationalNumber) => {
+                    setPhoneCountryCode(countryCode);
+                    setPhoneNationalNumber(nationalNumber);
+                  }}
+                  selectClassName={inputBase}
+                  customInputClassName={inputBase}
+                  numberInputClassName={inputBase}
+                  nationalPlaceholder="98765 43210"
+                  className={phoneStep === 'otp' ? 'pointer-events-none opacity-80' : undefined}
+                />
                 {phoneStep === 'idle' && (
                   <Button
                     type="button"
-                    disabled={phoneBusy || phoneDigits.length !== 10}
+                    disabled={
+                      phoneBusy || !phoneCountryCode || phoneNationalNumber.length < 6
+                    }
                     onClick={() => void handleSendPhoneLinkSms()}
                     className="w-full bg-primary hover:opacity-95 sm:w-auto"
                   >

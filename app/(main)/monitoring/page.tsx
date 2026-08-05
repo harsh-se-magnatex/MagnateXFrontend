@@ -620,11 +620,6 @@ function DetailModal({
           <DetailRow label="Caption / Message" value={post.message || '—'} />
           <DetailRow label="User name" value={post.userName || '—'} />
           <DetailRow label="Email" value={post.userEmail || '—'} />
-          <DetailRow
-            label="Business DNA"
-            value={post.businessDNA || '—'}
-            long
-          />
           <DetailRow label="Schedule at" value={scheduleAt} />
           <DetailRow label="Created at" value={createdAt} />
           <DetailRow label="Post status" value={post.postStatus ?? '—'} />

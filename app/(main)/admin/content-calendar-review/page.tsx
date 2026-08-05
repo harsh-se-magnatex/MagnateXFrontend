@@ -211,6 +211,8 @@ export default function AdminContentCalendarReviewPage() {
     Record<string, number>
   >({});
 
+  const now = useMemo(() => new Date(), []);
+
   useEffect(() => {
     if (user && !user.admin) {
       router.replace('/home');
@@ -504,7 +506,10 @@ export default function AdminContentCalendarReviewPage() {
   };
 
   if (!user?.admin) return null;
-
+  console.log('now', now.getTime());
+  console.log('preview', new Date(preview?.date ?? '').getTime());
+  console.log("content date is past", now.getTime() > new Date(preview?.date ?? '').getTime());
+  const contentDateIsPast = now.getTime() > new Date(preview?.date ?? '').getTime();
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16 page-enter">
       <header className="space-y-1">
@@ -721,7 +726,7 @@ export default function AdminContentCalendarReviewPage() {
         <PreviewModal
           target={preview}
           regenerateEnabled={
-            String(detail?.mode ?? '').trim().toLowerCase() === 'auto'
+            String(detail?.mode ?? '').trim().toLowerCase() === 'auto' && !contentDateIsPast
           }
           isRegenerating={
             pendingRegenKeys.has(
@@ -1260,17 +1265,7 @@ function PreviewModal({
                   />
                 )}
               </div>
-              <KV label="Kind" value={kindLabel(item.kind)} />
-              <KV
-                label="Media"
-                value={
-                  isCarousel
-                    ? `Carousel · ${item.slideCount ?? carouselSlides.length} slides`
-                    : isVideo
-                      ? 'Video'
-                      : item.mediaType ?? 'Image'
-                }
-              />
+              <KV label="Type" value={kindLabel(item.kind)} />
               <KV
                 label="Scheduled post id"
                 value={item.scheduledPostId ?? null}
@@ -1295,7 +1290,10 @@ function PreviewModal({
               {platform === 'linkedin' && optimal ? (
                 <KV label="Optimal LinkedIn time" value={optimal} />
               ) : null}
-              <KV label="Content type" value={item.contentType ?? null} />
+                <Timestamp
+                  label="Scheduled at"
+                  ms={item.scheduleAtMs ?? null}
+                />
               <KV
                 label="Content description"
                 value={item.contentDescription ?? item.title ?? null}
@@ -1317,12 +1315,8 @@ function PreviewModal({
                 </div>
               ) : null}
               <div className="grid grid-cols-2 gap-3 text-[11px] text-white/50">
-                <Timestamp
-                  label="Scheduled at"
-                  ms={item.scheduleAtMs ?? null}
-                />
-                <Timestamp label="Updated" ms={item.updatedAtMs ?? null} />
                 <Timestamp label="Created" ms={item.createdAtMs ?? null} />
+                <Timestamp label="Updated" ms={item.updatedAtMs ?? null} />
               </div>
             </div>
           </div>
