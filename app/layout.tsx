@@ -11,6 +11,8 @@ import { AnalyticsProvider } from '@/components/AnalyticsProvider';
 import { CookieBanner } from '@/components/CookieBanner';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const sora = Sora({
   variable: '--font-sora',
@@ -125,6 +127,8 @@ export default function RootLayout({
         {children}
         <Toaster />
         <AnalyticsProvider />
+        <Analytics />
+        <SpeedInsights />
         <CookieBanner />
       </body>
     </html>

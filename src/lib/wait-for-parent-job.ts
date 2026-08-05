@@ -277,3 +277,120 @@ export function applyGenerationOutcome(
   if (outcome === 'generated') handlers.onGenerated();
   else handlers.onFailed();
 }
+
+/**
+ * Campaign draft regenerate keeps the same `draftId` and original
+ * `parentJobId` (for campaign-box grouping). Completion is signaled by
+ * `lastRegenJobId` matching the enqueue id returned from the API.
+ */
+export function waitForCampaignDraftRegen(args: {
+  uid: string;
+  draftId: string;
+  regenJobId: string;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}): Promise<{
+  timedOut: boolean;
+  outcome: GenerationWaitOutcome;
+  data: Record<string, unknown> | null;
+}> {
+  const {
+    uid,
+    draftId,
+    regenJobId,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    signal,
+  } = args;
+
+  if (!draftId || !regenJobId) {
+    return Promise.resolve({
+      timedOut: false,
+      outcome: 'failed',
+      data: null,
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    let unsub: Unsubscribe | null = null;
+    let settled = false;
+
+    const finish = (result: {
+      timedOut: boolean;
+      outcome: GenerationWaitOutcome;
+      data: Record<string, unknown> | null;
+    }) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(result);
+    };
+
+    const fail = (err: unknown) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(err);
+    };
+
+    const onAbort = () => {
+      fail(new DOMException('Aborted', 'AbortError'));
+    };
+
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+      unsub?.();
+      unsub = null;
+    };
+
+    if (signal?.aborted) {
+      onAbort();
+      return;
+    }
+    signal?.addEventListener('abort', onAbort);
+
+    const timer = window.setTimeout(() => {
+      finish({
+        timedOut: true,
+        outcome: 'timedOut',
+        data: null,
+      });
+    }, timeoutMs);
+
+    try {
+      unsub = onSnapshot(
+        doc(db, 'users', uid, 'campaignDrafts', draftId),
+        (snap) => {
+          if (!snap.exists()) {
+            finish({
+              timedOut: false,
+              outcome: 'failed',
+              data: null,
+            });
+            return;
+          }
+          const data = snap.data() as Record<string, unknown>;
+          const status = String(data.generationStatus ?? '').toLowerCase();
+          if (status === 'failed' || status === 'error') {
+            finish({
+              timedOut: false,
+              outcome: 'failed',
+              data,
+            });
+            return;
+          }
+          if (String(data.lastRegenJobId ?? '') === regenJobId) {
+            finish({
+              timedOut: false,
+              outcome: 'generated',
+              data,
+            });
+          }
+        },
+        (err) => fail(err)
+      );
+    } catch (err) {
+      fail(err);
+    }
+  });
+}

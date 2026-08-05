@@ -43,6 +43,7 @@ import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeat
 import { isPlanInactive } from '@/lib/plan-access';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { useTimestampFormatter } from '@/lib/user-timezone';
+import { useTourDemo } from '@/src/stores/tourState';
 import {
   Sheet,
   SheetContent,
@@ -75,6 +76,7 @@ import {
   DEFAULT_CAMPAIGN_SET_SIZE,
   MAX_CAMPAIGN_DAYS,
   createCampaignApi,
+  deleteCampaignDraftApi,
   getCampaignSuggestionsApi,
   listCampaignDraftsApi,
   canRegenerateDraft,
@@ -86,13 +88,52 @@ import {
   type CampaignDraft,
   type CampaignSuggestion,
 } from '@/src/service/api/campaign.service';
-import { waitForParentJobDocs } from '@/src/lib/wait-for-parent-job';
+import {
+  waitForCampaignDraftRegen,
+  waitForParentJobDocs,
+} from '@/src/lib/wait-for-parent-job';
 import { auth } from '@/lib/firebase';
 import {
   useCampaignState,
   type CampaignDayDraft,
 } from '@/src/stores/campaignState';
 import { getTodatDate } from '@/utils/getTodayDate';
+import { normalizePreferredPostingTime } from '@/utils/preferredPostingTime';
+
+const OPTIMAL_TIME_FIELD: Record<
+  SocialPlatform,
+  'optimalFacebookTime' | 'optimalInstagramTime' | 'optimalLinkedinTime'
+> = {
+  facebook: 'optimalFacebookTime',
+  instagram: 'optimalInstagramTime',
+  linkedin: 'optimalLinkedinTime',
+};
+
+function preferredScheduleTimeForPlatform(
+  platform: string | null | undefined,
+  prefs:
+    | {
+        preferredTime?: string;
+        useAnalyticsOptimalPostingTime?: boolean;
+        optimalFacebookTime?: string;
+        optimalInstagramTime?: string;
+        optimalLinkedinTime?: string;
+      }
+    | null
+    | undefined
+): string {
+  const key = String(platform ?? '').toLowerCase();
+  const social =
+    key === 'facebook' || key === 'instagram' || key === 'linkedin'
+      ? (key as SocialPlatform)
+      : null;
+  if (!prefs) return normalizePreferredPostingTime(undefined);
+  if (social && prefs.useAnalyticsOptimalPostingTime) {
+    const optimal = prefs[OPTIMAL_TIME_FIELD[social]];
+    if (optimal) return normalizePreferredPostingTime(optimal, optimal);
+  }
+  return normalizePreferredPostingTime(prefs.preferredTime);
+}
 
 function platformLabel(platform: SocialPlatform): string {
   if (platform === 'instagram') return 'Instagram';
@@ -255,14 +296,38 @@ function legacyCampaignBatchKey(draft: CampaignDraft): string {
   return `legacy-${theme}-${goal}-${bucket}`;
 }
 
-/** One bordered box per campaign run (`parentJobId`). */
+/**
+ * Stable box key for one campaign run.
+ * Auto-seed / gap-fill enqueue one Cloud Task per day (unique parentJobId),
+ * so grouping by parentJobId alone splits a 5-day AI campaign into 5 boxes.
+ * Prefer theme + calendar window for auto-seeded drafts.
+ */
+function campaignBatchKey(draft: CampaignDraft): string {
+  const theme = (draft.campaignTheme || 'Campaign').trim();
+  const windowStart = String(draft.campaignWindowStart ?? '').trim();
+  const windowEnd = String(draft.campaignWindowEnd ?? '').trim();
+
+  if (draft.autoSeeded === true) {
+    if (windowStart || windowEnd || theme) {
+      return `auto:${theme}|${windowStart}|${windowEnd}`;
+    }
+  }
+
+  if (draft.parentJobId) return draft.parentJobId;
+
+  if (windowStart && theme) {
+    return `window:${theme}|${windowStart}|${windowEnd}`;
+  }
+
+  return legacyCampaignBatchKey(draft);
+}
+
+/** One bordered box per campaign run. */
 function groupDraftsByCampaign(drafts: CampaignDraft[]): CampaignDraftBox[] {
   const batches = new Map<string, CampaignDraft[]>();
 
   for (const draft of drafts) {
-    const batchKey = draft.parentJobId
-      ? draft.parentJobId
-      : legacyCampaignBatchKey(draft);
+    const batchKey = campaignBatchKey(draft);
     const list = batches.get(batchKey) ?? [];
     list.push(draft);
     batches.set(batchKey, list);
@@ -306,6 +371,7 @@ function unknownTsToDate(value: unknown): Date | null {
 export default function CreateCampaignPage() {
   const formattedToday = getTodatDate();
   const { billing, loading: planCreditsLoading } = useUserPlanCredits();
+  const isTourDemo = useTourDemo();
 
   const goal = useCampaignState((s) => s.goal);
   const setGoal = useCampaignState((s) => s.setGoal);
@@ -732,7 +798,7 @@ export default function CreateCampaignPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (isPlanInactive(billing)) {
+  if (!isTourDemo && isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
   }
 
@@ -1263,6 +1329,16 @@ function DayDraftList(props: DayDraftListProps) {
                       className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
                     />
                   </label>
+                  {days.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => onRemove(day.dayNumber)}
+                      title="Remove this day"
+                      className="inline-flex items-center justify-center rounded-lg border border-border bg-card p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  ) : null}
                 </div>
 
                 <div className="flex-1 space-y-2">
@@ -1631,9 +1707,7 @@ function DraftsDrawer(props: DraftsDrawerProps) {
   } = props;
   const [drafts, setDrafts] = useState<CampaignDraft[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<
-    'draft' | 'ai-draft' | 'scheduled' | 'all'
-  >('draft');
+  const [filter, setFilter] = useState<'draft' | 'scheduled' | 'all'>('draft');
   // Holds the id of the draft currently being regenerated so we can show a
   // per-row spinner. Set when the user clicks Regenerate, cleared once the
   // refresh after the job completes brings back the updated draft data
@@ -1641,7 +1715,9 @@ function DraftsDrawer(props: DraftsDrawerProps) {
   const [regeneratingDraftId, setRegeneratingDraftId] = useState<
     string | null
   >(null);
+  const [removingDraftId, setRemovingDraftId] = useState<string | null>(null);
   const preview = useImagePreview();
+  const { billing } = useUserPlanCredits();
 
   useEffect(() => {
     if (!open) preview.close();
@@ -1660,13 +1736,8 @@ function DraftsDrawer(props: DraftsDrawerProps) {
         status: statusParam,
         limit: 50,
       });
-      const filtered =
-        filter === 'ai-draft'
-          ? list.filter((d) => d.autoSeeded === true)
-          : filter === 'draft'
-            ? list.filter((d) => d.autoSeeded !== true)
-            : list;
-      setDrafts(filtered);
+      // Draft tab includes both manual and AI-seeded drafts (autoSeeded).
+      setDrafts(list);
       // Refreshed data is the authoritative source for "is this draft
       // still being regenerated?". Once the new image/regenerationCount
       // is in `list`, the spinner can go away.
@@ -1723,11 +1794,10 @@ function DraftsDrawer(props: DraftsDrawerProps) {
         const response = await regenerateCampaignDraftApi({ draftId });
         const uid = auth.currentUser?.uid;
         if (uid && response.parentJobId) {
-          const wait = await waitForParentJobDocs({
+          const wait = await waitForCampaignDraftRegen({
             uid,
-            collectionName: 'campaignDrafts',
-            parentJobId: response.parentJobId,
-            expectedCount: 1,
+            draftId,
+            regenJobId: response.parentJobId,
           });
           if (wait.outcome === 'generated') toast.success('Generated');
           else showErrorToast('Failed');
@@ -1744,6 +1814,23 @@ function DraftsDrawer(props: DraftsDrawerProps) {
       }
     },
     [isCampaignJobRunning, regeneratingDraftId, refresh]
+  );
+
+  const handleRemoveDraft = useCallback(
+    async (draftId: string) => {
+      if (removingDraftId) return;
+      try {
+        setRemovingDraftId(draftId);
+        await deleteCampaignDraftApi({ draftId });
+        toast.success('Marked as removed');
+        await refresh();
+      } catch {
+        showErrorToast('Could not remove this draft.');
+      } finally {
+        setRemovingDraftId(null);
+      }
+    },
+    [removingDraftId, refresh]
   );
 
   return (
@@ -1778,9 +1865,9 @@ function DraftsDrawer(props: DraftsDrawerProps) {
             Campaign drafts
           </SheetTitle>
           <SheetDescription className="text-xs text-muted-foreground">
-            Drafts are generated but not yet posted. Manual campaigns appear
-            under Draft; auto-mode content is under AI Draft. Pick a date
-            &amp; time to push one onto your schedule.
+            Drafts are generated but not yet posted. AI-seeded campaigns show
+            an AI generated badge. Pick a date &amp; time to push one onto your
+            schedule.
           </SheetDescription>
         </SheetHeader>
 
@@ -1789,7 +1876,6 @@ function DraftsDrawer(props: DraftsDrawerProps) {
             {(
               [
                 { value: 'draft', label: 'Draft' },
-                { value: 'ai-draft', label: 'AI Draft' },
                 { value: 'scheduled', label: 'Scheduled' },
                 { value: 'all', label: 'All' },
               ] as const
@@ -1832,11 +1918,9 @@ function DraftsDrawer(props: DraftsDrawerProps) {
           )}
           {!loading && drafts.length === 0 && (
             <div className="rounded-2xl border border-dashed border-border bg-muted/40 p-6 text-center text-sm text-muted-foreground">
-              {filter === 'ai-draft'
-                ? 'No AI campaign drafts yet. Auto-mode campaigns will appear here when generated.'
-                : filter === 'all'
-                  ? 'No drafts yet.'
-                  : `No ${filter} drafts yet.`}
+              {filter === 'all'
+                ? 'No drafts yet.'
+                : `No ${filter} drafts yet.`}
               {filter === 'draft' &&
                 ' Generate a campaign and the renders will land here.'}
             </div>
@@ -1849,9 +1933,15 @@ function DraftsDrawer(props: DraftsDrawerProps) {
                   draft={draft}
                   dateWindow={dateWindow}
                   formattedToday={formattedToday}
+                  defaultScheduleTime={preferredScheduleTimeForPlatform(
+                    draft.platform,
+                    billing?.preferences
+                  )}
                   onScheduled={handleScheduled}
                   onRegenerate={handleRegenerate}
+                  onRemove={handleRemoveDraft}
                   isRegenerating={regeneratingDraftId === draft.draftId}
+                  isRemoving={removingDraftId === draft.draftId}
                   isAnyRegenInFlight={
                     regeneratingDraftId != null || isCampaignJobRunning
                   }
@@ -1868,10 +1958,18 @@ function DraftsDrawer(props: DraftsDrawerProps) {
               >
                 <header className="flex items-start justify-between gap-3 border-b border-border bg-muted/50 px-4 py-3">
                   <div className="min-w-0 space-y-1">
-                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
-                      <CalendarRange className="h-3.5 w-3.5 shrink-0" />
-                      {box.weekLabel}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
+                        <CalendarRange className="h-3.5 w-3.5 shrink-0" />
+                        {box.weekLabel}
+                      </span>
+                      {box.items.some((d) => d.autoSeeded === true) ? (
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-violet-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-violet-700">
+                          <Sparkles className="h-3 w-3" />
+                          AI generated
+                        </span>
+                      ) : null}
+                    </div>
                     <p className="truncate text-sm font-semibold text-foreground">
                       {box.theme}
                     </p>
@@ -1888,9 +1986,15 @@ function DraftsDrawer(props: DraftsDrawerProps) {
                       draft={draft}
                       dateWindow={dateWindow}
                       formattedToday={formattedToday}
+                      defaultScheduleTime={preferredScheduleTimeForPlatform(
+                        draft.platform,
+                        billing?.preferences
+                      )}
                       onScheduled={handleScheduled}
                       onRegenerate={handleRegenerate}
+                      onRemove={handleRemoveDraft}
                       isRegenerating={regeneratingDraftId === draft.draftId}
+                      isRemoving={removingDraftId === draft.draftId}
                       isAnyRegenInFlight={
                         regeneratingDraftId != null || isCampaignJobRunning
                       }
@@ -1921,9 +2025,13 @@ type DraftRowProps = {
   draft: CampaignDraft;
   dateWindow: string[];
   formattedToday: string;
+  /** Preferred or analytics-optimal HH:mm for this draft's platform. */
+  defaultScheduleTime: string;
   onScheduled: () => void;
   onRegenerate: (draftId: string) => void;
+  onRemove: (draftId: string) => void;
   isRegenerating: boolean;
+  isRemoving: boolean;
   isAnyRegenInFlight: boolean;
   isPreviewOpen: boolean;
   onOpenPreview: (url: string, alt?: string) => void;
@@ -1949,25 +2057,41 @@ function DraftRow(props: DraftRowProps) {
     draft,
     dateWindow,
     formattedToday,
+    defaultScheduleTime,
     onScheduled,
     onRegenerate,
+    onRemove,
     isRegenerating,
+    isRemoving,
     isAnyRegenInFlight,
     isPreviewOpen,
     onOpenPreview,
   } = props;
   const fmtTimestamp = useTimestampFormatter();
   const isScheduled = draft.status === 'scheduled';
+  const isUserRemoved = draft.userRemoved === true;
+  const isAiGenerated = draft.autoSeeded === true;
   const targetDate = draft.targetDate || dateWindow[0] || formattedToday;
-  const [date, setDate] = useState<string>(targetDate);
-  // Default 09:00 — always stored/shown as 24-hour HH:mm (no AM/PM).
-  const [time, setTime] = useState<string>('09:00');
+  const isPastDate = Boolean(
+    draft.targetDate && draft.targetDate < formattedToday
+  );
+  const date = targetDate;
+  // Default to the user's preferred / analytics-optimal time for this platform.
+  const [time, setTime] = useState<string>(defaultScheduleTime);
   const [scheduling, setScheduling] = useState(false);
+
+  useEffect(() => {
+    setTime(defaultScheduleTime);
+  }, [defaultScheduleTime, draft.draftId]);
+
   // First regen is free; everything after costs CAMPAIGN_REGENERATE_CREDIT.
   // Surface this in the button label so the user knows exactly what they're
   // about to spend BEFORE they click.
   const regenCost = nextRegenerationCost(draft.regenerationCount ?? 0);
-  const canRegen = canRegenerateDraft(draft.regenerationCount ?? 0);
+  const canRegen =
+    canRegenerateDraft(draft.regenerationCount ?? 0) &&
+    !isPastDate &&
+    !isUserRemoved;
 
   const scheduledAtDate = isScheduled ? unknownTsToDate(draft.scheduledAt) : null;
   const { hour: timeHour, minute: timeMinute } = splitHhMm(time);
@@ -2034,16 +2158,26 @@ function DraftRow(props: DraftRowProps) {
           <ImageIcon className="h-10 w-10" />
         </div>
       )}
-      <span
-        className={cn(
-          'absolute top-2 left-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm',
-          isScheduled
-            ? 'bg-emerald-500/20 text-emerald-300'
-            : 'bg-card/90 text-foreground ring-1 ring-border'
-        )}
-      >
-        {isScheduled ? 'scheduled' : 'draft'}
-      </span>
+      <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+        <span
+          className={cn(
+            'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm',
+            isScheduled
+              ? 'bg-emerald-500/20 text-emerald-300'
+              : isUserRemoved
+                ? 'bg-slate-500/20 text-slate-200'
+                : 'bg-card/90 text-foreground ring-1 ring-border'
+          )}
+        >
+          {isScheduled ? 'scheduled' : isUserRemoved ? 'removed' : 'draft'}
+        </span>
+        {isAiGenerated ? (
+          <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-violet-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+            <Sparkles className="h-2.5 w-2.5" />
+            AI generated
+          </span>
+        ) : null}
+      </div>
       {draft.imageUrl && (
         <ImagePreviewButton
           variant="overlay-icon"
@@ -2058,7 +2192,12 @@ function DraftRow(props: DraftRowProps) {
   );
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:shadow-md">
+    <div
+      className={cn(
+        'flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:shadow-md',
+        isUserRemoved && 'opacity-80'
+      )}
+    >
       {cardImage}
 
       <div className="flex flex-1 flex-col gap-3 p-4">
@@ -2082,14 +2221,24 @@ function DraftRow(props: DraftRowProps) {
           </p>
         )}
 
-        {isScheduled ? (
-          <div className="mt-auto rounded-xl border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-900">
-            <p className="inline-flex items-center gap-1">
-              <CalendarCheck2 className="h-3.5 w-3.5" />
-              {scheduledAtDate
-                ? `Will publish ${fmtTimestamp(scheduledAtDate, { style: 'datetime' })}`
-                : 'Scheduled'}
+        {isUserRemoved ? (
+          <div className="mt-auto rounded-xl border border-slate-300 bg-slate-100 px-3 py-3 text-center">
+            <p className="text-sm font-bold text-slate-800">Removed by you</p>
+            <p className="mt-1 text-[11px] text-slate-500">
+              This draft stays in your campaign history and will not be
+              scheduled.
             </p>
+          </div>
+        ) : isScheduled ? (
+          <div className="mt-auto space-y-3">
+            <div className="rounded-xl border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-900">
+              <p className="inline-flex items-center gap-1">
+                <CalendarCheck2 className="h-3.5 w-3.5" />
+                {scheduledAtDate
+                  ? `Will publish ${fmtTimestamp(scheduledAtDate, { style: 'datetime' })}`
+                  : 'Scheduled'}
+              </p>
+            </div>
           </div>
         ) : (
           <div className="mt-auto space-y-3">
@@ -2101,9 +2250,8 @@ function DraftRow(props: DraftRowProps) {
                     (locked)
                   </span>
                 </span>
-                {/* The date was committed when the campaign was generated —
-                     the user only picks a time of day here. Disabled +
-                     readOnly so neither click nor keyboard can change it. */}
+                {/* Date is always locked (set at generation). Time is locked
+                     only for AI-seeded campaigns; manual drafts can pick a time. */}
                 <input
                   type="date"
                   value={date}
@@ -2116,16 +2264,31 @@ function DraftRow(props: DraftRowProps) {
               <div
                 className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
                 role="group"
-                aria-label="Time (24-hour)"
+                aria-label={
+                  isAiGenerated
+                    ? 'Time (24-hour, locked for AI campaigns)'
+                    : 'Time (24-hour)'
+                }
               >
-                <span>Time (24h)</span>
+                <span>
+                  Time (24h)
+                  {isAiGenerated ? (
+                    <span className="ml-1 normal-case text-muted-foreground/70">
+                      (locked)
+                    </span>
+                  ) : null}
+                </span>
                 <div className="mt-1 flex items-center gap-1">
                   <Select
                     value={timeHour}
                     onValueChange={(h) => setTime(`${h}:${timeMinute}`)}
+                    disabled={isAiGenerated}
                   >
                     <SelectTrigger
-                      className="h-8 flex-1 px-2 text-xs tabular-nums"
+                      className={cn(
+                        'h-8 flex-1 px-2 text-xs tabular-nums',
+                        isAiGenerated && 'cursor-not-allowed opacity-70'
+                      )}
                       aria-label="Hour (00–23)"
                     >
                       <SelectValue placeholder="HH" />
@@ -2148,9 +2311,13 @@ function DraftRow(props: DraftRowProps) {
                   <Select
                     value={timeMinute}
                     onValueChange={(m) => setTime(`${timeHour}:${m}`)}
+                    disabled={isAiGenerated}
                   >
                     <SelectTrigger
-                      className="h-8 flex-1 px-2 text-xs tabular-nums"
+                      className={cn(
+                        'h-8 flex-1 px-2 text-xs tabular-nums',
+                        isAiGenerated && 'cursor-not-allowed opacity-70'
+                      )}
                       aria-label="Minute (00–59)"
                     >
                       <SelectValue placeholder="MM" />
@@ -2174,7 +2341,7 @@ function DraftRow(props: DraftRowProps) {
             <button
               type="button"
               onClick={handleSchedule}
-              disabled={scheduling || isRegenerating}
+              disabled={scheduling || isRegenerating || isRemoving}
               className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {scheduling ? (
@@ -2187,42 +2354,62 @@ function DraftRow(props: DraftRowProps) {
 
             <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
               <span className="text-[10px] text-muted-foreground line-clamp-2 flex-1">
-                {!canRegen
-                  ? `Regenerated ${draft.regenerationCount ?? 0}× · no more regens`
-                  : draft.regenerationCount > 0
-                    ? `Regenerated ${draft.regenerationCount}× · next ${regenCost === 0 ? 'free' : `${regenCost} credit${regenCost === 1 ? '' : 's'}`}`
-                    : 'First regen is free'}
+                {isPastDate
+                  ? 'Past date · regeneration unavailable'
+                  : !canRegen
+                    ? `Regenerated ${draft.regenerationCount ?? 0}× · no more regens`
+                    : draft.regenerationCount > 0
+                      ? `Regenerated ${draft.regenerationCount}× · next ${regenCost === 0 ? 'free' : `${regenCost} credit${regenCost === 1 ? '' : 's'}`}`
+                      : 'First regen is free'}
               </span>
-              {canRegen ? (
+              <div className="flex shrink-0 items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => onRegenerate(draft.draftId)}
-                  disabled={isAnyRegenInFlight || scheduling}
-                  title={
-                    regenCost === 0
-                      ? 'Re-render this draft (free)'
-                      : `Re-render this draft (${regenCost} credits)`
+                  onClick={() => onRemove(draft.draftId)}
+                  disabled={
+                    isAnyRegenInFlight || scheduling || isRemoving || isRegenerating
                   }
-                  className={cn(
-                    'shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition',
-                    regenCost === 0
-                      ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
-                      : 'border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/15',
-                    'disabled:cursor-not-allowed disabled:opacity-50'
-                  )}
+                  title="Remove this draft"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isRegenerating ? (
+                  {isRemoving ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <RefreshCcw className="h-3 w-3" />
+                    <Trash2 className="h-3 w-3" />
                   )}
-                  {isRegenerating
-                    ? 'Regenerating…'
-                    : regenCost === 0
-                      ? 'Regenerate Free'
-                      : `${regenCost} cr`}
+                  Remove
                 </button>
-              ) : null}
+                {canRegen ? (
+                  <button
+                    type="button"
+                    onClick={() => onRegenerate(draft.draftId)}
+                    disabled={isAnyRegenInFlight || scheduling || isRemoving}
+                    title={
+                      regenCost === 0
+                        ? 'Re-render this draft (free)'
+                        : `Re-render this draft (${regenCost} credits)`
+                    }
+                    className={cn(
+                      'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition',
+                      regenCost === 0
+                        ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
+                        : 'border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/15',
+                      'disabled:cursor-not-allowed disabled:opacity-50'
+                    )}
+                  >
+                    {isRegenerating ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <RefreshCcw className="h-3 w-3" />
+                    )}
+                    {isRegenerating
+                      ? 'Regenerating…'
+                      : regenCost === 0
+                        ? 'Regenerate Free'
+                        : `${regenCost} cr`}
+                  </button>
+                ) : null}
+              </div>
             </div>
           </div>
         )}

@@ -206,12 +206,6 @@ function PlatformCell({
 
   const isPast = date < todayIso;
   const hasGenerated = entries.some((e) => e.source === 'generated');
-  const showForceRun =
-    forceRunEnabled &&
-    !isPast &&
-    !hasGenerated &&
-    entries.every((e) => e.source === 'upcoming') &&
-    entries.some((e) => canForceRunKind(e.kind));
   const cellKey = `${date}::${platform}`;
   const isRunning = forceRunKey === cellKey;
 
@@ -248,32 +242,44 @@ function PlatformCell({
           </div>
         );
 
-        if (!entry.href) {
-          return <div key={`${entry.kind}-${idx}`}>{body}</div>;
-        }
-        return (
-          <Link key={`${entry.kind}-${idx}`} href={entry.href} className="block">
+        const showForceRun =
+          forceRunEnabled &&
+          !isPast &&
+          !hasGenerated &&
+          entry.source === 'upcoming' &&
+          canForceRunKind(entry.kind);
+
+        const card = !entry.href ? (
+          body
+        ) : (
+          <Link href={entry.href} className="block">
             {body}
           </Link>
         );
+
+        return (
+          <div key={`${entry.kind}-${idx}`} className="flex flex-col gap-1">
+            {card}
+            {showForceRun ? (
+              <button
+                type="button"
+                disabled={Boolean(forceRunKey)}
+                onClick={() => onForceRun(date, platform)}
+                className={cn(
+                  'inline-flex items-center justify-center gap-1 rounded-md border border-border/80 bg-background/80 px-1.5 py-1 text-[10px] font-semibold text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60'
+                )}
+              >
+                {isRunning ? (
+                  <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                ) : (
+                  <Play className="h-3 w-3" aria-hidden />
+                )}
+                {isRunning ? 'Running…' : 'Force Run'}
+              </button>
+            ) : null}
+          </div>
+        );
       })}
-      {showForceRun ? (
-        <button
-          type="button"
-          disabled={Boolean(forceRunKey)}
-          onClick={() => onForceRun(date, platform)}
-          className={cn(
-            'inline-flex items-center justify-center gap-1 rounded-md border border-border/80 bg-background/80 px-1.5 py-1 text-[10px] font-semibold text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60'
-          )}
-        >
-          {isRunning ? (
-            <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-          ) : (
-            <Play className="h-3 w-3" aria-hidden />
-          )}
-          {isRunning ? 'Running…' : 'Force Run'}
-        </button>
-      ) : null}
     </div>
   );
 }

@@ -196,6 +196,8 @@ export type CampaignDraft = {
   createdAt: unknown;
   /** True when this draft was produced by auto-mode campaign seed. */
   autoSeeded?: boolean;
+  /** Soft-removed by the user — stays visible as "Removed by you". */
+  userRemoved?: boolean;
 };
 
 export async function listCampaignDraftsApi(params?: {
@@ -233,6 +235,17 @@ export async function scheduleCampaignDraftApi(params: {
   }>(`/api/v1/campaign/drafts/${encodeURIComponent(params.draftId)}/schedule`, {
     scheduleAt: params.scheduleAt,
   });
+  return response.data.data;
+}
+
+export async function deleteCampaignDraftApi(params: {
+  draftId: string;
+}): Promise<{ draftId: string; userRemoved?: boolean }> {
+  const response = await axiosClient.delete<{
+    success: boolean;
+    data: { draftId: string; userRemoved?: boolean };
+    message?: string;
+  }>(`/api/v1/campaign/drafts/${encodeURIComponent(params.draftId)}`);
   return response.data.data;
 }
 

@@ -859,14 +859,6 @@ function DayRow({
         const slot = day.byPlatform[platform];
         const generated = slot?.generated ?? [];
         const upcoming = slot?.upcoming ?? [];
-        const runnableUpcoming = upcoming.filter((u) =>
-          canForceRunKind(u.kind)
-        );
-        const showForceRun =
-          forceRunEnabled &&
-          !isPast &&
-          generated.length === 0 &&
-          runnableUpcoming.length > 0;
         const runKey = `${userId}::${platform}::${day.date}`;
         const runPending = pendingRunKey === runKey;
 
@@ -884,28 +876,39 @@ function DayRow({
                 />
               ))}
               {generated.length === 0 &&
-                upcoming.map((item, idx) => (
-                  <UpcomingCard key={`${item.kind}-${idx}`} item={item} />
-                ))}
+                upcoming.map((item, idx) => {
+                  const showForceRun =
+                    forceRunEnabled &&
+                    !isPast &&
+                    canForceRunKind(item.kind);
+                  return (
+                    <div
+                      key={`${item.kind}-${idx}`}
+                      className="flex flex-col gap-1.5"
+                    >
+                      <UpcomingCard item={item} />
+                      {showForceRun ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 gap-1.5 text-[11px]"
+                          disabled={runPending}
+                          onClick={() => onForceRun(platform)}
+                        >
+                          {runPending ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <Play className="h-3 w-3" />
+                          )}
+                          {runPending ? 'Running…' : 'Force Run'}
+                        </Button>
+                      ) : null}
+                    </div>
+                  );
+                })}
               {generated.length === 0 && upcoming.length === 0 ? (
                 <span className="text-[11px] text-muted-foreground">—</span>
-              ) : null}
-              {showForceRun ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1.5 text-[11px]"
-                  disabled={runPending}
-                  onClick={() => onForceRun(platform)}
-                >
-                  {runPending ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Play className="h-3 w-3" />
-                  )}
-                  {runPending ? 'Running…' : 'Force Run'}
-                </Button>
               ) : null}
             </div>
           </td>

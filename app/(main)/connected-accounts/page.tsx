@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
+import { useTourDemo } from '@/src/stores/tourState';
 import { AccountFrozenAlert } from '@/components/shared/AccountFrozenAlert';
 import {
   countEnabledPlatforms,
@@ -276,6 +277,7 @@ function SelectPageModal({
 export default function ConnectedPlatformsPage() {
   const router = useRouter();
   const { billing, loading: billingLoading } = useUserPlanCredits();
+  const isTourDemo = useTourDemo();
   const [socialAccounts, setSocialAccounts] = useState<SocialAccountRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -420,7 +422,11 @@ export default function ConnectedPlatformsPage() {
     return <PageLoadingState message="Loading your account..." />;
   }
 
-  if (isPlanInactive(billing) && billing?.isAccountFrozen !== true) {
+  if (
+    !isTourDemo &&
+    isPlanInactive(billing) &&
+    billing?.isAccountFrozen !== true
+  ) {
     return <NonSubscribedFeatureBlock />;
   }
 
