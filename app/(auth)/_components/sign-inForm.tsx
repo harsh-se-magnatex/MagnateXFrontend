@@ -120,9 +120,9 @@ export function SigninForm({
         return;
       }
 
-      // if (!userCredential.user.emailVerified) {
-      //   return;
-      // }
+      if (!userCredential.user.emailVerified) {
+        return;
+      }
       
       const isNewUser = localStorage.getItem('isNewUser');
       if (isNewUser === 'true') {

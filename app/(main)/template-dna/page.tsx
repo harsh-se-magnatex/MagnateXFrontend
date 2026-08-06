@@ -470,7 +470,7 @@ export default function BusinessProfilePage() {
       setWebsiteUrl('');
       toast.success('Profile updated successfully');
     } catch (error: any) {
-      showErrorToast('Failed to update profile');
+      showErrorToast('Failed to update profile. Please Try Again Later.');
     } finally {
       setSaving(false);
     }
@@ -545,7 +545,7 @@ export default function BusinessProfilePage() {
       const dnaFields = payload.dna ?? payload;
       await applyExtractedDna(dnaFields as Record<string, unknown>, websiteUrl);
     } catch (error: unknown) {
-      showErrorToast('Failed to extract business data');
+      showErrorToast('Failed to extract business data. Please Try Again Later.');
     } finally {
       setFetchingBusinessData(false);
     }
@@ -571,7 +571,7 @@ export default function BusinessProfilePage() {
       }
       toast.success('Business data extracted from catalog');
     } catch (error: unknown) {
-      showErrorToast('Failed to extract business data from catalog');
+      showErrorToast('Failed to extract business data from catalog. Please Try Again Later.');
     } finally {
       setFetchingBusinessData(false);
     }
@@ -624,7 +624,7 @@ export default function BusinessProfilePage() {
           : 'Logo variants are off. AI images will use only your main logo.'
       );
     } catch (error: unknown) {
-      showErrorToast('Could not update variant preference');
+      showErrorToast('Could not update variant preference. Please Try Again Later.');
     } finally {
       setVariantsPreferenceLoading(false);
     }

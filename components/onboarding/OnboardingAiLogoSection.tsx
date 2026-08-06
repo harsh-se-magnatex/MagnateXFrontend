@@ -75,7 +75,7 @@ export function OnboardingAiLogoSection({
       toast.success('Logo ready — pick one to use.');
     } catch (error: unknown) {
       showErrorToast(
-        error instanceof Error ? error.message : 'Failed to generate AI logo.'
+        error instanceof Error ? error.message : 'Failed to generate AI logo. Please Try Again Later.'
       );
     } finally {
       setGenerating(false);

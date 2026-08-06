@@ -85,7 +85,7 @@ export default function HelpSupportPage() {
       const response = await getSupportMessages();
       setMessages(response.data.supportData || []);
     } catch {
-      showErrorToast('Failed to send support message');
+      showErrorToast('Failed to send support message. Please Try Again Later.');
     } finally {
       setIsSubmitting(false);
     }

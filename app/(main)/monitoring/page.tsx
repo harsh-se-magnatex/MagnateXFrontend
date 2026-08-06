@@ -291,7 +291,7 @@ export default function MonitoringPage() {
       try {
         await performActionOnScheduledPost(postId, action, userId, platform);
       } catch {
-        showErrorToast('Failed to perform action on scheduled post');
+        showErrorToast('Failed to perform action on scheduled post. Please try again later.');
         setTabsState(previousState);
       }
     },

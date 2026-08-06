@@ -270,7 +270,7 @@ function SelectFacebookPageModal({
         onSuccess();
       }
     } catch {
-      showErrorToast('Failed to select Facebook page');
+      showErrorToast('Failed to select Facebook page. Please try again later.');
     }
   };
 
@@ -350,7 +350,7 @@ function SelectLinkedInPageModal({
         onSuccess();
       }
     } catch {
-      showErrorToast('Failed to select LinkedIn page');
+      showErrorToast('Failed to select LinkedIn page. Please try again later.');
     }
   };
 
@@ -522,7 +522,7 @@ export default function AIEnginePage() {
         return next ?? prev;
       });
     } catch {
-      showErrorToast('Failed to fetch AI Engine Details');
+      showErrorToast('Failed to fetch AI Engine Details. Please try again later.');
     } finally {
       if (!opts?.silent) setDataLoading(false);
     }
@@ -664,7 +664,7 @@ export default function AIEnginePage() {
       showErrorToast(
         err instanceof Error && err.message
           ? err.message
-          : 'Failed to start example generation'
+          : 'Failed to start example generation. Please try again later.'
       );
     } finally {
       setExampleGenerating(false);
@@ -682,7 +682,7 @@ export default function AIEnginePage() {
       },
     }));
     void updateAiEngineSetup({ automationDone: true }).catch(() => {
-      showErrorToast('Could not save automation step');
+      showErrorToast('Could not save automation step. Please try again later.');
     });
   };
 
@@ -697,7 +697,7 @@ export default function AIEnginePage() {
       },
     }));
     void updateAiEngineSetup({ businessDone: true }).catch(() => {
-      showErrorToast('Could not save business step');
+      showErrorToast('Could not save business step. Please try again later.');
     });
   };
 
@@ -769,7 +769,7 @@ export default function AIEnginePage() {
         );
         await getDetails({ silent: true });
       } else {
-        showErrorToast(message || 'Failed to save platform selection');
+        showErrorToast(message || 'Failed to save platform selection. Please try again later.');
       }
     } finally {
       setSavingSelection(false);
@@ -986,48 +986,52 @@ export default function AIEnginePage() {
               )}
 
               {examplePosts.length > 0 && (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {examplePosts.map((post) => (
-                    <article
-                      key={post.id}
-                      className="overflow-hidden rounded-xl border border-border bg-background"
-                    >
-                      {post.imageUrl ? (
-                        <div className="relative aspect-square w-full">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={post.imageUrl}
-                            alt={`${post.platform} example`}
-                            className="h-full w-full object-cover"
-                          />
-                          <div className="absolute bottom-2 right-2">
-                            <ImagePreviewButton
-                              variant="overlay-icon"
-                              stopPropagation
-                              onClick={() =>
-                                imagePreview.open(
-                                  post.imageUrl as string,
-                                  `${post.platform} example`
-                                )
-                              }
-                            />
-                          </div>
+                <div className="-mx-5 overflow-x-auto overflow-y-hidden px-5 pb-1 [scrollbar-width:thin]">
+                  <div className="flex snap-x snap-mandatory gap-4">
+                    {examplePosts.map((post) => (
+                      <article
+                        key={post.id}
+                        className="flex w-[80%] max-w-[80%] shrink-0 snap-start overflow-hidden rounded-xl border border-border bg-background"
+                      >
+                        <div className="relative aspect-square w-[42%] shrink-0 self-stretch bg-muted">
+                          {post.imageUrl ? (
+                            <>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={post.imageUrl}
+                                alt={`${post.platform} example`}
+                                className="h-full w-full object-cover"
+                              />
+                              <div className="absolute bottom-2 right-2">
+                                <ImagePreviewButton
+                                  variant="overlay-icon"
+                                  stopPropagation
+                                  onClick={() =>
+                                    imagePreview.open(
+                                      post.imageUrl as string,
+                                      `${post.platform} example`
+                                    )
+                                  }
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex h-full min-h-[9rem] w-full items-center justify-center text-xs text-muted-foreground">
+                              Image unavailable
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="flex aspect-square w-full items-center justify-center bg-muted text-xs text-muted-foreground">
-                          Image unavailable
+                        <div className="flex min-w-0 flex-1 flex-col gap-2 overflow-y-auto p-3 max-h-[14rem] sm:max-h-[16rem]">
+                          <p className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {post.platform}
+                          </p>
+                          <p className="whitespace-pre-wrap text-sm text-foreground">
+                            {post.caption || 'No caption'}
+                          </p>
                         </div>
-                      )}
-                      <div className="space-y-2 p-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {post.platform}
-                        </p>
-                        <p className="whitespace-pre-wrap text-sm text-foreground">
-                          {post.caption || 'No caption'}
-                        </p>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

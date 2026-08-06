@@ -30,3 +30,4 @@ ffmpeg -y -i $sourceVideo.FullName -an `
 $count = (Get-ChildItem $outDir -Filter "*.jpg").Count
 Write-Host "Done. Generated $count frames at 1920x1080, 60fps (q:v 2)."
 Write-Host "Update TOTAL_FRAMES in components/landing/landing-3d-background.tsx if the count changed."
+Write-Host "After copying frames into public/frames-jpg (and mobile), run: npm run convert-frames-webp"

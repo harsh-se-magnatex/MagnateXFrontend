@@ -44,7 +44,7 @@ export default function AdminUsersPage() {
       setActiveSearchText(search);
       setActiveSearchField(field);
     } catch (error: unknown) {
-      showErrorToast('Failed to fetch users');
+      showErrorToast('Failed to fetch users. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ export default function AdminUsersPage() {
         )
       );
     } catch {
-      showErrorToast('Failed to update freeze status');
+      showErrorToast('Failed to update freeze status. Please try again later.');
     } finally {
       setActionUserId(null);
     }

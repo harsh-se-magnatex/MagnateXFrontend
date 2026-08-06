@@ -131,7 +131,7 @@ export default function AccountSettingsPage() {
     try {
       const res = await updateUserName(trimmed);
       if (!res.success) {
-        showErrorToast('Could not update name.');
+        showErrorToast('Could not update name. Please try again later.');
         return;
       }
       try {
@@ -144,7 +144,7 @@ export default function AccountSettingsPage() {
       setName(trimmed);
       toast.success(res.message || 'Name updated.');
     } catch (err: unknown) {
-      showErrorToast('Could not update name.');
+      showErrorToast('Could not update name. Please try again later.');
     } finally {
       setNameSaving(false);
     }
@@ -202,7 +202,7 @@ export default function AccountSettingsPage() {
       await logOutFromAllDevices();
       router.replace('/sign-in');
     } catch (err: unknown) {
-      showErrorToast('Failed to log out.');
+      showErrorToast('Failed to log out. Please try again later.');
     }
   };
 
@@ -214,7 +214,7 @@ export default function AccountSettingsPage() {
       await deleteUserAccount();
       await signOutUser();
     } catch (err: unknown) {
-      showErrorToast('Failed to delete account.');
+      showErrorToast('Failed to delete account. Please try again later.');
     } finally {
       setIsDeletingAccount(false);
     }

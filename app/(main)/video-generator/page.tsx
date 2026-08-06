@@ -365,7 +365,7 @@ export default function VideoGenerationPage() {
         }
       } catch {
         if (!cancelled) {
-          showErrorToast('Could not load your brand logo for the first frame.');
+          showErrorToast('Could not load your brand logo for the first frame. Please Try Again Later.');
         }
       } finally {
         if (!cancelled) setLogoLoading(false);
@@ -529,7 +529,7 @@ export default function VideoGenerationPage() {
       });
       if (wait.timedOut || wait.outcome !== 'generated' || !wait.data) {
         setPipelinePhase('failed');
-        showErrorToast('Failed');
+        showErrorToast('Video generation failed. Please Try Again Later.');
         return;
       }
       const data = wait.data;
@@ -550,7 +550,7 @@ export default function VideoGenerationPage() {
       toast.success('Generated');
     } catch (err) {
       setPipelinePhase('failed');
-      showErrorToast('Failed');
+      showErrorToast('Failed to generate video. Please Try Again Later.');
     }
   };
 

@@ -549,7 +549,7 @@ export default function CreateCampaignPage() {
           `Generated ${set.suggestions.length} campaign idea${set.suggestions.length === 1 ? '' : 's'}.`
         );
       } catch {
-        showErrorToast('Could not generate campaign suggestions.');
+        showErrorToast('Could not generate campaign suggestions. Please try again later.');
       } finally {
         setIsLoadingSuggestions(false);
       }
@@ -566,7 +566,7 @@ export default function CreateCampaignPage() {
         replaceSuggestion(fresh);
         toast.success('Suggestion refreshed.');
       } catch {
-        showErrorToast('Could not regenerate this suggestion.');
+        showErrorToast('Could not regenerate this suggestion. Please try again later.');
       } finally {
         setRegeneratingSuggestionId(null);
       }
@@ -748,7 +748,7 @@ export default function CreateCampaignPage() {
           });
           void refreshDraftsRef.current?.();
           if (wait.outcome === 'generated') toast.success('Generated');
-          else showErrorToast('Failed');
+          else showErrorToast('Campaign creation failed. Please try again later.');
         }
         setIsSubmitting(false);
         return;
@@ -756,14 +756,14 @@ export default function CreateCampaignPage() {
       if (response.successCount > 0 && response.failedCount === 0) {
         toast.success('Generated');
       } else if (response.successCount > 0) {
-        showErrorToast('Failed');
+        showErrorToast('Campaign creation failed. Please try again later.');
       } else if (response.failedCount > 0) {
-        showErrorToast('Failed');
+        showErrorToast('Campaign creation failed. Please try again later.');
       }
       void refreshDraftsRef.current?.();
       setIsSubmitting(false);
     } catch {
-      showErrorToast('Failed');
+      showErrorToast('Campaign creation failed. Please try again later.');
       setIsSubmitting(false);
     }
   }, [
@@ -1801,9 +1801,9 @@ function DraftsDrawer(props: DraftsDrawerProps) {
             regenJobId: response.parentJobId,
           });
           if (wait.outcome === 'generated') toast.success('Generated');
-          else showErrorToast('Failed');
+          else showErrorToast('Regeneration failed. Please try again later.');
         } else {
-          showErrorToast('Failed');
+          showErrorToast('Regeneration failed. Please try again later.');
         }
         await refresh();
         setRegeneratingDraftId(null);
@@ -1811,7 +1811,7 @@ function DraftsDrawer(props: DraftsDrawerProps) {
         // Roll back the spinner so the user can retry; the toast already
         // tells them what went wrong.
         setRegeneratingDraftId(null);
-        showErrorToast('Failed');
+        showErrorToast('Regeneration failed. Please try again later.');
       }
     },
     [isCampaignJobRunning, regeneratingDraftId, refresh]
@@ -1826,7 +1826,7 @@ function DraftsDrawer(props: DraftsDrawerProps) {
         toast.success('Marked as removed');
         await refresh();
       } catch {
-        showErrorToast('Could not remove this draft.');
+        showErrorToast('Could not remove this draft. Please try again later.');
       } finally {
         setRemovingDraftId(null);
       }
@@ -2121,7 +2121,7 @@ function DraftRow(props: DraftRowProps) {
       toast.success('Draft scheduled.');
       onScheduled();
     } catch {
-      showErrorToast('Could not schedule this draft.');
+      showErrorToast('Could not schedule this draft. Please try again later.');
     } finally {
       setScheduling(false);
     }

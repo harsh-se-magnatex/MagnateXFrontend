@@ -30,7 +30,7 @@ export default function PaymentTestingPage() {
       window.location.href = res.data.checkoutUrl;
     } catch (e: unknown) {
       console.error('Test checkout failed', e);
-      showErrorToast('Failed to start checkout');
+      showErrorToast('Failed to start checkout. Please try again later.');
     } finally {
       setLoadingId(null);
     }

@@ -818,7 +818,7 @@ export default function ApprovalPage() {
           await silentRefresh();
         }
       } catch {
-        showErrorToast('Failed to perform action on scheduled post');
+        showErrorToast('Failed to perform action on scheduled post. Please try again later.');
         if (isRegen) {
           cancelRegeneration(postId);
         } else {

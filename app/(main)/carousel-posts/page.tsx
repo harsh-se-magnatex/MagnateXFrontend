@@ -241,17 +241,17 @@ export default function CarouselGenerationPage() {
       if (wait.outcome === 'generated') {
         const result = mapCarouselResult(wait.matchedDocs);
         if (!result) {
-          showErrorToast('Failed');
+          showErrorToast('Carousel generation failed. Please try again later.');
         } else {
           setGeneratedCarousel(result);
           toast.success('Generated');
         }
       } else {
-        showErrorToast('Failed');
+        showErrorToast('Carousel generation failed. Please try again later.');
       }
       setIsGenerating(false);
     } catch (err) {
-      showErrorToast('Failed');
+      showErrorToast('Carousel generation failed. Please try again later.');
       setIsGenerating(false);
     }
   }, [

@@ -81,7 +81,7 @@ export default function TransactionsPage() {
       const res = await getTransactions();
       setTransactions(res.data.transactions ?? []);
     } catch (e: unknown) {
-      showErrorToast('Failed to load transactions');
+      showErrorToast('Failed to load transactions. Please Try Again Later.');
       setTransactions([]);
     } finally {
       setListLoading(false);

@@ -736,10 +736,10 @@ export default function AIContentPage() {
           expectedCount: 1,
         });
         if (wait.outcome === 'generated') toast.success('Generated');
-        else showErrorToast('Failed');
+        else showErrorToast('Content generation failed. Please try again later.');
         setIsGenerating(false);
       } catch (e: unknown) {
-        showErrorToast('Failed');
+        showErrorToast('Content generation failed. Please try again later.');
         setGenerateError('Failed');
         setIsGenerating(false);
       }
@@ -789,11 +789,11 @@ export default function AIContentPage() {
         );
         toast.success('Generated');
       } else {
-        showErrorToast('Failed');
+        showErrorToast('Content generation failed. Please try again later.');
       }
       setIsGenerating(false);
     } catch (e: unknown) {
-      showErrorToast('Failed');
+      showErrorToast('Content generation failed. Please try again later.');
       setGenerateError('Failed');
       setIsGenerating(false);
     }

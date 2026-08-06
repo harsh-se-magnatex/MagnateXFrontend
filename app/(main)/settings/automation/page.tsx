@@ -414,7 +414,7 @@ export default function AutomationPreferencePage() {
           ...prev,
           [platform]: { ...prev[platform], refreshing: false },
         }));
-        showErrorToast('Failed to refresh optimal time');
+        showErrorToast('Failed to refresh optimal time. Please Try Again Later.');
       }
     },
     []
@@ -456,7 +456,7 @@ export default function AutomationPreferencePage() {
       // Per-platform optimal-time fields update live via the Firestore
       // subscription above, no need to re-fetch here.
     } catch (error: unknown) {
-      showErrorToast('Failed to update preferences');
+      showErrorToast('Failed to update preferences. Please Try Again Later.');
     }
   };
 

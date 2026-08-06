@@ -125,7 +125,7 @@ export default function LogoVariantsPage() {
       }
     } catch (e: unknown) {
       setError('Failed to generate variants.');
-      showErrorToast('Failed to generate variants.');
+      showErrorToast('Failed to generate variants. Please Try Again Later.');
     } finally {
       manualGenInFlightRef.current = false;
       setIsGenerating(false);

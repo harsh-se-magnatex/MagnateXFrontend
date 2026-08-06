@@ -32,7 +32,7 @@ export function DownloadPngButton({
         try {
           await downloadImageAsFile(url, getFilename());
         } catch (e) {
-          showErrorToast('Could not download image');
+          showErrorToast('Could not download image. Please Try Again Later.');
         } finally {
           setBusy(false);
         }

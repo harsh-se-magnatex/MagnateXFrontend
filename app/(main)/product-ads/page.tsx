@@ -334,11 +334,11 @@ export default function ProductAdvertPage() {
         });
         toast.success('Generated');
       } else {
-        showErrorToast('Failed');
+        showErrorToast('Product advert generation failed. Please try again later.');
       }
       setIsGenerating(false);
     } catch (e: unknown) {
-      showErrorToast('Failed');
+      showErrorToast('Product advert generation failed. Please try again later.');
       console.log(e);
       setIsGenerating(false);
     }
@@ -485,24 +485,7 @@ export default function ProductAdvertPage() {
             className="w-full bg-white border border-slate-200 text-slate-900 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
           />
         </div>
-                {generationMode==="social_full" &&
-                
-        <div className="flex items-center gap-2 mb-6">
-          <input
-            id="useIndustryResearch"
-            type="checkbox"
-            checked={true}
-            onChange={() => {}}
-            className="accent-indigo-600 rounded disabled:opacity-50"
-          />
-          <label
-            htmlFor="useIndustryResearch"
-            className="text-slate-700 text-sm"
-          >
-            Use industry research (full social mode; skipped when off)
-          </label>
-        </div>
-}
+
         <div id="tour-pa-upload" className="space-y-3 mb-6">
           <label className="block text-slate-700 font-medium">
             Upload product PNG (transparent background)

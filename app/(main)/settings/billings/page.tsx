@@ -612,7 +612,7 @@ export default function BillingsPage() {
       window.location.href = res.data.checkoutUrl;
     } catch (error: unknown) {
       console.error('Failed to purchase credit pack', error);
-      showErrorToast('Failed to purchase credit pack');
+      showErrorToast('Failed to purchase credit pack. Please Try Again Later.');
     } finally {
       setTopUpLoading(false);
     }
@@ -633,7 +633,7 @@ export default function BillingsPage() {
       window.location.href = data.checkoutUrl;
     } catch (error: any) {
       clickedPurchasePlan.current = null;
-      showErrorToast('Failed to purchase plan');
+      showErrorToast('Failed to purchase plan. Please Try Again Later.');
     } finally {
       setPlanPurchaseLoading(false);
     }
@@ -655,7 +655,7 @@ export default function BillingsPage() {
         setPlanSwitchPreview(res.data);
         setPlanSwitchOpen(true);
       } catch (error: unknown) {
-        showErrorToast('Could not preview plan change');
+        showErrorToast('Could not preview plan change. Please Try Again Later.');
       } finally {
         setPlanChoiceBusyId(null);
       }
@@ -681,7 +681,7 @@ export default function BillingsPage() {
       setUpgradeOpen(false);
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast('Could not schedule plan change');
+      showErrorToast('Could not schedule plan change. Please Try Again Later.');
     } finally {
       setPlanSwitchSubmitting(false);
     }
@@ -694,7 +694,7 @@ export default function BillingsPage() {
       const res = await createCustomerPortalSession();
       window.location.href = res.data.portalUrl;
     } catch (error: unknown) {
-      showErrorToast('Could not open payment portal');
+      showErrorToast('Could not open payment portal. Please Try Again Later.');
       setPortalLoading(false);
     }
   };
@@ -703,7 +703,7 @@ export default function BillingsPage() {
     if (!user) return;
     const sub = paymentSummary?.subscription;
     if (sub && sub.canDeletePaymentMethod === false) {
-      showErrorToast('Cannot remove payment method', {
+      showErrorToast('Cannot remove payment method. Please Try Again Later.', {
         description:
           'You can only delete this payment method after your subscription ends.',
       });
@@ -720,7 +720,7 @@ export default function BillingsPage() {
       toast.success('Payment method deleted');
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast('Could not delete payment method');
+      showErrorToast('Could not delete payment method. Please Try Again Later.');
     } finally {
       setDeletePaymentMethodLoading(false);
     }
@@ -734,7 +734,7 @@ export default function BillingsPage() {
       toast.success('Scheduled plan change cancelled.');
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast('Could not cancel scheduled plan change');
+      showErrorToast('Could not cancel scheduled plan change. Please Try Again Later.');
     } finally {
       setCancelScheduledChangeLoading(false);
     }
@@ -754,7 +754,7 @@ export default function BillingsPage() {
       );
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast('Could not cancel subscription');
+      showErrorToast('Could not cancel subscription. Please Try Again Later.');
     } finally {
       setCancelSubscriptionLoading(false);
     }
@@ -768,7 +768,7 @@ export default function BillingsPage() {
       toast.success('Cancellation revoked.');
       void fetchPaymentSummary();
     } catch (error: unknown) {
-      showErrorToast('Could not revoke cancellation');
+      showErrorToast('Could not revoke cancellation. Please Try Again Later.');
     } finally {
       setRevokeCancellationLoading(false);
     }

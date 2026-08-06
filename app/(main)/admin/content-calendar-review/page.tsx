@@ -235,7 +235,7 @@ export default function AdminContentCalendarReviewPage() {
       const res = await getAdminContentCalendarReviewUsers();
       setUsers(res.data.users ?? []);
     } catch {
-      showErrorToast('Failed to load content calendar users');
+      showErrorToast('Failed to load content calendar users. Please try again later.');
       setUsers([]);
     } finally {
       setListLoading(false);
@@ -259,7 +259,7 @@ export default function AdminContentCalendarReviewPage() {
       const res = await getAdminContentCalendarReviewDetail(userId);
       setDetail(res.data);
     } catch {
-      showErrorToast('Failed to load content calendar');
+      showErrorToast('Failed to load content calendar. Please try again later.');
       setDetail(null);
     } finally {
       setDetailLoading(false);
@@ -449,7 +449,7 @@ export default function AdminContentCalendarReviewPage() {
           ? (err as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : undefined;
-      showErrorToast(message || 'Force Run failed');
+      showErrorToast(message || 'Force Run failed. Please try again later.');
     } finally {
       setPendingRunKey(null);
     }
@@ -505,7 +505,7 @@ export default function AdminContentCalendarReviewPage() {
           ? (err as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : undefined;
-      showErrorToast(message || 'Failed to regenerate');
+      showErrorToast(message || 'Failed to regenerate. Please try again later.');
     } finally {
       setPendingRegenKeys((prev) => {
         const next = new Set(prev);

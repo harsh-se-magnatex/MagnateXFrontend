@@ -177,7 +177,7 @@ export default function BrandMemoryPage() {
         }
       }
     } catch (e) {
-      showErrorToast('Something went wrong');
+      showErrorToast('Something went wrong. Please Try Again Later.');
     } finally {
       setLoading(false);
     }
@@ -316,7 +316,7 @@ export default function BrandMemoryPage() {
       }
       goHomeWithPlatformTour();
     } catch (e) {
-      showErrorToast('Failed to skip');
+      showErrorToast('Failed to skip. Please Try Again Later.');
     } finally {
       setSubmitting(false);
     }
@@ -521,7 +521,7 @@ export default function BrandMemoryPage() {
       }
       goHomeWithPlatformTour();
     } catch (e) {
-      showErrorToast('Failed');
+      showErrorToast('Failed to skip photos. Please Try Again Later.');
     } finally {
       setSubmitting(false);
     }

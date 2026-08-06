@@ -37,14 +37,28 @@ export function normalizeDialDigits(value: string): string {
   return digitsOnly(value);
 }
 
+export function findCountryByIsoCode(
+  isoCode: string | null | undefined
+): CountryDialCode | undefined {
+  const code = String(isoCode ?? '')
+    .trim()
+    .toUpperCase();
+  if (!code) return undefined;
+  return COUNTRY_DIAL_CODES.find((row) => row.code.toUpperCase() === code);
+}
+
 export function findCountryByDialDigits(
   dialDigits: string
 ): CountryDialCode | undefined {
   const digits = normalizeDialDigits(dialDigits);
   if (!digits) return undefined;
-  return COUNTRY_DIAL_CODES.find(
+  const matches = COUNTRY_DIAL_CODES.filter(
     (row) => normalizeDialDigits(row.dial_code) === digits
   );
+  if (matches.length === 0) return undefined;
+  if (matches.length === 1) return matches[0];
+  // Shared dial codes (e.g. +1 US/CA): prefer United States as the default label.
+  return matches.find((row) => row.code.toUpperCase() === 'US') ?? matches[0];
 }
 
 export function splitStoredPhone(stored: unknown): {

@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "convert-frames-webp": "node scripts/convert-frames-to-webp.mjs",
     "license-audit": "npx --yes license-checker --production --summary",
     "notices": "npx --yes license-checker --production --json --out license-report.json && node scripts/generate-notices.mjs && node -e \"require('fs').copyFileSync('THIRD_PARTY_NOTICES.md','public/legal/third-party-notices.md')\""
   },

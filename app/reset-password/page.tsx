@@ -124,7 +124,7 @@ function ResetPasswordPageContent() {
           showErrorToast('User with this email not found. Please sign up first.');
           return;
         }
-        showErrorToast('Failed to send reset link.');
+        showErrorToast('Failed to send reset link. Please Try Again Later.');
         return;
       }
       setTone('success');
@@ -137,7 +137,7 @@ function ResetPasswordPageContent() {
         showErrorToast('User not found. Please sign up first.');
         return;
       }
-      showErrorToast('Failed to send reset link.');
+      showErrorToast('Failed to send reset link. Please Try Again Later.');
     } finally {
       setLoading(false);
     }

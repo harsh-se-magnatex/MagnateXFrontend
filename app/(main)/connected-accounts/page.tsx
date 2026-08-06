@@ -114,6 +114,64 @@ const ALL_PLATFORMS: {
   },
 ];
 
+type TroubleshootingTip = {
+  text: string;
+  href?: string;
+  linkLabel?: string;
+};
+
+const PLATFORM_TROUBLESHOOTING: Record<
+  PlatformId,
+  { title: string; tips: TroubleshootingTip[] }
+> = {
+  facebook: {
+    title: "Can't see your Facebook Page?",
+    tips: [
+      {
+        text: 'Remove Sociogenie from your Facebook Business Integrations and submit a data deletion request from Facebook. Then try connecting again.',
+        href: '/legal/facebook-data-deletion-instruction',
+        linkLabel: 'Facebook data deletion steps',
+      },
+      {
+        text: 'Make sure you have full admin access to the Facebook Page you want to connect.',
+      },
+      {
+        text: 'If you just created the Facebook Page, wait a short while before connecting it to Sociogenie.',
+      },
+    ],
+  },
+  instagram: {
+    title: "Can't see your Instagram business account?",
+    tips: [
+      {
+        text: 'Remove Sociogenie from your Instagram / Meta Business Integrations and submit a data deletion request. Then try connecting again.',
+        href: '/legal/instagram-data-deletion-instruction',
+        linkLabel: 'Instagram data deletion steps',
+      },
+      {
+        text: 'Make sure you have full access to the Instagram professional account you want to connect, and that it is linked to a Facebook Page when required.',
+      },
+      {
+        text: 'If you just created or converted the Instagram account to a business/creator account, wait a short while before connecting it to Sociogenie.',
+      },
+    ],
+  },
+  linkedin: {
+    title: "Can't see your LinkedIn organization Page?",
+    tips: [
+      {
+        text: 'Remove Sociogenie from your LinkedIn authorized apps (Settings → Data privacy → Permitted services), then try connecting again.',
+      },
+      {
+        text: 'Make sure you have admin access to the LinkedIn Company Page or organization you want to connect.',
+      },
+      {
+        text: 'If you just created the LinkedIn organization Page, wait a short while before connecting it to Sociogenie.',
+      },
+    ],
+  },
+};
+
 function isAccountConnected(
   accounts: SocialAccountRow[],
   platformId: PlatformId
@@ -346,7 +404,7 @@ export default function ConnectedPlatformsPage() {
       setSocialAccounts(Array.isArray(rows) ? rows : []);
     } catch (error) {
       console.error(error);
-      showErrorToast('Could not load connected platforms. Try again.');
+      showErrorToast('Could not load connected platforms. Please try again later.');
     } finally {
       setIsLoading(false);
       setHasLoadedOnce(true);
@@ -468,7 +526,7 @@ export default function ConnectedPlatformsPage() {
       }
     } catch (error) {
       console.error(error);
-      showErrorToast('Could not disconnect. Try again.');
+      showErrorToast('Could not disconnect. Please try again later.');
     }
   };
 
@@ -609,6 +667,7 @@ export default function ConnectedPlatformsPage() {
                     platformLayoutTier === 2 && n === 1;
                   const singleOffCenterTier3 =
                     platformLayoutTier === 3 && n === 1;
+                  const troubleshooting = PLATFORM_TROUBLESHOOTING[platform.id];
 
                   return (
                     <Card
@@ -695,6 +754,30 @@ export default function ConnectedPlatformsPage() {
                               </>
                             )}
                           </div>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
+                          <p className="text-sm font-semibold text-slate-800">
+                            {troubleshooting.title}
+                          </p>
+                          <ol className="mt-2 list-decimal space-y-2 pl-4 text-xs leading-relaxed text-slate-600">
+                            {troubleshooting.tips.map((tip) => (
+                              <li key={tip.text}>
+                                <span>{tip.text}</span>
+                                {tip.href && tip.linkLabel ? (
+                                  <>
+                                    {' '}
+                                    <Link
+                                      href={tip.href}
+                                      className="font-medium text-slate-800 underline underline-offset-2 hover:text-slate-950"
+                                    >
+                                      {tip.linkLabel}
+                                    </Link>
+                                  </>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ol>
                         </div>
                       </CardHeader>
                       <CardFooter className="flex-col gap-2 border-t border-border/50 bg-muted/20 px-5 py-4 sm:flex-row sm:justify-end">

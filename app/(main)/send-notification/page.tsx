@@ -60,7 +60,7 @@ export default function SendNotificationPage() {
         title: '',
       });
     } catch {
-      showErrorToast('Failed to send notification');
+      showErrorToast('Failed to send notification. Please try again later.');
     } finally {
       setSending(false);
     }

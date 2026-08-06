@@ -89,7 +89,7 @@ export function SharePostButton({
       }
       showErrorToast(result.message);
     } catch {
-      showErrorToast('Sharing failed. Please try again.');
+      showErrorToast('Sharing failed. Please Try Again Later.');
     } finally {
       setBusy(false);
     }

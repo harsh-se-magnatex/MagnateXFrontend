@@ -19,15 +19,6 @@ export const EVENTS = [
   },
   {
     id: '3',
-    name: 'International Youth Day',
-    date: '2026-08-12',
-    description:
-      'International Youth Day focuses on the role of young people in society.',
-    reason:
-      'It is celebrated to support youth voice, leadership, and opportunity.',
-  },
-  {
-    id: '4',
     name: 'Independence Day',
     date: '2026-08-15',
     description:
@@ -36,7 +27,7 @@ export const EVENTS = [
       'It is celebrated to honor patriotism, sacrifice, and national pride.',
   },
   {
-    id: '5',
+    id: '4',
     name: 'Raksha Bandhan',
     date: '2026-08-28',
     description:
@@ -45,7 +36,7 @@ export const EVENTS = [
       'It is celebrated to honor love, protection, and family connection.',
   },
   {
-    id: '6',
+    id: '5',
     name: 'National Sports Day',
     date: '2026-08-29',
     description:
@@ -54,11 +45,20 @@ export const EVENTS = [
       'It is celebrated to promote sports, fitness, and athletic excellence.',
   },
   {
-    id: '7',
+    id: '6',
     name: 'Janmashtami',
     date: '2026-09-04',
     description: 'Janmashtami marks the birth of Lord Krishna.',
     reason: 'It is celebrated to honor devotion, joy, and sacred storytelling.',
+  },
+  {
+    id: '7',
+    name: "Teachers' Day",
+    date: '2026-09-05',
+    description:
+      "Teachers' Day honors the contribution of educators in shaping lives and minds.",
+    reason:
+      'It is celebrated to appreciate teaching, mentorship, and learning.',
   },
   {
     id: '8',
@@ -115,9 +115,9 @@ export const EVENTS = [
     name: 'Republic Day',
     date: '2027-01-26',
     description:
-    "Republic Day commemorates the adoption of India's Constitution in 1950.",
+      "Republic Day commemorates the adoption of India's Constitution in 1950.",
     reason:
-    'It is celebrated to honor democracy, sovereignty, and national values.',
+      'It is celebrated to honor democracy, sovereignty, and national values.',
   },
   {
     id: '15',
@@ -143,7 +143,7 @@ export const EVENTS = [
     date: '2027-03-22',
     description: 'Holi is the festival of colors, joy, and spring.',
     reason:
-    'It is celebrated to strengthen bonds, celebrate renewal, and express festivity.',
+      'It is celebrated to strengthen bonds, celebrate renewal, and express festivity.',
   },
   {
     id: '18',
@@ -156,6 +156,13 @@ export const EVENTS = [
   },
   {
     id: '19',
+    name: 'Ram Navami',
+    date: '2027-04-15',
+    description: 'Ram Navami marks the birth of Lord Rama.',
+    reason: 'It is celebrated to honor devotion, righteousness, and dharma.',
+  },
+  {
+    id: '20',
     name: 'Earth Day',
     date: '2027-04-22',
     description:
@@ -164,7 +171,7 @@ export const EVENTS = [
       'It is celebrated to encourage protection of nature and responsible living.',
   },
   {
-    id: '20',
+    id: '21',
     name: "Mother's Day",
     date: '2027-05-09',
     description:
@@ -173,7 +180,7 @@ export const EVENTS = [
       'It is celebrated to express gratitude, affection, and family appreciation.',
   },
   {
-    id: '21',
+    id: '22',
     name: 'International Day of Families',
     date: '2027-05-15',
     description:
@@ -181,7 +188,7 @@ export const EVENTS = [
     reason: 'It is celebrated to honor care, belonging, and family well-being.',
   },
   {
-    id: '22',
+    id: '23',
     name: 'World Football Day',
     date: '2027-05-25',
     description:
@@ -190,7 +197,7 @@ export const EVENTS = [
       'It is celebrated to honor teamwork, passion, and shared sporting culture.',
   },
   {
-    id: '23',
+    id: '24',
     name: 'World Environment Day',
     date: '2027-06-05',
     description:
@@ -199,25 +206,33 @@ export const EVENTS = [
       'It is celebrated to encourage sustainability, conservation, and climate responsibility.',
   },
   {
-    id: '24',
+    id: '25',
     name: "Father's Day",
     date: '2027-06-20',
     description:
       "Father's Day honors fathers and father figures for their guidance and support.",
     reason:
       'It is celebrated to express gratitude, love, and family appreciation.',
+  }, {
+    id: '26',
+    name: 'International Yoga Day',
+    date: '2027-06-21',
+    description:
+      'International Yoga Day promotes yoga for physical, mental, and spiritual well-being.',
+    reason:
+      'It is celebrated to encourage balance, health, and mindful living.',
   },
   {
-    id: '25',
+    id: '27',
     name: "National Doctors' Day",
     date: '2027-07-01',
     description:
-    "National Doctors' Day honors doctors for their dedication, expertise, and service to society.",
+      "National Doctors' Day honors doctors for their dedication, expertise, and service to society.",
     reason:
-    'It is celebrated to appreciate medical care, healing, and compassionate service.',
+      'It is celebrated to appreciate medical care, healing, and compassionate service.',
   },
   {
-    id: '26',
+    id: '28',
     name: 'Rath Yatra',
     date: '2027-07-05',
     description:
@@ -226,16 +241,7 @@ export const EVENTS = [
       'It is celebrated to express devotion, community participation, and sacred tradition.',
   },
   {
-    id: '27',
-    name: 'International Youth Day',
-    date: '2027-08-12',
-    description:
-      'International Youth Day focuses on the role of young people in society.',
-    reason:
-      'It is celebrated to support youth voice, leadership, and opportunity.',
-  },
-  {
-    id: '28',
+    id: '29',
     name: 'Independence Day',
     date: '2027-08-15',
     description:
@@ -244,7 +250,7 @@ export const EVENTS = [
       'It is celebrated to honor patriotism, sacrifice, and national pride.',
   },
   {
-    id: '29',
+    id: '30',
     name: 'Raksha Bandhan',
     date: '2027-08-17',
     description:
@@ -253,23 +259,32 @@ export const EVENTS = [
       'It is celebrated to honor love, protection, and family connection.',
   },
   {
-    id: '30',
+    id: '31',
     name: 'National Sports Day',
     date: '2027-08-29',
     description:
-    'National Sports Day commemorates the birthday of hockey legend Major Dhyan Chand.',
+      'National Sports Day commemorates the birthday of hockey legend Major Dhyan Chand.',
     reason:
-    'It is celebrated to promote sports, fitness, and athletic excellence.',
+      'It is celebrated to promote sports, fitness, and athletic excellence.',
   },
   {
-    id: '31',
+    id: '32',
     name: 'Janmashtami',
     date: '2027-08-25',
     description: 'Janmashtami marks the birth of Lord Krishna.',
     reason: 'It is celebrated to honor devotion, joy, and sacred storytelling.',
   },
   {
-    id: '32',
+    id: '33',
+    name: "Teachers' Day",
+    date: '2027-09-05',
+    description:
+      "Teachers' Day honors the contribution of educators in shaping lives and minds.",
+    reason:
+      'It is celebrated to appreciate teaching, mentorship, and learning.',
+  },
+  {
+    id: '34',
     name: 'Diwali',
     date: '2027-10-29',
     description:
@@ -278,7 +293,7 @@ export const EVENTS = [
       'It is celebrated to mark the victory of light over darkness and good over evil.',
   },
   {
-    id: '33',
+    id: '35',
     name: 'Bhai Dooj',
     date: '2027-10-31',
     description:
@@ -286,7 +301,7 @@ export const EVENTS = [
     reason: 'It is celebrated to strengthen family bonds and mutual blessings.',
   },
   {
-    id: '34',
+    id: '36',
     name: "Children's Day",
     date: '2027-11-14',
     description:
@@ -295,7 +310,7 @@ export const EVENTS = [
       'It is celebrated to support childhood happiness, learning, and rights.',
   },
   {
-    id: '35',
+    id: '37',
     name: 'Christmas',
     date: '2027-12-25',
     description: 'Christmas celebrates the birth of Jesus Christ.',
@@ -310,4 +325,18 @@ export function isFestiveDateOnOrAfterToday(
   today: string
 ): boolean {
   return date >= today;
+}
+
+/**
+ * Event is visible when it falls on/after today and on/before plan expiry.
+ * If `planExpiresAtYmd` is missing, only the today lower-bound is applied.
+ */
+export function isFestiveDateWithinPlanRange(
+  date: string,
+  today: string,
+  planExpiresAtYmd: string | null | undefined
+): boolean {
+  if (!isFestiveDateOnOrAfterToday(date, today)) return false;
+  if (!planExpiresAtYmd) return true;
+  return date <= planExpiresAtYmd;
 }

@@ -25,7 +25,7 @@ import {
 } from '@/lib/workspace-nav';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getTodatDate } from '@/utils/getTodayDate';
-import { EVENTS, isFestiveDateOnOrAfterToday } from './events';
+import { EVENTS, isFestiveDateWithinPlanRange } from './events';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
@@ -89,19 +89,6 @@ export default function AutomatedPostPage() {
   const setIsSubmitting = useFestivePostState((s) => s.setIsSubmitting);
 
   const formattedToday = getTodatDate();
-  const builtInEvents = useMemo<FestiveEventItem[]>(
-    () =>
-      EVENTS.filter((event) =>
-        isFestiveDateOnOrAfterToday(event.date, formattedToday)
-      ).map(({ id, name, date, description, reason }) => ({
-        id,
-        name,
-        date,
-        description,
-        reason,
-      })),
-    [formattedToday]
-  );
   const { billing, loading: planCreditsLoading } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
   const isTourDemo = useTourDemo();
@@ -111,6 +98,27 @@ export default function AutomatedPostPage() {
   const formattedPlanExpiresAt = planExpiresAt
     ? fmtTimestamp(planExpiresAt)
     : '—';
+  const planExpiresYmd = planExpiresAt
+    ? fmtTimestamp(planExpiresAt, { format: 'yyyy-MM-dd' })
+    : null;
+
+  const builtInEvents = useMemo<FestiveEventItem[]>(
+    () =>
+      EVENTS.filter((event) =>
+        isFestiveDateWithinPlanRange(
+          event.date,
+          formattedToday,
+          planExpiresYmd
+        )
+      ).map(({ id, name, date, description, reason }) => ({
+        id,
+        name,
+        date,
+        description,
+        reason,
+      })),
+    [formattedToday, planExpiresYmd]
+  );
   const hasSelectablePlatforms = useMemo(
     () => isTourDemo || !!firstEnabledPlatform(selectedAccounts),
     [selectedAccounts, isTourDemo]
@@ -202,11 +210,18 @@ export default function AutomatedPostPage() {
       return;
     }
     const eventMap = new Map(
-      [...builtInEvents, ...customEvents].map((event) => [event.id, event])
+      allEvents.map((event) => [event.id, event])
     );
     const selectedEvents = selected
       .map((id) => eventMap.get(id))
       .filter((event): event is FestiveEventItem => !!event)
+      .filter((event) =>
+        isFestiveDateWithinPlanRange(
+          event.date,
+          formattedToday,
+          planExpiresYmd
+        )
+      )
       .map((event) => ({
         id: event.id,
         name: event.name,
@@ -230,7 +245,7 @@ export default function AutomatedPostPage() {
       const response = await createAutomatedPost(selectedEvents, genPlatforms);
       clearSelected();
       if ((response.failedCount ?? 0) > 0) {
-        showErrorToast('Failed');
+        showErrorToast('Event studio creation failed. Please try again later.');
         setIsSubmitting(false);
         return;
       }
@@ -245,13 +260,13 @@ export default function AutomatedPostPage() {
           expectedCount: expected,
         });
         if (wait.outcome === 'generated') toast.success('Generated');
-        else showErrorToast('Failed');
+        else showErrorToast('Event studio creation failed. Please try again later.');
       } else {
-        showErrorToast('Failed');
+        showErrorToast('Event studio creation failed. Please try again later.');
       }
       setIsSubmitting(false);
     } catch (error: unknown) {
-      showErrorToast('Failed');
+      showErrorToast('Event studio creation failed. Please try again later.');
       setIsSubmitting(false);
     } finally {
       setTimeout(() => setMessage(''), 5000);
@@ -262,11 +277,26 @@ export default function AutomatedPostPage() {
     () => [
       ...builtInEvents,
       ...customEvents.filter((event) =>
-        isFestiveDateOnOrAfterToday(event.date, formattedToday)
+        isFestiveDateWithinPlanRange(
+          event.date,
+          formattedToday,
+          planExpiresYmd
+        )
       ),
     ],
-    [builtInEvents, customEvents, formattedToday]
+    [builtInEvents, customEvents, formattedToday, planExpiresYmd]
   );
+
+  // Drop selections that fall outside the visible plan window.
+  useEffect(() => {
+    const visibleIds = new Set(allEvents.map((event) => event.id));
+    const stale = selected.filter((id) => !visibleIds.has(id));
+    if (stale.length === 0) return;
+    for (const id of stale) {
+      toggleSelected(id);
+    }
+  }, [allEvents, selected, toggleSelected]);
+
   const sortedEvents = allEvents
     .filter((e) => e && e.date)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -472,6 +502,7 @@ export default function AutomatedPostPage() {
                             <input
                               type="date"
                               min={formattedToday}
+                              max={planExpiresYmd ?? undefined}
                               value={editDate}
                               onChange={(e) => setEditDate(e.target.value)}
                               className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"

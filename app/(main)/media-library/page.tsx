@@ -562,7 +562,7 @@ function CampaignDraftScheduleModal({
       onScheduled();
       onClose();
     } catch (err) {
-      showErrorToast('Could not schedule this draft.');
+      showErrorToast('Could not schedule this draft. Please try again later.');
     } finally {
       setScheduling(false);
     }

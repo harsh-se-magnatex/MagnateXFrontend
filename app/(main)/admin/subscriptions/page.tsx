@@ -134,7 +134,7 @@ export default function AdminSubscriptionsPage() {
         setPlans(plansRes.data.plans);
         setUsers(usersRes.data.users);
       } catch {
-        showErrorToast('Failed to load subscription admin data');
+        showErrorToast('Failed to load subscription admin data. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -191,7 +191,7 @@ export default function AdminSubscriptionsPage() {
       );
       setConfirmOpen(false);
     } catch (error: unknown) {
-      showErrorToast('Failed to activate subscription');
+      showErrorToast('Failed to activate subscription. Please try again later.');
     } finally {
       setSubmitting(false);
     }

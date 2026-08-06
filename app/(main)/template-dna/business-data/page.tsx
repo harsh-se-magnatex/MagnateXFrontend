@@ -189,7 +189,7 @@ export default function TemplateDnaMemoryLayerPage() {
       }
     } catch (e) {
       setMemoryLayerEnabled(previous);
-      showErrorToast('Update failed');
+      showErrorToast('Update failed. Please Try Again Later.');
     } finally {
       setSavingMemoryLayerPref(false);
     }
@@ -206,7 +206,7 @@ export default function TemplateDnaMemoryLayerPage() {
       }
     } catch (e) {
       setMemoryLayerStrict(previous);
-      showErrorToast('Update failed');
+      showErrorToast('Update failed. Please Try Again Later.');
     } finally {
       setSavingMemoryLayerPref(false);
     }
@@ -226,7 +226,7 @@ export default function TemplateDnaMemoryLayerPage() {
       setMemoryLayerStrict(res.data.memoryLayerStrict !== false);
     } catch (e) {
       if (!opts?.silent) {
-        showErrorToast('Load failed');
+        showErrorToast('Load failed. Please Try Again Later.');
       }
     } finally {
       if (!opts?.silent) setLoading(false);
@@ -394,7 +394,7 @@ export default function TemplateDnaMemoryLayerPage() {
       await persistAnswers({ complete: true });
       toast.success('Answers saved');
     } catch (e) {
-      showErrorToast('Save failed');
+      showErrorToast('Save failed. Please Try Again Later.');
     } finally {
       setSavingAnswers(false);
     }
@@ -512,7 +512,7 @@ export default function TemplateDnaMemoryLayerPage() {
       setMemory(ml);
       toast.success(force ? 'Fresh questions ready' : 'Questions ready');
     } catch (e) {
-      showErrorToast('Generation failed');
+      showErrorToast('Generation failed. Please Try Again Later.');
     } finally {
       setGenerating(false);
     }
@@ -530,7 +530,7 @@ export default function TemplateDnaMemoryLayerPage() {
       if (ml) setMemory(ml);
       toast.success('Photo removed');
     } catch (e) {
-      showErrorToast('Remove failed');
+      showErrorToast('Remove failed. Please Try Again Later.');
     }
   };
 
@@ -685,7 +685,7 @@ export default function TemplateDnaMemoryLayerPage() {
           setExtraOptions({});
         }
       } catch {
-        showErrorToast('Could not save custom line');
+        showErrorToast('Could not save custom line. Please Try Again Later.');
       }
     })();
   };

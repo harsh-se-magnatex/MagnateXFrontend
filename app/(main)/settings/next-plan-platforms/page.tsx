@@ -94,7 +94,7 @@ export default function NextPlanPlatformsPage() {
         setLocalSelected(emptySelected());
       }
     } catch {
-      showErrorToast('Could not load next-plan platform settings');
+      showErrorToast('Could not load next-plan platform settings. Please Try Again Later.');
     } finally {
       setLoadingData(false);
     }
@@ -175,7 +175,7 @@ export default function NextPlanPlatformsPage() {
           ? (err as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : undefined;
-      showErrorToast(message || 'Failed to save next-cycle platforms');
+      showErrorToast(message || 'Failed to save next-cycle platforms. Please Try Again Later.');
     } finally {
       setSaving(false);
     }

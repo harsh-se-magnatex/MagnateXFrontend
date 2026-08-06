@@ -446,10 +446,31 @@ export default function OnboardingMenu() {
     };
   }, [router]);
 
+  const hasSuggestContext = (fields: Record<string, unknown>) => {
+    const trim = (key: string) => {
+      const v = fields[key];
+      return typeof v === 'string' ? v.trim() : '';
+    };
+    return Boolean(
+      trim('businessName') ||
+        trim('industry') ||
+        trim('location') ||
+        trim('website') ||
+        trim('brandDescription')
+    );
+  };
+
   const ensureBrandCopySuggestions = (opts?: {
     from?: Record<string, unknown>;
     force?: boolean;
   }): Promise<{ hashtags: string[]; slogans: string[] } | null> => {
+    const fd = opts?.from ?? formDataRef.current;
+    // No business DNA yet — skip AI hashtags/slogans; Template DNA generates
+    // them the first time the user fills business data.
+    if (!hasSuggestContext(fd as Record<string, unknown>)) {
+      return Promise.resolve(null);
+    }
+
     if (suggestPromiseRef.current && !opts?.force) {
       return suggestPromiseRef.current;
     }
@@ -458,7 +479,6 @@ export default function OnboardingMenu() {
     }
 
     hashtagSuggestStartedRef.current = true;
-    const fd = opts?.from ?? formDataRef.current;
     const requestId = ++suggestRequestIdRef.current;
     const run = (async () => {
       setSuggestLoading(true);
@@ -510,10 +530,14 @@ export default function OnboardingMenu() {
     return run;
   };
 
-  // Fallback if user reaches hashtag/slogan before extract finished starting AI.
+  // Only generate when DNA context exists (scrape / filled fields). Empty
+  // profiles wait until Template DNA is filled for the first time.
   useEffect(() => {
     const q = questions[step];
     if (q?.name !== 'hashtags' && q?.name !== 'brandSlogan') return;
+    if (!hasSuggestContext(formDataRef.current as Record<string, unknown>)) {
+      return;
+    }
     void ensureBrandCopySuggestions();
   }, [step]);
 
@@ -607,19 +631,22 @@ export default function OnboardingMenu() {
         if (uploadedUrl) dataToSave.logo = uploadedUrl;
       }
 
-      // Ensure hashtag/slogan recommendations exist even if user raced past those steps.
-      const copy = await ensureBrandCopySuggestions();
-      const recommendedHashtags =
-        copy?.hashtags?.length
-          ? copy.hashtags
-          : fieldSuggestions.hashtags;
-      const recommendedSlogans =
-        copy?.slogans?.length ? copy.slogans : fieldSuggestions.slogans;
-      if (recommendedHashtags.length > 0) {
-        dataToSave.recommendedHashtags = recommendedHashtags;
-      }
-      if (recommendedSlogans.length > 0) {
-        dataToSave.recommendedSlogans = recommendedSlogans;
+      // Only persist AI hashtags/slogans when business DNA exists. Empty DNA
+      // users get them later when they first fill Template DNA.
+      if (hasSuggestContext(dataToSave as Record<string, unknown>)) {
+        const copy = await ensureBrandCopySuggestions();
+        const recommendedHashtags =
+          copy?.hashtags?.length
+            ? copy.hashtags
+            : fieldSuggestions.hashtags;
+        const recommendedSlogans =
+          copy?.slogans?.length ? copy.slogans : fieldSuggestions.slogans;
+        if (recommendedHashtags.length > 0) {
+          dataToSave.recommendedHashtags = recommendedHashtags;
+        }
+        if (recommendedSlogans.length > 0) {
+          dataToSave.recommendedSlogans = recommendedSlogans;
+        }
       }
 
       const response = await onBoardUser(dataToSave);
@@ -629,15 +656,15 @@ export default function OnboardingMenu() {
         router.push('/brand-memory');
       }
     } catch (error) {
-      showErrorToast('Failed to onboard user');
+      showErrorToast('Failed to OnBoard. Please Try Again Later.');
     } finally {
       setLoading(false);
     }
   };
 
   const skipEntirely = () => {
-    // Persist recommendations in background so Brand DNA can show them later.
-    void ensureBrandCopySuggestions();
+    // Do not generate hashtags/slogans without business DNA — Template DNA
+    // will create them the first time the user fills business data.
     useTourState.getState().queuePlatformTour();
     router.push('/home');
   };
@@ -702,7 +729,7 @@ export default function OnboardingMenu() {
           force: true,
         });
       } catch (error) {
-        showErrorToast('Failed to extract business data');
+        showErrorToast('Failed to extract business data. Please Try Again Later.');
       } finally {
         setFetchingBusinessData(false);
       }
@@ -764,7 +791,7 @@ export default function OnboardingMenu() {
         console.warn('[onboarding] catalog extract warnings:', apiWarnings);
       }
     } catch (error) {
-      showErrorToast('Failed to extract business data from catalog');
+      showErrorToast('Failed to extract business data from catalog. Please Try Again Later.');
       throw error;
     } finally {
       setFetchingBusinessData(false);
@@ -788,10 +815,7 @@ export default function OnboardingMenu() {
           if (url !== String(formData.website ?? '').trim()) {
             setFormData((prev) => ({ ...prev, website: url }));
           }
-          // Start AI copy immediately; scrape will force-refresh with fuller DNA.
-          void ensureBrandCopySuggestions({
-            from: { ...formDataRef.current, website: url },
-          });
+          // Scrape fills DNA first; ensureBrandCopySuggestions runs after extract.
           void fetchOnboarding('website');
         }
       }

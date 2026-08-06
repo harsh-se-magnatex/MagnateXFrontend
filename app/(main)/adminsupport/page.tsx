@@ -131,7 +131,7 @@ export default function AdminSupportViewer() {
         const response = await getAllUsersSupportMessages();
         setMessages(response.data.tikcets);
       } catch (error: unknown) {
-        showErrorToast('Failed to get all users support messages');
+        showErrorToast('Failed to get all users support messages. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -166,7 +166,7 @@ export default function AdminSupportViewer() {
         prev.map((m) => (m.id === ticketId ? { ...m, status } : m))
       );
     } catch (error: unknown) {
-      showErrorToast('Failed to update support message status');
+      showErrorToast('Failed to update support message status. Please try again later.');
     } finally {
       setUpdatingId(null);
     }

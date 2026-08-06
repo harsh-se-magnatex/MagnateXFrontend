@@ -105,7 +105,7 @@ export default function AILogoPage() {
       toast.success('Logo pick is ready.');
       void handleGetAiGeneratedLogos();
     } catch (error: unknown) {
-      showErrorToast('Failed to generate AI logo pick.');
+      showErrorToast('Failed to generate AI logo pick. Please Try Again Later.');
     } finally {
       setGenerating(false);
     }
@@ -137,7 +137,7 @@ export default function AILogoPage() {
       toast.success('Logo saved successfully.');
       router.push('/template-dna');
     } catch (error: unknown) {
-      showErrorToast('Failed to save selected logo.');
+      showErrorToast('Failed to save selected logo. Please Try Again Later.');
     } finally {
       setSaving(false);
     }

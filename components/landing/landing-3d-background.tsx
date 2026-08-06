@@ -5,8 +5,12 @@ import { getFrameScrubT } from '@/lib/landing-scroll';
 
 const TOTAL_FRAMES = 634;
 const LERP_SPEED = 0.22;
-const FRAME_BASE_PATH_DESKTOP = '/frames-jpg/frame_';
-const FRAME_BASE_PATH_MOBILE = '/frames-jpg-mobile/frame_';
+/** How many frames to fetch in parallel while filling the contiguous window. */
+const LOAD_BATCH_SIZE = 12;
+/** Hero scroll fade only after this many contiguous frames are ready. */
+const HERO_READY_FRAMES = 24;
+const FRAME_BASE_PATH_DESKTOP = '/frames-webp/frame_';
+const FRAME_BASE_PATH_MOBILE = '/frames-webp-mobile/frame_';
 
 function isMobileViewport(): boolean {
   if (typeof window === 'undefined') return false;
@@ -14,7 +18,7 @@ function isMobileViewport(): boolean {
 }
 
 function framePath(index: number, basePath: string): string {
-  return `${basePath}${String(index + 1).padStart(6, '0')}.jpg`;
+  return `${basePath}${String(index + 1).padStart(6, '0')}.webp`;
 }
 
 type Landing3DBackgroundProps = {
@@ -41,36 +45,58 @@ export function Landing3DBackground({
       ? FRAME_BASE_PATH_MOBILE
       : FRAME_BASE_PATH_DESKTOP;
 
-    const images: HTMLImageElement[] = new Array(TOTAL_FRAMES);
+    const images: (HTMLImageElement | undefined)[] = new Array(TOTAL_FRAMES);
+    const loaded = new Uint8Array(TOTAL_FRAMES);
+    let contiguousLoaded = -1;
     let currentFrame = 0;
     let targetFrame = 0;
-    let isReady = false;
-    let maxLoadedIndex = -1;
+    let lastDrawnIndex = -1;
+    let nextToLoad = 0;
+    let inFlight = 0;
+    let cancelled = false;
     let rafId = 0;
 
-    function markFrameLoaded(frameIndex: number) {
-      maxLoadedIndex = Math.max(maxLoadedIndex, frameIndex);
+    function advanceContiguous() {
+      while (
+        contiguousLoaded + 1 < TOTAL_FRAMES &&
+        loaded[contiguousLoaded + 1]
+      ) {
+        contiguousLoaded++;
+      }
+    }
+
+    function scheduleLoads() {
+      if (cancelled || reducedMotion) return;
+      while (inFlight < LOAD_BATCH_SIZE && nextToLoad < TOTAL_FRAMES) {
+        const frameIndex = nextToLoad++;
+        inFlight++;
+        const img = new Image();
+        images[frameIndex] = img;
+        const settle = () => {
+          loaded[frameIndex] = 1;
+          inFlight--;
+          advanceContiguous();
+          scheduleLoads();
+        };
+        img.onload = settle;
+        img.onerror = settle;
+        img.src = framePath(frameIndex, basePath);
+      }
     }
 
     if (!reducedMotion) {
-      for (let i = 0; i < TOTAL_FRAMES; i++) {
-        images[i] = new Image();
-        const frameIndex = i;
-        images[i].onload = () => {
-          markFrameLoaded(frameIndex);
-          if (frameIndex === TOTAL_FRAMES - 1) isReady = true;
-        };
-        images[i].onerror = () => {
-          markFrameLoaded(frameIndex);
-          if (frameIndex === TOTAL_FRAMES - 1) isReady = true;
-        };
-        images[i].src = framePath(i, basePath);
-      }
+      scheduleLoads();
     } else {
       const img = new Image();
       img.onload = () => {
-        isReady = true;
+        loaded[0] = 1;
+        contiguousLoaded = 0;
+        images[0] = img;
         drawFrame(img);
+      };
+      img.onerror = () => {
+        loaded[0] = 1;
+        contiguousLoaded = 0;
       };
       img.src = framePath(0, basePath);
       images[0] = img;
@@ -103,7 +129,7 @@ export function Landing3DBackground({
     }
 
     function animate() {
-      if (!reducedMotion && (maxLoadedIndex >= 0 || isReady)) {
+      if (!reducedMotion && contiguousLoaded >= 0) {
         targetFrame = getFrameScrubT() * (TOTAL_FRAMES - 1);
       }
 
@@ -111,14 +137,27 @@ export function Landing3DBackground({
       let idx = Math.round(currentFrame);
       if (idx < 0) idx = 0;
       if (idx >= TOTAL_FRAMES) idx = TOTAL_FRAMES - 1;
-      if (!isReady) idx = Math.min(idx, Math.max(0, maxLoadedIndex));
-      if (idx >= 0 && idx < TOTAL_FRAMES && images[idx]) {
-        drawFrame(images[idx]);
+      // Never scrub past the contiguous loaded window — holds last good frame.
+      if (contiguousLoaded >= 0) {
+        idx = Math.min(idx, contiguousLoaded);
       }
 
-      const pHero = getFrameScrubT();
+      const img = images[idx];
+      if (img?.naturalWidth && idx !== lastDrawnIndex) {
+        drawFrame(img);
+        lastDrawnIndex = idx;
+      } else if (
+        !img?.naturalWidth &&
+        lastDrawnIndex >= 0 &&
+        images[lastDrawnIndex]?.naturalWidth
+      ) {
+        // keep previous draw
+      }
+
       const hero = document.getElementById(heroContentId);
       if (hero) {
+        const heroReady = contiguousLoaded >= HERO_READY_FRAMES - 1;
+        const pHero = heroReady ? getFrameScrubT() : 0;
         const o = Math.max(0, 1 - pHero * 3.2);
         const scale = 1 - pHero * 0.08;
         const y = -pHero * 48;
@@ -144,10 +183,13 @@ export function Landing3DBackground({
     rafId = requestAnimationFrame(animate);
 
     return () => {
+      cancelled = true;
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(rafId);
       document.documentElement.style.removeProperty('--landing-3d-frame-opacity');
-      document.documentElement.style.removeProperty('--landing-3d-section-bg-opacity');
+      document.documentElement.style.removeProperty(
+        '--landing-3d-section-bg-opacity'
+      );
     };
   }, [heroContentId]);
 

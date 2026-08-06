@@ -152,9 +152,11 @@ export function formatWatchSeconds(sec: number): string {
  * analytics trend (e.g. reachTrend, engagementsTrend). Returns null when
  * we don't have enough data to be meaningful so the UI can hide the badge.
  *
- * `pct` is a signed percentage change versus the previous window. When the
- * previous window is 0 we treat any growth as +100% and any drop as -100%
- * to avoid Infinity/NaN bleeding into the UI.
+ * `pct` is a signed percentage change versus the previous window.
+ *
+ * First-connect / sparse syncs often produce absurd spikes (e.g. +365% or
+ * +4000%) when the prior window is empty or near-zero. In those cases we
+ * return null instead of a misleading percentage.
  */
 export function weeklyDeltaFromTrend(
   trend: { date: string; value: number }[] | null | undefined
@@ -166,6 +168,10 @@ export function weeklyDeltaFromTrend(
   if (sorted.length === 0) return null;
 
   const totalLen = sorted.length;
+  // Need enough points for a real week-over-week compare (≈7 vs ≈7).
+  // With fewer than 8 points the prior window is too thin for first-connect users.
+  if (totalLen < 8) return null;
+
   // Use up to the last 14 points; split into "recent 7" vs "prior 7".
   // If we only have 8-13 points we still split, biasing recent half.
   const window = Math.min(14, totalLen);
@@ -174,7 +180,8 @@ export function weeklyDeltaFromTrend(
   const previous = tail.slice(0, tail.length - split);
   const current = tail.slice(tail.length - split);
 
-  if (current.length === 0 || previous.length === 0) return null;
+  // Each window should have several days — a 1-point "previous week" is not meaningful.
+  if (current.length < 3 || previous.length < 3) return null;
 
   const currentSum = current.reduce(
     (s, p) => s + (Number(p.value) || 0),
@@ -185,12 +192,14 @@ export function weeklyDeltaFromTrend(
     0
   );
 
-  let pct = 0;
-  if (previousSum === 0) {
-    pct = currentSum > 0 ? 100 : currentSum < 0 ? -100 : 0;
-  } else {
-    pct = ((currentSum - previousSum) / Math.abs(previousSum)) * 100;
-  }
+  // No prior baseline (common right after connecting) — cannot compute WoW %.
+  if (previousSum === 0) return null;
+
+  const pct = ((currentSum - previousSum) / Math.abs(previousSum)) * 100;
+
+  // Near-zero prior windows create runaway percentages (prev=1 → +4000%).
+  // Treat those as "not enough history" rather than celebrating fake growth.
+  if (!Number.isFinite(pct) || Math.abs(pct) > 250) return null;
 
   return {
     pct: Math.round(pct * 10) / 10,
