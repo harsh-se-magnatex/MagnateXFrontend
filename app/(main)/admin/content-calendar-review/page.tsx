@@ -47,6 +47,7 @@ import { formatTimestampInTz, getBrowserTimeZone } from '@/lib/user-timezone';
 import { resolveSchedulableMediaPreview } from '@/lib/post-media-preview';
 import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
 import { CarouselSwipePreview } from '@/components/shared/CarouselSwipePreview';
+import { DownloadVideoButton } from '@/components/download-video-button';
 
 const PLATFORM_LABEL: Record<ContentCalendarReviewPlatform, string> = {
   instagram: 'Instagram',
@@ -1240,13 +1241,13 @@ function PreviewModal({
                     muted={false}
                     videoClassName="w-full max-h-[28rem] rounded-xl bg-black"
                   />
-                  <a
-                    href={mediaPreview.videoUrl}
-                    download={`admin-calendar-${item.scheduledPostId ?? 'post'}.mp4`}
-                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-white/10"
-                  >
-                    Download video
-                  </a>
+                  <DownloadVideoButton
+                    url={mediaPreview.videoUrl}
+                    getFilename={() =>
+                      `admin-calendar-${item.scheduledPostId ?? 'post'}.mp4`
+                    }
+                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-white/10 disabled:opacity-60"
+                  />
                 </div>
               ) : item.imageUrl ? (
                 <div className="relative h-full w-full">

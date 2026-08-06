@@ -1,19 +1,20 @@
 /**
- * Fetch a remote image as a Blob. Tries CORS first, then the same-origin
+ * Fetch a remote media file as a Blob. Tries CORS first, then the same-origin
  * `/api/download-image` proxy (Firebase Storage often blocks cross-origin reads).
+ * Works for images and videos hosted on allowed storage hosts.
  */
 export async function fetchImageAsBlob(url: string): Promise<Blob> {
   const trimmed = url.trim();
   if (!trimmed) {
-    throw new Error('Image URL is missing.');
+    throw new Error('Media URL is missing.');
   }
 
   try {
     const res = await fetch(trimmed, { mode: 'cors', credentials: 'omit' });
     if (res.ok) {
       const blob = await res.blob();
-      if (!blob.type.startsWith('image/') && blob.size === 0) {
-        throw new Error('Empty image response.');
+      if (blob.size === 0) {
+        throw new Error('Empty media response.');
       }
       return blob;
     }
@@ -24,10 +25,10 @@ export async function fetchImageAsBlob(url: string): Promise<Blob> {
   const res = await fetch('/api/download-image', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: trimmed, filename: 'sociogenie-post.png' }),
+    body: JSON.stringify({ url: trimmed, filename: 'sociogenie-media.bin' }),
   });
   if (!res.ok) {
-    let message = 'Failed to fetch image.';
+    let message = 'Failed to fetch media.';
     try {
       const data = (await res.json()) as { error?: string };
       if (data?.error) message = data.error;
@@ -36,5 +37,9 @@ export async function fetchImageAsBlob(url: string): Promise<Blob> {
     }
     throw new Error(message);
   }
-  return res.blob();
+  const blob = await res.blob();
+  if (blob.size === 0) {
+    throw new Error('Empty media response.');
+  }
+  return blob;
 }

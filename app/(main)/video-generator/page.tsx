@@ -40,6 +40,7 @@ import {
   detectVideoFramePreviewMode,
   type VideoFramePreviewMode,
 } from '@/lib/video-frame-preview';
+import { DownloadVideoButton } from '@/components/download-video-button';
 import { toast } from 'sonner';
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
@@ -808,13 +809,11 @@ export default function VideoGenerationPage() {
                 </div>
               ) : null}
               <div className="flex flex-col gap-3 sm:flex-row">
-                <a
-                  href={result.videoUrl}
-                  download={`video-${result.platform}.mp4`}
-                  className="inline-flex flex-1 items-center justify-center rounded-full border border-violet-200 bg-white px-5 py-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-50"
-                >
-                  Download video
-                </a>
+                <DownloadVideoButton
+                  url={result.videoUrl}
+                  getFilename={() => `video-${result.platform}.mp4`}
+                  className="inline-flex flex-1 items-center justify-center rounded-full border border-violet-200 bg-white px-5 py-2.5 text-sm font-semibold text-violet-700 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-60"
+                />
                 <button
                   type="button"
                   onClick={handleSendToScheduler}

@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
   const upstream = await fetch(rawUrl, {
     redirect: 'follow',
-    headers: { Accept: 'image/*,*/*' },
+    headers: { Accept: 'video/*,image/*,*/*' },
   });
 
   if (!upstream.ok) {
