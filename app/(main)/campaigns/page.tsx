@@ -73,6 +73,7 @@ import {
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import {
   CAMPAIGN_CREDIT_PER_DAY,
+  DEFAULT_CAMPAIGN_PLAN_DAYS,
   DEFAULT_CAMPAIGN_SET_SIZE,
   MAX_CAMPAIGN_DAYS,
   createCampaignApi,
@@ -806,7 +807,7 @@ export default function CreateCampaignPage() {
   const effectiveMaxDays =
     maxDaysFromServer && maxDaysFromServer > 0
       ? maxDaysFromServer
-      : MAX_CAMPAIGN_DAYS;
+      : DEFAULT_CAMPAIGN_PLAN_DAYS;
   const activeSuggestion =
     selectedSuggestionId != null
       ? suggestions.find((s) => s.id === selectedSuggestionId) ?? null

@@ -1,8 +1,11 @@
 import axiosClient from '@/lib/axios';
 
 /** Hard cap on how many days a single campaign can plan. Mirrors the
- *  backend constant so the two layers can never drift. */
+ *  backend constant so the two layers can never drift. Used for the
+ *  date-picker window; AI idea length defaults to {@link DEFAULT_CAMPAIGN_PLAN_DAYS}. */
 export const MAX_CAMPAIGN_DAYS = 7;
+/** Default AI campaign idea length (manual + auto-mode). */
+export const DEFAULT_CAMPAIGN_PLAN_DAYS = 5;
 /** Default suggestion-set size when the page first loads. */
 export const DEFAULT_CAMPAIGN_SET_SIZE = 5;
 /** Credit cost per (day × platform) — mirrors backend
@@ -31,8 +34,9 @@ export type CampaignSuggestion = {
 
 export type CampaignSuggestionSet = {
   suggestions: CampaignSuggestion[];
-  /** Server-clamped max days for THIS user (capped by plan window). When
-   *  null, the saved set predates this field — treat as MAX_CAMPAIGN_DAYS. */
+  /** Server-clamped max days for THIS user (capped by plan window + 5-day
+   *  campaign plan default). When null, the saved set predates this field —
+   *  treat as the default 5-day plan length. */
   maxDays: number | null;
   /** Goal the set was generated against. Null when the user did not supply
    *  one. */
