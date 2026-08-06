@@ -179,6 +179,15 @@ function formatDateParts(isoDate: string): { weekday: string; day: string } {
   }
 }
 
+function forceRunVisualKey(args: {
+  date: string;
+  platform: ContentPlanPlatform;
+  kind: string;
+  idx: number;
+}): string {
+  return `${args.date}::${args.platform}::${args.kind}::${args.idx}`;
+}
+
 function PlatformCell({
   date,
   platform,
@@ -194,7 +203,11 @@ function PlatformCell({
   todayIso: string;
   forceRunEnabled: boolean;
   forceRunKey: string | null;
-  onForceRun: (date: string, platform: ContentPlanPlatform) => void;
+  onForceRun: (
+    date: string,
+    platform: ContentPlanPlatform,
+    visualKey: string
+  ) => void;
 }) {
   if (entries.length === 0) {
     return (
@@ -206,12 +219,16 @@ function PlatformCell({
 
   const isPast = date < todayIso;
   const hasGenerated = entries.some((e) => e.source === 'generated');
-  const cellKey = `${date}::${platform}`;
-  const isRunning = forceRunKey === cellKey;
-
   return (
     <div className="flex h-full min-h-[3.25rem] flex-col gap-1 px-1.5 py-1.5">
       {entries.map((entry, idx) => {
+        const runKey = forceRunVisualKey({
+          date,
+          platform,
+          kind: entry.kind,
+          idx,
+        });
+        const isRunning = forceRunKey === runKey;
         const body = (
           <div
             className={cn(
@@ -264,7 +281,7 @@ function PlatformCell({
               <button
                 type="button"
                 disabled={Boolean(forceRunKey)}
-                onClick={() => onForceRun(date, platform)}
+                onClick={() => onForceRun(date, platform, runKey)}
                 className={cn(
                   'inline-flex items-center justify-center gap-1 rounded-md border border-border/80 bg-background/80 px-1.5 py-1 text-[10px] font-semibold text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60'
                 )}
@@ -298,7 +315,11 @@ function ContentPlanSheet({
   todayIso: string;
   forceRunEnabled: boolean;
   forceRunKey: string | null;
-  onForceRun: (date: string, platform: ContentPlanPlatform) => void;
+  onForceRun: (
+    date: string,
+    platform: ContentPlanPlatform,
+    visualKey: string
+  ) => void;
 }) {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
@@ -541,13 +562,16 @@ export default function ContentPlanPage() {
   }, [load]);
 
   const handleForceRun = useCallback(
-    async (date: string, platform: ContentPlanPlatform) => {
+    async (
+      date: string,
+      platform: ContentPlanPlatform,
+      visualKey: string
+    ) => {
       if (date < todayIso) {
         toast.error('Force Run is not available for past dates');
         return;
       }
-      const key = `${date}::${platform}`;
-      setForceRunKey(key);
+      setForceRunKey(visualKey);
       try {
         await forceRunContentPlanApi({ date, platform });
         toast.success(`Generating for ${platform} on ${date}`);

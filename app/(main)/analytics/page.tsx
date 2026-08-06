@@ -45,6 +45,7 @@ import {
   isPlatformSelectionComplete,
   PLAN_MAX_SOCIAL,
 } from '@/lib/platform-selection';
+import { buildBusinessSocialProfileUrl } from '@/lib/business-social-profile-url';
 
 function formatRefreshedAgo(iso: string): string {
   const then = new Date(iso).getTime();
@@ -477,6 +478,27 @@ export default function AnalyticsPage() {
     [pageAnalytics]
   );
 
+  const facebookProfileUrl = useMemo(
+    () =>
+      pageAnalytics
+        ? buildBusinessSocialProfileUrl('facebook', {
+            selectedPageId: pageAnalytics.pageId,
+            pageName: pageAnalytics.pageName,
+          })
+        : null,
+    [pageAnalytics]
+  );
+
+  const instagramProfileUrl = useMemo(
+    () =>
+      igAnalytics
+        ? buildBusinessSocialProfileUrl('instagram', {
+            pageName: igAnalytics.username,
+          })
+        : null,
+    [igAnalytics]
+  );
+
   const liMerged = useMemo((): LinkedInMerged => {
     if (!liAnalytics) {
       const engagementsFromPosts = allLiPosts.reduce(
@@ -624,6 +646,17 @@ export default function AnalyticsPage() {
     [liAnalytics]
   );
 
+  const linkedInProfileUrl = useMemo(
+    () =>
+      liAnalytics
+        ? buildBusinessSocialProfileUrl('linkedin', {
+            selectedPageId: liAnalytics.organizationUrn,
+            pageName: liAnalytics.pageName ?? liAnalytics.displayName,
+          })
+        : null,
+    [liAnalytics]
+  );
+
   if (billingLoading && !billing) {
     return <PageLoadingState />;
   }
@@ -700,6 +733,7 @@ export default function AnalyticsPage() {
             TOP_POSTS_LIMIT={TOP_POSTS_LIMIT}
             metrics={metrics}
             pageAnalytics={pageAnalytics}
+            profileUrl={facebookProfileUrl}
             merged={merged}
             reachChartData={reachChartData}
             followersChartData={followersChartData}
@@ -717,6 +751,7 @@ export default function AnalyticsPage() {
           <InstagramAnalyticsView
             IG_MEDIA_LIMIT={IG_MEDIA_LIMIT}
             ig={igAnalytics}
+            profileUrl={instagramProfileUrl}
             posts={allIgPosts}
             expandedPost={expandedIgPost}
             onExpandedPostChange={setExpandedIgPost}
@@ -731,6 +766,7 @@ export default function AnalyticsPage() {
             TOP_POSTS_LIMIT={TOP_POSTS_LIMIT}
             connection={liConnection}
             li={liAnalytics}
+            profileUrl={linkedInProfileUrl}
             posts={allLiPosts}
             merged={liMerged}
             topPosts={topLiPosts}

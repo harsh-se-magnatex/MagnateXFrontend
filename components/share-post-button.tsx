@@ -6,7 +6,8 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
   appendSocialProfileLink,
-  resolveBusinessSocialProfileUrl,
+  appendSocialProfileLinks,
+  resolveAllBusinessSocialProfileUrls,
 } from '@/lib/business-social-profile-url';
 import { downloadImageAsFile } from '@/lib/download-image';
 import { shareGeneratedPost } from '@/lib/share-generated-post';
@@ -58,8 +59,8 @@ export function SharePostButton({
 
   async function buildShareText(): Promise<string> {
     const base = String(caption ?? '').trim();
-    const profileUrl = await resolveBusinessSocialProfileUrl(platform);
-    const next = appendSocialProfileLink(base, profileUrl);
+    const profileUrls = await resolveAllBusinessSocialProfileUrls();
+    const next = appendSocialProfileLinks(base, profileUrls);
     setShareText(next);
     return next;
   }

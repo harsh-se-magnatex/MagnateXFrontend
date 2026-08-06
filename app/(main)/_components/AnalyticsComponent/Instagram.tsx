@@ -19,7 +19,7 @@ import {
   weeklyDeltaFromTrend,
 } from "./utils/utils_functions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Crown, Eye, Film, Heart, ImageIcon, Instagram, Layers, MapPin, PlayCircle, Sparkles, TrendingUp, Trophy, Users } from "lucide-react";
+import { Crown, Eye, ExternalLink, Film, Heart, ImageIcon, Instagram, Layers, MapPin, PlayCircle, Sparkles, TrendingUp, Trophy, Users } from "lucide-react";
 import { formatChartTooltipDate, formatCompact, GrowthAreaChart } from "./utils/facebook_components/util_component";
 import { IgMetricTile, InstagramMediaCard, InstagramMediaDialog } from "./utils/instagram_components/utils_components";
 import { ChartConfig } from "@/components/ui/chart";
@@ -43,6 +43,7 @@ const igReachGrowthChartConfig = {
 
 export function InstagramAnalyticsView({
     ig,
+    profileUrl,
     posts,
     expandedPost,
     IG_MEDIA_LIMIT,
@@ -52,6 +53,7 @@ export function InstagramAnalyticsView({
     preloadedReplySuggestions,
   }: {
     ig: InstagramAnalytics | null;
+    profileUrl?: string | null;
     posts: InstagramPost[];
     expandedPost: InstagramPost | null;
     IG_MEDIA_LIMIT: number;
@@ -195,7 +197,20 @@ export function InstagramAnalyticsView({
           </h1>
           {ig?.username ? (
             <p className="text-sm text-muted-foreground">
-              @{ig.username} · {formatCompact(ig.mediaCount)} media
+              {profileUrl ? (
+                <a
+                  href={profileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 font-medium text-foreground underline decoration-border underline-offset-2 hover:decoration-foreground"
+                >
+                  <span>@{ig.username}</span>
+                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                </a>
+              ) : (
+                `@${ig.username}`
+              )}{' '}
+              · {formatCompact(ig.mediaCount)} media
             </p>
           ) : null}
           {ig?.lastUpdated ? (

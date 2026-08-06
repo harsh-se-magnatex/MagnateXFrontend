@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Trophy,
   Users,
+  ExternalLink,
 } from 'lucide-react';
 import {
   formatCompact,
@@ -52,6 +53,7 @@ const followersGrowthChartConfig = {
 export default function FaceBookAnalytics({
   metrics,
   pageAnalytics,
+  profileUrl,
   merged,
   TOP_POSTS_LIMIT,
   reachChartData,
@@ -66,6 +68,7 @@ export default function FaceBookAnalytics({
 }: {
   metrics: Metrics;
   pageAnalytics: PageAnalytics | null;
+  profileUrl?: string | null;
   merged: Merged;
   TOP_POSTS_LIMIT: number;
   reachChartData: { date: string; reach: number }[];
@@ -180,7 +183,22 @@ export default function FaceBookAnalytics({
           <Facebook className="h-7 w-7 text-blue-700" />
           Analytics
         </h1>
-        <p>Page Name: {pageAnalytics?.pageName}</p>
+        <p className="text-sm text-muted-foreground">
+          Page Name:{' '}
+          {profileUrl && pageAnalytics?.pageName ? (
+            <a
+              href={profileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 font-medium text-foreground underline decoration-border underline-offset-2 hover:decoration-foreground"
+            >
+              <span>{pageAnalytics.pageName}</span>
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            </a>
+          ) : (
+            pageAnalytics?.pageName
+          )}
+        </p>
         {metrics.updatedLabel ? (
           <p className="text-sm text-muted-foreground">
             Last updated {metrics.updatedLabel}

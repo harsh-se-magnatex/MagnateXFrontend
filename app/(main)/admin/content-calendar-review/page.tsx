@@ -184,6 +184,16 @@ function itemRegenKey(
   return `${userId}::${item.scheduledPostId || item.draftId || ''}::${platform}`;
 }
 
+function forceRunVisualKey(args: {
+  userId: string;
+  platform: ContentCalendarReviewPlatform;
+  date: string;
+  kind: string;
+  idx: number;
+}): string {
+  return `${args.userId}::${args.platform}::${args.date}::${args.kind}::${args.idx}`;
+}
+
 export default function AdminContentCalendarReviewPage() {
   const { user } = useUser();
   const router = useRouter();
@@ -371,7 +381,8 @@ export default function AdminContentCalendarReviewPage() {
 
   const handleForceRun = async (
     platform: ContentCalendarReviewPlatform,
-    date: string
+    date: string,
+    visualKey: string
   ) => {
     if (!detail) return;
     if (String(detail.mode ?? '').trim().toLowerCase() !== 'auto') {
@@ -382,8 +393,7 @@ export default function AdminContentCalendarReviewPage() {
       showErrorToast('Force Run is not available for past dates');
       return;
     }
-    const key = `${detail.userId}::${platform}::${date}`;
-    setPendingRunKey(key);
+    setPendingRunKey(visualKey);
     try {
       await postAdminContentCalendarForceRun({
         userId: detail.userId,
@@ -707,8 +717,8 @@ export default function AdminContentCalendarReviewPage() {
                                 preferences: detail.preferences,
                               })
                             }
-                            onForceRun={(platform) =>
-                              void handleForceRun(platform, day.date)
+                            onForceRun={(platform, visualKey) =>
+                              void handleForceRun(platform, day.date, visualKey)
                             }
                           />
                         ))}
@@ -818,7 +828,10 @@ function DayRow({
     platform: ContentCalendarReviewPlatform,
     item: AdminContentPlanGeneratedItem
   ) => void;
-  onForceRun: (platform: ContentCalendarReviewPlatform) => void;
+  onForceRun: (
+    platform: ContentCalendarReviewPlatform,
+    visualKey: string
+  ) => void;
 }) {
   const isToday = day.date === todayIso;
   const isPast = day.date < todayIso;
@@ -859,8 +872,6 @@ function DayRow({
         const slot = day.byPlatform[platform];
         const generated = slot?.generated ?? [];
         const upcoming = slot?.upcoming ?? [];
-        const runKey = `${userId}::${platform}::${day.date}`;
-        const runPending = pendingRunKey === runKey;
 
         return (
           <td key={platform} className="px-2 py-2">
@@ -881,6 +892,14 @@ function DayRow({
                     forceRunEnabled &&
                     !isPast &&
                     canForceRunKind(item.kind);
+                  const runKey = forceRunVisualKey({
+                    userId,
+                    platform,
+                    date: day.date,
+                    kind: item.kind,
+                    idx,
+                  });
+                  const runPending = pendingRunKey === runKey;
                   return (
                     <div
                       key={`${item.kind}-${idx}`}
@@ -894,7 +913,7 @@ function DayRow({
                           variant="outline"
                           className="h-7 gap-1.5 text-[11px]"
                           disabled={runPending}
-                          onClick={() => onForceRun(platform)}
+                          onClick={() => onForceRun(platform, runKey)}
                         >
                           {runPending ? (
                             <Loader2 className="h-3 w-3 animate-spin" />

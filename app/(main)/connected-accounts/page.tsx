@@ -9,7 +9,7 @@ import {
   workspacePageTitle,
 } from '@/lib/workspace-nav';
 import { useRouter } from 'next/navigation';
-import { Check, AlertCircle } from 'lucide-react';
+import { Check, AlertCircle, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
@@ -53,6 +53,7 @@ import {
   isPlatformSelectionComplete,
   PLAN_MAX_SOCIAL,
 } from '@/lib/platform-selection';
+import { buildBusinessSocialProfileUrl } from '@/lib/business-social-profile-url';
 
 type PlatformId = 'instagram' | 'facebook' | 'linkedin';
 
@@ -159,6 +160,32 @@ function getSelectedPageId(
   return acc?.selectedPageId ?? null;
 }
 
+function getAccountForPlatform(
+  accounts: SocialAccountRow[],
+  platformId: PlatformId
+): SocialAccountRow | null {
+  return accounts.find((a) => a.platform === platformId) ?? null;
+}
+
+function getSelectedProfileUrl(
+  accounts: SocialAccountRow[],
+  platformId: PlatformId
+): string | null {
+  const account = getAccountForPlatform(accounts, platformId);
+  return buildBusinessSocialProfileUrl(platformId, account);
+}
+
+function getPageProfileUrl(
+  platform: PageSelectablePlatform,
+  page: SocialAccountPage | null | undefined
+): string | null {
+  if (!page) return null;
+  return buildBusinessSocialProfileUrl(platform, {
+    selectedPageId: page.pageId,
+    pageName: page.pageName,
+  });
+}
+
 type PageSelectablePlatform = 'facebook' | 'linkedin';
 
 function SelectPageModal({
@@ -202,6 +229,7 @@ function SelectPageModal({
     selectedPageId == null
       ? null
       : (pages.find((p) => p.pageId === selectedPageId) ?? null);
+  const selectedPageProfileUrl = getPageProfileUrl(platform, selectedPage);
 
   const handleConfirm = async () => {
     if (!selectedPage) return;
@@ -240,11 +268,37 @@ function SelectPageModal({
           <SelectContent>
             {pages.map((page) => (
               <SelectItem key={page.pageId} value={page.pageId}>
-                {page.pageName}
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate">{page.pageName}</span>
+                  {getPageProfileUrl(platform, page) ? (
+                    <span className="truncate text-xs text-muted-foreground">
+                      {getPageProfileUrl(platform, page)}
+                    </span>
+                  ) : null}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {selectedPage && selectedPageProfileUrl ? (
+          <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2 text-sm">
+            <div className="min-w-0">
+              <p className="font-medium text-foreground">{selectedPage.pageName}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {selectedPageProfileUrl}
+              </p>
+            </div>
+            <a
+              href={selectedPageProfileUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              Open
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+            </a>
+          </div>
+        ) : null}
         <DialogFooter>
           <Button
             variant="outline"
@@ -533,6 +587,10 @@ export default function ConnectedPlatformsPage() {
                     socialAccounts,
                     platform.id
                   );
+                  const selectedProfileUrl = getSelectedProfileUrl(
+                    socialAccounts,
+                    platform.id
+                  );
                   const isPageSelectable =
                     platform.id === 'facebook' || platform.id === 'linkedin';
                   const availablePages = isPageSelectable
@@ -592,13 +650,28 @@ export default function ConnectedPlatformsPage() {
                                 : 'Connect your account to allow automated posts from Sociogenie.'}
                             </CardDescription>
                             {connected && selectedPageName && (
-                                <p className="text-sm font-medium text-slate-800">
-                                  Selected:&nbsp;
+                              <p className="text-sm font-medium text-slate-800">
+                                Selected:&nbsp;
+                                {selectedProfileUrl ? (
+                                  <a
+                                    href={selectedProfileUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-900"
+                                  >
+                                    <span>{selectedPageName}</span>
+                                    <ExternalLink
+                                      className="h-3.5 w-3.5"
+                                      aria-hidden
+                                    />
+                                  </a>
+                                ) : (
                                   <span className="text-slate-900">
                                     {selectedPageName}
                                   </span>
-                                </p>
-                              )}
+                                )}
+                              </p>
+                            )}
                             {needsPageSelection && (
                               <>
                                 <p className="text-sm text-amber-700">

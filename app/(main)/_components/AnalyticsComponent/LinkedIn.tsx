@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Trophy,
   Users,
+  ExternalLink,
 } from 'lucide-react';
 import {
   formatCompact,
@@ -247,6 +248,7 @@ function LinkedInMetricDetailPanel({
 export default function WLinkedInAnalyticsView({
   connection,
   li,
+  profileUrl,
   posts,
   merged,
   TOP_POSTS_LIMIT,
@@ -264,6 +266,7 @@ export default function WLinkedInAnalyticsView({
 }: {
   connection: LinkedInAnalyticsConnection;
   li: LinkedInAnalytics | null;
+  profileUrl?: string | null;
   posts: LinkedInPost[];
   merged: LinkedInMerged;
   TOP_POSTS_LIMIT: number;
@@ -408,7 +411,19 @@ export default function WLinkedInAnalyticsView({
         </h1>
         {li?.pageName || li?.displayName ? (
           <p className="text-sm text-muted-foreground">
-            {li.pageName ?? li.displayName}
+            {profileUrl ? (
+              <a
+                href={profileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-foreground underline decoration-border underline-offset-2 hover:decoration-foreground"
+              >
+                <span>{li.pageName ?? li.displayName}</span>
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </a>
+            ) : (
+              li.pageName ?? li.displayName
+            )}
           </p>
         ) : null}
         {updatedLabel ? (

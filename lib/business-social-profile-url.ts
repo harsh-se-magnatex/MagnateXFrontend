@@ -57,20 +57,32 @@ export function buildBusinessSocialProfileUrl(
   const raw = String(account.selectedPageId ?? '').trim();
   if (!raw) return null;
   const id = raw.split(':').at(-1)?.trim();
-  return id ? `https://linkedin.com/${id}` : null;
+  return id ? `https://linkedin.com/company/${id}` : null;
 }
 
-/** Append the business social URL to caption text for share / copy. */
+/** Append one business social URL to caption text for share / copy. */
 export function appendSocialProfileLink(
   caption: string | null | undefined,
   profileUrl: string | null | undefined
 ): string {
+  return appendSocialProfileLinks(caption, [profileUrl]);
+}
+
+/** Append all unique business social URLs to caption text for share / copy. */
+export function appendSocialProfileLinks(
+  caption: string | null | undefined,
+  profileUrls: Array<string | null | undefined>
+): string {
   const text = String(caption ?? '').trim();
-  const url = String(profileUrl ?? '').trim();
-  if (!url) return text;
-  if (!text) return url;
-  if (text.includes(url)) return text;
-  return `${text}\n\n${url}`;
+  const urls = profileUrls
+    .map((url) => String(url ?? '').trim())
+    .filter(Boolean)
+    .filter((url, index, arr) => arr.indexOf(url) === index)
+    .filter((url) => !text.includes(url));
+
+  if (urls.length === 0) return text;
+  if (!text) return urls.join('\n');
+  return `${text}\n\n${urls.join('\n')}`;
 }
 
 async function loadSocialAccounts(): Promise<SocialAccountShareFields[]> {
@@ -111,4 +123,23 @@ export async function resolveBusinessSocialProfileUrl(
       (a) => normalizeSharePlatform(a.platform) === platform
     ) ?? null;
   return buildBusinessSocialProfileUrl(platform, account);
+}
+
+/** Resolve all selected business page/account URLs across connected platforms. */
+export async function resolveAllBusinessSocialProfileUrls(): Promise<string[]> {
+  const accounts = await loadSocialAccounts();
+  const urlsByPlatform = new Map<ShareSocialPlatform, string>();
+
+  for (const account of accounts) {
+    const platform = normalizeSharePlatform(account.platform);
+    if (!platform || urlsByPlatform.has(platform)) continue;
+    const url = buildBusinessSocialProfileUrl(platform, account);
+    if (url) {
+      urlsByPlatform.set(platform, url);
+    }
+  }
+
+  return (['facebook', 'instagram', 'linkedin'] as const)
+    .map((platform) => urlsByPlatform.get(platform))
+    .filter((url): url is string => Boolean(url));
 }
