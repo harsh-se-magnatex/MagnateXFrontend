@@ -15,9 +15,10 @@ import {
 } from 'lucide-react';
 import { PlatformIcon } from '@/components/home/dashboard-ui';
 import {
-  SHOWCASE_BRAND,
   formatRelativePostTime,
   getPostEngagement,
+  pickShowcaseFeedPosts,
+  type ShowcaseBrand,
   type ShowcasePost,
 } from '@/components/landing/social-preview/showcase-data';
 import { ShowcaseMedia } from '@/components/landing/social-preview/showcase-media';
@@ -25,6 +26,7 @@ import { ShowcaseProfileGrid } from '@/components/landing/social-preview/showcas
 import { ShowcasePostDetail } from '@/components/landing/social-preview/showcase-post-detail';
 
 type LinkedInPageMockupProps = {
+  brand: ShowcaseBrand;
   posts: ShowcasePost[];
   selectedPostId: string | null;
   onSelectPost: (postId: string) => void;
@@ -41,9 +43,11 @@ function MockAvatar({ className = 'h-12 w-12' }: { className?: string }) {
 }
 
 function LinkedInFeedPost({
+  brand,
   post,
   onOpen,
 }: {
+  brand: ShowcaseBrand;
   post: ShowcasePost;
   onOpen: () => void;
 }) {
@@ -54,10 +58,10 @@ function LinkedInFeedPost({
         <MockAvatar />
         <div>
           <p className="text-[14px] font-semibold text-neutral-900">
-            {SHOWCASE_BRAND.name}
+            {brand.name}
           </p>
           <p className="text-xs text-neutral-500">
-            {SHOWCASE_BRAND.followersLabel} followers
+            {brand.followersLabel} followers
           </p>
           <p className="text-xs text-neutral-500">
             {formatRelativePostTime(post.scheduleAt)} · Public
@@ -67,20 +71,17 @@ function LinkedInFeedPost({
       <p className="line-clamp-3 px-4 pt-3 text-[14px] leading-relaxed text-neutral-800">
         {post.caption}
       </p>
-      <button
-        type="button"
-        onClick={onOpen}
-        className="relative mx-4 mt-3 block aspect-square w-[calc(100%-2rem)] overflow-hidden rounded-lg bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple"
-        aria-label="Open LinkedIn post"
-      >
+      <div className="relative mx-4 mt-3 aspect-square w-[calc(100%-2rem)] overflow-hidden rounded-lg bg-neutral-100">
         <ShowcaseMedia
           post={post}
           playVideo={false}
-          interactive={false}
+          interactive
+          onMediaClick={onOpen}
           mediaClassName="object-contain"
           sizes="(max-width: 552px) 100vw, 552px"
+          alt="Open LinkedIn post"
         />
-      </button>
+      </div>
       <div className="mx-4 mt-3 flex items-center justify-between border-b border-neutral-100 pb-2 text-xs text-neutral-500">
         <span>{likes.toLocaleString()} reactions</span>
         <span>
@@ -110,6 +111,7 @@ function LinkedInFeedPost({
 }
 
 export function LinkedInPageMockup({
+  brand,
   posts,
   selectedPostId,
   onSelectPost,
@@ -122,7 +124,7 @@ export function LinkedInPageMockup({
     { icon: MessageCircle, label: 'Messaging' },
     { icon: Bell, label: 'Notifications' },
   ];
-  const feedPosts = posts.slice(0, 3);
+  const feedPosts = pickShowcaseFeedPosts(posts, 3);
 
   return (
     <div className="relative h-full bg-[#F3F2EF]">
@@ -161,10 +163,10 @@ export function LinkedInPageMockup({
             <div className="-mt-8 px-4 pb-4">
               <MockAvatar className="mx-auto h-16 w-16 ring-4 ring-white" />
               <p className="mt-2 text-center text-sm font-semibold text-neutral-900">
-                {SHOWCASE_BRAND.name}
+                {brand.name}
               </p>
               <p className="text-center text-xs text-neutral-500">
-                {SHOWCASE_BRAND.tagline}
+                {brand.tagline}
               </p>
               <p className="mt-2 text-center text-xs text-neutral-500">
                 {posts.length} posts this month
@@ -208,6 +210,7 @@ export function LinkedInPageMockup({
           {feedPosts.map((post) => (
             <LinkedInFeedPost
               key={post.id}
+              brand={brand}
               post={post}
               onOpen={() => onSelectPost(post.id)}
             />
@@ -228,6 +231,7 @@ export function LinkedInPageMockup({
       </div>
 
       <ShowcasePostDetail
+        brand={brand}
         platform="linkedin"
         posts={posts}
         selectedPostId={selectedPostId}

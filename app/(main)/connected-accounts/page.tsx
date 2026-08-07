@@ -246,6 +246,55 @@ function getPageProfileUrl(
 
 type PageSelectablePlatform = 'facebook' | 'linkedin';
 
+function TroubleshootingDialog({
+  open,
+  onOpenChange,
+  platformId,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  platformId: PlatformId | null;
+}) {
+  const content = platformId ? PLATFORM_TROUBLESHOOTING[platformId] : null;
+  if (!content) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{content.title}</DialogTitle>
+          <DialogDescription>
+            Follow these steps, then try connecting again.
+          </DialogDescription>
+        </DialogHeader>
+        <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground">
+          {content.tips.map((tip) => (
+            <li key={tip.text} className="pl-1">
+              <span>{tip.text}</span>
+              {tip.href && tip.linkLabel ? (
+                <>
+                  {' '}
+                  <Link
+                    href={tip.href}
+                    className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                  >
+                    {tip.linkLabel}
+                  </Link>
+                </>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+        <DialogFooter>
+          <Button type="button" onClick={() => onOpenChange(false)}>
+            Got it
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function SelectPageModal({
   open,
   onOpenChange,
@@ -395,6 +444,8 @@ export default function ConnectedPlatformsPage() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [pageModalPlatform, setPageModalPlatform] =
     useState<PageSelectablePlatform | null>(null);
+  const [troubleshootingPlatform, setTroubleshootingPlatform] =
+    useState<PlatformId | null>(null);
 
   const loadAccounts = async () => {
     setIsLoading(true);
@@ -630,6 +681,14 @@ export default function ConnectedPlatformsPage() {
         />
       )}
 
+      <TroubleshootingDialog
+        open={troubleshootingPlatform !== null}
+        onOpenChange={(open) => {
+          if (!open) setTroubleshootingPlatform(null);
+        }}
+        platformId={troubleshootingPlatform}
+      />
+
       {billing != null && (
         <div id="platform-list" className={platformListStyle.outer}>
           {billingLoading || !hasLoadedOnce ? (
@@ -662,6 +721,8 @@ export default function ConnectedPlatformsPage() {
                     isPageSelectable &&
                     availablePages.length > 0 &&
                     selectedPageId == null;
+                  const showTroubleshooting =
+                    connected && isPageSelectable && selectedPageId == null;
                   const n = selectedPlatforms.length;
                   const singleOffCenterTier2 =
                     platformLayoutTier === 2 && n === 1;
@@ -756,29 +817,18 @@ export default function ConnectedPlatformsPage() {
                           </div>
                         </div>
 
-                        <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-3">
-                          <p className="text-sm font-semibold text-slate-800">
+                        {showTroubleshooting ? (
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto w-fit max-w-full justify-start px-0 py-0 text-left text-sm font-medium whitespace-normal text-primary"
+                            onClick={() =>
+                              setTroubleshootingPlatform(platform.id)
+                            }
+                          >
                             {troubleshooting.title}
-                          </p>
-                          <ol className="mt-2 list-decimal space-y-2 pl-4 text-xs leading-relaxed text-slate-600">
-                            {troubleshooting.tips.map((tip) => (
-                              <li key={tip.text}>
-                                <span>{tip.text}</span>
-                                {tip.href && tip.linkLabel ? (
-                                  <>
-                                    {' '}
-                                    <Link
-                                      href={tip.href}
-                                      className="font-medium text-slate-800 underline underline-offset-2 hover:text-slate-950"
-                                    >
-                                      {tip.linkLabel}
-                                    </Link>
-                                  </>
-                                ) : null}
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
+                          </Button>
+                        ) : null}
                       </CardHeader>
                       <CardFooter className="flex-col gap-2 border-t border-border/50 bg-muted/20 px-5 py-4 sm:flex-row sm:justify-end">
                         {connected ? (

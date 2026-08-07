@@ -16,9 +16,11 @@ type ShowcaseMediaProps = {
   playVideo?: boolean;
   /**
    * When false, carousel renders a still (no nested nav buttons).
-   * Use inside outer &lt;button&gt; click targets (feed thumbnails).
+   * Prefer `true` + `onMediaClick` in feed so arrows work without nested buttons.
    */
   interactive?: boolean;
+  /** Click on the media surface (not carousel arrows) — e.g. open post detail. */
+  onMediaClick?: () => void;
   sizes?: string;
   alt?: string;
 };
@@ -29,6 +31,7 @@ export function ShowcaseMedia({
   mediaClassName = 'object-cover',
   playVideo = false,
   interactive = true,
+  onMediaClick,
   sizes = '(max-width: 768px) 100vw, 560px',
   alt = 'Post media',
 }: ShowcaseMediaProps) {
@@ -51,7 +54,22 @@ export function ShowcaseMedia({
     if (!interactive) {
       const src = getPostThumbnailUrl(post);
       return (
-        <div className={cn('relative h-full w-full bg-neutral-100', className)}>
+        <div
+          className={cn('relative h-full w-full bg-neutral-100', className)}
+          onClick={onMediaClick}
+          onKeyDown={
+            onMediaClick
+              ? (e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onMediaClick();
+                  }
+                }
+              : undefined
+          }
+          role={onMediaClick ? 'button' : undefined}
+          tabIndex={onMediaClick ? 0 : undefined}
+        >
           <Image
             src={src}
             alt={alt}
@@ -69,11 +87,34 @@ export function ShowcaseMedia({
         mediaClassName={mediaClassName}
         sizes={sizes}
         alt={alt}
+        onMediaClick={onMediaClick}
       />
     );
   }
 
   const src = getPostThumbnailUrl(post);
+  if (onMediaClick) {
+    return (
+      <button
+        type="button"
+        onClick={onMediaClick}
+        className={cn(
+          'relative h-full w-full bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-purple',
+          className
+        )}
+        aria-label={alt}
+      >
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          className={mediaClassName}
+          sizes={sizes}
+        />
+      </button>
+    );
+  }
+
   return (
     <div className={cn('relative h-full w-full bg-neutral-100', className)}>
       <Image
@@ -93,12 +134,14 @@ function ShowcaseCarousel({
   mediaClassName,
   sizes,
   alt,
+  onMediaClick,
 }: {
   slides: string[];
   className?: string;
   mediaClassName?: string;
   sizes?: string;
   alt?: string;
+  onMediaClick?: () => void;
 }) {
   const [index, setIndex] = useState(0);
   const total = slides.length;
@@ -110,13 +153,30 @@ function ShowcaseCarousel({
 
   return (
     <div className={cn('relative h-full w-full bg-neutral-100', className)}>
-      <Image
-        src={current}
-        alt={`${alt} — slide ${index + 1}`}
-        fill
-        className={mediaClassName}
-        sizes={sizes}
-      />
+      {onMediaClick ? (
+        <button
+          type="button"
+          onClick={onMediaClick}
+          className="absolute inset-0 z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-purple"
+          aria-label="Open post"
+        >
+          <Image
+            src={current}
+            alt={`${alt} — slide ${index + 1}`}
+            fill
+            className={mediaClassName}
+            sizes={sizes}
+          />
+        </button>
+      ) : (
+        <Image
+          src={current}
+          alt={`${alt} — slide ${index + 1}`}
+          fill
+          className={mediaClassName}
+          sizes={sizes}
+        />
+      )}
       {total > 1 && (
         <>
           <button
@@ -141,7 +201,7 @@ function ShowcaseCarousel({
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-          <div className="absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+          <div className="pointer-events-none absolute bottom-2.5 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
             {slides.map((_, i) => (
               <span
                 key={i}

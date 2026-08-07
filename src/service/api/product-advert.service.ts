@@ -1,4 +1,5 @@
 import axiosClient from '@/lib/axios';
+import { prepareGenerationImage } from '@/lib/prepare-generation-image';
 
 export type ProductGenerationMode = 'advert_asset' | 'social_full';
 
@@ -51,7 +52,7 @@ export const generateProductAdvertApi = async ({
   useIndustryResearch,
 }: ProductAdvertPayload): Promise<ProductAdvertGenerateResponse> => {
   const form = new FormData();
-  form.append('image', image);
+  form.append('image', await prepareGenerationImage(image));
   form.append('uid', uid);
   if (prompt?.trim()) form.append('prompt', prompt.trim());
   if (background?.trim()) form.append('background', background.trim());
@@ -78,8 +79,8 @@ export const generateProductAdvertVideoApi = async (args: {
   if (args.referencePrompt?.trim()) {
     form.append('referencePrompt', args.referencePrompt.trim());
   }
-  form.append('firstFrame', args.firstFrame);
-  form.append('lastFrame', args.lastFrame);
+  form.append('firstFrame', await prepareGenerationImage(args.firstFrame));
+  form.append('lastFrame', await prepareGenerationImage(args.lastFrame));
   const response = await axiosClient.post<{
     success: boolean;
     data: ProductAdvertVideoGenerateResponse;

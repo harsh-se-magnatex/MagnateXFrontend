@@ -116,6 +116,7 @@ type CellEntry = {
   note?: string;
   href?: string | null;
   source: 'generated' | 'upcoming';
+  eventId?: string;
 };
 
 /** Kinds that Force Run can enqueue (including campaign). */
@@ -156,15 +157,20 @@ function entriesForSlot(args: {
     };
   });
 
-  if (generated.length > 0) return generated;
-
-  return args.upcoming.map((item) => ({
+  // Keep sibling upcoming cards visible (e.g. festival still pending after a
+  // planned Force Run on the same date).
+  const upcoming: CellEntry[] = args.upcoming.map((item) => ({
     kind: item.kind,
     label: kindLabel(item.kind),
     note: item.note?.trim() || undefined,
     href: null,
-    source: 'upcoming',
+    source: 'upcoming' as const,
+    ...(item.eventId ? { eventId: item.eventId } : {}),
   }));
+
+  if (generated.length === 0) return upcoming;
+  if (upcoming.length === 0) return generated;
+  return [...generated, ...upcoming];
 }
 
 function formatDateParts(isoDate: string): { weekday: string; day: string } {
@@ -206,7 +212,9 @@ function PlatformCell({
   onForceRun: (
     date: string,
     platform: ContentPlanPlatform,
-    visualKey: string
+    visualKey: string,
+    kind: ContentPlanUpcomingItem['kind'],
+    eventId?: string
   ) => void;
 }) {
   if (entries.length === 0) {
@@ -218,7 +226,6 @@ function PlatformCell({
   }
 
   const isPast = date < todayIso;
-  const hasGenerated = entries.some((e) => e.source === 'generated');
   return (
     <div className="flex h-full min-h-[3.25rem] flex-col gap-1 px-1.5 py-1.5">
       {entries.map((entry, idx) => {
@@ -262,7 +269,6 @@ function PlatformCell({
         const showForceRun =
           forceRunEnabled &&
           !isPast &&
-          !hasGenerated &&
           entry.source === 'upcoming' &&
           canForceRunKind(entry.kind);
 
@@ -275,13 +281,21 @@ function PlatformCell({
         );
 
         return (
-          <div key={`${entry.kind}-${idx}`} className="flex flex-col gap-1">
+          <div key={`${entry.kind}-${entry.eventId ?? ''}-${idx}`} className="flex flex-col gap-1">
             {card}
             {showForceRun ? (
               <button
                 type="button"
                 disabled={Boolean(forceRunKey)}
-                onClick={() => onForceRun(date, platform, runKey)}
+                onClick={() =>
+                  onForceRun(
+                    date,
+                    platform,
+                    runKey,
+                    entry.kind as ContentPlanUpcomingItem['kind'],
+                    entry.eventId
+                  )
+                }
                 className={cn(
                   'inline-flex items-center justify-center gap-1 rounded-md border border-border/80 bg-background/80 px-1.5 py-1 text-[10px] font-semibold text-foreground transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60'
                 )}
@@ -318,7 +332,9 @@ function ContentPlanSheet({
   onForceRun: (
     date: string,
     platform: ContentPlanPlatform,
-    visualKey: string
+    visualKey: string,
+    kind: ContentPlanUpcomingItem['kind'],
+    eventId?: string
   ) => void;
 }) {
   return (
@@ -565,47 +581,74 @@ export default function ContentPlanPage() {
     async (
       date: string,
       platform: ContentPlanPlatform,
-      visualKey: string
+      visualKey: string,
+      kind: ContentPlanUpcomingItem['kind'],
+      eventId?: string
     ) => {
       if (date < todayIso) {
         toast.error('Force Run is not available for past dates');
         return;
       }
+      if (kind === 'empty') {
+        toast.error('No planned generation on this date');
+        return;
+      }
       setForceRunKey(visualKey);
       try {
-        await forceRunContentPlanApi({ date, platform });
+        await forceRunContentPlanApi({
+          date,
+          platform,
+          kind,
+          ...(eventId ? { eventId } : {}),
+        });
         toast.success(`Generating for ${platform} on ${date}`);
-        // Optimistic: mark cell as queued so Force Run disappears without a
-        // full-page loading flash; then silently refresh for server truth.
+        // Optimistic: mark only the clicked card as queued; keep sibling
+        // upcoming cards (e.g. festival + planned on the same date).
         setDays((prev) =>
           prev.map((day) => {
             if (day.date !== date) return day;
             const slot = day.byPlatform[platform];
             if (!slot) return day;
-            const queuedFromUpcoming = slot.upcoming
-              .filter((u) => canForceRunKind(u.kind))
-              .map((u) => ({
-                kind: u.kind as ContentPlanGeneratedItem['kind'],
-                status: 'queued' as const,
-                title: u.label,
-                captionPreview: u.note,
-              }));
+            const matchesClicked = (u: ContentPlanUpcomingItem) => {
+              if (u.kind !== kind) return false;
+              if (kind === 'festival' && eventId) {
+                return u.eventId === eventId;
+              }
+              return true;
+            };
+            const remainingUpcoming = slot.upcoming.filter(
+              (u) => !matchesClicked(u)
+            );
+            const queuedItem = slot.upcoming.find(matchesClicked);
+            const queuedGenerated: ContentPlanGeneratedItem[] = queuedItem
+              ? [
+                  {
+                    kind:
+                      queuedItem.kind === 'festival'
+                        ? 'festive'
+                        : (queuedItem.kind as ContentPlanGeneratedItem['kind']),
+                    status: 'queued',
+                    title: queuedItem.label,
+                    captionPreview: queuedItem.note,
+                  },
+                ]
+              : [
+                  {
+                    kind:
+                      kind === 'festival'
+                        ? 'festive'
+                        : (kind as ContentPlanGeneratedItem['kind']),
+                    status: 'queued',
+                    title: 'Queued',
+                  },
+                ];
             return {
               ...day,
               byPlatform: {
                 ...day.byPlatform,
                 [platform]: {
-                  generated:
-                    queuedFromUpcoming.length > 0
-                      ? queuedFromUpcoming
-                      : [
-                          {
-                            kind: 'other' as const,
-                            status: 'queued' as const,
-                            title: 'Queued',
-                          },
-                        ],
-                  upcoming: [],
+                  generated: [...slot.generated, ...queuedGenerated],
+                  upcoming: remainingUpcoming,
                 },
               },
             };

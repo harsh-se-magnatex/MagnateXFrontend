@@ -101,8 +101,6 @@ const ACCEPTED_IMAGE_TYPES = [
 ];
 
 
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-// const ACCEPTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const VIDEO_EDIT_CREDIT_COST = 4;
 // const ACCEPTED_TYPES=ACCEPTED_IMAGE_TYPES.concat(ACCEPTED_VIDEO_TYPES);
@@ -141,50 +139,6 @@ function mapInstantDocsToCreatedContent(args: {
     renderedImages,
     createdAt: new Date().toISOString(),
   };
-}
-
-async function compressToWebP(file: File, maxBytes: number): Promise<File> {
-  const bitmap = await createImageBitmap(file);
-  const canvas = document.createElement('canvas');
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(bitmap, 0, 0);
-  bitmap.close();
-
-  let lo = 0.1;
-  let hi = 1.0;
-  let best: Blob | null = null;
-
-  for (let i = 0; i < 8; i++) {
-    const mid = (lo + hi) / 2;
-    const blob = await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error('Canvas toBlob failed'))),
-        'image/webp',
-        mid
-      )
-    );
-    if (blob.size <= maxBytes) {
-      best = blob;
-      lo = mid;
-    } else {
-      hi = mid;
-    }
-  }
-
-  if (!best) {
-    best = await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error('Canvas toBlob failed'))),
-        'image/webp',
-        lo
-      )
-    );
-  }
-
-  const baseName = file.name.replace(/\.[^.]+$/, '');
-  return new File([best!], `${baseName}.webp`, { type: 'image/webp' });
 }
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
@@ -753,15 +707,10 @@ export default function AIContentPage() {
     setIsGenerating(true);
 
     try {
-      let imageToSend = selectedImage;
-      if (selectedImage && selectedImage.size > MAX_IMAGE_BYTES) {
-        imageToSend = await compressToWebP(selectedImage, MAX_IMAGE_BYTES);
-      }
-
       const response = await generateAiContentStudio({
         prompt: prompt.trim(),
         platforms: genPlatforms,
-        image: imageToSend,
+        image: selectedImage,
       });
 
       if (!response.accepted) {

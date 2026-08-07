@@ -383,7 +383,9 @@ export default function AdminContentCalendarReviewPage() {
   const handleForceRun = async (
     platform: ContentCalendarReviewPlatform,
     date: string,
-    visualKey: string
+    visualKey: string,
+    kind: string,
+    eventId?: string
   ) => {
     if (!detail) return;
     if (String(detail.mode ?? '').trim().toLowerCase() !== 'auto') {
@@ -400,11 +402,13 @@ export default function AdminContentCalendarReviewPage() {
         userId: detail.userId,
         date,
         platform,
+        kind,
+        ...(eventId ? { eventId } : {}),
       });
       toast.success(
         `Force Run queued for ${PLATFORM_LABEL[platform]} on ${date}`
       );
-      // Optimistic: mark cell queued so Force Run hides without a full reload.
+      // Optimistic: queue only the clicked card; keep sibling upcoming.
       setDetail((prev) => {
         if (!prev) return prev;
         return {
@@ -413,30 +417,40 @@ export default function AdminContentCalendarReviewPage() {
             if (day.date !== date) return day;
             const slot = day.byPlatform[platform];
             if (!slot) return day;
-            const queuedFromUpcoming = slot.upcoming
-              .filter((u) => canForceRunKind(u.kind))
-              .map((u) => ({
-                kind: u.kind,
-                status: 'queued' as const,
-                title: u.label,
-                captionPreview: u.note,
-              }));
+            const matchesClicked = (u: AdminContentPlanUpcomingItem) => {
+              if (u.kind !== kind) return false;
+              if ((kind === 'festival' || kind === 'festive') && eventId) {
+                return u.eventId === eventId;
+              }
+              return true;
+            };
+            const remainingUpcoming = slot.upcoming.filter(
+              (u) => !matchesClicked(u)
+            );
+            const queuedItem = slot.upcoming.find(matchesClicked);
+            const queuedGenerated = queuedItem
+              ? [
+                  {
+                    kind: queuedItem.kind,
+                    status: 'queued' as const,
+                    title: queuedItem.label,
+                    captionPreview: queuedItem.note,
+                  },
+                ]
+              : [
+                  {
+                    kind,
+                    status: 'queued' as const,
+                    title: 'Queued',
+                  },
+                ];
             return {
               ...day,
               byPlatform: {
                 ...day.byPlatform,
                 [platform]: {
-                  generated:
-                    queuedFromUpcoming.length > 0
-                      ? queuedFromUpcoming
-                      : [
-                          {
-                            kind: 'other',
-                            status: 'queued' as const,
-                            title: 'Queued',
-                          },
-                        ],
-                  upcoming: [],
+                  generated: [...slot.generated, ...queuedGenerated],
+                  upcoming: remainingUpcoming,
                 },
               },
             };
@@ -718,8 +732,14 @@ export default function AdminContentCalendarReviewPage() {
                                 preferences: detail.preferences,
                               })
                             }
-                            onForceRun={(platform, visualKey) =>
-                              void handleForceRun(platform, day.date, visualKey)
+                            onForceRun={(platform, visualKey, kind, eventId) =>
+                              void handleForceRun(
+                                platform,
+                                day.date,
+                                visualKey,
+                                kind,
+                                eventId
+                              )
                             }
                           />
                         ))}
@@ -831,7 +851,9 @@ function DayRow({
   ) => void;
   onForceRun: (
     platform: ContentCalendarReviewPlatform,
-    visualKey: string
+    visualKey: string,
+    kind: string,
+    eventId?: string
   ) => void;
 }) {
   const isToday = day.date === todayIso;
@@ -903,7 +925,7 @@ function DayRow({
                   const runPending = pendingRunKey === runKey;
                   return (
                     <div
-                      key={`${item.kind}-${idx}`}
+                      key={`${item.kind}-${item.eventId ?? ''}-${idx}`}
                       className="flex flex-col gap-1.5"
                     >
                       <UpcomingCard item={item} />
@@ -914,7 +936,14 @@ function DayRow({
                           variant="outline"
                           className="h-7 gap-1.5 text-[11px]"
                           disabled={runPending}
-                          onClick={() => onForceRun(platform, runKey)}
+                          onClick={() =>
+                            onForceRun(
+                              platform,
+                              runKey,
+                              item.kind,
+                              item.eventId
+                            )
+                          }
                         >
                           {runPending ? (
                             <Loader2 className="h-3 w-3 animate-spin" />

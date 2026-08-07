@@ -105,11 +105,7 @@ export default function AutomatedPostPage() {
   const builtInEvents = useMemo<FestiveEventItem[]>(
     () =>
       EVENTS.filter((event) =>
-        isFestiveDateWithinPlanRange(
-          event.date,
-          formattedToday,
-          planExpiresYmd
-        )
+        event
       ).map(({ id, name, date, description, reason }) => ({
         id,
         name,
@@ -215,13 +211,8 @@ export default function AutomatedPostPage() {
     const selectedEvents = selected
       .map((id) => eventMap.get(id))
       .filter((event): event is FestiveEventItem => !!event)
-      .filter((event) =>
-        isFestiveDateWithinPlanRange(
-          event.date,
-          formattedToday,
-          planExpiresYmd
-        )
-      )
+     
+      
       .map((event) => ({
         id: event.id,
         name: event.name,
@@ -276,15 +267,9 @@ export default function AutomatedPostPage() {
   const allEvents = useMemo(
     () => [
       ...builtInEvents,
-      ...customEvents.filter((event) =>
-        isFestiveDateWithinPlanRange(
-          event.date,
-          formattedToday,
-          planExpiresYmd
-        )
-      ),
+      ...customEvents
     ],
-    [builtInEvents, customEvents, formattedToday, planExpiresYmd]
+    [builtInEvents, customEvents]
   );
 
   // Drop selections that fall outside the visible plan window.

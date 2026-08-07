@@ -15,14 +15,15 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import type { PreviewPlatform } from '@/components/landing/social-preview/constants';
 import {
-  SHOWCASE_BRAND,
   formatRelativePostTime,
   getPostEngagement,
+  type ShowcaseBrand,
   type ShowcasePost,
 } from '@/components/landing/social-preview/showcase-data';
 import { ShowcaseMedia } from '@/components/landing/social-preview/showcase-media';
 
 type ShowcasePostDetailProps = {
+  brand: ShowcaseBrand;
   platform: PreviewPlatform;
   posts: ShowcasePost[];
   selectedPostId: string | null;
@@ -44,6 +45,7 @@ function MockAvatar({
 }
 
 export function ShowcasePostDetail({
+  brand,
   platform,
   posts,
   selectedPostId,
@@ -133,9 +135,15 @@ export function ShowcasePostDetail({
               className="mx-auto max-w-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {platform === 'instagram' && <InstagramDetail post={post} />}
-              {platform === 'facebook' && <FacebookDetail post={post} />}
-              {platform === 'linkedin' && <LinkedInDetail post={post} />}
+              {platform === 'instagram' && (
+                <InstagramDetail brand={brand} post={post} />
+              )}
+              {platform === 'facebook' && (
+                <FacebookDetail brand={brand} post={post} />
+              )}
+              {platform === 'linkedin' && (
+                <LinkedInDetail brand={brand} post={post} />
+              )}
             </motion.div>
           </div>
         </motion.div>
@@ -154,7 +162,13 @@ function detailMediaFrameClass(post: ShowcasePost, rounded = false): string {
   return `${base} aspect-square`;
 }
 
-function InstagramDetail({ post }: { post: ShowcasePost }) {
+function InstagramDetail({
+  brand,
+  post,
+}: {
+  brand: ShowcaseBrand;
+  post: ShowcasePost;
+}) {
   const { likes } = getPostEngagement(post);
   return (
     <article className="overflow-hidden rounded-xl bg-white shadow-xl">
@@ -162,7 +176,7 @@ function InstagramDetail({ post }: { post: ShowcasePost }) {
         <MockAvatar className="h-8 w-8" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[13px] font-semibold text-neutral-900">
-            {SHOWCASE_BRAND.handle}
+            {brand.handle}
           </p>
           <p className="text-[11px] text-neutral-500">
             {formatRelativePostTime(post.scheduleAt)}
@@ -190,7 +204,7 @@ function InstagramDetail({ post }: { post: ShowcasePost }) {
           {likes.toLocaleString()} likes
         </p>
         <p className="mt-1 text-[13px] leading-snug text-neutral-800">
-          <span className="font-semibold">{SHOWCASE_BRAND.handle} </span>
+          <span className="font-semibold">{brand.handle} </span>
           {post.caption}
         </p>
       </div>
@@ -198,7 +212,13 @@ function InstagramDetail({ post }: { post: ShowcasePost }) {
   );
 }
 
-function FacebookDetail({ post }: { post: ShowcasePost }) {
+function FacebookDetail({
+  brand,
+  post,
+}: {
+  brand: ShowcaseBrand;
+  post: ShowcasePost;
+}) {
   const { likes, comments, shares } = getPostEngagement(post);
   return (
     <article className="overflow-hidden rounded-xl border border-neutral-200/80 bg-white shadow-xl">
@@ -206,7 +226,7 @@ function FacebookDetail({ post }: { post: ShowcasePost }) {
         <MockAvatar className="h-10 w-10" />
         <div>
           <p className="text-[15px] font-semibold text-neutral-900">
-            {SHOWCASE_BRAND.name}
+            {brand.name}
           </p>
           <p className="text-xs text-neutral-500">
             {formatRelativePostTime(post.scheduleAt)} · Public
@@ -253,7 +273,13 @@ function FacebookDetail({ post }: { post: ShowcasePost }) {
   );
 }
 
-function LinkedInDetail({ post }: { post: ShowcasePost }) {
+function LinkedInDetail({
+  brand,
+  post,
+}: {
+  brand: ShowcaseBrand;
+  post: ShowcasePost;
+}) {
   const { likes, comments, shares } = getPostEngagement(post);
   return (
     <article className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl">
@@ -261,10 +287,10 @@ function LinkedInDetail({ post }: { post: ShowcasePost }) {
         <MockAvatar className="h-12 w-12" />
         <div>
           <p className="text-[14px] font-semibold text-neutral-900">
-            {SHOWCASE_BRAND.name}
+            {brand.name}
           </p>
           <p className="text-xs text-neutral-500">
-            {SHOWCASE_BRAND.followersLabel} followers
+            {brand.followersLabel} followers
           </p>
           <p className="text-xs text-neutral-500">
             {formatRelativePostTime(post.scheduleAt)} · Public

@@ -1,13 +1,21 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { BrandSwitcher } from '@/components/landing/social-preview/brand-switcher';
 import { PlatformSwitcher } from '@/components/landing/social-preview/platform-switcher';
 import { PreviewDeviceFrame } from '@/components/landing/social-preview/preview-device-frame';
 import { InstagramPageMockup } from '@/components/landing/social-preview/instagram-page-mockup';
 import { FacebookPageMockup } from '@/components/landing/social-preview/facebook-page-mockup';
 import { LinkedInPageMockup } from '@/components/landing/social-preview/linkedin-page-mockup';
 import type { PreviewPlatform } from '@/components/landing/social-preview/constants';
-import { getShowcasePostsForPlatform } from '@/components/landing/social-preview/showcase-data';
+import {
+  DEFAULT_SHOWCASE_BRAND_ID,
+  type ShowcaseBrandId,
+} from '@/components/landing/social-preview/showcase-brands';
+import {
+  getShowcaseBrand,
+  getShowcasePostsForPlatform,
+} from '@/components/landing/social-preview/showcase-data';
 
 export function SocialPreviewDisclaimer() {
   return (
@@ -21,13 +29,20 @@ export function SocialPreviewDisclaimer() {
 
 /** Interactive IG / FB / LI showcase — embeddable without page chrome. */
 export function SocialPreviewEmbed() {
+  const [brandId, setBrandId] = useState<ShowcaseBrandId>(DEFAULT_SHOWCASE_BRAND_ID);
   const [platform, setPlatform] = useState<PreviewPlatform>('instagram');
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
+  const brand = useMemo(() => getShowcaseBrand(brandId), [brandId]);
   const posts = useMemo(
-    () => getShowcasePostsForPlatform(platform),
-    [platform]
+    () => getShowcasePostsForPlatform(brandId, platform),
+    [brandId, platform]
   );
+
+  const handleBrandChange = (next: ShowcaseBrandId) => {
+    setBrandId(next);
+    setSelectedPostId(null);
+  };
 
   const handlePlatformChange = (next: PreviewPlatform) => {
     setPlatform(next);
@@ -36,11 +51,15 @@ export function SocialPreviewEmbed() {
 
   return (
     <div className="w-full">
-      <PlatformSwitcher active={platform} onChange={handlePlatformChange} />
+      <BrandSwitcher active={brandId} onChange={handleBrandChange} />
+      <div className="mt-6">
+        <PlatformSwitcher active={platform} onChange={handlePlatformChange} />
+      </div>
       <div className="mt-8">
         <PreviewDeviceFrame platform={platform} nestedScroll>
           {platform === 'instagram' && (
             <InstagramPageMockup
+              brand={brand}
               posts={posts}
               selectedPostId={selectedPostId}
               onSelectPost={setSelectedPostId}
@@ -49,6 +68,7 @@ export function SocialPreviewEmbed() {
           )}
           {platform === 'facebook' && (
             <FacebookPageMockup
+              brand={brand}
               posts={posts}
               selectedPostId={selectedPostId}
               onSelectPost={setSelectedPostId}
@@ -57,6 +77,7 @@ export function SocialPreviewEmbed() {
           )}
           {platform === 'linkedin' && (
             <LinkedInPageMockup
+              brand={brand}
               posts={posts}
               selectedPostId={selectedPostId}
               onSelectPost={setSelectedPostId}

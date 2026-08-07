@@ -14,16 +14,20 @@ import {
   Tag,
 } from 'lucide-react';
 import { PlatformIcon } from '@/components/home/dashboard-ui';
-import { SHOWCASE_BRAND } from '@/components/landing/social-preview/showcase-data';
-import type { ShowcasePost } from '@/components/landing/social-preview/showcase-data';
+import type {
+  ShowcaseBrand,
+  ShowcasePost,
+} from '@/components/landing/social-preview/showcase-data';
 import {
   getPostEngagement,
+  pickShowcaseFeedPosts,
 } from '@/components/landing/social-preview/showcase-data';
 import { ShowcaseMedia } from '@/components/landing/social-preview/showcase-media';
 import { ShowcaseProfileGrid } from '@/components/landing/social-preview/showcase-grid';
 import { ShowcasePostDetail } from '@/components/landing/social-preview/showcase-post-detail';
 
 type InstagramPageMockupProps = {
+  brand: ShowcaseBrand;
   posts: ShowcasePost[];
   selectedPostId: string | null;
   onSelectPost: (postId: string) => void;
@@ -42,10 +46,12 @@ function MockAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
 }
 
 function InstagramFeedPost({
+  brand,
   post,
   sponsored = false,
   onOpen,
 }: {
+  brand: ShowcaseBrand;
   post: ShowcasePost;
   sponsored?: boolean;
   onOpen: () => void;
@@ -57,27 +63,24 @@ function InstagramFeedPost({
         <MockAvatar size="sm" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[12px] font-semibold text-neutral-900 sm:text-[13px]">
-            {SHOWCASE_BRAND.handle}
+            {brand.handle}
           </p>
           {sponsored && (
             <p className="text-[10px] text-neutral-500 sm:text-[11px]">Sponsored</p>
           )}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onOpen}
-        className="relative block aspect-square w-full bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-purple"
-        aria-label="Open post from feed"
-      >
+      <div className="relative aspect-square w-full bg-neutral-100">
         <ShowcaseMedia
           post={post}
           playVideo={false}
-          interactive={false}
+          interactive
+          onMediaClick={onOpen}
           mediaClassName="object-contain"
           sizes="(max-width: 768px) 50vw, 360px"
+          alt="Open post from feed"
         />
-      </button>
+      </div>
       <div className="px-2.5 py-2 sm:px-3 sm:py-2.5">
         <div className="flex items-center justify-between text-neutral-800">
           <div className="flex items-center gap-3 sm:gap-4">
@@ -91,7 +94,7 @@ function InstagramFeedPost({
           {likes.toLocaleString()} likes
         </p>
         <p className="mt-1 line-clamp-3 text-[12px] leading-snug text-neutral-800 sm:text-[13px]">
-          <span className="font-semibold">{SHOWCASE_BRAND.handle} </span>
+          <span className="font-semibold">{brand.handle} </span>
           {post.caption}
         </p>
       </div>
@@ -100,14 +103,16 @@ function InstagramFeedPost({
 }
 
 function InstagramFeedColumn({
+  brand,
   posts,
   onSelectPost,
 }: {
+  brand: ShowcaseBrand;
   posts: ShowcasePost[];
   onSelectPost: (postId: string) => void;
 }) {
   const stories = Array.from({ length: 6 }, (_, i) => i);
-  const feedPosts = posts.slice(0, 4);
+  const feedPosts = pickShowcaseFeedPosts(posts, 4);
 
   return (
     <section className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-neutral-200 bg-white">
@@ -134,6 +139,7 @@ function InstagramFeedColumn({
         {feedPosts.map((post, i) => (
           <InstagramFeedPost
             key={post.id}
+            brand={brand}
             post={post}
             sponsored={i === 0}
             onOpen={() => onSelectPost(post.id)}
@@ -145,9 +151,11 @@ function InstagramFeedColumn({
 }
 
 function InstagramProfileColumn({
+  brand,
   posts,
   onSelectPost,
 }: {
+  brand: ShowcaseBrand;
   posts: ShowcasePost[];
   onSelectPost: (postId: string) => void;
 }) {
@@ -172,13 +180,13 @@ function InstagramProfileColumn({
               </div>
               <div>
                 <p className="text-sm font-semibold text-neutral-900 sm:text-base">
-                  {SHOWCASE_BRAND.followersLabel}
+                  {brand.followersLabel}
                 </p>
                 <p className="text-[10px] text-neutral-500 sm:text-xs">followers</p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-neutral-900 sm:text-base">
-                  {SHOWCASE_BRAND.followingLabel}
+                  {brand.followingLabel}
                 </p>
                 <p className="text-[10px] text-neutral-500 sm:text-xs">following</p>
               </div>
@@ -187,10 +195,10 @@ function InstagramProfileColumn({
 
           <div className="mt-2 sm:mt-3">
             <p className="text-xs font-semibold text-neutral-900 sm:text-sm">
-              {SHOWCASE_BRAND.name}
+              {brand.name}
             </p>
             <p className="mt-0.5 text-[10px] leading-relaxed text-neutral-600 sm:text-xs">
-              {SHOWCASE_BRAND.tagline}
+              {brand.tagline}
             </p>
           </div>
         </div>
@@ -211,6 +219,7 @@ function InstagramProfileColumn({
 }
 
 export function InstagramPageMockup({
+  brand,
   posts,
   selectedPostId,
   onSelectPost,
@@ -230,8 +239,16 @@ export function InstagramPageMockup({
       </header>
 
       <div className="grid min-h-0 flex-1 grid-cols-2">
-        <InstagramFeedColumn posts={posts} onSelectPost={onSelectPost} />
-        <InstagramProfileColumn posts={posts} onSelectPost={onSelectPost} />
+        <InstagramFeedColumn
+          brand={brand}
+          posts={posts}
+          onSelectPost={onSelectPost}
+        />
+        <InstagramProfileColumn
+          brand={brand}
+          posts={posts}
+          onSelectPost={onSelectPost}
+        />
       </div>
 
       <nav
@@ -248,6 +265,7 @@ export function InstagramPageMockup({
       </nav>
 
       <ShowcasePostDetail
+        brand={brand}
         platform="instagram"
         posts={posts}
         selectedPostId={selectedPostId}

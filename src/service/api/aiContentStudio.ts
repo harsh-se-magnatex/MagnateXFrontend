@@ -1,5 +1,9 @@
 import axiosClient from '@/lib/axios';
 import { apiPost } from '@/lib/api-client';
+import {
+  prepareGenerationImage,
+  prepareGenerationImages,
+} from '@/lib/prepare-generation-image';
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -33,7 +37,9 @@ export async function generateAiContentStudio(params: {
   const form = new FormData();
   form.append('platforms', JSON.stringify(params.platforms));
   form.append('prompt', params.prompt);
-  if (params.image) form.append('image', params.image);
+  if (params.image) {
+    form.append('image', await prepareGenerationImage(params.image));
+  }
 
   const res = await axiosClient.post<ApiEnvelope<StudioGenerateResult>>(
     '/api/v1/ai-content-studio/generate',
@@ -127,7 +133,10 @@ export async function editVideoAiContentStudio(params: {
     form.append('placementPreset', params.placementPreset);
   }
   form.append('video', params.video);
-  for (const img of (params.productImages ?? []).slice(0, 3)) {
+  const productImages = await prepareGenerationImages(
+    (params.productImages ?? []).slice(0, 3)
+  );
+  for (const img of productImages) {
     form.append('productImage', img);
   }
 

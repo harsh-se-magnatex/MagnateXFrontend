@@ -14,9 +14,10 @@ import {
 } from 'lucide-react';
 import { PlatformIcon } from '@/components/home/dashboard-ui';
 import {
-  SHOWCASE_BRAND,
   formatRelativePostTime,
   getPostEngagement,
+  pickShowcaseFeedPosts,
+  type ShowcaseBrand,
   type ShowcasePost,
 } from '@/components/landing/social-preview/showcase-data';
 import { ShowcaseMedia } from '@/components/landing/social-preview/showcase-media';
@@ -24,6 +25,7 @@ import { ShowcaseProfileGrid } from '@/components/landing/social-preview/showcas
 import { ShowcasePostDetail } from '@/components/landing/social-preview/showcase-post-detail';
 
 type FacebookPageMockupProps = {
+  brand: ShowcaseBrand;
   posts: ShowcasePost[];
   selectedPostId: string | null;
   onSelectPost: (postId: string) => void;
@@ -40,9 +42,11 @@ function MockAvatar({ className = 'h-10 w-10' }: { className?: string }) {
 }
 
 function FacebookFeedPost({
+  brand,
   post,
   onOpen,
 }: {
+  brand: ShowcaseBrand;
   post: ShowcasePost;
   onOpen: () => void;
 }) {
@@ -53,7 +57,7 @@ function FacebookFeedPost({
         <MockAvatar />
         <div>
           <p className="text-[15px] font-semibold text-neutral-900">
-            {SHOWCASE_BRAND.name}
+            {brand.name}
           </p>
           <p className="text-xs text-neutral-500">
             {formatRelativePostTime(post.scheduleAt)} · Public
@@ -63,20 +67,17 @@ function FacebookFeedPost({
       <p className="line-clamp-3 px-4 pt-3 text-[15px] leading-snug text-neutral-800">
         {post.caption}
       </p>
-      <button
-        type="button"
-        onClick={onOpen}
-        className="relative mx-4 mt-3 block aspect-square w-[calc(100%-2rem)] overflow-hidden rounded-lg bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple"
-        aria-label="Open Facebook post"
-      >
+      <div className="relative mx-4 mt-3 aspect-square w-[calc(100%-2rem)] overflow-hidden rounded-lg bg-neutral-100">
         <ShowcaseMedia
           post={post}
           playVideo={false}
-          interactive={false}
+          interactive
+          onMediaClick={onOpen}
           mediaClassName="object-contain"
           sizes="(max-width: 680px) 100vw, 680px"
+          alt="Open Facebook post"
         />
-      </button>
+      </div>
       <div className="mx-4 mt-3 flex items-center justify-between border-b border-neutral-100 pb-2 text-xs text-neutral-500">
         <span className="flex items-center gap-1">
           <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#1877F2] text-[9px] text-white">
@@ -107,6 +108,7 @@ function FacebookFeedPost({
 }
 
 export function FacebookPageMockup({
+  brand,
   posts,
   selectedPostId,
   onSelectPost,
@@ -118,7 +120,7 @@ export function FacebookPageMockup({
     { icon: Tv, label: 'Watch' },
     { icon: Store, label: 'Marketplace' },
   ];
-  const feedPosts = posts.slice(0, 3);
+  const feedPosts = pickShowcaseFeedPosts(posts, 3);
 
   return (
     <div className="relative h-full bg-[#F0F2F5]">
@@ -176,7 +178,7 @@ export function FacebookPageMockup({
             <div className="flex items-center gap-3">
               <MockAvatar />
               <div className="flex-1 rounded-full bg-[#F0F2F5] px-4 py-2.5 text-sm text-neutral-500">
-                What&apos;s on your mind, {SHOWCASE_BRAND.name}?
+                What&apos;s on your mind, {brand.name}?
               </div>
             </div>
             <div className="mt-3 flex justify-around border-t border-neutral-100 pt-3 text-sm font-medium text-neutral-600">
@@ -191,7 +193,7 @@ export function FacebookPageMockup({
               <Grid3x3 className="h-4 w-4 text-[#1877F2]" />
               <div>
                 <p className="text-sm font-semibold text-neutral-900">
-                  {SHOWCASE_BRAND.name} · Photos
+                  {brand.name} · Photos
                 </p>
                 <p className="text-xs text-neutral-500">
                   {posts.length} posts this month — tap any to open
@@ -204,6 +206,7 @@ export function FacebookPageMockup({
           {feedPosts.map((post) => (
             <FacebookFeedPost
               key={post.id}
+              brand={brand}
               post={post}
               onOpen={() => onSelectPost(post.id)}
             />
@@ -227,6 +230,7 @@ export function FacebookPageMockup({
       </div>
 
       <ShowcasePostDetail
+        brand={brand}
         platform="facebook"
         posts={posts}
         selectedPostId={selectedPostId}

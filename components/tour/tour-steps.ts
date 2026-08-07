@@ -208,7 +208,7 @@ const PLATFORM_STEPS: TourStep[] = [
     side: 'bottom',
     title: 'Plan a full campaign',
     description:
-      'Start by generating a few campaign ideas around a goal like a product launch, seasonal push, or sale.',
+      'Start by generating a few campaign ideas around a goal like a product launch, brand story, or lifestyle spotlight.',
     paid: true,
   },
   {

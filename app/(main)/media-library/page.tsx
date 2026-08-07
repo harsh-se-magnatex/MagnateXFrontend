@@ -800,10 +800,10 @@ export default function MediaLibraryPage() {
       return 'Generated images from Content Studio, Carousel Posts, and Product Ads will appear here.';
     }
     if (source === 'instant-generation') {
-      return 'New Content Studio runs save images here automatically. Older runs may not have stored files.';
+      return 'Content Studio saves images here automatically.';
     }
     if (source === 'carouselGeneratedPosts') {
-      return 'Carousels from Carousel Posts appear here until you schedule them.';
+      return 'Carousels from Carousel Posts appear here after generation.';
     }
     if (source === 'videoGeneration') {
       return 'Videos from Video Generator appear here after generation.';
@@ -812,7 +812,7 @@ export default function MediaLibraryPage() {
       return 'Event Studio posts with images are listed here.';
     }
     if (source === 'campaignDrafts') {
-      return 'Campaign drafts appear here until you schedule them.';
+      return 'Campaign drafts appear here after generation.';
     }
     if (source === 'aiEnginePosts') {
       return 'AI Engine posts with images are listed here.';

@@ -33,6 +33,7 @@ export type ContentPlanUpcomingItem = {
     | 'empty';
   label: string;
   note?: string;
+  eventId?: string;
 };
 
 export type ContentPlanDay = {
@@ -90,6 +91,8 @@ export type ContentPlanForceRunResult = {
 export async function forceRunContentPlanApi(args: {
   date: string;
   platform: ContentPlanPlatform;
+  kind: ContentPlanUpcomingItem['kind'];
+  eventId?: string;
 }): Promise<ContentPlanForceRunResult> {
   const response = await axiosClient.post<{
     success: boolean;

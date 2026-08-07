@@ -177,6 +177,7 @@ export type AdminContentPlanUpcomingItem = {
   kind: string;
   label: string;
   note?: string;
+  eventId?: string;
 };
 
 export type AdminContentPlanDay = {
@@ -233,6 +234,8 @@ export const postAdminContentCalendarForceRun = async (payload: {
   userId: string;
   date: string;
   platform: ContentCalendarReviewPlatform;
+  kind: string;
+  eventId?: string;
 }) => {
   return apiPost<
     ApiEnvelope<{

@@ -1,10 +1,14 @@
 'use client';
 
+import { useMemo } from 'react';
 import Image from 'next/image';
 import { Clapperboard, Images, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ShowcasePost } from '@/components/landing/social-preview/showcase-data';
-import { getPostThumbnailUrl } from '@/components/landing/social-preview/showcase-data';
+import {
+  arrangeShowcasePostsForGrid,
+  getPostThumbnailUrl,
+} from '@/components/landing/social-preview/showcase-data';
 
 type ShowcaseProfileGridProps = {
   posts: ShowcasePost[];
@@ -21,7 +25,12 @@ export function ShowcaseProfileGrid({
   gapClassName = 'gap-0.5',
   columns = 3,
 }: ShowcaseProfileGridProps) {
-  if (posts.length === 0) {
+  const orderedPosts = useMemo(
+    () => arrangeShowcasePostsForGrid(posts, columns),
+    [posts, columns]
+  );
+
+  if (orderedPosts.length === 0) {
     return (
       <div className="flex items-center justify-center bg-neutral-50 px-4 py-12 text-sm text-neutral-500">
         No posts yet for this platform.
@@ -38,7 +47,7 @@ export function ShowcaseProfileGrid({
         className
       )}
     >
-      {posts.map((post) => (
+      {orderedPosts.map((post) => (
         <ShowcaseGridCell key={post.id} post={post} onSelect={onSelect} />
       ))}
     </div>

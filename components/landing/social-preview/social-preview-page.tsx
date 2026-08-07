@@ -45,9 +45,9 @@ export function SocialPreviewPage() {
               <span className="bg-gradient-primary-text">social media</span> look?
             </h1>
             <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Switch between Instagram, Facebook, and LinkedIn, browse the profile grid,
-              and open any post to see how Sociogenie-generated content could appear once
-              published.
+              Pick a brand, switch between Instagram, Facebook, and LinkedIn, browse the
+              profile grid, and open any post to see how Sociogenie-generated content could
+              appear once published.
             </p>
           </motion.div>
 

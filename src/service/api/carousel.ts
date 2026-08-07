@@ -1,5 +1,6 @@
 import axiosClient from '@/lib/axios';
 import type { SocialPlatform } from '@/lib/platform-selection';
+import { prepareGenerationImage } from '@/lib/prepare-generation-image';
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -26,7 +27,9 @@ export async function generateCarousel(params: {
   form.append('platforms', JSON.stringify([params.platform]));
   form.append('slideCount', String(params.slideCount));
   if (params.prompt?.trim()) form.append('prompt', params.prompt.trim());
-  if (params.image) form.append('image', params.image);
+  if (params.image) {
+    form.append('image', await prepareGenerationImage(params.image));
+  }
 
   const res = await axiosClient.post<ApiEnvelope<GenerateCarouselResponse>>(
     '/api/v1/carousel/generate',
