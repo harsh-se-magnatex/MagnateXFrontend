@@ -248,3 +248,84 @@ export const postAdminContentCalendarForceRun = async (payload: {
     }>
   >('/api/v1/admin/content-calendar-review/force-run', payload);
 };
+
+export type AdminAutomationDateField = 'createdAt' | 'lastLoginAt';
+
+export type AdminAutomationClient = {
+  userId: string;
+  name: string;
+  email: string;
+  businessName: string;
+  industry: string;
+  website: string;
+  location: string;
+  activePlan: string;
+  createdAt?: unknown;
+  lastLoginAt?: unknown;
+  onBoardedAt?: unknown;
+};
+
+export const getAdminAutomationUnpaidOnboarded = async (params: {
+  from?: string;
+  to?: string;
+  dateField?: AdminAutomationDateField;
+  search?: string;
+}) => {
+  return apiGet<
+    ApiEnvelope<{
+      clients: AdminAutomationClient[];
+      total: number;
+      filters: {
+        from: string | null;
+        to: string | null;
+        dateField: AdminAutomationDateField;
+        search: string | null;
+      };
+    }>
+  >('/api/v1/admin/automation/unpaid-onboarded', {
+    params: {
+      ...(params.from ? { from: params.from } : {}),
+      ...(params.to ? { to: params.to } : {}),
+      ...(params.dateField ? { dateField: params.dateField } : {}),
+      ...(params.search ? { search: params.search } : {}),
+    },
+  });
+};
+
+export type AdminLandingLead = {
+  id: string;
+  email: string;
+  domainKey: string;
+  website: string;
+  platform: string;
+  businessName: string;
+  industry: string;
+  postStatus: string;
+  postCaption: string;
+  postImageUrl: string;
+  createdAt?: unknown;
+};
+
+export const getAdminLandingLeadMagnetLeads = async (params: {
+  from?: string;
+  to?: string;
+  search?: string;
+}) => {
+  return apiGet<
+    ApiEnvelope<{
+      leads: AdminLandingLead[];
+      total: number;
+      filters: {
+        from: string | null;
+        to: string | null;
+        search: string | null;
+      };
+    }>
+  >('/api/v1/admin/automation/landing-leads', {
+    params: {
+      ...(params.from ? { from: params.from } : {}),
+      ...(params.to ? { to: params.to } : {}),
+      ...(params.search ? { search: params.search } : {}),
+    },
+  });
+};

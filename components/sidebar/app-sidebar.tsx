@@ -25,6 +25,7 @@ import {
   LayoutGrid,
   User,
   CalendarDays,
+  Workflow,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -312,6 +313,23 @@ export function AppSidebar({
                     >
                       <User className="h-4 w-4 shrink-0" />
                       <span>Users</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname?.startsWith('/admin/automation') ?? false}
+                  >
+                    <Link
+                      href="/admin/automation"
+                      className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${(pathname?.startsWith('/admin/automation') ?? false)
+                          ? 'bg-primary text-primary-foreground shadow-sm'
+                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                        }`}
+                    >
+                      <Workflow className="h-4 w-4 shrink-0" />
+                      <span>Automation</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

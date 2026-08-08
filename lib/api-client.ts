@@ -9,6 +9,11 @@ function toErrorMessage(err: unknown, fallback: string = GENERIC_API_ERROR) {
     if (err.response?.status === 413) {
       return CONTENT_TOO_LARGE_MESSAGE;
     }
+    const apiMessage = (err.response?.data as { message?: string } | undefined)
+      ?.message;
+    if (typeof apiMessage === 'string' && apiMessage.trim()) {
+      return apiMessage.trim();
+    }
     if (!err.response) {
       const code = err.code;
       const msg = err.message || '';

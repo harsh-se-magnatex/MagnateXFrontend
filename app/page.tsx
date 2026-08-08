@@ -89,6 +89,14 @@ export default function Home() {
             >
               Setup in under 10 minutes · Human-reviewed before publishing · Cancel anytime
             </motion.p>
+            <motion.p variants={fadeIn} className="landing-body mt-3 text-sm">
+              <Link
+                href="/try-it"
+                className="text-white/50 underline-offset-4 transition-colors hover:text-white/80 hover:underline"
+              >
+                Or try a free post for your website
+              </Link>
+            </motion.p>
           </motion.div>
 
           <motion.div

@@ -1109,7 +1109,7 @@ export default function AIContentPage() {
                       : editTool === 'add_product'
                         ? 'Optional notes — placement is set by the preset above.'
                         : 'Optional polish notes — e.g. "warmer light, less noise."'
-                    : 'Describe the product, audience, and goal. For example: "Instagram carousel ad for a D2C coffee brand, targeting busy founders who want better focus."'
+                    : 'Describe the product, audience, and goal. For example: "Instagram post for a D2C coffee brand, targeting busy founders who want better focus."'
                 }
                 rows={3}
                 className={cn(
