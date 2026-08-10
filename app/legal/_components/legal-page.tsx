@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import { Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type IconTone = 'indigo' | 'blue' | 'pink' | 'emerald' | 'amber' | 'sky';
+export type IconTone = 'indigo' | 'blue' | 'pink' | 'emerald' | 'amber' | 'sky';
 
 const iconToneClasses: Record<IconTone, string> = {
   indigo: 'bg-indigo-500/10 text-indigo-600 ring-indigo-500/15',

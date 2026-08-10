@@ -167,6 +167,49 @@
     color: rgb(51 65 85);
   }
 
+  .legal-table-wrap {
+    margin-top: 0.75rem;
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+    border-radius: 1rem;
+    border: 1px solid rgb(226 232 240);
+    background: rgb(255 255 255);
+  }
+
+  .legal-prose .legal-table-wrap table {
+    width: 100%;
+    min-width: 32rem;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+
+  .legal-prose .legal-table-wrap thead {
+    background: linear-gradient(180deg, rgb(248 250 252), rgb(241 245 249));
+    border-bottom: 1px solid rgb(226 232 240);
+  }
+
+  .legal-prose .legal-table-wrap th {
+    padding: 0.85rem 1rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgb(100 116 139);
+  }
+
+  .legal-prose .legal-table-wrap td {
+    padding: 0.9rem 1rem;
+    vertical-align: top;
+    color: rgb(71 85 105);
+    border-top: 1px solid rgb(241 245 249);
+  }
+
+  .legal-prose .legal-table-wrap tbody tr:hover {
+    background: rgb(248 250 252 / 0.75);
+  }
+
   .legal-panel {
     overflow: hidden;
     border-radius: 1.25rem;

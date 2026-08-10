@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Boxes, Download } from 'lucide-react';
+import { LegalMarkdownContent } from '../_lib/legal-markdown';
 import {
   LegalCallout,
   LegalDocument,
@@ -84,8 +85,19 @@ function parseNotices(): {
   };
 }
 
+function loadLicensesFooter(): string {
+  const filePath = path.join(process.cwd(), 'licenses.md');
+  if (!fs.existsSync(filePath)) return '';
+  const md = fs.readFileSync(filePath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
+  const marker = '## Scope of this page';
+  const start = md.indexOf(marker);
+  if (start === -1) return '';
+  return md.slice(start).trim();
+}
+
 export default function OpenSourceLicensesPage() {
   const { generatedDate, total, summary, sections } = parseNotices();
+  const footer = loadLicensesFooter();
 
   return (
     <LegalPage
@@ -105,12 +117,18 @@ export default function OpenSourceLicensesPage() {
         <p>
           SocioGenie is built by <strong>MAGNATEX LLP</strong> on top of a
           large ecosystem of open-source software. This page lists every
-          third-party package shipped with the SocioGenie frontend, together
-          with its license, in fulfilment of the attribution requirements of
-          MIT, BSD, Apache 2.0, and similar permissive licenses.
+          third-party package shipped with SocioGenie, together with its
+          license, in fulfilment of the attribution requirements of the MIT,
+          BSD, Apache 2.0, ISC, and similar permissive licenses.
         </p>
         <p>
-          The complete machine-readable notices file is available for download:
+          This list is generated automatically from our dependency manifest on
+          every deployment, so it always reflects what is actually running in
+          production.
+        </p>
+        <p>
+          The complete machine-readable notices file, including full license
+          texts, is available for download:
         </p>
         <p>
           <a
@@ -210,6 +228,8 @@ export default function OpenSourceLicensesPage() {
           </li>
         </ul>
       </LegalCallout>
+
+      {footer ? <LegalMarkdownContent body={footer} /> : null}
     </LegalPage>
   );
 }

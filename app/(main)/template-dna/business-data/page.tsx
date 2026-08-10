@@ -1087,9 +1087,11 @@ export default function TemplateDnaMemoryLayerPage() {
                         Send brand images
                       </h2>
                       <p className="mt-1.5 text-sm text-slate-600 leading-relaxed max-w-xl">
-                        When this is on, your reference photos are shared with the
-                        generation model so captions and visuals can match your brand
-                        look. Turn it off anytime if you prefer text-only context.
+                        Upload product photos only. When this is on, those
+                        product images are shared with generation so Auto-mode
+                        video can run product-advert scenes and captions/visuals
+                        can match your products. Turn it off anytime to use
+                        AI Engine image generation without product photos.
                       </p>
                     </div>
                   </div>
@@ -1202,9 +1204,10 @@ export default function TemplateDnaMemoryLayerPage() {
                   Brand reference photos
                 </h2>
                 <p className="text-sm text-slate-500 mt-1 max-w-[48ch]">
-                  Upload a PDF brochure or individual images. SocioGenie suggests
-                  descriptions when you leave them blank — edit anytime. Up to
-                  30 images total.
+                  Product photos only — upload a product brochure PDF or
+                  individual product images. SocioGenie suggests descriptions
+                  when you leave them blank — edit anytime. Up to 30 images
+                  total.
                 </p>
               </div>
               <button
