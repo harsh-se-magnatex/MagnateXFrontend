@@ -10,4 +10,3 @@ skills-lock.json
 
 # license audit scratch files (regenerate via npm run notices)
 license-report.json
-public/videos/
