@@ -14,7 +14,14 @@ import {
   type LeadMagnetPost,
 } from '@/src/service/api/lead-magnet';
 
-type Step = 'email' | 'website' | 'platform' | 'loading' | 'generating' | 'result';
+type Step =
+  | 'email'
+  | 'website'
+  | 'loading'
+  | 'brand'
+  | 'platform'
+  | 'generating'
+  | 'result';
 
 const PLATFORMS: { id: LeadMagnetPlatform; label: string }[] = [
   { id: 'instagram', label: 'Instagram' },
@@ -23,6 +30,115 @@ const PLATFORMS: { id: LeadMagnetPlatform; label: string }[] = [
 ];
 
 const PREVIEW_TIMEOUT_MS = 90_000;
+
+function BrandColorSwatch({ hex, label }: { hex: string; label: string }) {
+  const color = hex.trim();
+  if (!color) return null;
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="h-7 w-7 shrink-0 rounded-full border border-white/15"
+        style={{ backgroundColor: color }}
+        title={`${label}: ${color}`}
+        aria-hidden
+      />
+      <div className="min-w-0">
+        <p className="landing-body text-[11px] uppercase tracking-wide text-white/40">
+          {label}
+        </p>
+        <p className="landing-body truncate font-mono text-xs text-white/65">
+          {color}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function BrandPreviewCard({ dna }: { dna: LeadMagnetDna }) {
+  const colors = [
+    { hex: dna.primaryColor, label: 'Primary' },
+    { hex: dna.secondaryColor, label: 'Secondary' },
+    { hex: dna.accentColor, label: 'Accent' },
+  ].filter((c) => c.hex.trim());
+
+  const hashtags = dna.hashtags
+    .split(/[\s,]+/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-black/35">
+      <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-5 sm:p-5">
+        <div className="mx-auto flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5 sm:mx-0">
+          {dna.logo.trim() ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={dna.logo}
+              alt={`${dna.businessName || 'Brand'} logo`}
+              className="h-full w-full object-contain p-2"
+            />
+          ) : (
+            <span className="landing-display text-2xl text-white/35">
+              {(dna.businessName || '?').slice(0, 1).toUpperCase()}
+            </span>
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1 space-y-2 text-center sm:text-left">
+          <h3 className="landing-display text-xl text-white">
+            {dna.businessName || 'Your business'}
+          </h3>
+          <div className="landing-body flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm text-white/55 sm:justify-start">
+            {dna.industry ? <span>{dna.industry}</span> : null}
+            {dna.industry && dna.location ? (
+              <span className="text-white/25" aria-hidden>
+                ·
+              </span>
+            ) : null}
+            {dna.location ? <span>{dna.location}</span> : null}
+          </div>
+          {dna.website ? (
+            <p className="landing-body truncate text-sm text-white/45">
+              {dna.website.replace(/^https?:\/\//, '')}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      {dna.brandDescription.trim() ? (
+        <div className="border-t border-white/10 px-4 py-3 sm:px-5">
+          <p className="landing-body text-sm leading-relaxed text-white/70">
+            {dna.brandDescription.length > 280
+              ? `${dna.brandDescription.slice(0, 280).trim()}…`
+              : dna.brandDescription}
+          </p>
+        </div>
+      ) : null}
+
+      {colors.length > 0 ? (
+        <div className="grid gap-3 border-t border-white/10 px-4 py-3 sm:grid-cols-3 sm:px-5">
+          {colors.map((c) => (
+            <BrandColorSwatch key={c.label} hex={c.hex} label={c.label} />
+          ))}
+        </div>
+      ) : null}
+
+      {hashtags.length > 0 ? (
+        <div className="flex flex-wrap gap-2 border-t border-white/10 px-4 py-3 sm:px-5">
+          {hashtags.map((tag) => (
+            <span
+              key={tag}
+              className="landing-body rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-white/55"
+            >
+              {tag.startsWith('#') ? tag : `#${tag}`}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function LeadMagnetSection() {
   const sectionRef = React.useRef<HTMLElement | null>(null);
@@ -69,22 +185,17 @@ export function LeadMagnetSection() {
     }
   };
 
-  const onContinueWebsite = (e: React.FormEvent) => {
+  const onContinueWebsite = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!website.trim()) {
       setError('Enter your website to continue.');
       return;
     }
-    setStep('platform');
-  };
-
-  const onPickPlatform = async (nextPlatform: LeadMagnetPlatform) => {
     if (busy) return;
     setBusy(true);
-    setPickingPlatform(nextPlatform);
-    setError(null);
     setStep('loading');
+    scrollToSection();
     try {
       const data = await Promise.race([
         previewLeadMagnet({ email, website }),
@@ -103,15 +214,31 @@ export function LeadMagnetSection() {
       setDomainKey(data.domainKey);
       setDna(data.dna);
       if (data.consentText) setConsentText(data.consentText);
-      setPlatform(nextPlatform);
-      setStep('generating');
+      if (data.dna.website) setWebsite(data.dna.website);
+      setStep('brand');
       scrollToSection();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setStep('website');
+    } finally {
+      setBusy(false);
+    }
+  };
 
+  const onPickPlatform = async (nextPlatform: LeadMagnetPlatform) => {
+    if (busy || !dna) return;
+    setBusy(true);
+    setPickingPlatform(nextPlatform);
+    setError(null);
+    setPlatform(nextPlatform);
+    setStep('generating');
+    scrollToSection();
+    try {
       const gen = await generateLeadMagnet({
         email,
-        website: data.dna.website || website,
+        website: dna.website || website,
         platform: nextPlatform,
-        dna: data.dna,
+        dna,
       });
       setDomainKey(gen.domainKey);
       setPost(gen.post);
@@ -156,8 +283,8 @@ export function LeadMagnetSection() {
           See a post for your brand
         </h2>
         <p className="landing-body mx-auto mt-4 max-w-xl text-center text-base text-white/60">
-          Enter your email, drop your website, pick a platform, and we&apos;ll
-          craft one sample post from your brand — no signup required.
+          Enter your email, drop your website, confirm your brand, pick a
+          platform, and we&apos;ll craft one sample post — no signup required.
         </p>
 
         <div className="mt-12 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-md md:p-8">
@@ -200,7 +327,7 @@ export function LeadMagnetSection() {
           )}
 
           {step === 'website' && (
-            <form onSubmit={onContinueWebsite} className="space-y-4">
+            <form onSubmit={(e) => void onContinueWebsite(e)} className="space-y-4">
               <p className="landing-body text-xs text-white/40">
                 Using {email}
               </p>
@@ -214,16 +341,26 @@ export function LeadMagnetSection() {
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
                   className="lead-magnet-input mt-2"
+                  disabled={busy}
                 />
               </label>
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
                   className="landing-btn-primary w-full sm:w-auto"
-                  disabled={busy}
+                  disabled={busy || !website.trim()}
                 >
-                  Continue
-                  <ArrowRight className="h-4 w-4" />
+                  {busy ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Looking up…
+                    </>
+                  ) : (
+                    <>
+                      Look up brand
+                      <ArrowRight className="h-4 w-4" />
+                    </>
+                  )}
                 </button>
                 <button
                   type="button"
@@ -237,8 +374,66 @@ export function LeadMagnetSection() {
             </form>
           )}
 
+          {step === 'loading' && (
+            <div className="flex flex-col items-center gap-4 py-10 text-center">
+              <Loader2 className="h-8 w-8 animate-spin text-white/70" />
+              <p className="landing-display text-lg text-white">
+                Looking up your brand…
+              </p>
+              <p className="landing-body max-w-sm text-sm text-white/50">
+                Pulling business details from{' '}
+                <span className="text-white/70">{website}</span>.
+              </p>
+            </div>
+          )}
+
+          {step === 'brand' && dna && (
+            <div className="space-y-5">
+              <div>
+                <p className="landing-body text-sm text-white/70">
+                  We found this brand from your website
+                </p>
+                <p className="landing-body mt-1 text-xs text-white/40">
+                  Confirm it looks right, then pick a platform for your sample
+                  post.
+                </p>
+              </div>
+              <BrandPreviewCard dna={dna} />
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  className="landing-btn-primary w-full sm:w-auto"
+                  onClick={() => {
+                    setError(null);
+                    setStep('platform');
+                    scrollToSection();
+                  }}
+                >
+                  Looks good
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
+                  onClick={() => {
+                    setDna(null);
+                    setDomainKey('');
+                    setStep('website');
+                  }}
+                >
+                  Change website
+                </button>
+              </div>
+            </div>
+          )}
+
           {step === 'platform' && (
             <div className="space-y-5">
+              {dna?.businessName ? (
+                <p className="landing-body text-xs text-white/40">
+                  Creating a sample for {dna.businessName}
+                </p>
+              ) : null}
               <p className="landing-body text-sm text-white/70">
                 Choose one platform for your sample post
               </p>
@@ -249,7 +444,7 @@ export function LeadMagnetSection() {
                     <button
                       key={p.id}
                       type="button"
-                      disabled={busy}
+                      disabled={busy || !dna}
                       onClick={() => void onPickPlatform(p.id)}
                       className="lead-magnet-platform-btn"
                     >
@@ -265,24 +460,11 @@ export function LeadMagnetSection() {
               <button
                 type="button"
                 className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
-                onClick={() => setStep('website')}
+                onClick={() => setStep('brand')}
                 disabled={busy}
               >
-                Change website
+                Back to brand
               </button>
-            </div>
-          )}
-
-          {step === 'loading' && (
-            <div className="flex flex-col items-center gap-4 py-10 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-white/70" />
-              <p className="landing-display text-lg text-white">
-                Looking up your brand…
-              </p>
-              <p className="landing-body max-w-sm text-sm text-white/50">
-                Pulling business details from{' '}
-                <span className="text-white/70">{website}</span>.
-              </p>
             </div>
           )}
 
@@ -304,7 +486,11 @@ export function LeadMagnetSection() {
             <div ref={resultRef} className="space-y-6">
               <p className="landing-body text-sm text-white/55">
                 Your {PLATFORMS.find((p) => p.id === platform)?.label} sample
-                {domainKey ? ` for ${domainKey}` : ''}
+                {dna?.businessName
+                  ? ` for ${dna.businessName}`
+                  : domainKey
+                    ? ` for ${domainKey}`
+                    : ''}
               </p>
               <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40">
                 {post.imageUrl ? (

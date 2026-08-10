@@ -289,6 +289,8 @@ export default function AutomationPreferencePage() {
               linkedin: '',
             }
           );
+          setSocialSalesEmailUsage(response.data.preferences.socialSalesEmailUsage ?? true);
+          setSocialSalesContactUsage(response.data.preferences.socialSalesContactUsage ?? true);
           setNeedApproval(response.data.preferences.Need_Approval ?? true);
           setTimeZone(response.data.preferences.TimeZone || 'Asia/Calcutta');
           setPreferredTime(
