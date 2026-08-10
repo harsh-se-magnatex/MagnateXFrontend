@@ -10,6 +10,7 @@ export function pageScroll01(): number {
   return Math.min(Math.max(y / maxScroll, 0), 1);
 }
 
+
 export function getFrameScrubT(): number {
   const p = pageScroll01();
   if (p <= FRAME_PHASE) return p / FRAME_PHASE;
