@@ -1,6 +1,8 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { Fragment, type ReactNode } from 'react';
+import {
+  type LegalDocumentId,
+  legalDocuments,
+} from '@/content/legal/documents';
 import { LegalDocument } from '../_components/legal-page';
 
 type Block =
@@ -17,9 +19,11 @@ export type LegalMarkdownMeta = {
   body: string;
 };
 
-export function loadLegalMarkdown(filename: string): LegalMarkdownMeta {
-  const filePath = path.join(process.cwd(), filename);
-  const raw = fs.readFileSync(filePath, 'utf8');
+export function loadLegalMarkdown(documentId: LegalDocumentId): LegalMarkdownMeta {
+  const raw = legalDocuments[documentId];
+  if (!raw) {
+    throw new Error(`Unknown legal document: ${documentId}`);
+  }
   const withoutComments = raw.replace(/<!--[\s\S]*?-->/g, '').trim();
   const lines = withoutComments.replace(/\r\n/g, '\n').split('\n');
 

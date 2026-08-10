@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
+    "dev": "node scripts/bundle-legal-content.mjs && next dev -H 0.0.0.0",
+    "build": "node scripts/bundle-legal-content.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "convert-frames-webp": "node scripts/convert-frames-to-webp.mjs",

@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import type { LegalDocumentId } from '@/content/legal/documents';
 import {
   LegalMarkdownContent,
   loadLegalMarkdown,
@@ -6,19 +7,19 @@ import {
 import { LegalPage, type IconTone } from './legal-page';
 
 type LegalMarkdownPageProps = {
-  filename: string;
+  document: LegalDocumentId;
   icon: LucideIcon;
   iconTone?: IconTone;
   maxWidth?: 'lg' | 'xl';
 };
 
 export function LegalMarkdownPage({
-  filename,
+  document,
   icon,
   iconTone,
   maxWidth,
 }: LegalMarkdownPageProps) {
-  const { title, subtitle, body } = loadLegalMarkdown(filename);
+  const { title, subtitle, body } = loadLegalMarkdown(document);
 
   return (
     <LegalPage

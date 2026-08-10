@@ -1,6 +1,6 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { Boxes, Download } from 'lucide-react';
+import { licensesFooterMarkdown } from '@/content/legal/documents';
+import { licensesNotices } from '@/content/legal/licenses-notices';
 import { LegalMarkdownContent } from '../_lib/legal-markdown';
 import {
   LegalCallout,
@@ -9,95 +9,9 @@ import {
   LegalPanel,
 } from '../_components/legal-page';
 
-type Entry = {
-  name: string;
-  repository: string;
-};
-
-type Section = {
-  license: string;
-  count: number;
-  entries: Entry[];
-};
-
-function parseNotices(): {
-  generatedDate: string | null;
-  total: number | null;
-  summary: { license: string; count: number }[];
-  sections: Section[];
-} {
-  const filePath = path.join(process.cwd(), 'THIRD_PARTY_NOTICES.md');
-  if (!fs.existsSync(filePath)) {
-    return { generatedDate: null, total: null, summary: [], sections: [] };
-  }
-  const md = fs.readFileSync(filePath, 'utf8');
-
-  const generatedMatch = md.match(/\*\*Generated:\*\*\s*([0-9-]+)/);
-  const totalMatch = md.match(/\*\*Total third-party packages:\*\*\s*(\d+)/);
-
-  const summary: { license: string; count: number }[] = [];
-  const summaryBlock = md.split('## License summary')[1]?.split('## Packages by license')[0];
-  if (summaryBlock) {
-    const rows = summaryBlock
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.startsWith('|') && !line.includes('---') && !/^\|\s*License\s*\|/i.test(line));
-    for (const row of rows) {
-      const cells = row.split('|').map((c) => c.trim()).filter(Boolean);
-      if (cells.length >= 2) {
-        const count = parseInt(cells[1], 10);
-        if (!Number.isNaN(count)) {
-          summary.push({ license: cells[0], count });
-        }
-      }
-    }
-  }
-
-  const sections: Section[] = [];
-  const packagesBlock = md.split('## Packages by license')[1]?.split('## Notes')[0] ?? '';
-  const sectionChunks = packagesBlock.split(/^###\s+/m).slice(1);
-  for (const chunk of sectionChunks) {
-    const headerMatch = chunk.match(/^([^\n]+)\n/);
-    if (!headerMatch) continue;
-    const header = headerMatch[1].trim();
-    const headerInfo = header.match(/^(.*?)\s*\((\d+)\)$/);
-    const license = headerInfo ? headerInfo[1].trim() : header;
-    const count = headerInfo ? parseInt(headerInfo[2], 10) : 0;
-    const entries: Entry[] = [];
-    const lines = chunk.slice(headerMatch[0].length).split('\n');
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith('- ')) continue;
-      const inner = trimmed.slice(2);
-      const split = inner.split(/\s+—\s+/);
-      const name = split[0].replace(/`/g, '').trim();
-      const repository = split.slice(1).join(' — ').trim();
-      entries.push({ name, repository });
-    }
-    sections.push({ license, count, entries });
-  }
-
-  return {
-    generatedDate: generatedMatch?.[1] ?? null,
-    total: totalMatch ? parseInt(totalMatch[1], 10) : null,
-    summary,
-    sections,
-  };
-}
-
-function loadLicensesFooter(): string {
-  const filePath = path.join(process.cwd(), 'licenses.md');
-  if (!fs.existsSync(filePath)) return '';
-  const md = fs.readFileSync(filePath, 'utf8').replace(/<!--[\s\S]*?-->/g, '');
-  const marker = '## Scope of this page';
-  const start = md.indexOf(marker);
-  if (start === -1) return '';
-  return md.slice(start).trim();
-}
-
 export default function OpenSourceLicensesPage() {
-  const { generatedDate, total, summary, sections } = parseNotices();
-  const footer = loadLicensesFooter();
+  const { generatedDate, total, summary, sections } = licensesNotices;
+  const footer = licensesFooterMarkdown;
 
   return (
     <LegalPage
