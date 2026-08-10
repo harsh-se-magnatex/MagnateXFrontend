@@ -3,22 +3,15 @@
 import { useEffect, useRef } from 'react';
 import { getFrameScrubT } from '@/lib/landing-scroll';
 
-const TOTAL_FRAMES = 634;
 const LERP_SPEED = 0.22;
-/** How many frames to fetch in parallel while filling the contiguous window. */
-const LOAD_BATCH_SIZE = 12;
-/** Hero scroll fade only after this many contiguous frames are ready. */
-const HERO_READY_FRAMES = 24;
-const FRAME_BASE_PATH_DESKTOP = '/frames-webp/frame_';
-const FRAME_BASE_PATH_MOBILE = '/frames-webp-mobile/frame_';
+/** Ignore tiny seeks to reduce decoder thrash while scrolling. */
+const SEEK_EPSILON = 1 / 60;
+const VIDEO_DESKTOP_MP4 = process.env.NEXT_PUBLIC_LANDING_VIDEO_MP4 || '';
+const VIDEO_MOBILE_MP4 = process.env.NEXT_PUBLIC_LANDING_VIDEO_Mobile || '';
 
 function isMobileViewport(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(max-width: 820px), (pointer: coarse)').matches;
-}
-
-function framePath(index: number, basePath: string): string {
-  return `${basePath}${String(index + 1).padStart(6, '0')}.webp`;
 }
 
 type Landing3DBackgroundProps = {
@@ -29,6 +22,20 @@ export function Landing3DBackground({
   heroContentId = 'heroContent',
 }: Landing3DBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  
+    window.scrollTo(0, 0);
+  
+    return () => {
+      window.history.scrollRestoration = 'auto';
+    };
+  }, []);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia(
@@ -36,71 +43,34 @@ export function Landing3DBackground({
     ).matches;
 
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const video = videoRef.current;
+    if (!canvas || !video) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const basePath = isMobileViewport()
-      ? FRAME_BASE_PATH_MOBILE
-      : FRAME_BASE_PATH_DESKTOP;
-
-    const images: (HTMLImageElement | undefined)[] = new Array(TOTAL_FRAMES);
-    const loaded = new Uint8Array(TOTAL_FRAMES);
-    let contiguousLoaded = -1;
-    let currentFrame = 0;
-    let targetFrame = 0;
-    let lastDrawnIndex = -1;
-    let nextToLoad = 0;
-    let inFlight = 0;
-    let cancelled = false;
+    let currentTime = 0;
+    let targetTime = 0;
     let rafId = 0;
+    let seeking = false;
+    let hasDrawn = false;
+    let cancelled = false;
 
-    function advanceContiguous() {
-      while (
-        contiguousLoaded + 1 < TOTAL_FRAMES &&
-        loaded[contiguousLoaded + 1]
-      ) {
-        contiguousLoaded++;
-      }
-    }
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    video.loop = false;
+    video.disableRemotePlayback = true;
 
-    function scheduleLoads() {
-      if (cancelled || reducedMotion) return;
-      while (inFlight < LOAD_BATCH_SIZE && nextToLoad < TOTAL_FRAMES) {
-        const frameIndex = nextToLoad++;
-        inFlight++;
-        const img = new Image();
-        images[frameIndex] = img;
-        const settle = () => {
-          loaded[frameIndex] = 1;
-          inFlight--;
-          advanceContiguous();
-          scheduleLoads();
-        };
-        img.onload = settle;
-        img.onerror = settle;
-        img.src = framePath(frameIndex, basePath);
-      }
-    }
+    const mobile = isMobileViewport();
+    // Clear previous sources, then attach device-appropriate files.
+    while (video.firstChild) video.removeChild(video.firstChild);
 
-    if (!reducedMotion) {
-      scheduleLoads();
-    } else {
-      const img = new Image();
-      img.onload = () => {
-        loaded[0] = 1;
-        contiguousLoaded = 0;
-        images[0] = img;
-        drawFrame(img);
-      };
-      img.onerror = () => {
-        loaded[0] = 1;
-        contiguousLoaded = 0;
-      };
-      img.src = framePath(0, basePath);
-      images[0] = img;
-    }
+    const mp4 = document.createElement('source');
+    mp4.src = mobile ? VIDEO_MOBILE_MP4 : VIDEO_DESKTOP_MP4;
+    mp4.type = 'video/mp4';
+    video.appendChild(mp4);
+    video.load();
 
     function resize() {
       const dprCap = isMobileViewport() ? 1.5 : 2;
@@ -114,50 +84,77 @@ export function Landing3DBackground({
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx!.imageSmoothingEnabled = true;
       ctx!.imageSmoothingQuality = 'high';
+      if (video!.readyState >= 2) drawVideo();
     }
 
-    function drawFrame(img: HTMLImageElement) {
-      if (!img?.naturalWidth) return;
+    function drawVideo() {
+      if (video!.readyState < 2 || !video!.videoWidth) return;
       const cw = window.innerWidth;
       const ch = window.innerHeight;
       if (cw < 10 || ch < 10) return;
       ctx!.clearRect(0, 0, cw, ch);
-      const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-      const w = img.naturalWidth * scale;
-      const h = img.naturalHeight * scale;
-      ctx!.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+      const scale = Math.max(
+        cw / video!.videoWidth,
+        ch / video!.videoHeight
+      );
+      const w = video!.videoWidth * scale;
+      const h = video!.videoHeight * scale;
+      ctx!.drawImage(video!, (cw - w) / 2, (ch - h) / 2, w, h);
+      hasDrawn = true;
+    }
+
+    function durationSec(): number {
+      const d = video!.duration;
+      return Number.isFinite(d) && d > 0 ? d : 0;
+    }
+
+    function onSeeked() {
+      seeking = false;
+      drawVideo();
+    }
+
+    function onLoadedData() {
+      if (cancelled) return;
+      // Freeze on first frame for reduced-motion, or warm the first paint.
+      try {
+        video!.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+      drawVideo();
     }
 
     function animate() {
-      if (!reducedMotion && contiguousLoaded >= 0) {
-        targetFrame = getFrameScrubT() * (TOTAL_FRAMES - 1);
+      const dur = durationSec();
+      if (!reducedMotion && dur > 0) {
+        targetTime = getFrameScrubT() * dur;
+        // Keep last frame reachable (duration is exclusive in some browsers).
+        const maxT = Math.max(dur - SEEK_EPSILON, 0);
+        if (targetTime > maxT) targetTime = maxT;
+
+        currentTime += (targetTime - currentTime) * LERP_SPEED;
+
+        if (
+          !seeking &&
+          video!.readyState >= 2 &&
+          Math.abs(video!.currentTime - currentTime) >= SEEK_EPSILON
+        ) {
+          seeking = true;
+          try {
+            video!.currentTime = currentTime;
+          } catch {
+            seeking = false;
+          }
+        } else if (!seeking && hasDrawn) {
+          // Still redraw occasionally so canvas stays sharp after resize.
+        }
       }
 
-      currentFrame += (targetFrame - currentFrame) * LERP_SPEED;
-      let idx = Math.round(currentFrame);
-      if (idx < 0) idx = 0;
-      if (idx >= TOTAL_FRAMES) idx = TOTAL_FRAMES - 1;
-      // Never scrub past the contiguous loaded window — holds last good frame.
-      if (contiguousLoaded >= 0) {
-        idx = Math.min(idx, contiguousLoaded);
-      }
-
-      const img = images[idx];
-      if (img?.naturalWidth && idx !== lastDrawnIndex) {
-        drawFrame(img);
-        lastDrawnIndex = idx;
-      } else if (
-        !img?.naturalWidth &&
-        lastDrawnIndex >= 0 &&
-        images[lastDrawnIndex]?.naturalWidth
-      ) {
-        // keep previous draw
-      }
+      if (video!.readyState >= 2) drawVideo();
 
       const hero = document.getElementById(heroContentId);
       if (hero) {
-        const heroReady = contiguousLoaded >= HERO_READY_FRAMES - 1;
-        const pHero = heroReady ? getFrameScrubT() : 0;
+        const pHero = reducedMotion || dur <= 0 ? 0 : getFrameScrubT();
         const o = Math.max(0, 1 - pHero * 3.2);
         const scale = 1 - pHero * 0.08;
         const y = -pHero * 48;
@@ -178,6 +175,8 @@ export function Landing3DBackground({
       rafId = requestAnimationFrame(animate);
     }
 
+    video.addEventListener('seeked', onSeeked);
+    video.addEventListener('loadeddata', onLoadedData);
     window.addEventListener('resize', resize);
     resize();
     rafId = requestAnimationFrame(animate);
@@ -185,7 +184,13 @@ export function Landing3DBackground({
     return () => {
       cancelled = true;
       window.removeEventListener('resize', resize);
+      video.removeEventListener('seeked', onSeeked);
+      video.removeEventListener('loadeddata', onLoadedData);
       cancelAnimationFrame(rafId);
+      video.pause();
+      video.removeAttribute('src');
+      while (video.firstChild) video.removeChild(video.firstChild);
+      video.load();
       document.documentElement.style.removeProperty('--landing-3d-frame-opacity');
       document.documentElement.style.removeProperty(
         '--landing-3d-section-bg-opacity'
@@ -197,6 +202,14 @@ export function Landing3DBackground({
     <>
       <div id="bgWrap" className="landing-3d-bg-wrap" aria-hidden>
         <canvas ref={canvasRef} id="bgCanvas" className="landing-3d-canvas" />
+        <video
+          ref={videoRef}
+          className="pointer-events-none absolute h-px w-px opacity-0"
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden
+        />
       </div>
       <div className="landing-3d-vignette" aria-hidden />
     </>
