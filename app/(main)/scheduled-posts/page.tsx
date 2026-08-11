@@ -1703,7 +1703,8 @@ export default function SchedulePostPage() {
   const filteredAndSortedPosts = useMemo(() => {
     const isRemoved = (p: ScheduledPost) => p.removedByUser === true;
     const isRejected = (p: ScheduledPost) =>
-      (p.UserApprovalStatus ?? '').toLowerCase() === 'rejected';
+      (p.UserApprovalStatus ?? '').toLowerCase() === 'rejected' ||
+      (p.postStatus ?? '').toLowerCase() === 'rejected';
     const isFailed = (p: ScheduledPost) => p.postStatus === 'failed';
     const isPosted = (p: ScheduledPost) => p.postStatus === 'posted';
 

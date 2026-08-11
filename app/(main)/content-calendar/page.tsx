@@ -7,9 +7,11 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { CalendarRange, Loader2, Play, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useUserTimezone } from '@/lib/user-timezone';
+import { isPlanInactive } from '@/lib/plan-access';
 import {
   forceRunContentPlanApi,
   generateContentPlanApi,
@@ -77,11 +79,25 @@ function statusLabel(status: ContentPlanGeneratedItem['status']): string {
       return 'Scheduled';
     case 'removed':
       return 'Removed by user';
+    case 'rejected-by-admin':
+      return 'Rejected by admin';
+    case 'rejected-by-user':
     case 'rejected':
       return 'Rejected by user';
     default:
       return status;
   }
+}
+
+function isTerminalGeneratedStatus(
+  status: ContentPlanGeneratedItem['status']
+): boolean {
+  return (
+    status === 'removed' ||
+    status === 'rejected' ||
+    status === 'rejected-by-user' ||
+    status === 'rejected-by-admin'
+  );
 }
 
 function cellToneClass(kind: string): string {
@@ -137,8 +153,7 @@ function entriesForSlot(args: {
   upcoming: ContentPlanUpcomingItem[];
 }): CellEntry[] {
   const generated: CellEntry[] = args.generated.map((item) => {
-    const isTerminal =
-      item.status === 'removed' || item.status === 'rejected';
+    const isTerminal = isTerminalGeneratedStatus(item.status);
     return {
       kind: item.kind,
       label: kindLabel(item.kind),
@@ -484,6 +499,7 @@ export default function ContentPlanPage() {
 
   const isAuto = billing?.mode === 'auto';
   const hasAccess = isAuto || billing?.mode === 'manual';
+  const planInactive = isPlanInactive(billing);
 
   const selectedPlatforms = useMemo((): ContentPlanPlatform[] => {
     const selected = billing?.selected;
@@ -680,14 +696,18 @@ export default function ContentPlanPage() {
   useEffect(() => {
     if (authLoading || creditsLoading) return;
     if (!user) return;
-    if (!hasAccess) return;
+    if (planInactive || !hasAccess) return;
     // Initial API hydration intentionally owns this page's loading state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-  }, [authLoading, creditsLoading, user, hasAccess, load]);
+  }, [authLoading, creditsLoading, user, planInactive, hasAccess, load]);
 
   if (authLoading || creditsLoading) {
     return <PageLoadingState />;
+  }
+
+  if (planInactive) {
+    return <NonSubscribedFeatureBlock />;
   }
 
   if (!hasAccess) {

@@ -106,6 +106,9 @@ function statusLabel(status: AdminContentPlanGeneratedItem['status']): string {
       return 'Scheduled';
     case 'removed':
       return 'Removed by user';
+    case 'rejected-by-admin':
+      return 'Rejected by admin';
+    case 'rejected-by-user':
     case 'rejected':
       return 'Rejected by user';
     default:
@@ -994,7 +997,10 @@ function GeneratedCard({
   onOpen: () => void;
 }) {
   const isTerminal =
-    item.status === 'removed' || item.status === 'rejected';
+    item.status === 'removed' ||
+    item.status === 'rejected' ||
+    item.status === 'rejected-by-user' ||
+    item.status === 'rejected-by-admin';
   const title =
     item.title?.trim() ||
     item.captionPreview?.trim() ||
@@ -1126,7 +1132,10 @@ function PreviewModal({
     Boolean(preferences.preferredTime) && !optimal;
   const isQueued = item.status === 'queued';
   const isTerminal =
-    item.status === 'removed' || item.status === 'rejected';
+    item.status === 'removed' ||
+    item.status === 'rejected' ||
+    item.status === 'rejected-by-user' ||
+    item.status === 'rejected-by-admin';
   // Admin regenerate is Auto-plan only (manual users own their own review).
   const canRegenerate =
     regenerateEnabled &&
@@ -1422,7 +1431,14 @@ function StatusBadge({
       </span>
     );
   }
-  if (status === 'rejected') {
+  if (status === 'rejected-by-admin') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-xs font-semibold text-rose-100">
+        Rejected by admin
+      </span>
+    );
+  }
+  if (status === 'rejected' || status === 'rejected-by-user') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-xs font-semibold text-rose-100">
         Rejected by user

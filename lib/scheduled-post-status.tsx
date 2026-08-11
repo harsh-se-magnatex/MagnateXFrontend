@@ -14,7 +14,8 @@
  *   3. `postStatus === 'failed'`        → Failed (with reason from `error` or
  *                                          `errors[]`)
  *   4. `postStatus === 'posted'`        → Posted
- *   5. `UserApprovalStatus === 'rejected'` → Rejected
+ *   5. `UserApprovalStatus === 'rejected'`
+ *      or `postStatus === 'rejected'`   → Rejected by user / Rejected by admin
  *   6. `UserApprovalStatus !== 'approved'` → Approval pending by you
  *      (user-side approval check intentionally wins over
  *      `postStatus === 'approved'`, because the AI engine sometimes
@@ -43,6 +44,11 @@ export type ScheduledPostStatusInput = {
    * own explicit action, which is the most useful signal to surface back.
    */
   removedByUser?: boolean | null;
+  /**
+   * `true` when the end user rejected the post from their approval queue.
+   * Distinguishes admin rejects (`postStatus === 'rejected'`) from user rejects.
+   */
+  rejectedByUser?: boolean | null;
   error?: string | null;
   errors?: string[] | null;
 };
@@ -110,8 +116,14 @@ export function getDisplayStatus(post: ScheduledPostStatusInput): DisplayStatus 
   }
   if (ps === 'posted')
     return { label: 'Posted', variant: 'posted', reason: null };
-  if (ua === 'rejected')
-    return { label: 'Rejected', variant: 'rejected', reason: null };
+  if (ua === 'rejected' || ps === 'rejected') {
+    const byAdmin = ps === 'rejected' && post.rejectedByUser !== true;
+    return {
+      label: byAdmin ? 'Rejected by admin' : 'Rejected by user',
+      variant: 'rejected',
+      reason: null,
+    };
+  }
 
   if (ua !== 'approved') {
     return {
