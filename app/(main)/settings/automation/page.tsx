@@ -682,7 +682,7 @@ export default function AutomationPreferencePage() {
                 />
               </button>
               <span className="text-sm font-medium text-slate-700">
-                {socialSalesEmailUsage ? 'Enabled' : 'Disabled'}
+                {socialSalesContactUsage ? 'Enabled' : 'Disabled'}
               </span>
               <Phone
                 className={cn(
@@ -1006,7 +1006,11 @@ export default function AutomationPreferencePage() {
               </label>
               <p className="text-xs text-slate-500 mb-3">
                 When enabled, AI-engine scheduled posts use your best posting
-                hour derived from synced social analytics.
+                hour derived from synced social analytics. With fewer than 5
+                synced posts, the first posts try different times of day (e.g.
+                1:30am, 8:30am, noon, 5pm, 9pm) so we can learn what works —
+                then we recommend an hour and refine at :15 / :30 / :45. Your
+                preferred time below is used when this is off.
               </p>
               <div className="flex flex-wrap items-center gap-3 mb-3">
                 <button

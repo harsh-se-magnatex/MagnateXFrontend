@@ -8,6 +8,10 @@ import {
   GENERATED_SHOWCASE_BRAND as SUNGLASSES_BRAND,
   GENERATED_SHOWCASE_POSTS as SUNGLASSES_POSTS,
 } from '@/components/landing/social-preview/brands/sunglasses.generated';
+import {
+  GENERATED_SHOWCASE_BRAND as CLOTHING_BRAND,
+  GENERATED_SHOWCASE_POSTS as CLOTHING_POSTS,
+} from '@/components/landing/social-preview/brands/clothing.generated';
 
 export type ShowcaseMediaType = 'image' | 'video' | 'carousel';
 
@@ -48,6 +52,10 @@ const SHOWCASES: Record<ShowcaseBrandId, ShowcaseBundle> = {
   sunglasses: {
     brand: SUNGLASSES_BRAND,
     posts: SUNGLASSES_POSTS as unknown as ShowcasePost[],
+  },
+  clothing: {
+    brand: CLOTHING_BRAND,
+    posts: CLOTHING_POSTS as unknown as ShowcasePost[],
   },
 };
 
