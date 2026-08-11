@@ -50,7 +50,7 @@ export type AnalyticsSnapshotDocument = {
         hhmm: string | null;
         status: 'computed' | 'preserved' | 'absent';
         sampleSize?: number;
-        source?: 'ai_openai' | 'aggregated_posts';
+        source?: 'ai_openai' | 'aggregated_posts' | 'exploration' | 'refining';
         reasoning?: string;
       }
     >

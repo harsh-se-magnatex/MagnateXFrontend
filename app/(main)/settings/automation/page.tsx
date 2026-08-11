@@ -405,8 +405,10 @@ export default function AutomationPreferencePage() {
           }));
           toast.success(
             optimal
-              ? `${PLATFORM_LABELS[platform]} optimal time refreshed to ${optimal.hhmm}.`
-              : `${PLATFORM_LABELS[platform]} needs at least 5 posts before we can recommend a time.`
+              ? optimal.source === 'exploration'
+                ? `${PLATFORM_LABELS[platform]} next posting time: ${optimal.hhmm}.`
+                : `${PLATFORM_LABELS[platform]} optimal time refreshed to ${optimal.hhmm}.`
+              : `${PLATFORM_LABELS[platform]} is still gathering posts — the next scheduled posts will try different times until we have 5.`
           );
         } else {
           throw new Error('Refresh failed');
@@ -1004,9 +1006,7 @@ export default function AutomationPreferencePage() {
               </label>
               <p className="text-xs text-slate-500 mb-3">
                 When enabled, AI-engine scheduled posts use your best posting
-                hour derived from synced social analytics (engagement-weighted).
-                Your preferred time below is used when this is off or when not
-                enough posts are available yet.
+                hour derived from synced social analytics.
               </p>
               <div className="flex flex-wrap items-center gap-3 mb-3">
                 <button
@@ -1144,21 +1144,27 @@ export default function AutomationPreferencePage() {
                             </p>
                           ) : state.hhmm ? (
                             <p className="mt-1 text-xs text-slate-500">
-                              {state.meta?.sampleSize
-                                ? `From ${state.meta.sampleSize} posts`
-                                : 'From recent posts'}
+                              {state.meta?.source === 'exploration'
+                                ? `Next posting time`
+                                : state.meta?.source === 'refining'
+                                  ? 'Refining minute within the best hour'
+                                  : state.meta?.sampleSize
+                                    ? `From ${state.meta.sampleSize} posts`
+                                    : 'From recent posts'}
                               {state.meta?.source === 'ai_openai'
                                 ? ' · AI picked'
                                 : state.meta?.source === 'aggregated_posts'
                                   ? ' · Engagement-weighted'
-                                  : ''}
-                              {computedAtLabel
-                                ? ` · ${computedAtLabel}`
-                                : ''}
+                                  : state.meta?.source === 'exploration'
+                                    ? ''
+                                    : state.meta?.source === 'refining'
+                                      ? ' · Quarter-hour probe'
+                                      : ''}
                             </p>
                           ) : (
                             <p className="mt-1 text-xs text-slate-500">
-                              Needs at least 5 synced posts to recommend a time.
+                              Refresh to load the next warmup posting time, or
+                              wait for the next scheduled post.
                             </p>
                           )}
                         </div>

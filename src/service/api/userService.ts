@@ -290,7 +290,7 @@ export type OptimalPostingPlatform = 'facebook' | 'instagram' | 'linkedin';
 export type OptimalPostingMeta = {
   sampleSize?: number;
   computedAt?: unknown;
-  source?: 'ai_openai' | 'aggregated_posts';
+  source?: 'ai_openai' | 'aggregated_posts' | 'exploration' | 'refining';
   reasoning?: string;
 };
 
@@ -325,7 +325,7 @@ export type RefreshOptimalPostingTimeResult = {
   optimal: {
     hhmm: string;
     sampleSize: number;
-    source: 'ai_openai' | 'aggregated_posts';
+    source: 'ai_openai' | 'aggregated_posts' | 'exploration' | 'refining';
     reasoning?: string;
     /**
      * `computed` – fresh value picked this run.
