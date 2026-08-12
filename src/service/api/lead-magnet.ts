@@ -22,6 +22,8 @@ export type LeadMagnetPost = {
   imageFilePath?: string;
 };
 
+export type LeadMagnetJobStatus = 'processing' | 'ready' | 'failed';
+
 type ApiEnvelope<T> = {
   success?: boolean;
   message?: string;
@@ -69,8 +71,9 @@ export async function previewLeadMagnet(args: {
 }
 
 /**
- * Step 3 — generate synchronously via API → worker HTTP POST.
- * Waits for the finished post in the same response (no poll / no queue).
+ * Step 3 — enqueue generation on the worker (Cloud Tasks).
+ * Returns `jobId` immediately; client polls `/status` for the finished post.
+ * May return `status: 'ready'` with `post` if the job already finished.
  */
 export async function generateLeadMagnet(args: {
   email: string;
@@ -83,8 +86,9 @@ export async function generateLeadMagnet(args: {
       email: string;
       domainKey: string;
       platform: LeadMagnetPlatform;
-      status: 'ready';
-      post: LeadMagnetPost;
+      status: 'processing' | 'ready';
+      jobId: string;
+      post?: LeadMagnetPost;
     }>
   >(
     '/api/v1/lead-magnet/generate',
@@ -94,10 +98,39 @@ export async function generateLeadMagnet(args: {
       platform: args.platform,
       dna: args.dna,
     },
-    { timeout: 16 * 60_000 }
+    { timeout: 30_000 }
   );
-  if (!res?.data?.post) {
-    throw new Error(res?.message || 'Generate failed — no post returned');
+  if (!res?.data?.jobId) {
+    throw new Error(res?.message || 'Generate failed — no job returned');
+  }
+  return res.data;
+}
+
+/** Poll worker-persisted job until ready / failed. */
+export async function pollLeadMagnetStatus(args: {
+  email: string;
+  jobId: string;
+}) {
+  const res = await apiPost<
+    ApiEnvelope<{
+      status: LeadMagnetJobStatus;
+      email: string;
+      domainKey?: string;
+      platform?: LeadMagnetPlatform;
+      jobId: string;
+      post?: LeadMagnetPost;
+      error?: string;
+    }>
+  >(
+    '/api/v1/lead-magnet/status',
+    {
+      email: args.email.trim(),
+      jobId: args.jobId.trim(),
+    },
+    { timeout: 20_000 }
+  );
+  if (!res?.data?.status) {
+    throw new Error(res?.message || 'Status check failed');
   }
   return res.data;
 }

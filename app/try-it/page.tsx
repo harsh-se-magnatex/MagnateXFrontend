@@ -6,7 +6,7 @@ import '@/components/landing/landing-3d.css';
 export const metadata: Metadata = {
   title: 'Try it — Sociogenie | Free sample post',
   description:
-    'Enter your email and website, pick a platform, and get one free sample social post crafted from your brand — no signup required.',
+    'Enter your website and email, pick a platform, and get one free sample social post crafted from your brand — no signup required.',
 };
 
 export default function TryItPage() {

@@ -8,6 +8,7 @@ import {
   claimLeadMagnetEmail,
   generateLeadMagnet,
   LEAD_MAGNET_CONSENT_FALLBACK,
+  pollLeadMagnetStatus,
   previewLeadMagnet,
   type LeadMagnetDna,
   type LeadMagnetPlatform,
@@ -30,6 +31,8 @@ const PLATFORMS: { id: LeadMagnetPlatform; label: string }[] = [
 ];
 
 const PREVIEW_TIMEOUT_MS = 90_000;
+const POLL_INTERVAL_MS = 2_000;
+const POLL_TIMEOUT_MS = 12 * 60_000;
 
 function BrandColorSwatch({ hex, label }: { hex: string; label: string }) {
   const color = hex.trim();
@@ -143,7 +146,7 @@ function BrandPreviewCard({ dna }: { dna: LeadMagnetDna }) {
 export function LeadMagnetSection() {
   const sectionRef = React.useRef<HTMLElement | null>(null);
   const resultRef = React.useRef<HTMLDivElement | null>(null);
-  const [step, setStep] = React.useState<Step>('email');
+  const [step, setStep] = React.useState<Step>('website');
   const [email, setEmail] = React.useState('');
   const [website, setWebsite] = React.useState('');
   const [platform, setPlatform] = React.useState<LeadMagnetPlatform | null>(
@@ -158,47 +161,28 @@ export function LeadMagnetSection() {
   );
   const [post, setPost] = React.useState<LeadMagnetPost | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const [generatingSince, setGeneratingSince] = React.useState<number | null>(
+    null
+  );
   const [error, setError] = React.useState<string | null>(null);
+  const [, setTick] = React.useState(0);
 
   const scrollToSection = React.useCallback(() => {
     sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
-  const onContinueEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (!email.trim()) {
-      setError('Enter your email to continue.');
-      return;
-    }
-    setBusy(true);
-    try {
-      const data = await claimLeadMagnetEmail(email);
-      setEmail(data.email);
-      if (data.consentText) setConsentText(data.consentText);
-      setStep('website');
-      scrollToSection();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not verify email');
-    } finally {
-      setBusy(false);
-    }
-  };
+  React.useEffect(() => {
+    if (step !== 'generating' || generatingSince == null) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 15_000);
+    return () => window.clearInterval(id);
+  }, [step, generatingSince]);
 
-  const onContinueWebsite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    if (!website.trim()) {
-      setError('Enter your website to continue.');
-      return;
-    }
-    if (busy) return;
-    setBusy(true);
-    setStep('loading');
-    scrollToSection();
-    try {
+  const runWebsitePreview = React.useCallback(
+    async (args: { email: string; website: string }) => {
+      setStep('loading');
+      scrollToSection();
       const data = await Promise.race([
-        previewLeadMagnet({ email, website }),
+        previewLeadMagnet({ email: args.email, website: args.website }),
         new Promise<never>((_, reject) => {
           setTimeout(
             () =>
@@ -217,9 +201,48 @@ export function LeadMagnetSection() {
       if (data.dna.website) setWebsite(data.dna.website);
       setStep('brand');
       scrollToSection();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+    },
+    [scrollToSection]
+  );
+
+  /** Website first — collect URL only; no scrape until email is verified. */
+  const onContinueWebsite = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!website.trim()) {
+      setError('Enter your website to continue.');
+      return;
+    }
+    setStep('email');
+    scrollToSection();
+  };
+
+  /**
+   * Email second — claim check (already generated?), then start website fetch.
+   */
+  const onContinueEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email.trim()) {
+      setError('Enter your email to continue.');
+      return;
+    }
+    if (!website.trim()) {
+      setError('Enter your website to continue.');
       setStep('website');
+      return;
+    }
+    if (busy) return;
+    setBusy(true);
+    try {
+      const data = await claimLeadMagnetEmail(email);
+      setEmail(data.email);
+      if (data.consentText) setConsentText(data.consentText);
+      await runWebsitePreview({ email: data.email, website });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not verify email');
+      // Stay on email if claim failed; go back to email if preview failed after claim.
+      setStep('email');
     } finally {
       setBusy(false);
     }
@@ -232,34 +255,70 @@ export function LeadMagnetSection() {
     setError(null);
     setPlatform(nextPlatform);
     setStep('generating');
+    setGeneratingSince(Date.now());
     scrollToSection();
+
     try {
-      const gen = await generateLeadMagnet({
+      const queued = await generateLeadMagnet({
         email,
         website: dna.website || website,
         platform: nextPlatform,
         dna,
       });
-      setDomainKey(gen.domainKey);
-      setPost(gen.post);
-      setStep('result');
-      requestAnimationFrame(() => {
-        resultRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
+      setDomainKey(queued.domainKey);
+
+      if (queued.status === 'ready' && queued.post) {
+        setPost(queued.post);
+        setStep('result');
+        requestAnimationFrame(() => {
+          resultRef.current?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
         });
-      });
+        return;
+      }
+
+      const startedAt = Date.now();
+      while (Date.now() - startedAt < POLL_TIMEOUT_MS) {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+        const status = await pollLeadMagnetStatus({
+          email,
+          jobId: queued.jobId,
+        });
+        if (status.domainKey) setDomainKey(status.domainKey);
+        if (status.status === 'ready' && status.post) {
+          setPost(status.post);
+          setStep('result');
+          requestAnimationFrame(() => {
+            resultRef.current?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          });
+          return;
+        }
+        if (status.status === 'failed') {
+          throw new Error(
+            status.error || 'Generation failed. Please try again.'
+          );
+        }
+      }
+      throw new Error(
+        'This is taking longer than expected. Please try again in a few minutes.'
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setStep('platform');
     } finally {
       setBusy(false);
       setPickingPlatform(null);
+      setGeneratingSince(null);
     }
   };
 
   const reset = () => {
-    setStep('email');
+    setStep('website');
     setEmail('');
     setWebsite('');
     setPlatform(null);
@@ -269,6 +328,7 @@ export function LeadMagnetSection() {
     setPost(null);
     setError(null);
     setBusy(false);
+    setGeneratingSince(null);
   };
 
   return (
@@ -283,13 +343,46 @@ export function LeadMagnetSection() {
           See a post for your brand
         </h2>
         <p className="landing-body mx-auto mt-4 max-w-xl text-center text-base text-white/60">
-          Enter your email, drop your website, confirm your brand, pick a
+          Drop your website, enter your email, confirm your brand, pick a
           platform, and we&apos;ll craft one sample post — no signup required.
         </p>
 
         <div className="mt-12 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-md md:p-8">
+          {step === 'website' && (
+            <form onSubmit={onContinueWebsite} className="space-y-4">
+              <label className="landing-body block text-sm text-white/70">
+                Your website
+                <input
+                  type="text"
+                  inputMode="url"
+                  autoComplete="url"
+                  placeholder="yourbusiness.com"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  className="lead-magnet-input mt-2"
+                  disabled={busy}
+                />
+              </label>
+              <button
+                type="submit"
+                className="landing-btn-primary w-full sm:w-auto"
+                disabled={busy || !website.trim()}
+              >
+                Continue
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </form>
+          )}
+
           {step === 'email' && (
-            <form onSubmit={onContinueEmail} className="space-y-4">
+            <form onSubmit={(e) => void onContinueEmail(e)} className="space-y-4">
+              <p className="landing-body text-xs text-white/40">
+                Looking up{' '}
+                <span className="text-white/60">
+                  {website.replace(/^https?:\/\//, '')}
+                </span>{' '}
+                after we verify your email
+              </p>
               <label className="landing-body block text-sm text-white/70">
                 Email
                 <input
@@ -306,58 +399,20 @@ export function LeadMagnetSection() {
               <p className="landing-body -mt-1 text-xs leading-relaxed text-white/45">
                 {consentText}
               </p>
-              <button
-                type="submit"
-                className="landing-btn-primary w-full sm:w-auto"
-                disabled={busy || !email.trim()}
-              >
-                {busy ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Checking…
-                  </>
-                ) : (
-                  <>
-                    Continue
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-
-          {step === 'website' && (
-            <form onSubmit={(e) => void onContinueWebsite(e)} className="space-y-4">
-              <p className="landing-body text-xs text-white/40">
-                Using {email}
-              </p>
-              <label className="landing-body block text-sm text-white/70">
-                Your website
-                <input
-                  type="text"
-                  inputMode="url"
-                  autoComplete="url"
-                  placeholder="yourbusiness.com"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  className="lead-magnet-input mt-2"
-                  disabled={busy}
-                />
-              </label>
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
                   className="landing-btn-primary w-full sm:w-auto"
-                  disabled={busy || !website.trim()}
+                  disabled={busy || !email.trim()}
                 >
                   {busy ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Looking up…
+                      Checking…
                     </>
                   ) : (
                     <>
-                      Look up brand
+                      Continue
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}
@@ -365,10 +420,13 @@ export function LeadMagnetSection() {
                 <button
                   type="button"
                   className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
-                  onClick={() => setStep('email')}
+                  onClick={() => {
+                    setError(null);
+                    setStep('website');
+                  }}
                   disabled={busy}
                 >
-                  Change email
+                  Change website
                 </button>
               </div>
             </form>
@@ -479,6 +537,13 @@ export function LeadMagnetSection() {
                   ? `Crafting a ${PLATFORMS.find((p) => p.id === platform)?.label ?? ''} sample for ${dna.businessName}.`
                   : 'This usually takes a minute or two.'}
               </p>
+              {generatingSince != null &&
+              Date.now() - generatingSince > 60_000 ? (
+                <p className="landing-body text-xs text-white/40">
+                  Still working — hang tight, we&apos;ll show it when it&apos;s
+                  ready.
+                </p>
+              ) : null}
             </div>
           )}
 
@@ -524,7 +589,7 @@ export function LeadMagnetSection() {
                   onClick={reset}
                   className="landing-btn-secondary"
                 >
-                  Try another email
+                  Try another website
                 </button>
                 <Link
                   href="/product"
