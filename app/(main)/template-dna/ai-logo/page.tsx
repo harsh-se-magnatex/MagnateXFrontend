@@ -96,6 +96,9 @@ export default function AILogoPage() {
       const nextPicks = response?.data?.picks || [];
       const nextUrls = response?.data?.urls || [];
       if (!nextPicks.length) throw new Error('No logo pick was generated.');
+      // Keep the white-canvas data URL in `picks` for display. Refetching
+      // storage URLs right away caused a white→dark flash when the gallery
+      // briefly showed transparency over dark UI chrome.
       setPicks((currentPicks) =>
         [...nextPicks, ...currentPicks].slice(0, MAX_AI_LOGO_PICKS)
       );
@@ -103,7 +106,6 @@ export default function AILogoPage() {
         [...nextUrls, ...current].slice(0, MAX_AI_LOGO_PICKS)
       );
       toast.success('Logo pick is ready.');
-      void handleGetAiGeneratedLogos();
     } catch (error: unknown) {
       showErrorToast('Failed to generate AI logo pick. Please Try Again Later.');
     } finally {
@@ -303,8 +305,9 @@ export default function AILogoPage() {
                       type="button"
                       key={`logo-pick-${idx}`}
                       onClick={() => setSelectedIndex(idx)}
+                      style={{ backgroundColor: '#ffffff' }}
                       className={[
-                        'group relative aspect-square rounded-2xl border bg-white p-2 transition',
+                        'group relative aspect-square rounded-2xl border p-2 transition',
                         active
                           ? 'border-indigo-500 ring-2 ring-indigo-200'
                           : 'border-slate-200 hover:border-slate-300',

@@ -195,8 +195,9 @@ export function OnboardingAiLogoSection({
                 onClick={() =>
                   onSelect({ url: pick.url, preview: pick.preview })
                 }
+                style={{ backgroundColor: '#ffffff' }}
                 className={cn(
-                  'group relative aspect-square overflow-hidden rounded-xl border bg-background p-2 transition',
+                  'group relative aspect-square overflow-hidden rounded-xl border p-2 transition',
                   active
                     ? 'border-primary-purple ring-2 ring-primary-purple/25'
                     : 'border-border hover:border-primary-purple/40'
