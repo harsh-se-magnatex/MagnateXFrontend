@@ -625,9 +625,13 @@ export const useAiGeneratedLogo = async (publicUrl: string) => {
 };
 
 export const getAiGeneratedLogos = async () => {
-  return apiGet<ApiEnvelope<{ logos: { url: string; createdAt: string }[] }>>(
-    '/api/v1/user/ai-logo/generated'
-  );
+  return apiGet<
+    ApiEnvelope<{
+      logos: { url: string; createdAt: string }[];
+      totalGeneratedLogos?: number;
+      onboardingAiLogoGenerations?: number;
+    }>
+  >('/api/v1/user/ai-logo/generated');
 };
 
 export const selectSocialPlatformApi = async (selected: {

@@ -378,15 +378,6 @@ export const GENERATED_SHOWCASE_POSTS = [
     "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/4C6v9v631ypPEDRGI6Zh/image.png"
   },
   {
-    "id": "ji9WA7hgmZNaPOqIkPrn",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-07T09:42:04.889Z",
-    "mediaType": "video",
-    "caption": "Which style says YOU? This tortoiseshell frame cuts through the noise. Classic shape, bold blue lens—built for clarity and confidence. Find your frame at Neon Ray. What's your go-to look?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "videoUrl": "/landing/how-it-looks/sunglasses/instagram/ji9WA7hgmZNaPOqIkPrn/video.mp4",
-    "posterUrl": "/landing/how-it-looks/sunglasses/instagram/ji9WA7hgmZNaPOqIkPrn/poster.png"
-  },
-  {
     "id": "a8BTCSkc6D8Jkuxk8Iin",
     "platform": "facebook",
     "scheduleAt": "2026-08-07T09:35:16.537Z",

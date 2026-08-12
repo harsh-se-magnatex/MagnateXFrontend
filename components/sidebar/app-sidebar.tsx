@@ -50,7 +50,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { usePathname } from 'next/navigation';
-import { WORKSPACE_NAV, CONTENT_PLAN_NAV_ITEM, WORKSPACE_NAV_HREFS, type WorkspaceNavHref } from '@/lib/workspace-nav';
+import { WORKSPACE_NAV, WORKSPACE_NAV_HREFS, type WorkspaceNavHref } from '@/lib/workspace-nav';
 import { useTourState } from '@/src/stores/tourState';
 import { getPageTourRequest } from '@/components/tour/tour-steps';
 import { useAuth } from '@/hooks/useAuth';
@@ -142,22 +142,6 @@ export function AppSidebar({
       );
     }
     const items = [...workspaceNav];
-    // Content Calendar for Auto (AI) and Studio — append from users/{uid}.mode
-    // via UserPlanCreditsProvider.
-    if (billing?.mode === 'auto' || billing?.mode === 'manual') {
-      const schedulePostIdx = items.findIndex(
-        (item) => item.href === WORKSPACE_NAV_HREFS.schedulePost
-      );
-      const contentPlanItem = {
-        ...CONTENT_PLAN_NAV_ITEM,
-        icon: workspaceNavIcons[CONTENT_PLAN_NAV_ITEM.href],
-      };
-      if (schedulePostIdx >= 0) {
-        items.splice(schedulePostIdx + 1, 0, contentPlanItem);
-      } else {
-        items.push(contentPlanItem);
-      }
-    }
     return items;
   })();
   const settingsChildItems = isAccountFrozen

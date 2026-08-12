@@ -3,7 +3,7 @@
  * Add a brand here after exporting with:
  *   pnpm export-how-it-looks -- --brand=<id>
  */
-export type ShowcaseBrandId = 'magnate-regalia' | 'sunglasses' | 'clothing';
+export type ShowcaseBrandId = 'magnate-regalia' | 'sunglasses' | 'clothing' | 'cafe';
 
 export type ShowcaseBrandOption = {
   id: ShowcaseBrandId;
@@ -26,6 +26,11 @@ export const SHOWCASE_BRAND_OPTIONS: ShowcaseBrandOption[] = [
     id: 'clothing',
     label: 'Clothing',
     description: 'Fashion clothing',
+  },
+  {
+    id: 'cafe',
+    label: 'Cafe',
+    description: 'Food & Beverage',
   },
 ];
 

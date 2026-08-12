@@ -93,6 +93,12 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.schedulePost),
   },
   {
+    name: 'Content Calendar',
+  href: WORKSPACE_NAV_HREFS.contentPlan,
+  match: (pathname) =>
+    !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.contentPlan),
+  },
+  {
     name: 'Scheduled Posts',
     href: WORKSPACE_NAV_HREFS.postQueue,
     match: (pathname) =>
@@ -120,17 +126,9 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
   },
 ];
 
-/** Auto-mode only — appended in the sidebar from `UserPlanCreditsProvider`. */
-export const CONTENT_PLAN_NAV_ITEM: WorkspaceNavItem = {
-  name: 'Content Calendar',
-  href: WORKSPACE_NAV_HREFS.contentPlan,
-  match: (pathname) =>
-    !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.contentPlan),
-};
 
 export function workspacePageTitle(href: WorkspaceNavHref): string {
   const item =
-    WORKSPACE_NAV.find((entry) => entry.href === href) ??
-    (href === WORKSPACE_NAV_HREFS.contentPlan ? CONTENT_PLAN_NAV_ITEM : null);
+    WORKSPACE_NAV.find((entry) => entry.href === href);
   return item?.name ?? href;
 }

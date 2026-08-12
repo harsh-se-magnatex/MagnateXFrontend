@@ -9,9 +9,9 @@ import { generateAiLogoPicks } from '@/src/service/api/userService';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { toast } from 'sonner';
 
-const MAX_ONBOARDING_AI_LOGOS = 2;
+export const MAX_ONBOARDING_AI_LOGOS = 2;
 
-type LogoPick = {
+export type OnboardingLogoPick = {
   preview: string;
   url: string;
 };
@@ -24,6 +24,13 @@ type OnboardingAiLogoSectionProps = {
   selectedUrl?: string | null;
   /** True when upload / suggestion / prior pick already set a logo. */
   hasExistingLogo?: boolean;
+  /** Lifted state so generation count survives step navigation. */
+  picks: OnboardingLogoPick[];
+  onPicksChange: (picks: OnboardingLogoPick[]) => void;
+  generationUsed: number;
+  onGenerationUsedChange: (count: number) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
 export function OnboardingAiLogoSection({
@@ -32,13 +39,17 @@ export function OnboardingAiLogoSection({
   onSelect,
   selectedUrl,
   hasExistingLogo = false,
+  picks,
+  onPicksChange,
+  generationUsed,
+  onGenerationUsedChange,
+  open,
+  onOpenChange,
 }: OnboardingAiLogoSectionProps) {
-  const [open, setOpen] = useState(false);
   const [requirements, setRequirements] = useState('');
-  const [picks, setPicks] = useState<LogoPick[]>([]);
   const [generating, setGenerating] = useState(false);
 
-  const limitReached = picks.length >= MAX_ONBOARDING_AI_LOGOS;
+  const limitReached = generationUsed >= MAX_ONBOARDING_AI_LOGOS;
   const canGenerate =
     Boolean(businessName.trim() && industry.trim()) && !limitReached && !generating;
 
@@ -66,12 +77,20 @@ export function OnboardingAiLogoSection({
       if (!nextPreview || !nextUrl) {
         throw new Error('No logo was generated.');
       }
-      setPicks((prev) =>
-        [{ preview: nextPreview, url: nextUrl }, ...prev].slice(
+      onPicksChange(
+        [{ preview: nextPreview, url: nextUrl }, ...picks].slice(
           0,
           MAX_ONBOARDING_AI_LOGOS
         )
       );
+      const remaining = response?.data?.remaining;
+      if (typeof remaining === 'number') {
+        onGenerationUsedChange(
+          Math.max(0, MAX_ONBOARDING_AI_LOGOS - remaining)
+        );
+      } else {
+        onGenerationUsedChange(generationUsed + 1);
+      }
       toast.success('Logo ready — pick one to use.');
     } catch (error: unknown) {
       showErrorToast(
@@ -80,13 +99,22 @@ export function OnboardingAiLogoSection({
     } finally {
       setGenerating(false);
     }
-  }, [businessName, industry, limitReached, requirements]);
+  }, [
+    businessName,
+    industry,
+    generationUsed,
+    limitReached,
+    onGenerationUsedChange,
+    onPicksChange,
+    picks,
+    requirements,
+  ]);
 
   if (!open) {
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => onOpenChange(true)}
         className={cn(
           'flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary-purple/35 bg-primary-purple/5 px-4 py-3.5 text-sm font-semibold text-foreground transition-colors',
           'hover:border-primary-purple/55 hover:bg-primary-purple/10'
@@ -117,7 +145,7 @@ export function OnboardingAiLogoSection({
           </p>
         </div>
         <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
-          {picks.length}/{MAX_ONBOARDING_AI_LOGOS}
+          {generationUsed}/{MAX_ONBOARDING_AI_LOGOS}
         </span>
       </div>
 

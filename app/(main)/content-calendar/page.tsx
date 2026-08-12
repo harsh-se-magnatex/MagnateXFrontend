@@ -24,6 +24,11 @@ import {
 } from '@/src/service/api/content-plan.service';
 import { cn } from '@/lib/utils';
 import {
+  forceRunLockKey,
+  isForceRunTargetComplete,
+  parseForceRunLockKey,
+} from '@/lib/content-plan-force-run';
+import {
   WORKSPACE_NAV_HREFS,
   workspacePageTitle,
 } from '@/lib/workspace-nav';
@@ -204,9 +209,14 @@ function forceRunVisualKey(args: {
   date: string;
   platform: ContentPlanPlatform;
   kind: string;
-  idx: number;
+  eventId?: string;
 }): string {
-  return `${args.date}::${args.platform}::${args.kind}::${args.idx}`;
+  return forceRunLockKey({
+    date: args.date,
+    platform: args.platform,
+    kind: args.kind,
+    eventId: args.eventId,
+  });
 }
 
 function PlatformCell({
@@ -215,7 +225,7 @@ function PlatformCell({
   entries,
   todayIso,
   forceRunEnabled,
-  forceRunKey,
+  runningForceRunKeys,
   onForceRun,
 }: {
   date: string;
@@ -223,11 +233,10 @@ function PlatformCell({
   entries: CellEntry[];
   todayIso: string;
   forceRunEnabled: boolean;
-  forceRunKey: string | null;
+  runningForceRunKeys: Set<string>;
   onForceRun: (
     date: string,
     platform: ContentPlanPlatform,
-    visualKey: string,
     kind: ContentPlanUpcomingItem['kind'],
     eventId?: string
   ) => void;
@@ -248,9 +257,16 @@ function PlatformCell({
           date,
           platform,
           kind: entry.kind,
-          idx,
+          eventId: entry.eventId,
         });
-        const isRunning = forceRunKey === runKey;
+        const isRunning = runningForceRunKeys.has(runKey);
+        const displayStatus =
+          isRunning || entry.status === 'Generating'
+            ? 'Generating'
+            : entry.status ??
+              (entry.source === 'upcoming' && entry.kind !== 'empty'
+                ? 'Planned'
+                : undefined);
         const body = (
           <div
             className={cn(
@@ -258,17 +274,17 @@ function PlatformCell({
               cellToneClass(entry.kind),
               entry.href && 'hover:ring-primary/60'
             )}
-            title={[entry.label, entry.status, entry.note]
+            title={[entry.label, displayStatus, entry.note]
               .filter(Boolean)
               .join(' · ')}
           >
             <div className="text-[11px] font-bold tracking-tight">
               {entry.label}
             </div>
-            {entry.status ? (
-              <div className="text-[10px] font-medium opacity-90">{entry.status}</div>
-            ) : entry.source === 'upcoming' && entry.kind !== 'empty' ? (
-              <div className="text-[10px] font-medium opacity-90">Planned</div>
+            {displayStatus ? (
+              <div className="text-[10px] font-medium opacity-90">
+                {displayStatus}
+              </div>
             ) : null}
             {entry.note ? (
               <div
@@ -284,6 +300,7 @@ function PlatformCell({
         const showForceRun =
           forceRunEnabled &&
           !isPast &&
+          !isRunning &&
           entry.source === 'upcoming' &&
           canForceRunKind(entry.kind);
 
@@ -301,12 +318,10 @@ function PlatformCell({
             {showForceRun ? (
               <button
                 type="button"
-                disabled={Boolean(forceRunKey)}
                 onClick={() =>
                   onForceRun(
                     date,
                     platform,
-                    runKey,
                     entry.kind as ContentPlanUpcomingItem['kind'],
                     entry.eventId
                   )
@@ -335,7 +350,7 @@ function ContentPlanSheet({
   platforms,
   todayIso,
   forceRunEnabled,
-  forceRunKey,
+  runningForceRunKeys,
   onForceRun,
 }: {
   days: ContentPlanDay[];
@@ -343,11 +358,10 @@ function ContentPlanSheet({
   /** YYYY-MM-DD in the user's timezone — highlighted as Today. */
   todayIso: string;
   forceRunEnabled: boolean;
-  forceRunKey: string | null;
+  runningForceRunKeys: Set<string>;
   onForceRun: (
     date: string,
     platform: ContentPlanPlatform,
-    visualKey: string,
     kind: ContentPlanUpcomingItem['kind'],
     eventId?: string
   ) => void;
@@ -450,7 +464,7 @@ function ContentPlanSheet({
                           entries={entries}
                           todayIso={todayIso}
                           forceRunEnabled={forceRunEnabled}
-                          forceRunKey={forceRunKey}
+                          runningForceRunKeys={runningForceRunKeys}
                           onForceRun={onForceRun}
                         />
                       </td>
@@ -490,7 +504,9 @@ export default function ContentPlanPage() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [forceRunKey, setForceRunKey] = useState<string | null>(null);
+  const [runningForceRunKeys, setRunningForceRunKeys] = useState<Set<string>>(
+    () => new Set()
+  );
   const [calendarSeeded, setCalendarSeeded] = useState(false);
   const [initialGenerationPending, setInitialGenerationPending] =
     useState(false);
@@ -541,6 +557,17 @@ export default function ContentPlanPage() {
       setCalendarSeeded(data.calendarSeeded);
       setInitialGenerationPending(data.initialCalendarGenerationPending);
       setCanGenerateCalendar(data.canGenerateCalendar);
+      setRunningForceRunKeys((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set(prev);
+        for (const key of prev) {
+          const target = parseForceRunLockKey(key);
+          if (target && isForceRunTargetComplete(data.days, target)) {
+            next.delete(key);
+          }
+        }
+        return next.size === prev.size ? prev : next;
+      });
       if (silent) setError('');
     } catch (err) {
       const message =
@@ -597,7 +624,6 @@ export default function ContentPlanPage() {
     async (
       date: string,
       platform: ContentPlanPlatform,
-      visualKey: string,
       kind: ContentPlanUpcomingItem['kind'],
       eventId?: string
     ) => {
@@ -609,7 +635,8 @@ export default function ContentPlanPage() {
         toast.error('No planned generation on this date');
         return;
       }
-      setForceRunKey(visualKey);
+      const lockKey = forceRunLockKey({ date, platform, kind, eventId });
+      setRunningForceRunKeys((prev) => new Set(prev).add(lockKey));
       try {
         await forceRunContentPlanApi({
           date,
@@ -672,6 +699,11 @@ export default function ContentPlanPage() {
         );
         void load({ silent: true });
       } catch (err) {
+        setRunningForceRunKeys((prev) => {
+          const next = new Set(prev);
+          next.delete(lockKey);
+          return next;
+        });
         const message =
           err &&
           typeof err === 'object' &&
@@ -686,12 +718,18 @@ export default function ContentPlanPage() {
               ? err.message
               : 'Force Run failed';
         toast.error(message);
-      } finally {
-        setForceRunKey(null);
       }
     },
     [load, todayIso]
   );
+
+  useEffect(() => {
+    if (runningForceRunKeys.size === 0) return;
+    const id = window.setInterval(() => {
+      void load({ silent: true });
+    }, 4000);
+    return () => window.clearInterval(id);
+  }, [runningForceRunKeys.size, load]);
 
   useEffect(() => {
     if (authLoading || creditsLoading) return;
@@ -870,7 +908,7 @@ export default function ContentPlanPage() {
             platforms={platforms}
             todayIso={todayIso}
             forceRunEnabled={isAuto}
-            forceRunKey={forceRunKey}
+            runningForceRunKeys={runningForceRunKeys}
             onForceRun={handleForceRun}
           />
         </div>

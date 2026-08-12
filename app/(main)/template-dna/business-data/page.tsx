@@ -18,6 +18,7 @@ import {
   showErrorToast,
 } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
+import { normalizeMemoryLayerUploadImage } from '@/lib/normalize-memory-layer-image';
 import {
   deleteMemoryLayerBrandPhoto,
   getMemoryLayer,
@@ -123,6 +124,7 @@ function isImageFile(f: File): boolean {
     'bmp',
     'heic',
     'heif',
+    'avif',
     'svg',
   ].includes(ext);
 }
@@ -544,35 +546,47 @@ export default function TemplateDnaMemoryLayerPage() {
 
   const addFilesFromPicker = (list: FileList | null) => {
     if (!list?.length) return;
-    const brandPhotos = memoryRef.current?.brandPhotos ?? [];
-    setPendingImages((prev) => {
-      const maxTotal = 30 - brandPhotos.length;
-      const room = Math.max(0, maxTotal - prev.length);
-      if (room === 0) {
-        toast.message('30 image limit reached');
-        return prev;
-      }
-      const next = [...prev];
-      for (let i = 0; i < list.length; i++) {
-        if (next.length >= maxTotal) {
-          toast.message('30 image limit reached');
-          break;
-        }
-        const f = list.item(i);
-        if (!f) continue;
+    void (async () => {
+      const brandPhotos = memoryRef.current?.brandPhotos ?? [];
+      const incoming = Array.from(list);
+      const staged: PendingImage[] = [];
+
+      for (const f of incoming) {
         if (!isImageFile(f)) {
           showErrorToast(`${f.name} is not an image`);
           continue;
         }
-        next.push({
-          id: makePendingId(f),
-          file: f,
-          previewUrl: URL.createObjectURL(f),
+        const normalized = await normalizeMemoryLayerUploadImage(f);
+        staged.push({
+          id: makePendingId(normalized),
+          file: normalized,
+          previewUrl: URL.createObjectURL(normalized),
           description: '',
         });
       }
-      return next;
-    });
+
+      if (staged.length === 0) return;
+
+      setPendingImages((prev) => {
+        const maxTotal = 30 - brandPhotos.length;
+        const room = Math.max(0, maxTotal - prev.length);
+        if (room === 0) {
+          for (const item of staged) {
+            URL.revokeObjectURL(item.previewUrl);
+          }
+          toast.message('30 image limit reached');
+          return prev;
+        }
+        const accepted = staged.slice(0, room);
+        for (const item of staged.slice(room)) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+        if (staged.length > room) {
+          toast.message('30 image limit reached');
+        }
+        return [...prev, ...accepted];
+      });
+    })();
   };
 
   const toggleMulti = (q: Question, option: string) => {

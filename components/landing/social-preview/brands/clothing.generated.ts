@@ -90,6 +90,126 @@ export const GENERATED_SHOWCASE_POSTS = [
     "imageUrl": "/landing/how-it-looks/clothing/linkedin/Xee07VY75hBT8BQr4ZlM/image.png"
   },
   {
+    "id": "pdIV3OJBsl9QAMHtuJKP",
+    "platform": "linkedin",
+    "scheduleAt": "2026-09-01T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Your style is your story. At Neon Clothes, we believe fashion is the most authentic form of self-expression—where vibrant color meets everyday comfort, and individuality shines brightest.\n\nThis season, celebrate the unique energy you bring to every room, every street, every moment. Wear what makes you feel alive.\n\n#NeonFashion #VibrantStyles #TrendyWear\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/linkedin/pdIV3OJBsl9QAMHtuJKP/image.png"
+  },
+  {
+    "id": "FDYV3zxzbcNTiruGFJLR",
+    "platform": "instagram",
+    "scheduleAt": "2026-09-01T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Every outfit tells your story. Neon Clothes celebrates the individuals who wear their confidence loud and proud. Find your vibrant edge. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/instagram/FDYV3zxzbcNTiruGFJLR/image.png"
+  },
+  {
+    "id": "15e9MlAcPs10aLfTjzIg",
+    "platform": "facebook",
+    "scheduleAt": "2026-09-01T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Express yourself boldly. Neon Clothes celebrates your unique style with vibrant fashion designed for everyday confidence. Discover where color meets comfort. #NeonFashion #VibrantStyles #TrendyWear\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/facebook/15e9MlAcPs10aLfTjzIg/image.png"
+  },
+  {
+    "id": "mT6HZ3VDI69ofWeL7Nsn",
+    "platform": "facebook",
+    "scheduleAt": "2026-08-31T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Weekend adventures demand color. Neon Clothes brings vibrant style to every escape—where bold fashion meets outdoor joy. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/facebook/mT6HZ3VDI69ofWeL7Nsn/image.png"
+  },
+  {
+    "id": "j1saiY6c662mqOdfnacH",
+    "platform": "instagram",
+    "scheduleAt": "2026-08-31T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Weekends call for bold style and brighter moments. Neon Clothes brings vibrant fashion to every adventure—where comfort meets color. Dress to celebrate life. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/instagram/j1saiY6c662mqOdfnacH/image.png"
+  },
+  {
+    "id": "56NX5dIpogoN4CpvrInm",
+    "platform": "linkedin",
+    "scheduleAt": "2026-08-31T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Weekends are made for color. Whether you're gathering with friends in nature or simply stepping away from the ordinary, Neon Clothes helps you celebrate every moment in bold, vibrant style. Our premium neon pieces transform everyday adventures into statements of joy and confidence.\n\nWhere vibrant fashion meets everyday comfort — that's the Neon Clothes promise.\n\n#NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/linkedin/56NX5dIpogoN4CpvrInm/image.png"
+  },
+  {
+    "id": "txxAijPpyQgZYdSkgiQt",
+    "platform": "facebook",
+    "scheduleAt": "2026-08-30T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Let your style shine as the sun sets. Neon Clothes: where vibrant fashion meets everyday comfort. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/facebook/txxAijPpyQgZYdSkgiQt/image.png"
+  },
+  {
+    "id": "WvaF3ky3Y750ts0HPgUR",
+    "platform": "instagram",
+    "scheduleAt": "2026-08-30T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "As the sun sets, let your vibrant edge shine. Neon Clothes celebrates the magic where bold distressed denim meets the glow of everyday confidence. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/instagram/WvaF3ky3Y750ts0HPgUR/image.png"
+  },
+  {
+    "id": "7g2deNnGXThYZMwJUZXa",
+    "platform": "linkedin",
+    "scheduleAt": "2026-08-30T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "As daylight fades, your style becomes the focal point. The white hoodie—a timeless essential from Neon Clothes—proves that vibrant living isn't about loud colors alone. It's about confidence, comfort, and pieces that transition seamlessly from day to evening. Whether styled solo or layered, this hoodie embodies where vibrant fashion meets everyday comfort. Let the glow of your personal style shine brightest as the sun sets. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/linkedin/7g2deNnGXThYZMwJUZXa/image.png"
+  },
+  {
+    "id": "pfMGPQNKvNB9kWzZ4K2C",
+    "platform": "facebook",
+    "scheduleAt": "2026-08-29T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Start your day with vibrant energy. Friends, coffee, and bold style—where Neon Clothes meets everyday comfort. #NeonFashion #VibrantStyles #TrendyWear\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/facebook/pfMGPQNKvNB9kWzZ4K2C/image.png"
+  },
+  {
+    "id": "jxg320Frotw15ROvlCCo",
+    "platform": "instagram",
+    "scheduleAt": "2026-08-29T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Start your day with vibrant energy. Neon Clothes celebrates everyday comfort wrapped in bold color. Where vibrant fashion meets real life, real laughter, real you. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/instagram/jxg320Frotw15ROvlCCo/image.png"
+  },
+  {
+    "id": "dOdI2Bz1R2t5MSNwDM3M",
+    "platform": "linkedin",
+    "scheduleAt": "2026-08-29T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Your morning just got brighter. There's something electric about stepping into the day wearing a color that feels like *you*—confidence in every fiber, comfort in every moment. At Neon Clothes, we believe vibrant fashion isn't just what you wear; it's how you show up for yourself and the people around you. That bold red tee, the lime-green shirt, the electric purple—each one a statement of individuality that turns a simple café coffee into a celebration of living unapologetically.\n\nWhere vibrant fashion meets everyday comfort.\n\n#NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/linkedin/dOdI2Bz1R2t5MSNwDM3M/image.png"
+  },
+  {
+    "id": "OKPxh7NUpAd53dffiQX8",
+    "platform": "facebook",
+    "scheduleAt": "2026-08-28T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Comfort meets color at home. Neon Clothes brings vibrant style to your everyday moments. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/facebook/OKPxh7NUpAd53dffiQX8/image.png"
+  },
+  {
+    "id": "NnRich3AJdSN7aDTvK1Q",
+    "platform": "instagram",
+    "scheduleAt": "2026-08-28T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Where vibrant fashion meets everyday comfort. Neon Clothes celebrates the art of lounging in color—bold style that feels effortless, serene spaces that spark joy. Embrace your vibrant living. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/instagram/NnRich3AJdSN7aDTvK1Q/image.png"
+  },
+  {
+    "id": "MhFIZZwQkJtlbKMbhaTJ",
+    "platform": "linkedin",
+    "scheduleAt": "2026-08-28T03:00:00.000Z",
+    "mediaType": "image",
+    "caption": "Where vibrant fashion meets everyday comfort. Neon Clothes celebrates the art of living boldly—choosing color and style that feels as good as it looks. Your wardrobe should energize you, inspire confidence, and make every moment feel intentional. From sunrise lounging to evening adventures, wrap yourself in pieces that radiate joy and comfort. Embrace the vibrant life you deserve. Discover what comfort in color truly means. #NeonFashion #TrendyWear #VibrantStyles\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "imageUrl": "/landing/how-it-looks/clothing/linkedin/MhFIZZwQkJtlbKMbhaTJ/image.png"
+  },
+  {
     "id": "Qz35ydNUU0lBwGDpkWDh",
     "platform": "instagram",
     "scheduleAt": "2026-08-26T14:30:00.000Z",

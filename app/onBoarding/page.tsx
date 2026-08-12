@@ -32,6 +32,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { scrapeUrl, extractCatalogPdf } from '@/src/service/api/scrape';
 import {
   getUserAIenginePageContext,
+  getAiGeneratedLogos,
   onBoardUser,
   suggestOnboardingBrandCopy,
   uploadLogo,
@@ -44,7 +45,11 @@ import {
   type OnboardingFieldSuggestions,
   type OnboardingColorSuggestions,
 } from '@/components/onboarding/OnboardingSuggestionsPanel';
-import { OnboardingAiLogoSection } from '@/components/onboarding/OnboardingAiLogoSection';
+import {
+  OnboardingAiLogoSection,
+  MAX_ONBOARDING_AI_LOGOS,
+  type OnboardingLogoPick,
+} from '@/components/onboarding/OnboardingAiLogoSection';
 import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
 import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
 import {
@@ -417,6 +422,10 @@ export default function OnboardingMenu() {
     slogans: string[];
   } | null> | null>(null);
   const suggestRequestIdRef = useRef(0);
+  const [aiLogoPicks, setAiLogoPicks] = useState<OnboardingLogoPick[]>([]);
+  const [aiLogoGenerationUsed, setAiLogoGenerationUsed] = useState(0);
+  const [aiLogoSectionOpen, setAiLogoSectionOpen] = useState(false);
+  const aiLogoHydratedRef = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -847,6 +856,38 @@ export default function OnboardingMenu() {
     setSelectedSuggestionKey(null);
   }, [step]);
 
+  // Hydrate AI logo generation count from backend when user returns to the logo step.
+  useEffect(() => {
+    if (questions[step]?.name !== 'logo' || aiLogoHydratedRef.current) return;
+    aiLogoHydratedRef.current = true;
+    void (async () => {
+      try {
+        const res = await getAiGeneratedLogos();
+        const data = (res as {
+          data?: {
+            logos?: { url: string }[];
+            onboardingAiLogoGenerations?: number;
+          };
+        })?.data;
+        const logos = Array.isArray(data?.logos) ? data.logos : [];
+        const used = Number(data?.onboardingAiLogoGenerations ?? logos.length);
+        if (used > 0 || logos.length > 0) {
+          setAiLogoGenerationUsed(
+            Math.min(MAX_ONBOARDING_AI_LOGOS, Math.max(used, logos.length))
+          );
+          setAiLogoPicks(
+            logos
+              .slice(0, MAX_ONBOARDING_AI_LOGOS)
+              .map((logo) => ({ url: logo.url, preview: logo.url }))
+          );
+          setAiLogoSectionOpen(true);
+        }
+      } catch {
+        // Non-blocking — local state still tracks this session's generations.
+      }
+    })();
+  }, [step]);
+
   const showSuggestionsPanel = useMemo(() => {
     const s = fieldSuggestions;
     switch (current.name) {
@@ -1202,6 +1243,12 @@ export default function OnboardingMenu() {
             selectedUrl={selectedLogoUrl}
             onSelect={applyAiGeneratedLogo}
             hasExistingLogo={Boolean(hasLogo)}
+            picks={aiLogoPicks}
+            onPicksChange={setAiLogoPicks}
+            generationUsed={aiLogoGenerationUsed}
+            onGenerationUsedChange={setAiLogoGenerationUsed}
+            open={aiLogoSectionOpen}
+            onOpenChange={setAiLogoSectionOpen}
           />
         </div>
       );

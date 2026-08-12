@@ -10,6 +10,7 @@ import {
   showErrorToast,
 } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
+import { normalizeMemoryLayerUploadImage } from '@/lib/normalize-memory-layer-image';
 import {
   BRAND_PHOTO_DESCRIPTION_MAX,
   generateMemoryLayerQuestions,
@@ -69,6 +70,7 @@ function isImageFile(f: File): boolean {
     'bmp',
     'heic',
     'heif',
+    'avif',
     'svg',
   ].includes(ext);
 }
@@ -148,33 +150,8 @@ export default function BrandMemoryPage() {
           Array.isArray(gPayload?.brandPhotos) ? gPayload.brandPhotos : []
         );
       } else {
-        const missingSuggestions = ml.questions.some(
-          (q) =>
-            q.type !== 'multiselect' &&
-            (!Array.isArray(q.suggestions) ||
-              q.suggestions.map((s) => String(s ?? '').trim()).filter(Boolean)
-                .length < 2)
-        );
-        // Always backfill suggestions for in-progress questionnaires so chips
-        // are visible (older caches / stale generator builds).
-        if (missingSuggestions && ml.status !== 'complete') {
-          const gen = await generateMemoryLayerQuestions({ force: true });
-          if (!isEnvelopeOk(gen as { success?: boolean })) {
-            throw new Error('Failed to generate questions');
-          }
-          const gPayload = parseMemory(
-            (gen as { data?: { memoryLayer?: unknown } }).data?.memoryLayer
-          );
-          setQuestions(gPayload?.questions ?? ml.questions);
-          setBrandPhotosMeta(
-            Array.isArray(gPayload?.brandPhotos)
-              ? gPayload.brandPhotos
-              : (ml.brandPhotos ?? [])
-          );
-        } else {
-          setQuestions(ml.questions);
-          setBrandPhotosMeta(ml.brandPhotos ?? []);
-        }
+        setQuestions(ml.questions);
+        setBrandPhotosMeta(ml.brandPhotos ?? []);
       }
     } catch (e) {
       showErrorToast('Something went wrong. Please Try Again Later.');
@@ -346,35 +323,52 @@ export default function BrandMemoryPage() {
 
   const onFilesPicked = useCallback((list: FileList | null) => {
     if (!list?.length) return;
-    const brandPhotos = brandPhotosMetaRef.current;
-    setPendingStaged((prev) => {
-      const maxTotal = 30 - brandPhotos.length;
-      const room = Math.max(0, maxTotal - prev.length);
-      if (room === 0) {
-        toast.message('30 image limit reached');
-        return prev;
-      }
-      const next = [...prev];
-      for (let i = 0; i < list.length; i++) {
-        if (next.length >= maxTotal) {
-          toast.message('30 image limit reached');
-          break;
-        }
-        const f = list.item(i);
-        if (!f) continue;
+    void (async () => {
+      const brandPhotos = brandPhotosMetaRef.current;
+      const incoming = Array.from(list);
+      const staged: {
+        id: string;
+        file: File;
+        previewUrl: string;
+        description: string;
+      }[] = [];
+
+      for (const f of incoming) {
         if (!isImageFile(f)) {
           showErrorToast(`${f.name} is not an image`);
           continue;
         }
-        next.push({
-          id: `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2)}`,
-          file: f,
-          previewUrl: URL.createObjectURL(f),
+        const normalized = await normalizeMemoryLayerUploadImage(f);
+        staged.push({
+          id: `${normalized.name}-${normalized.size}-${normalized.lastModified}-${Math.random().toString(36).slice(2)}`,
+          file: normalized,
+          previewUrl: URL.createObjectURL(normalized),
           description: '',
         });
       }
-      return next;
-    });
+
+      if (staged.length === 0) return;
+
+      setPendingStaged((prev) => {
+        const maxTotal = 30 - brandPhotos.length;
+        const room = Math.max(0, maxTotal - prev.length);
+        if (room === 0) {
+          for (const item of staged) {
+            URL.revokeObjectURL(item.previewUrl);
+          }
+          toast.message('30 image limit reached');
+          return prev;
+        }
+        const accepted = staged.slice(0, room);
+        for (const item of staged.slice(room)) {
+          URL.revokeObjectURL(item.previewUrl);
+        }
+        if (staged.length > room) {
+          toast.message('30 image limit reached');
+        }
+        return [...prev, ...accepted];
+      });
+    })();
   }, []);
 
   const handleUploadPdf = async () => {

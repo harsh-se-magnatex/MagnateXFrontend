@@ -37,6 +37,11 @@ import {
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 import {
+  adminForceRunLockKey,
+  isForceRunTargetComplete,
+  parseAdminForceRunLockKey,
+} from '@/lib/content-plan-force-run';
+import {
   ImagePreviewButton,
   ImagePreviewOverlay,
   useImagePreview,
@@ -193,9 +198,15 @@ function forceRunVisualKey(args: {
   platform: ContentCalendarReviewPlatform;
   date: string;
   kind: string;
-  idx: number;
+  eventId?: string;
 }): string {
-  return `${args.userId}::${args.platform}::${args.date}::${args.kind}::${args.idx}`;
+  return adminForceRunLockKey({
+    userId: args.userId,
+    date: args.date,
+    platform: args.platform,
+    kind: args.kind,
+    eventId: args.eventId,
+  });
 }
 
 export default function AdminContentCalendarReviewPage() {
@@ -211,7 +222,9 @@ export default function AdminContentCalendarReviewPage() {
   );
   const [detailLoading, setDetailLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewTarget | null>(null);
-  const [pendingRunKey, setPendingRunKey] = useState<string | null>(null);
+  const [runningForceRunKeys, setRunningForceRunKeys] = useState<Set<string>>(
+    () => new Set()
+  );
   /** Keys currently queuing the regenerate API call. */
   const [pendingRegenKeys, setPendingRegenKeys] = useState<Set<string>>(
     () => new Set()
@@ -290,6 +303,17 @@ export default function AdminContentCalendarReviewPage() {
     try {
       const res = await getAdminContentCalendarReviewDetail(selectedUserId);
       setDetail(res.data);
+      setRunningForceRunKeys((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set(prev);
+        for (const key of prev) {
+          const target = parseAdminForceRunLockKey(key);
+          if (target && isForceRunTargetComplete(res.data.days, target)) {
+            next.delete(key);
+          }
+        }
+        return next.size === prev.size ? prev : next;
+      });
       setPreview((prev) => {
         if (!prev) return prev;
         for (const day of res.data.days) {
@@ -371,6 +395,15 @@ export default function AdminContentCalendarReviewPage() {
     return () => window.clearInterval(id);
   }, [regeneratingKeys.size, refreshDetail]);
 
+  // Poll while force runs are in flight so cards unlock when generation finishes.
+  useEffect(() => {
+    if (runningForceRunKeys.size === 0) return;
+    const id = window.setInterval(() => {
+      void refreshDetail();
+    }, 4000);
+    return () => window.clearInterval(id);
+  }, [runningForceRunKeys.size, refreshDetail]);
+
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return users;
@@ -386,7 +419,6 @@ export default function AdminContentCalendarReviewPage() {
   const handleForceRun = async (
     platform: ContentCalendarReviewPlatform,
     date: string,
-    visualKey: string,
     kind: string,
     eventId?: string
   ) => {
@@ -399,7 +431,14 @@ export default function AdminContentCalendarReviewPage() {
       showErrorToast('Force Run is not available for past dates');
       return;
     }
-    setPendingRunKey(visualKey);
+    const lockKey = adminForceRunLockKey({
+      userId: detail.userId,
+      date,
+      platform,
+      kind,
+      eventId,
+    });
+    setRunningForceRunKeys((prev) => new Set(prev).add(lockKey));
     try {
       await postAdminContentCalendarForceRun({
         userId: detail.userId,
@@ -434,7 +473,10 @@ export default function AdminContentCalendarReviewPage() {
             const queuedGenerated = queuedItem
               ? [
                   {
-                    kind: queuedItem.kind,
+                    kind:
+                      queuedItem.kind === 'festival'
+                        ? 'festive'
+                        : queuedItem.kind,
                     status: 'queued' as const,
                     title: queuedItem.label,
                     captionPreview: queuedItem.note,
@@ -442,7 +484,7 @@ export default function AdminContentCalendarReviewPage() {
                 ]
               : [
                   {
-                    kind,
+                    kind: kind === 'festival' ? 'festive' : kind,
                     status: 'queued' as const,
                     title: 'Queued',
                   },
@@ -462,14 +504,17 @@ export default function AdminContentCalendarReviewPage() {
       });
       await refreshDetail();
     } catch (err: unknown) {
+      setRunningForceRunKeys((prev) => {
+        const next = new Set(prev);
+        next.delete(lockKey);
+        return next;
+      });
       const message =
         err && typeof err === 'object' && 'response' in err
           ? (err as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : undefined;
       showErrorToast(message || 'Force Run failed. Please try again later.');
-    } finally {
-      setPendingRunKey(null);
     }
   };
 
@@ -721,7 +766,7 @@ export default function AdminContentCalendarReviewPage() {
                                 .trim()
                                 .toLowerCase() === 'auto'
                             }
-                            pendingRunKey={pendingRunKey}
+                            runningForceRunKeys={runningForceRunKeys}
                             regeneratingKeys={regeneratingKeys}
                             userId={detail.userId}
                             onOpenPreview={(platform, item) =>
@@ -735,11 +780,10 @@ export default function AdminContentCalendarReviewPage() {
                                 preferences: detail.preferences,
                               })
                             }
-                            onForceRun={(platform, visualKey, kind, eventId) =>
+                            onForceRun={(platform, kind, eventId) =>
                               void handleForceRun(
                                 platform,
                                 day.date,
-                                visualKey,
                                 kind,
                                 eventId
                               )
@@ -835,7 +879,7 @@ function DayRow({
   platforms,
   todayIso,
   forceRunEnabled,
-  pendingRunKey,
+  runningForceRunKeys,
   regeneratingKeys,
   userId,
   onOpenPreview,
@@ -845,7 +889,7 @@ function DayRow({
   platforms: ContentCalendarReviewPlatform[];
   todayIso: string;
   forceRunEnabled: boolean;
-  pendingRunKey: string | null;
+  runningForceRunKeys: Set<string>;
   regeneratingKeys: Set<string>;
   userId: string;
   onOpenPreview: (
@@ -854,7 +898,6 @@ function DayRow({
   ) => void;
   onForceRun: (
     platform: ContentCalendarReviewPlatform,
-    visualKey: string,
     kind: string,
     eventId?: string
   ) => void;
@@ -914,38 +957,33 @@ function DayRow({
               ))}
               {generated.length === 0 &&
                 upcoming.map((item, idx) => {
-                  const showForceRun =
-                    forceRunEnabled &&
-                    !isPast &&
-                    canForceRunKind(item.kind);
                   const runKey = forceRunVisualKey({
                     userId,
                     platform,
                     date: day.date,
                     kind: item.kind,
-                    idx,
+                    eventId: item.eventId,
                   });
-                  const runPending = pendingRunKey === runKey;
+                  const runPending = runningForceRunKeys.has(runKey);
+                  const showForceRun =
+                    forceRunEnabled &&
+                    !isPast &&
+                    !runPending &&
+                    canForceRunKind(item.kind);
                   return (
                     <div
                       key={`${item.kind}-${item.eventId ?? ''}-${idx}`}
                       className="flex flex-col gap-1.5"
                     >
-                      <UpcomingCard item={item} />
+                      <UpcomingCard item={item} pending={runPending} />
                       {showForceRun ? (
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
                           className="h-7 gap-1.5 text-[11px]"
-                          disabled={runPending}
                           onClick={() =>
-                            onForceRun(
-                              platform,
-                              runKey,
-                              item.kind,
-                              item.eventId
-                            )
+                            onForceRun(platform, item.kind, item.eventId)
                           }
                         >
                           {runPending ? (
@@ -970,7 +1008,13 @@ function DayRow({
   );
 }
 
-function UpcomingCard({ item }: { item: AdminContentPlanUpcomingItem }) {
+function UpcomingCard({
+  item,
+  pending = false,
+}: {
+  item: AdminContentPlanUpcomingItem;
+  pending?: boolean;
+}) {
   return (
     <div
       className={cn(
@@ -979,7 +1023,9 @@ function UpcomingCard({ item }: { item: AdminContentPlanUpcomingItem }) {
       )}
     >
       <p className="font-semibold">{kindLabel(item.kind)}</p>
-      <p className="mt-0.5 opacity-90">{item.label}</p>
+      <p className="mt-0.5 opacity-90">
+        {pending ? 'Generating…' : item.label}
+      </p>
       {item.note ? (
         <p className="mt-0.5 text-[10px] opacity-80">{item.note}</p>
       ) : null}
