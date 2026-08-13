@@ -25,7 +25,7 @@ import {
 } from '@/lib/workspace-nav';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getTodatDate } from '@/utils/getTodayDate';
-import { EVENTS, isFestiveDateWithinPlanRange } from './events';
+import { EVENTS, isFestiveDateOnOrAfterToday } from './events';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
@@ -105,7 +105,7 @@ export default function AutomatedPostPage() {
   const builtInEvents = useMemo<FestiveEventItem[]>(
     () =>
       EVENTS.filter((event) =>
-        isFestiveDateWithinPlanRange(event.date, formattedToday, planExpiresYmd)
+        isFestiveDateOnOrAfterToday(event.date, formattedToday)
       ).map(({ id, name, date, description, reason }) => ({
         id,
         name,
@@ -211,8 +211,6 @@ export default function AutomatedPostPage() {
     const selectedEvents = selected
       .map((id) => eventMap.get(id))
       .filter((event): event is FestiveEventItem => !!event)
-     
-      
       .map((event) => ({
         id: event.id,
         name: event.name,
@@ -268,7 +266,7 @@ export default function AutomatedPostPage() {
     () => [
       ...builtInEvents,
       ...customEvents.filter((event) =>
-        isFestiveDateWithinPlanRange(event.date, formattedToday, planExpiresYmd)
+        isFestiveDateOnOrAfterToday(event.date, formattedToday)
       ),
     ],
     [builtInEvents, customEvents, formattedToday, planExpiresYmd]

@@ -13,14 +13,14 @@ export const PLATFORM_OPTIONS: {
   description: string;
 }[] = [
   {
-    id: 'instagram',
-    label: 'Instagram',
-    description: 'Browse the profile grid and open posts',
-  },
-  {
     id: 'facebook',
     label: 'Facebook',
     description: 'Page photos grid and feed posts',
+  },
+  {
+    id: 'instagram',
+    label: 'Instagram',
+    description: 'Browse the profile grid and open posts',
   },
   {
     id: 'linkedin',

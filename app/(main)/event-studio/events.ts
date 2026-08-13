@@ -331,12 +331,4 @@ export function isFestiveDateOnOrAfterToday(
  * Event is visible when it falls on/after today and on/before plan expiry.
  * If `planExpiresAtYmd` is missing, only the today lower-bound is applied.
  */
-export function isFestiveDateWithinPlanRange(
-  date: string,
-  today: string,
-  planExpiresAtYmd: string | null | undefined
-): boolean {
-  if (!isFestiveDateOnOrAfterToday(date, today)) return false;
-  if (!planExpiresAtYmd) return true;
-  return date <= planExpiresAtYmd;
-}
+

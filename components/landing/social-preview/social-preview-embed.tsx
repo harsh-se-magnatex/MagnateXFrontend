@@ -30,7 +30,7 @@ export function SocialPreviewDisclaimer() {
 /** Interactive IG / FB / LI showcase — embeddable without page chrome. */
 export function SocialPreviewEmbed() {
   const [brandId, setBrandId] = useState<ShowcaseBrandId>(DEFAULT_SHOWCASE_BRAND_ID);
-  const [platform, setPlatform] = useState<PreviewPlatform>('instagram');
+  const [platform, setPlatform] = useState<PreviewPlatform>('facebook');
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
   const brand = useMemo(() => getShowcaseBrand(brandId), [brandId]);
@@ -57,8 +57,8 @@ export function SocialPreviewEmbed() {
       </div>
       <div className="mt-8">
         <PreviewDeviceFrame platform={platform} nestedScroll>
-          {platform === 'instagram' && (
-            <InstagramPageMockup
+          {platform === 'facebook' && (
+            <FacebookPageMockup
               brand={brand}
               posts={posts}
               selectedPostId={selectedPostId}
@@ -66,8 +66,8 @@ export function SocialPreviewEmbed() {
               onClosePost={() => setSelectedPostId(null)}
             />
           )}
-          {platform === 'facebook' && (
-            <FacebookPageMockup
+          {platform === 'instagram' && (
+            <InstagramPageMockup
               brand={brand}
               posts={posts}
               selectedPostId={selectedPostId}
