@@ -5,7 +5,6 @@ import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import {
   getAdminAutomationUnpaidOnboarded,
   type AdminAutomationClient,
-  type AdminAutomationDateField,
 } from '@/src/service/api/adminService';
 import { useUser } from '../../_components/useUser';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
@@ -16,54 +15,27 @@ import {
   type TimestampInput,
 } from '@/lib/user-timezone';
 
-function defaultFromDate(): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - 30);
-  return d.toISOString().slice(0, 10);
-}
-
-function defaultToDate(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export default function AdminAutomationPage() {
+export default function AdminUnpaidSignupsPage() {
   const { user } = useUser();
   const formatDate = useTimestampFormatter();
   const router = useRouter();
   const [clients, setClients] = useState<AdminAutomationClient[]>([]);
+  const [purchasesToday, setPurchasesToday] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [from, setFrom] = useState(defaultFromDate);
-  const [to, setTo] = useState(defaultToDate);
-  const [dateField, setDateField] =
-    useState<AdminAutomationDateField>('createdAt');
   const [search, setSearch] = useState('');
-  const [activeFrom, setActiveFrom] = useState(defaultFromDate);
-  const [activeTo, setActiveTo] = useState(defaultToDate);
-  const [activeDateField, setActiveDateField] =
-    useState<AdminAutomationDateField>('createdAt');
   const [activeSearch, setActiveSearch] = useState('');
 
-  const loadClients = async (args: {
-    from: string;
-    to: string;
-    dateField: AdminAutomationDateField;
-    search: string;
-  }) => {
+  const loadClients = async (args: { search: string }) => {
     setLoading(true);
     try {
       const response = await getAdminAutomationUnpaidOnboarded({
-        from: args.from || undefined,
-        to: args.to || undefined,
-        dateField: args.dateField,
         search: args.search.trim() || undefined,
       });
       setClients(response.data.clients);
-      setActiveFrom(args.from);
-      setActiveTo(args.to);
-      setActiveDateField(args.dateField);
+      setPurchasesToday(response.data.purchasesToday ?? 0);
       setActiveSearch(args.search.trim());
     } catch {
-      showErrorToast('Failed to fetch automation clients. Please try again.');
+      showErrorToast('Failed to fetch unpaid signups. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -78,30 +50,13 @@ export default function AdminAutomationPage() {
 
   useEffect(() => {
     if (!user?.admin) return;
-    loadClients({
-      from: defaultFromDate(),
-      to: defaultToDate(),
-      dateField: 'createdAt',
-      search: '',
-    });
+    loadClients({ search: '' });
   }, [user]);
 
   const summary = useMemo(() => {
-    const fieldLabel =
-      activeDateField === 'lastLoginAt' ? 'last login' : 'signup';
-    const range =
-      activeFrom || activeTo
-        ? ` (${fieldLabel}: ${activeFrom || '…'} → ${activeTo || '…'})`
-        : '';
     const searchPart = activeSearch ? ` matching "${activeSearch}"` : '';
-    return `${clients.length} unpaid signup(s)${range}${searchPart}`;
-  }, [
-    clients.length,
-    activeDateField,
-    activeFrom,
-    activeTo,
-    activeSearch,
-  ]);
+    return `${clients.length} unpaid signup(s)${searchPart}`;
+  }, [clients.length, activeSearch]);
 
   if (!user?.admin) {
     return null;
@@ -109,33 +64,22 @@ export default function AdminAutomationPage() {
 
   const handleFilter = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await loadClients({ from, to, dateField, search });
+    await loadClients({ search });
   };
 
   const handleReset = async () => {
-    const nextFrom = defaultFromDate();
-    const nextTo = defaultToDate();
-    setFrom(nextFrom);
-    setTo(nextTo);
-    setDateField('createdAt');
     setSearch('');
-    await loadClients({
-      from: nextFrom,
-      to: nextTo,
-      dateField: 'createdAt',
-      search: '',
-    });
+    await loadClients({ search: '' });
   };
 
   return (
     <div className="min-h-screen bg-[#0B1020] text-white px-6 py-8 md:px-10">
       <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-[#6C5CE7] to-[#00D1FF] mb-2">
-        Admin - Automation
+        Admin - Unpaid Signups
       </h1>
       <p className="mb-6 max-w-2xl text-sm text-gray-300">
-        Users who signed up but never purchased a plan
+        All users who signed up but have not purchased a plan as of today
         (<code className="text-white/70">activePlan = non-subscribed</code>).
-        Onboarding and business details are not required.
       </p>
 
       <div className="mb-6 flex flex-wrap gap-2">
@@ -153,46 +97,30 @@ export default function AdminAutomationPage() {
         </Link>
       </div>
 
+      <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <div className="text-xs uppercase tracking-wide text-gray-400">
+            Unpaid signups
+          </div>
+          <div className="mt-1 text-2xl font-bold text-white">
+            {loading ? '—' : clients.length}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <div className="text-xs uppercase tracking-wide text-gray-400">
+            Plan purchases today
+          </div>
+          <div className="mt-1 text-2xl font-bold text-[#00D1FF]">
+            {loading ? '—' : purchasesToday}
+          </div>
+        </div>
+      </div>
+
       <form
         onSubmit={handleFilter}
         className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5"
       >
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_180px_1fr_120px_110px]">
-          <label className="text-xs text-gray-400">
-            From
-            <input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="mt-1 h-11 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
-            />
-          </label>
-          <label className="text-xs text-gray-400">
-            To
-            <input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="mt-1 h-11 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
-            />
-          </label>
-          <label className="text-xs text-gray-400">
-            Date field
-            <select
-              value={dateField}
-              onChange={(e) =>
-                setDateField(e.target.value as AdminAutomationDateField)
-              }
-              className="mt-1 h-11 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
-            >
-              <option value="createdAt" className="text-black">
-                Signup date
-              </option>
-              <option value="lastLoginAt" className="text-black">
-                Last login
-              </option>
-            </select>
-          </label>
+        <div className="grid gap-3 md:grid-cols-[1fr_120px_110px]">
           <label className="text-xs text-gray-400">
             Search
             <input
@@ -224,11 +152,11 @@ export default function AdminAutomationPage() {
       {loading ? (
         <PageLoadingState
           className="min-h-[240px]"
-          message="Loading automation clients..."
+          message="Loading unpaid signups..."
         />
       ) : clients.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-gray-300">
-          No matching clients in this date range.
+          No unpaid signups found.
         </div>
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">

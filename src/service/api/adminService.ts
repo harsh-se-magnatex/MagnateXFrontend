@@ -256,8 +256,6 @@ export const postAdminContentCalendarForceRun = async (payload: {
   >('/api/v1/admin/content-calendar-review/force-run', payload);
 };
 
-export type AdminAutomationDateField = 'createdAt' | 'lastLoginAt';
-
 export type AdminAutomationClient = {
   userId: string;
   name: string;
@@ -272,29 +270,21 @@ export type AdminAutomationClient = {
   onBoardedAt?: unknown;
 };
 
-export const getAdminAutomationUnpaidOnboarded = async (params: {
-  from?: string;
-  to?: string;
-  dateField?: AdminAutomationDateField;
+export const getAdminAutomationUnpaidOnboarded = async (params?: {
   search?: string;
 }) => {
   return apiGet<
     ApiEnvelope<{
       clients: AdminAutomationClient[];
       total: number;
+      purchasesToday: number;
       filters: {
-        from: string | null;
-        to: string | null;
-        dateField: AdminAutomationDateField;
         search: string | null;
       };
     }>
   >('/api/v1/admin/automation/unpaid-onboarded', {
     params: {
-      ...(params.from ? { from: params.from } : {}),
-      ...(params.to ? { to: params.to } : {}),
-      ...(params.dateField ? { dateField: params.dateField } : {}),
-      ...(params.search ? { search: params.search } : {}),
+      ...(params?.search ? { search: params.search } : {}),
     },
   });
 };

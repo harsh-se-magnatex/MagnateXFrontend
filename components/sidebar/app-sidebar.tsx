@@ -313,7 +313,7 @@ export function AppSidebar({
                         }`}
                     >
                       <Workflow className="h-4 w-4 shrink-0" />
-                      <span>Automation</span>
+                      <span>Unpaid Signups</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

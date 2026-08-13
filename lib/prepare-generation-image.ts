@@ -93,19 +93,19 @@ export async function prepareGenerationImage(
     ctx.drawImage(bitmap, 0, 0, targetW, targetH);
     bitmap.close();
 
-    // Prefer high quality when only resizing; search lower if still too big.
-    let lo = 0.45;
-    let hi = 0.92;
-    let best: Blob | null = null;
+    const encodeUnderBudget = async (
+      source: HTMLCanvasElement
+    ): Promise<Blob> => {
+      let lo = 0.45;
+      let hi = 0.92;
+      let best: Blob | null = null;
 
-    // Fast path: try a strong quality first.
-    const first = await canvasToBlob(canvas, mimeType, hi);
-    if (first.size <= maxBytes) {
-      best = first;
-    } else {
+      const first = await canvasToBlob(source, mimeType, hi);
+      if (first.size <= maxBytes) return first;
+
       for (let i = 0; i < 8; i++) {
         const mid = (lo + hi) / 2;
-        const blob = await canvasToBlob(canvas, mimeType, mid);
+        const blob = await canvasToBlob(source, mimeType, mid);
         if (blob.size <= maxBytes) {
           best = blob;
           lo = mid;
@@ -113,9 +113,29 @@ export async function prepareGenerationImage(
           hi = mid;
         }
       }
-      if (!best) {
-        best = await canvasToBlob(canvas, mimeType, Math.max(0.4, lo));
+      return best ?? (await canvasToBlob(source, mimeType, Math.max(0.4, lo)));
+    };
+
+    let workingCanvas = canvas;
+    let best = await encodeUnderBudget(workingCanvas);
+
+    // Still over budget after quality search — shrink pixels and retry.
+    let guard = 0;
+    while (best.size > maxBytes && guard < 6) {
+      guard += 1;
+      const nextW = Math.max(1, Math.round(workingCanvas.width * 0.75));
+      const nextH = Math.max(1, Math.round(workingCanvas.height * 0.75));
+      if (nextW === workingCanvas.width && nextH === workingCanvas.height) {
+        break;
       }
+      const smaller = document.createElement('canvas');
+      smaller.width = nextW;
+      smaller.height = nextH;
+      const sctx = smaller.getContext('2d');
+      if (!sctx) break;
+      sctx.drawImage(workingCanvas, 0, 0, nextW, nextH);
+      workingCanvas = smaller;
+      best = await encodeUnderBudget(workingCanvas);
     }
 
     // If somehow larger than the original and still over budget, keep original.

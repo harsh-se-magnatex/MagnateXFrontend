@@ -95,7 +95,14 @@ export default function BrandMemoryPage() {
     {}
   );
   const [pendingStaged, setPendingStaged] = useState<
-    { id: string; file: File; previewUrl: string; description: string }[]
+    {
+      id: string;
+      file: File;
+      previewUrl: string;
+      description: string;
+      uploading?: boolean;
+      failed?: boolean;
+    }[]
   >([]);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
@@ -104,6 +111,8 @@ export default function BrandMemoryPage() {
   pendingRef.current = pendingStaged;
   const brandPhotosMetaRef = useRef(brandPhotosMeta);
   brandPhotosMetaRef.current = brandPhotosMeta;
+  /** Sync lock — React state alone is too late to block rapid mobile taps. */
+  const finishInFlightRef = useRef(false);
   const isExtracting = uploadingPdf;
 
   useEffect(() => {
@@ -338,13 +347,20 @@ export default function BrandMemoryPage() {
           showErrorToast(`${f.name} is not an image`);
           continue;
         }
-        const normalized = await normalizeMemoryLayerUploadImage(f);
-        staged.push({
-          id: `${normalized.name}-${normalized.size}-${normalized.lastModified}-${Math.random().toString(36).slice(2)}`,
-          file: normalized,
-          previewUrl: URL.createObjectURL(normalized),
-          description: '',
-        });
+        try {
+          const normalized = await normalizeMemoryLayerUploadImage(f);
+          staged.push({
+            id: `${normalized.name}-${normalized.size}-${normalized.lastModified}-${Math.random().toString(36).slice(2)}`,
+            file: normalized,
+            previewUrl: URL.createObjectURL(normalized),
+            description: '',
+          });
+        } catch (err) {
+          showCaughtErrorToast(
+            err,
+            `${f.name} could not be prepared for upload`
+          );
+        }
       }
 
       if (staged.length === 0) return;
@@ -439,8 +455,15 @@ export default function BrandMemoryPage() {
   );
 
   const finish = useCallback(async () => {
+    if (finishInFlightRef.current) return;
+    finishInFlightRef.current = true;
+    setSubmitting(true);
+
+    // Keep previews visible; upload one-by-one and remove each on success.
+    const snapshot = [...pendingRef.current];
+    let photosFailed = false;
+
     try {
-      setSubmitting(true);
       const answers = buildAnswers();
       const pq = questions.find(
         (q) => q.type === 'multiselect' && q.multiselectRole === 'products'
@@ -449,31 +472,80 @@ export default function BrandMemoryPage() {
       const selectedProducts =
         pr && !pr.skipped && 'multi' in pr ? pr.multi : undefined;
 
-      if (pendingStaged.length > 0) {
-        const up = await uploadMemoryLayerBrandPhotos(
-          pendingStaged.map((p) => p.file),
-          pendingStaged.map((p) => p.description)
-        );
-        if (!isEnvelopeOk(up as { success?: boolean })) {
-          throw new Error('Photo upload failed');
-        }
-        const data = (up as {
-          data?: {
-            memoryLayer?: unknown;
-          };
-        }).data;
-        if (data?.memoryLayer) {
-          const ml = parseMemory(data.memoryLayer);
-          if (ml?.brandPhotos) setBrandPhotosMeta(ml.brandPhotos);
-        }
-        for (const p of pendingStaged) {
+      if (snapshot.length > 0) {
+        let uploadedCount = 0;
+        const failedNames: string[] = [];
+
+        for (const item of snapshot) {
+          setPendingStaged((prev) =>
+            prev.map((p) =>
+              p.id === item.id
+                ? { ...p, uploading: true, failed: false }
+                : p
+            )
+          );
+
           try {
-            URL.revokeObjectURL(p.previewUrl);
-          } catch {
-            /* ignore */
+            const up = await uploadMemoryLayerBrandPhotos(
+              [item.file],
+              [item.description]
+            );
+            if (!isEnvelopeOk(up as { success?: boolean })) {
+              throw new Error('Photo upload failed');
+            }
+            const data = (up as {
+              data?: {
+                memoryLayer?: unknown;
+                uploaded?: number;
+                failed?: { index: number; name: string; reason: string }[];
+              };
+            }).data;
+
+            if (Array.isArray(data?.failed) && data.failed.length > 0) {
+              throw new Error(data.failed[0]?.reason || 'Photo upload failed');
+            }
+
+            uploadedCount +=
+              typeof data?.uploaded === 'number' ? data.uploaded : 1;
+            if (data?.memoryLayer) {
+              const ml = parseMemory(data.memoryLayer);
+              if (ml?.brandPhotos) setBrandPhotosMeta(ml.brandPhotos);
+            }
+
+            setPendingStaged((prev) => {
+              const hit = prev.find((p) => p.id === item.id);
+              if (hit) {
+                try {
+                  URL.revokeObjectURL(hit.previewUrl);
+                } catch {
+                  /* ignore */
+                }
+              }
+              return prev.filter((p) => p.id !== item.id);
+            });
+          } catch (itemErr) {
+            photosFailed = true;
+            failedNames.push(item.file.name || 'image');
+            setPendingStaged((prev) =>
+              prev.map((p) =>
+                p.id === item.id
+                  ? { ...p, uploading: false, failed: true }
+                  : p
+              )
+            );
+            console.warn('[memory-layer] photo upload failed:', itemErr);
           }
         }
-        setPendingStaged([]);
+
+        if (photosFailed) {
+          const names = failedNames.slice(0, 3).join(', ');
+          toast.message(
+            uploadedCount > 0
+              ? `Uploaded ${uploadedCount}; ${failedNames.length} failed${names ? ` (${names})` : ''}. Fix or remove failed images to continue.`
+              : `Upload failed${names ? `: ${names}` : ''}. Fix or remove failed images to continue.`
+          );
+          return;
+        }
       }
 
       const res = await putMemoryLayer({
@@ -490,11 +562,17 @@ export default function BrandMemoryPage() {
     } catch (e) {
       showCaughtErrorToast(e, 'Failed to finish');
     } finally {
+      finishInFlightRef.current = false;
       setSubmitting(false);
+      setPendingStaged((prev) =>
+        prev.map((p) => ({ ...p, uploading: false }))
+      );
     }
-  }, [buildAnswers, goHomeWithPlatformTour, pendingStaged, questions, rowFor]);
+  }, [buildAnswers, goHomeWithPlatformTour, questions, rowFor]);
 
   const skipPhotos = useCallback(async () => {
+    if (finishInFlightRef.current) return;
+    finishInFlightRef.current = true;
     try {
       setSubmitting(true);
       const answers = buildAnswers();
@@ -517,6 +595,7 @@ export default function BrandMemoryPage() {
     } catch (e) {
       showErrorToast('Failed to skip photos. Please Try Again Later.');
     } finally {
+      finishInFlightRef.current = false;
       setSubmitting(false);
     }
   }, [buildAnswers, goHomeWithPlatformTour, questions, rowFor]);
@@ -968,18 +1047,30 @@ export default function BrandMemoryPage() {
                   });
                 }}
               />
-              <span className="text-gray-700">Drop or click to add images</span>
+              <span className="flex flex-col items-center gap-1">
+                <span className="text-gray-700">Drop or click to add images</span>
+                <span className="text-xs text-gray-500">
+                  Large images are resized automatically before upload
+                </span>
+              </span>
             </label>
             {pendingStaged.length > 0 && (
               <div>
                 <h3 className="text-xs font-semibold text-gray-500 mb-2 uppercase">
-                  Ready to upload
+                  {submitting
+                    ? `Uploading… (${pendingStaged.length} left)`
+                    : 'Ready to upload'}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {pendingStaged.map((row) => (
                     <div
                       key={row.id}
-                      className="list-none border border-white/10 rounded-lg p-2 bg-white/5 space-y-2"
+                      className={cn(
+                        'list-none border rounded-lg p-2 space-y-2',
+                        row.failed
+                          ? 'border-red-400/50 bg-red-500/10'
+                          : 'border-white/10 bg-white/5'
+                      )}
                     >
                       <div className="relative aspect-square rounded-md overflow-hidden bg-white/10 max-h-48">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -988,20 +1079,32 @@ export default function BrandMemoryPage() {
                           alt={row.file.name}
                           className="w-full h-full object-contain"
                         />
-                        <button
-                          type="button"
-                          onClick={() => removePending(row.id)}
-                          className="absolute top-2 right-2 text-xs rounded bg-black/50 text-white px-2 py-1 hover:bg-red-600"
-                        >
-                          Remove
-                        </button>
+                        {row.uploading ? (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/55 text-white">
+                            <Loader2
+                              className="h-5 w-5 animate-spin"
+                              aria-hidden
+                            />
+                            <span className="text-xs font-medium">Uploading…</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => removePending(row.id)}
+                            disabled={submitting}
+                            className="absolute top-2 right-2 text-xs rounded bg-black/50 text-white px-2 py-1 hover:bg-red-600 disabled:opacity-40"
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 truncate" title={row.file.name}>
-                        {row.file.name}
+                        {row.failed ? `Failed · ${row.file.name}` : row.file.name}
                       </p>
                       <label className="text-xs text-gray-600">Image description</label>
                       <textarea
                         value={row.description}
+                        disabled={!!row.uploading || submitting}
                         onChange={(e) =>
                           setPendingStaged((prev) =>
                             prev.map((p) =>
@@ -1020,7 +1123,7 @@ export default function BrandMemoryPage() {
                         maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
                         rows={3}
                         placeholder="Optional — helps generation match this product image"
-                        className="w-full text-sm bg-white/10 border border-black/20 rounded-md px-2 py-1.5 text-gray-900 placeholder:text-gray-500 resize-y min-h-[72px]"
+                        className="w-full text-sm bg-white/10 border border-black/20 rounded-md px-2 py-1.5 text-gray-900 placeholder:text-gray-500 resize-y min-h-[72px] disabled:opacity-60"
                       />
                       <p className="text-[10px] text-gray-500 text-right">
                         {row.description.length}/{BRAND_PHOTO_DESCRIPTION_MAX}

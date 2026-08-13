@@ -95,6 +95,10 @@ type PendingImage = {
   file: File;
   previewUrl: string;
   description: string;
+  /** True while this specific file is being uploaded. */
+  uploading?: boolean;
+  /** Set when this file failed so it stays visible for retry. */
+  failed?: boolean;
 };
 
 function isOk(res: { success?: boolean } | undefined): boolean {
@@ -156,6 +160,8 @@ export default function TemplateDnaMemoryLayerPage() {
   >({});
   const memoryRef = useRef(memory);
   memoryRef.current = memory;
+  /** Sync lock — React state alone is too late to block rapid mobile taps. */
+  const uploadPhotosInFlightRef = useRef(false);
   const [activeTab, setActiveTab] = useState<'questionnaire' | 'images'>(
     'questionnaire'
   );
@@ -426,50 +432,118 @@ export default function TemplateDnaMemoryLayerPage() {
   };
 
   const handleUploadPhotos = async () => {
+    if (uploadPhotosInFlightRef.current) return;
     if (pendingImages.length === 0) {
       toast.message('Choose images first');
       return;
     }
-    const files = pendingImages.map((p) => p.file);
-    const descriptions = pendingImages.map((p) => p.description);
+
+    uploadPhotosInFlightRef.current = true;
+    setUploadingPhotos(true);
+
+    // Keep previews in the UI; upload one-by-one and remove each on success.
+    const snapshot = [...pendingImages];
+    let uploadedCount = 0;
+    let describedCount = 0;
+    let describeError: string | undefined;
+    const failedNames: string[] = [];
+
     try {
-      setUploadingPhotos(true);
-      const up = await uploadMemoryLayerBrandPhotos(files, descriptions);
-      if (!isOk(up as { success?: boolean })) {
-        throw new Error('Photo upload failed');
+      for (const item of snapshot) {
+        setPendingImages((prev) =>
+          prev.map((p) =>
+            p.id === item.id
+              ? { ...p, uploading: true, failed: false }
+              : p
+          )
+        );
+
+        try {
+          const up = await uploadMemoryLayerBrandPhotos(
+            [item.file],
+            [item.description]
+          );
+          if (!isOk(up as { success?: boolean })) {
+            throw new Error('Photo upload failed');
+          }
+          const data = (up as {
+            data?: {
+              memoryLayer?: unknown;
+              uploaded?: number;
+              described?: number;
+              describeError?: string;
+              failed?: { index: number; name: string; reason: string }[];
+            };
+          }).data;
+
+          if (Array.isArray(data?.failed) && data.failed.length > 0) {
+            throw new Error(data.failed[0]?.reason || 'Photo upload failed');
+          }
+
+          uploadedCount +=
+            typeof data?.uploaded === 'number' ? data.uploaded : 1;
+          if (typeof data?.described === 'number') {
+            describedCount += data.described;
+          }
+          if (data?.describeError && !describeError) {
+            describeError = data.describeError;
+          }
+          if (data?.memoryLayer) setMemory(parseMemory(data.memoryLayer));
+
+          setPendingImages((prev) => {
+            const hit = prev.find((p) => p.id === item.id);
+            if (hit) {
+              try {
+                URL.revokeObjectURL(hit.previewUrl);
+              } catch {
+                /* ignore */
+              }
+            }
+            return prev.filter((p) => p.id !== item.id);
+          });
+        } catch (itemErr) {
+          failedNames.push(item.file.name || 'image');
+          setPendingImages((prev) =>
+            prev.map((p) =>
+              p.id === item.id
+                ? { ...p, uploading: false, failed: true }
+                : p
+            )
+          );
+          console.warn('[memory-layer] photo upload failed:', itemErr);
+        }
       }
-      const data = (up as {
-        data?: {
-          memoryLayer?: unknown;
-          uploaded?: number;
-          described?: number;
-          describeAttempted?: number;
-          describeError?: string;
-        };
-      }).data;
-      revokePendingUrls(pendingImages);
-      setPendingImages([]);
-      if (data?.memoryLayer) setMemory(parseMemory(data.memoryLayer));
-      if (data?.describeError) {
+
+      if (failedNames.length > 0) {
+        const names = failedNames.slice(0, 3).join(', ');
+        toast.message(
+          uploadedCount > 0
+            ? `Uploaded ${uploadedCount}; ${failedNames.length} failed${names ? ` (${names})` : ''}`
+            : `Upload failed${names ? `: ${names}` : ''}`
+        );
+      } else if (describeError) {
         toast.message(
           'Photos uploaded — AI descriptions unavailable. You can add them manually.'
         );
-      } else if (
-        typeof data?.described === 'number' &&
-        data.described > 0
-      ) {
+      } else if (describedCount > 0) {
         toast.success(
-          data.described === 1
+          describedCount === 1
             ? 'Photo uploaded with AI description'
-            : `Photos uploaded with ${data.described} AI descriptions`
+            : `Photos uploaded with ${describedCount} AI descriptions`
         );
-      } else {
-        toast.success('Photos uploaded');
+      } else if (uploadedCount > 0) {
+        toast.success(
+          uploadedCount === 1
+            ? 'Photo uploaded'
+            : `Photos uploaded (${uploadedCount})`
+        );
       }
-    } catch (e) {
-      showCaughtErrorToast(e, 'Upload failed');
     } finally {
+      uploadPhotosInFlightRef.current = false;
       setUploadingPhotos(false);
+      setPendingImages((prev) =>
+        prev.map((p) => ({ ...p, uploading: false }))
+      );
     }
   };
 
@@ -556,13 +630,20 @@ export default function TemplateDnaMemoryLayerPage() {
           showErrorToast(`${f.name} is not an image`);
           continue;
         }
-        const normalized = await normalizeMemoryLayerUploadImage(f);
-        staged.push({
-          id: makePendingId(normalized),
-          file: normalized,
-          previewUrl: URL.createObjectURL(normalized),
-          description: '',
-        });
+        try {
+          const normalized = await normalizeMemoryLayerUploadImage(f);
+          staged.push({
+            id: makePendingId(normalized),
+            file: normalized,
+            previewUrl: URL.createObjectURL(normalized),
+            description: '',
+          });
+        } catch (err) {
+          showCaughtErrorToast(
+            err,
+            `${f.name} could not be prepared for upload`
+          );
+        }
       }
 
       if (staged.length === 0) return;
@@ -1234,7 +1315,14 @@ export default function TemplateDnaMemoryLayerPage() {
                 onClick={() => void handleUploadPhotos()}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-emerald-700 disabled:opacity-60 shrink-0"
               >
-                Upload new photos
+                {uploadingPhotos ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    Uploading…
+                  </>
+                ) : (
+                  'Upload new photos'
+                )}
               </button>
             </div>
 
@@ -1410,20 +1498,28 @@ export default function TemplateDnaMemoryLayerPage() {
               <p className="text-xs text-slate-400 mt-2">
                 {maxNewSlots} slot
                 {maxNewSlots === 1 ? '' : 's'} left. JPEG, PNG, or WebP upload
-                best. Leave descriptions blank for suggestions.
+                best. Large images are resized automatically. Leave descriptions
+                blank for suggestions.
               </p>
             </div>
 
             {pendingImages.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
-                  Ready to upload ({pendingImages.length})
+                  {uploadingPhotos
+                    ? `Uploading… (${pendingImages.length} left)`
+                    : `Ready to upload (${pendingImages.length})`}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {pendingImages.map((p) => (
                     <div
                       key={p.id}
-                      className="rounded-xl border border-emerald-200 overflow-hidden bg-emerald-50/40 p-2 space-y-2 ring-1 ring-emerald-100"
+                      className={cn(
+                        'rounded-xl border overflow-hidden p-2 space-y-2 ring-1',
+                        p.failed
+                          ? 'border-red-300 bg-red-50/50 ring-red-100'
+                          : 'border-emerald-200 bg-emerald-50/40 ring-emerald-100'
+                      )}
                     >
                       <div className="relative aspect-square max-h-[220px] sm:max-h-none rounded-lg overflow-hidden bg-slate-100">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1432,16 +1528,27 @@ export default function TemplateDnaMemoryLayerPage() {
                           alt={p.file.name}
                           className="w-full h-full object-cover"
                         />
-                        <button
-                          type="button"
-                          onClick={() => removePending(p.id)}
-                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red-600"
-                          aria-label="Remove from queue"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
+                        {p.uploading ? (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/55 text-white">
+                            <Loader2
+                              className="h-6 w-6 animate-spin"
+                              aria-hidden
+                            />
+                            <span className="text-xs font-medium">Uploading…</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => removePending(p.id)}
+                            disabled={uploadingPhotos}
+                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red-600 disabled:opacity-40"
+                            aria-label="Remove from queue"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
                         <p className="absolute bottom-0 left-0 right-0 truncate bg-black/50 text-[10px] text-white px-2 py-1">
-                          {p.file.name}
+                          {p.failed ? `Failed · ${p.file.name}` : p.file.name}
                         </p>
                       </div>
                       <div className="space-y-1">
@@ -1450,6 +1557,7 @@ export default function TemplateDnaMemoryLayerPage() {
                         </label>
                         <textarea
                           value={p.description}
+                          disabled={!!p.uploading || uploadingPhotos}
                           onChange={(e) =>
                             setPendingImages((prev) =>
                               prev.map((row) =>
@@ -1470,7 +1578,7 @@ export default function TemplateDnaMemoryLayerPage() {
                           placeholder="Optional — leave blank for suggestion"
                           className={cn(
                             inputBase,
-                            'text-sm py-2 resize-y min-h-[72px]'
+                            'text-sm py-2 resize-y min-h-[72px] disabled:opacity-60'
                           )}
                         />
                         <p className="text-[10px] text-slate-400 text-right">
@@ -1495,7 +1603,14 @@ export default function TemplateDnaMemoryLayerPage() {
                 onClick={() => void handleUploadPhotos()}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-emerald-700 disabled:opacity-60"
               >
-                Upload new photos
+                {uploadingPhotos ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    Uploading…
+                  </>
+                ) : (
+                  'Upload new photos'
+                )}
               </button>
             </div>
           </section>

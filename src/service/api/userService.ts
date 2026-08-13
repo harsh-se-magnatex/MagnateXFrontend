@@ -736,6 +736,21 @@ export const putMemoryLayer = async (body: {
 /** Per-image user description; max 500 characters (enforced on server). */
 export const BRAND_PHOTO_DESCRIPTION_MAX = 500;
 
+export type MemoryLayerBrandPhotoUploadFailure = {
+  index: number;
+  name: string;
+  reason: string;
+};
+
+export type MemoryLayerBrandPhotoUploadResult = {
+  memoryLayer: unknown;
+  uploaded: number;
+  described?: number;
+  describeAttempted?: number;
+  describeError?: string;
+  failed: MemoryLayerBrandPhotoUploadFailure[];
+};
+
 export const uploadMemoryLayerBrandPhotos = async (
   files: File[],
   descriptions?: (string | undefined)[]
@@ -746,15 +761,14 @@ export const uploadMemoryLayerBrandPhotos = async (
   }
   if (descriptions != null) {
     const aligned = files.map((_, i) =>
-      (descriptions[i] ?? '')
-        .trim()
-        .slice(0, BRAND_PHOTO_DESCRIPTION_MAX)
+      (descriptions[i] ?? '').trim().slice(0, BRAND_PHOTO_DESCRIPTION_MAX)
     );
     formData.append('descriptions', JSON.stringify(aligned));
   }
-  return apiPost<
-    ApiEnvelope<{ memoryLayer: unknown; uploaded: number; described?: number }>
-  >('/api/v1/user/memory-layer/brand-photos', formData);
+  return apiPost<ApiEnvelope<MemoryLayerBrandPhotoUploadResult>>(
+    '/api/v1/user/memory-layer/brand-photos',
+    formData
+  );
 };
 
 export const putMemoryLayerBrandPhotoDescription = async (
