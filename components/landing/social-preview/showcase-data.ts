@@ -16,6 +16,10 @@ import {
   GENERATED_SHOWCASE_BRAND as CAFE_BRAND,
   GENERATED_SHOWCASE_POSTS as CAFE_POSTS,
 } from '@/components/landing/social-preview/brands/cafe.generated';
+import {
+  GENERATED_SHOWCASE_BRAND as JEWELRY_BRAND,
+  GENERATED_SHOWCASE_POSTS as JEWELRY_POSTS,
+} from '@/components/landing/social-preview/brands/jewelry.generated';
 
 export type ShowcaseMediaType = 'image' | 'video' | 'carousel';
 
@@ -64,6 +68,10 @@ const SHOWCASES: Record<ShowcaseBrandId, ShowcaseBundle> = {
   cafe: {
     brand: CAFE_BRAND,
     posts: CAFE_POSTS as unknown as ShowcasePost[],
+  },
+  jewelry: {
+    brand: JEWELRY_BRAND,
+    posts: JEWELRY_POSTS as unknown as ShowcasePost[],
   },
 };
 

@@ -579,10 +579,8 @@ export default function AdminContentCalendarReviewPage() {
   };
 
   if (!user?.admin) return null;
-  console.log('now', now.getTime());
-  console.log('preview', new Date(preview?.date ?? '').getTime());
-  console.log("content date is past", now.getTime() > new Date(preview?.date ?? '').getTime());
   const contentDateIsPast = now.getTime() > new Date(preview?.date ?? '').getTime();
+  
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16 page-enter">
       <header className="space-y-1">
@@ -955,7 +953,7 @@ function DayRow({
                   onOpen={() => onOpenPreview(platform, item)}
                 />
               ))}
-              {generated.length === 0 &&
+              {
                 upcoming.map((item, idx) => {
                   const runKey = forceRunVisualKey({
                     userId,
