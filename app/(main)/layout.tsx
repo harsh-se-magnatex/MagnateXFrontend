@@ -12,6 +12,7 @@ import { NotificationCountsProvider } from './_components/NotificationCountsProv
 import { UserProvider } from './_components/useUser';
 import { AssistantWidget } from '@/components/chat/AssistantWidget';
 import { TourLauncher } from '@/components/tour/TourLauncher';
+import { ClearPendingOnNavigation } from './_components/ClearPendingOnNavigation';
 
 export default async function MainLayout({
   children,
@@ -22,29 +23,30 @@ export default async function MainLayout({
   return (
     <SidebarProvider>
       <UserProvider>
-          <UserPlanCreditsProvider>
-            <NotificationCountsProvider>
-              <TooltipProvider delayDuration={150}>
-        <TourLauncher />
-        <AppSidebarWrapper />
-      <div className="app-shell relative z-0 w-full flex flex-col min-h-screen">
-        <AppGradientBackground variant="app" scoped />
-        <div className="relative z-10 flex flex-col min-h-screen">
-        <TopNav />
-        <AuthGuard>
-            <FrozenAccountGuard>
-              <ExpiredPlanGuard>
-                <main className="flex-1 px-4 py-6">{children}</main>
-                <AssistantWidget />
-              </ExpiredPlanGuard>
-            </FrozenAccountGuard>
-        </AuthGuard>
-        </div>
-      </div>
-              </TooltipProvider>
-            </NotificationCountsProvider>
-          </UserPlanCreditsProvider>
+        <UserPlanCreditsProvider>
+          <NotificationCountsProvider>
+            <TooltipProvider delayDuration={150}>
+              <TourLauncher />
+              <AppSidebarWrapper />
+              <div className="app-shell relative z-0 w-full flex flex-col min-h-screen">
+                <AppGradientBackground variant="app" scoped />
+                <div className="relative z-10 flex flex-col min-h-screen">
+                  <TopNav />
+                  <AuthGuard>
+                    <FrozenAccountGuard>
+                      <ExpiredPlanGuard>
+                        <main className="flex-1 px-4 py-6">{children}</main>
+                        <AssistantWidget />
+                      </ExpiredPlanGuard>
+                    </FrozenAccountGuard>
+                  </AuthGuard>
+                </div>
+              </div>
+            </TooltipProvider>
+          </NotificationCountsProvider>
+        </UserPlanCreditsProvider>
       </UserProvider>
+      <ClearPendingOnNavigation />
     </SidebarProvider>
   );
 }

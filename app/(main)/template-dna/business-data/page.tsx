@@ -31,6 +31,7 @@ import {
   toggleMemoryLayerPreference,
   generateMemoryLayerQuestions,
 } from '@/src/service/api/userService';
+import { useUploadStore } from '@/src/stores/photoState';
 import {
   Brain,
   ChevronLeft,
@@ -53,6 +54,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { usePathname } from 'next/navigation';
 
 const MAX_MEMORY_LAYER_PDF_BYTES = 50 * 1024 * 1024;
 
@@ -154,7 +156,6 @@ export default function TemplateDnaMemoryLayerPage() {
   const [extraOptions, setExtraOptions] = useState<Record<string, string[]>>(
     {}
   );
-  const [pendingImages, setPendingImages] = useState<PendingImage[]>([]);
   const [photoDescriptionDrafts, setPhotoDescriptionDrafts] = useState<
     Record<string, string>
   >({});
@@ -173,7 +174,18 @@ export default function TemplateDnaMemoryLayerPage() {
     boolean | undefined
   >(undefined);
   const [savingMemoryLayerPref, setSavingMemoryLayerPref] = useState(false);
+  const [convertingPhotos, setConvertingPhotos] = useState(false);
+  const pendingImages = useUploadStore((state) => state.pendingImages);
+  const addImages = useUploadStore((state) => state.addImages);
+  const removePending = useUploadStore((state) => state.removeImage);
+  const clearPending = useUploadStore((state) => state.clearImages);
+  const updateImage = useUploadStore((state) => state.updateImage);
+  const removeImage = useUploadStore((state) => state.removeImage);
+  const hydrate = useUploadStore((state) => state.hydrate);
   const questions = memory?.questions ?? [];
+  const pathname = usePathname();
+  
+const previousPathname = useRef(pathname);
 
   const memoryLayerPrefReady =
     !loading &&
@@ -240,6 +252,11 @@ export default function TemplateDnaMemoryLayerPage() {
       if (!opts?.silent) setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
+
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/sign-in');
@@ -433,6 +450,7 @@ export default function TemplateDnaMemoryLayerPage() {
 
   const handleUploadPhotos = async () => {
     if (uploadPhotosInFlightRef.current) return;
+
     if (pendingImages.length === 0) {
       toast.message('Choose images first');
       return;
@@ -441,96 +459,111 @@ export default function TemplateDnaMemoryLayerPage() {
     uploadPhotosInFlightRef.current = true;
     setUploadingPhotos(true);
 
-    // Keep previews in the UI; upload one-by-one and remove each on success.
     const snapshot = [...pendingImages];
+
     let uploadedCount = 0;
     let describedCount = 0;
     let describeError: string | undefined;
+
     const failedNames: string[] = [];
 
     try {
       for (const item of snapshot) {
-        setPendingImages((prev) =>
-          prev.map((p) =>
-            p.id === item.id
-              ? { ...p, uploading: true, failed: false }
-              : p
-          )
-        );
+        updateImage(item.id, {
+          uploading: true,
+          failed: false,
+        });
 
         try {
           const up = await uploadMemoryLayerBrandPhotos(
             [item.file],
             [item.description]
           );
+
           if (!isOk(up as { success?: boolean })) {
             throw new Error('Photo upload failed');
           }
+
           const data = (up as {
             data?: {
               memoryLayer?: unknown;
               uploaded?: number;
               described?: number;
               describeError?: string;
-              failed?: { index: number; name: string; reason: string }[];
+              failed?: {
+                index: number;
+                name: string;
+                reason: string;
+              }[];
             };
           }).data;
 
-          if (Array.isArray(data?.failed) && data.failed.length > 0) {
-            throw new Error(data.failed[0]?.reason || 'Photo upload failed');
+          if (
+            Array.isArray(data?.failed) &&
+            data.failed.length > 0
+          ) {
+            throw new Error(
+              data.failed[0]?.reason || 'Photo upload failed'
+            );
           }
 
           uploadedCount +=
-            typeof data?.uploaded === 'number' ? data.uploaded : 1;
+            typeof data?.uploaded === 'number'
+              ? data.uploaded
+              : 1;
+
           if (typeof data?.described === 'number') {
             describedCount += data.described;
           }
+
           if (data?.describeError && !describeError) {
             describeError = data.describeError;
           }
-          if (data?.memoryLayer) setMemory(parseMemory(data.memoryLayer));
 
-          setPendingImages((prev) => {
-            const hit = prev.find((p) => p.id === item.id);
-            if (hit) {
-              try {
-                URL.revokeObjectURL(hit.previewUrl);
-              } catch {
-                /* ignore */
-              }
-            }
-            return prev.filter((p) => p.id !== item.id);
-          });
+          if (data?.memoryLayer) {
+            setMemory(parseMemory(data.memoryLayer));
+          }
+
+          // Successfully uploaded → remove from Zustand + IndexedDB
+          await removeImage(item.id);
+
         } catch (itemErr) {
           failedNames.push(item.file.name || 'image');
-          setPendingImages((prev) =>
-            prev.map((p) =>
-              p.id === item.id
-                ? { ...p, uploading: false, failed: true }
-                : p
-            )
+
+          updateImage(item.id, {
+            uploading: false,
+            failed: true,
+          });
+
+          console.warn(
+            '[memory-layer] photo upload failed:',
+            itemErr
           );
-          console.warn('[memory-layer] photo upload failed:', itemErr);
         }
       }
 
       if (failedNames.length > 0) {
         const names = failedNames.slice(0, 3).join(', ');
+
         toast.message(
           uploadedCount > 0
-            ? `Uploaded ${uploadedCount}; ${failedNames.length} failed${names ? ` (${names})` : ''}`
+            ? `Uploaded ${uploadedCount}; ${failedNames.length} failed${names ? ` (${names})` : ''
+            }`
             : `Upload failed${names ? `: ${names}` : ''}`
         );
+
       } else if (describeError) {
         toast.message(
           'Photos uploaded — AI descriptions unavailable. You can add them manually.'
         );
+
       } else if (describedCount > 0) {
         toast.success(
           describedCount === 1
             ? 'Photo uploaded with AI description'
             : `Photos uploaded with ${describedCount} AI descriptions`
         );
+
       } else if (uploadedCount > 0) {
         toast.success(
           uploadedCount === 1
@@ -538,12 +571,17 @@ export default function TemplateDnaMemoryLayerPage() {
             : `Photos uploaded (${uploadedCount})`
         );
       }
+
     } finally {
       uploadPhotosInFlightRef.current = false;
       setUploadingPhotos(false);
-      setPendingImages((prev) =>
-        prev.map((p) => ({ ...p, uploading: false }))
-      );
+
+      // Reset only the UI status of remaining failed items
+      for (const item of useUploadStore.getState().pendingImages) {
+        updateImage(item.id, {
+          uploading: false,
+        });
+      }
     }
   };
 
@@ -610,32 +648,31 @@ export default function TemplateDnaMemoryLayerPage() {
     }
   };
 
-  const removePending = (id: string) => {
-    setPendingImages((prev) => {
-      const hit = prev.find((p) => p.id === id);
-      if (hit) URL.revokeObjectURL(hit.previewUrl);
-      return prev.filter((p) => p.id !== id);
-    });
-  };
-
   const addFilesFromPicker = (list: FileList | null) => {
     if (!list?.length) return;
+
     void (async () => {
       const brandPhotos = memoryRef.current?.brandPhotos ?? [];
       const incoming = Array.from(list);
-      const staged: PendingImage[] = [];
-
-      for (const f of incoming) {
-        if (!isImageFile(f)) {
+      const staged: {
+        id: string;
+        file: File;
+        description: string;
+      }[] = [];
+try {
+  
+  setConvertingPhotos(true);
+  for (const f of incoming) {
+    if (!isImageFile(f)) {
           showErrorToast(`${f.name} is not an image`);
           continue;
         }
+        
         try {
           const normalized = await normalizeMemoryLayerUploadImage(f);
           staged.push({
             id: makePendingId(normalized),
             file: normalized,
-            previewUrl: URL.createObjectURL(normalized),
             description: '',
           });
         } catch (err) {
@@ -643,30 +680,30 @@ export default function TemplateDnaMemoryLayerPage() {
             err,
             `${f.name} could not be prepared for upload`
           );
-        }
+        } 
       }
-
+      
       if (staged.length === 0) return;
-
-      setPendingImages((prev) => {
-        const maxTotal = 30 - brandPhotos.length;
-        const room = Math.max(0, maxTotal - prev.length);
-        if (room === 0) {
-          for (const item of staged) {
-            URL.revokeObjectURL(item.previewUrl);
-          }
-          toast.message('30 image limit reached');
-          return prev;
-        }
-        const accepted = staged.slice(0, room);
-        for (const item of staged.slice(room)) {
-          URL.revokeObjectURL(item.previewUrl);
-        }
-        if (staged.length > room) {
-          toast.message('30 image limit reached');
-        }
-        return [...prev, ...accepted];
-      });
+      
+      const maxTotal = 30 - brandPhotos.length;
+      const room = Math.max(0, maxTotal - pendingImages.length);
+      
+      if (room === 0) {
+        toast.message('30 image limit reached');
+        return;
+      }
+      
+      const accepted = staged.slice(0, room);
+      
+      if (staged.length > room) {
+        toast.message('30 image limit reached');
+      }
+      
+      addImages(accepted);
+    } 
+    finally  {
+      setConvertingPhotos(false);
+    }
     })();
   };
 
@@ -758,9 +795,9 @@ export default function TemplateDnaMemoryLayerPage() {
             ? cur
             : pr
               ? (() => {
-                  const row = rowFor(pr);
-                  return !row.skipped && 'multi' in row ? row.multi : undefined;
-                })()
+                const row = rowFor(pr);
+                return !row.skipped && 'multi' in row ? row.multi : undefined;
+              })()
               : undefined;
         const putRes = await putMemoryLayer({
           status:
@@ -1130,29 +1167,29 @@ export default function TemplateDnaMemoryLayerPage() {
               </section>
             ) : (
               <section
-              className="glass-card rounded-3xl p-8 border border-slate-200 shadow-sm"
-              role="tabpanel"
-            >
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                Your brand questionnaire isn&apos;t set up yet
-              </h3>
-              <p className="text-slate-600 mb-6">
-                Make sure your business profile is filled in — we&apos;ll use it
-                to craft a personalized set of questions you can revisit and
-                update anytime.
-              </p>
-              <button
-                type="button"
-                disabled={generating}
-                onClick={() => void handleGenerate()}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-indigo-700 disabled:opacity-60"
+                className="glass-card rounded-3xl p-8 border border-slate-200 shadow-sm"
+                role="tabpanel"
               >
-                {generating ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : null}
-                Build my questionnaire
-              </button>
-            </section>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  Your brand questionnaire isn&apos;t set up yet
+                </h3>
+                <p className="text-slate-600 mb-6">
+                  Make sure your business profile is filled in — we&apos;ll use it
+                  to craft a personalized set of questions you can revisit and
+                  update anytime.
+                </p>
+                <button
+                  type="button"
+                  disabled={generating}
+                  onClick={() => void handleGenerate()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-indigo-700 disabled:opacity-60"
+                >
+                  {generating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : null}
+                  Build my questionnaire
+                </button>
+              </section>
             )
           ) : null}
           {/* —— Photos —— */}
@@ -1310,7 +1347,8 @@ export default function TemplateDnaMemoryLayerPage() {
                 disabled={
                   uploadingPhotos ||
                   pendingImages.length === 0 ||
-                  isExtracting
+                  isExtracting ||
+                  convertingPhotos
                 }
                 onClick={() => void handleUploadPhotos()}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-emerald-700 disabled:opacity-60 shrink-0"
@@ -1346,7 +1384,7 @@ export default function TemplateDnaMemoryLayerPage() {
                   className={cn(
                     'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 cursor-pointer hover:bg-slate-50',
                     (isExtracting) &&
-                      'opacity-60 pointer-events-none'
+                    'opacity-60 pointer-events-none'
                   )}
                 >
                   <FileText className="w-4 h-4" />
@@ -1465,6 +1503,12 @@ export default function TemplateDnaMemoryLayerPage() {
               </div>
             )}
 
+            {convertingPhotos ? (
+              <div className="mx-auto w-full h-full flex items-center justify-center gap-2" >
+                Adding photos...
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              </div>
+            ) : (
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
                 Add from your device
@@ -1484,7 +1528,7 @@ export default function TemplateDnaMemoryLayerPage() {
                   accept="image/*"
                   multiple
                   className="sr-only"
-                  disabled={isExtracting}
+                  disabled={isExtracting || convertingPhotos}
                   onChange={(e) => {
                     const files = e.target.files;
                     addFilesFromPicker(files);
@@ -1502,7 +1546,7 @@ export default function TemplateDnaMemoryLayerPage() {
                 blank for suggestions.
               </p>
             </div>
-
+            )}
             {pendingImages.length > 0 && (
               <div className="mt-6">
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
@@ -1559,19 +1603,12 @@ export default function TemplateDnaMemoryLayerPage() {
                           value={p.description}
                           disabled={!!p.uploading || uploadingPhotos}
                           onChange={(e) =>
-                            setPendingImages((prev) =>
-                              prev.map((row) =>
-                                row.id === p.id
-                                  ? {
-                                    ...row,
-                                    description: e.target.value.slice(
-                                      0,
-                                      BRAND_PHOTO_DESCRIPTION_MAX
-                                    ),
-                                  }
-                                  : row
-                              )
-                            )
+                            updateImage(p.id, {
+                              description: e.target.value.slice(
+                                0,
+                                BRAND_PHOTO_DESCRIPTION_MAX
+                              ),
+                            })
                           }
                           maxLength={BRAND_PHOTO_DESCRIPTION_MAX}
                           rows={3}
@@ -1598,7 +1635,8 @@ export default function TemplateDnaMemoryLayerPage() {
                 disabled={
                   uploadingPhotos ||
                   pendingImages.length === 0 ||
-                  isExtracting
+                  isExtracting ||
+                  convertingPhotos
                 }
                 onClick={() => void handleUploadPhotos()}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-emerald-700 disabled:opacity-60"
