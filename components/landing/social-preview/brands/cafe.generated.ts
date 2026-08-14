@@ -352,7 +352,7 @@ export const GENERATED_SHOWCASE_POSTS = [
     "platform": "facebook",
     "scheduleAt": "2026-08-15T14:30:00.000Z",
     "mediaType": "video",
-    "caption": "Golden, crispy, impossible to resist. This is what comfort tastes like at Neon Cafe. What's your favorite way to enjoy fries—ketchup, mayo, or both? Drop your take below.",
+    "caption": "Crafted, stacked, and made to share. Every bite carries the flavor we're proud of—and the joy of good company makes it taste even better. What's your go-to sandwich?\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
     "videoUrl": "/landing/how-it-looks/cafe/facebook/4YSrKg0VI1dE2s5hR1yY/video.mp4",
     "posterUrl": "/landing/how-it-looks/cafe/facebook/4YSrKg0VI1dE2s5hR1yY/poster.png"
   }

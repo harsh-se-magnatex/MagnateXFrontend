@@ -228,15 +228,6 @@ export const GENERATED_SHOWCASE_POSTS = [
     "posterUrl": "/landing/how-it-looks/clothing/linkedin/OlN2A34LE3TkjWix9Pqr/poster.png"
   },
   {
-    "id": "U4Egm8nxI2f9d9tbgKOj",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-25T20:00:00.000Z",
-    "mediaType": "video",
-    "caption": "Quality over trends. Every piece in your collection should earn its place. Explore our curated denim and accessories—designed for those who value durability and style. What's your everyday essential?\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
-    "videoUrl": "/landing/how-it-looks/clothing/facebook/U4Egm8nxI2f9d9tbgKOj/video.mp4",
-    "posterUrl": "/landing/how-it-looks/clothing/facebook/U4Egm8nxI2f9d9tbgKOj/poster.png"
-  },
-  {
     "id": "Yr1J1BQijFnfE6kOn4EM",
     "platform": "instagram",
     "scheduleAt": "2026-08-23T14:30:00.000Z",
@@ -289,7 +280,7 @@ export const GENERATED_SHOWCASE_POSTS = [
     "platform": "facebook",
     "scheduleAt": "2026-08-21T14:30:00.000Z",
     "mediaType": "video",
-    "caption": "Prints that tell a story, every wear. Our floral collection brings vibrant design and everyday wearability together. What draws you to bold, colorful pieces? Drop your take below.\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
+    "caption": "What's your take on bold prints that double as personality? Our latest collection proves colorful design and everyday comfort aren't mutually exclusive. Drop your view below — what draws you to pieces like this?\n\nWebsite:- neonclothes.in\nContact:- +919498103210\nEmail:- clothes@neon.com",
     "videoUrl": "/landing/how-it-looks/clothing/facebook/CpFvfftMygEgrhxe4yOs/video.mp4",
     "posterUrl": "/landing/how-it-looks/clothing/facebook/CpFvfftMygEgrhxe4yOs/poster.png"
   },
