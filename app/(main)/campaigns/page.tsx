@@ -346,7 +346,7 @@ function groupDraftsByCampaign(drafts: CampaignDraft[]): CampaignDraftBox[] {
     });
   }
 
-  return boxes.sort((a, b) => {
+  return boxes.sort((b, a) => {
     const aDate = a.items.find((d) => d.targetDate)?.targetDate ?? '';
     const bDate = b.items.find((d) => d.targetDate)?.targetDate ?? '';
     return aDate.localeCompare(bDate);
