@@ -70,29 +70,6 @@ export function PageLookSelector({
           );
         })}
       </div>
-
-      <div className="space-y-2">
-        <Label
-          htmlFor={`${idPrefix}-custom`}
-          className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-        >
-          Or describe your own
-        </Label>
-        <Input
-          id={`${idPrefix}-custom`}
-          type="text"
-          value={customActive ? value : ''}
-          onChange={(e) => handleCustomChange(e.target.value)}
-          placeholder={customPlaceholder}
-          className={cn(
-            'h-11 rounded-xl bg-card px-3 text-base shadow-sm',
-            customActive && 'ring-2 ring-primary-blue/30'
-          )}
-        />
-        <p className="text-xs text-muted-foreground">
-          Choose one preset or enter a custom look — not both.
-        </p>
-      </div>
     </div>
   );
 
