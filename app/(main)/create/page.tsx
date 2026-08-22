@@ -49,7 +49,7 @@ const createFlows = [
   {
     title: 'AI tools',
     description: 'Advanced generation and experimentation.',
-    href: '/ai-engine',
+    href: '/autopilot',
     icon: Sparkles,
     gradient: 'from-rose-500 to-pink-400',
   },

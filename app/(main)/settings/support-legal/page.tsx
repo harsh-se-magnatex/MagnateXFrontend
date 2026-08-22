@@ -41,7 +41,7 @@ const FAQS = [
   {
     question: 'What is the credit system?',
     answer:
-      'Credits unlock on-demand actions: product ads 4 credits, Content Studio posts 2 credits, Bulk Creator 2 credits (Studio Plans), Event Studio 2 credits, Campaign posts 3 credits per day, and regeneration posts 1 credit (Free first regeneration). Your plan includes a monthly credit allowance; add-on packs are valid for 30 days. Personalized AI (AI Plans) does not use this balance.',
+      'Credits unlock on-demand actions: product posts 4 credits, standard posts 2 credits, Bulk Creator 2 credits (Studio plans), occasion posts 2 credits, campaign posts 3 credits per day, and regenerated posts 1 credit (first regeneration free). Your plan includes a monthly credit allowance; add-on packs are valid for 30 days. Personalized AI (AI plans) does not use this balance.',
   },
   {
     question: 'How do I update my profile information?',
@@ -232,7 +232,7 @@ export default function SupportAndLegalPage() {
               <button
                 type="submit"
                 disabled={contactSending}
-                className="w-full rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition-all shadow-md shadow-indigo-600/20 hover:bg-indigo-700 active:scale-95 disabled:opacity-50"
+                className="w-full rounded-xl bg-gradient-action px-4 py-3 text-sm font-semibold text-white transition-all shadow-md shadow-primary-purple/25 hover:brightness-105 active:scale-95 disabled:opacity-50"
               >
                 {contactSending ? 'Sending message...' : 'Send Message'}
               </button>
@@ -241,11 +241,11 @@ export default function SupportAndLegalPage() {
 
           {/* Report a Bug */}
           <section className="glass-card rounded-3xl p-6 sm:p-8 h-fit">
-            <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
               <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
                 <Bug className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-foreground">
                 Report a Bug
               </h2>
             </div>
@@ -281,11 +281,11 @@ export default function SupportAndLegalPage() {
 
           {/* Request a Refund */}
           <section className="glass-card rounded-3xl p-6 sm:p-8 h-fit">
-            <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+            <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
               <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
                 <BadgeDollarSign className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-foreground">
                 Request a Refund
               </h2>
             </div>
@@ -322,11 +322,11 @@ export default function SupportAndLegalPage() {
 
         {/* FAQs */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
             <div className="p-2 bg-sky-50 rounded-lg text-sky-600">
               <HelpCircle className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-foreground">
               Frequently Asked Questions
             </h2>
           </div>
@@ -347,13 +347,13 @@ export default function SupportAndLegalPage() {
                   onClick={() =>
                     setOpenFaqIndex(openFaqIndex === index ? null : index)
                   }
-                  className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-semibold text-slate-900 focus:outline-none"
+                  className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-semibold text-foreground focus:outline-none"
                 >
                   {faq.question}
                   <ChevronDown
                     className={cn(
-                      'h-5 w-5 text-slate-400 transition-transform duration-200',
-                      openFaqIndex === index ? 'rotate-180 text-indigo-500' : ''
+                      'h-5 w-5 text-muted-foreground transition-transform duration-200',
+                      openFaqIndex === index ? 'rotate-180 text-primary-purple' : ''
                     )}
                   />
                 </button>
@@ -366,7 +366,7 @@ export default function SupportAndLegalPage() {
                   )}
                 >
                   <div className="overflow-hidden">
-                    <p className="px-5 pb-4 text-sm text-slate-600 leading-relaxed">
+                    <p className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">
                       {faq.answer}
                     </p>
                   </div>
@@ -378,15 +378,15 @@ export default function SupportAndLegalPage() {
 
         {/* Data Deletion */}
         <section className="glass-card rounded-3xl p-6 sm:p-8 border-2 border-indigo-100">
-          <div className="flex items-center gap-3 mb-2 border-b border-slate-100 pb-4">
-            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+          <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
+            <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
               <Shield className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-foreground">
               Data Deletion
             </h2>
           </div>
-          <p className="text-sm text-slate-500 mb-6">
+          <p className="text-sm text-muted-foreground mb-6">
             Remove platform connection data stored by SocioGenie when you
             disconnect an account or submit a Meta deletion request.
           </p>
@@ -413,7 +413,7 @@ export default function SupportAndLegalPage() {
                 >
                   {item.label}
                 </span>
-                <span className="text-xs text-slate-600 leading-relaxed">
+                <span className="text-xs text-muted-foreground leading-relaxed">
                   {item.description}
                 </span>
                 <span
@@ -433,11 +433,11 @@ export default function SupportAndLegalPage() {
 
         {/* Legal */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-            <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
+          <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
+            <div className="p-2 bg-muted rounded-lg text-foreground">
               <Shield className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-foreground">
               Legal & Policies
             </h2>
           </div>
@@ -449,10 +449,10 @@ export default function SupportAndLegalPage() {
                 href={item.href}
                 className="group flex flex-col rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md hover:-translate-y-1"
               >
-                <span className="font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors mb-2">
+                <span className="font-semibold text-foreground group-hover:text-primary-purple transition-colors mb-2">
                   {item.label}
                 </span>
-                <span className="text-xs text-slate-500 leading-relaxed">
+                <span className="text-xs text-muted-foreground leading-relaxed">
                   {item.description}
                 </span>
               </a>

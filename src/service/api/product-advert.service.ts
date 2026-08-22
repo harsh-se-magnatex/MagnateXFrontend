@@ -32,6 +32,7 @@ export type ProductAdvertVideoGenerateResponse = {
   parentJobId: string;
   videoGenerationDocId: string;
   platform: string;
+  platforms: string[];
   creditCost: number;
 };
 
@@ -58,7 +59,8 @@ export const generateProductAdvertApi = async ({
   if (background?.trim()) form.append('background', background.trim());
   appendPlatforms(form, platforms);
   if (generationMode) form.append('generationMode', generationMode);
-  if (campaignContext?.trim()) form.append('campaignContext', campaignContext.trim());
+  if (campaignContext?.trim())
+    form.append('campaignContext', campaignContext.trim());
   if (useIndustryResearch) form.append('useIndustryResearch', 'true');
   const response = await axiosClient.post<{
     success: boolean;
@@ -69,18 +71,21 @@ export const generateProductAdvertApi = async ({
 };
 
 export const generateProductAdvertVideoApi = async (args: {
-  platform: string;
   referencePrompt?: string;
-  firstFrame: File;
-  lastFrame: File;
+  referenceImage?: File;
+  logoFramePosition: 'first' | 'last';
 }): Promise<ProductAdvertVideoGenerateResponse> => {
   const form = new FormData();
-  form.append('platform', args.platform);
+  form.append('logoFramePosition', args.logoFramePosition);
   if (args.referencePrompt?.trim()) {
     form.append('referencePrompt', args.referencePrompt.trim());
   }
-  form.append('firstFrame', await prepareGenerationImage(args.firstFrame));
-  form.append('lastFrame', await prepareGenerationImage(args.lastFrame));
+  if (args.referenceImage) {
+    form.append(
+      'referenceImage',
+      await prepareGenerationImage(args.referenceImage)
+    );
+  }
   const response = await axiosClient.post<{
     success: boolean;
     data: ProductAdvertVideoGenerateResponse;

@@ -1,60 +1,38 @@
 import type { Metadata } from 'next';
-import {
-  Sora,
-  DM_Sans,
-  Bricolage_Grotesque,
-  Inter,
-  Geist_Mono,
-  Geist,
-} from 'next/font/google';
+import { Inter, Instrument_Serif } from 'next/font/google';
 import { AnalyticsProvider } from '@/components/AnalyticsProvider';
+import { ConsentAwareAnalytics } from '@/components/ConsentAwareAnalytics';
 import { CookieBanner } from '@/components/CookieBanner';
 import { Toaster } from '@/components/ui/sonner';
+import { MotionProvider } from '@/components/shared/MotionProvider';
 import './globals.css';
-import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
 
-const sora = Sora({
-  variable: '--font-sora',
-  subsets: ['latin'],
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
-});
-
-
-const dmSans = DM_Sans({
-  variable: '--font-dm-sans',
-  subsets: ['latin'],
-  display: 'swap',
-  weight: ['400', '500', '600', '700'],
-});
-
-
-const bricolage = Bricolage_Grotesque({
-  variable: '--font-bricolage',
-  subsets: ['latin'],
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '800'],
-});
-
-
+// One typeface, the whole app — differentiated by weight rather than by
+// mixing families. Inter is the closest open match to SF Pro Text, so it
+// carries both display headlines (700–900) and body/UI copy (400–600).
+// `--font-sora` / `--font-dm-sans` / `--font-bricolage` / `--font-geist-*`
+// are aliased to this same font in globals.css so existing className
+// references across the app keep working without a mass find-replace.
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
 });
 
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+/**
+ * Display face for marketing headlines only — body and UI stay on Inter.
+ * Inter is deliberately neutral, which is what makes it excellent for
+ * interface text and bland for a hero. A high-contrast serif carries the
+ * elegance; the pairing (editorial serif + functional grotesque) is what
+ * reads as premium rather than either face alone.
+ */
+const instrumentSerif = Instrument_Serif({
+  variable: '--font-display',
   subsets: ['latin'],
-});
-
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400'],
+  style: ['normal', 'italic'],
 });
 
 
@@ -113,7 +91,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${inter.variable} ${instrumentSerif.variable}`}>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#4A8FF6" />
@@ -121,14 +99,11 @@ export default function RootLayout({
         <meta property="og:url" content="https://www.sociogenie.ai/" />
         <meta property="fb:app_id" content="949135284535930" />
       </head>
-      <body
-        className={`${sora.variable} ${dmSans.variable} ${bricolage.variable} ${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased text-foreground min-h-screen relative`}
-      >
-        {children}
+      <body className="antialiased text-foreground min-h-screen relative">
+        <MotionProvider>{children}</MotionProvider>
         <Toaster />
         <AnalyticsProvider />
-        <Analytics />
-        <SpeedInsights />
+        <ConsentAwareAnalytics />
         <CookieBanner />
       </body>
     </html>

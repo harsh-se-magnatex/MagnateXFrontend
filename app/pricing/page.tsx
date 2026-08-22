@@ -49,10 +49,10 @@ const BILLING_FAQ_ITEMS = [
 ] as const;
 
 const CREDIT_ACTIONS = [
-  { label: 'Product Ads', credits: '4 credits' },
+  { label: 'Product Posts', credits: '4 credits' },
   { label: 'Campaign post', credits: '3 credits / day' },
-  { label: 'Content Studio', credits: '2 credits' },
-  { label: 'Event Studio', credits: '2 credits' },
+  { label: 'Create Post', credits: '2 credits' },
+  { label: 'Occasion Posts', credits: '2 credits' },
   { label: 'Regeneration', credits: '1 credit (First regen free)' },
 ] as const;
 
@@ -299,10 +299,7 @@ export default function PricingPage() {
               Pricing for our plans and credit packs. No contracts — cancel anytime.
             </motion.p>
 
-            {/* Mode toggle: Studio (you curate) vs AI (daily auto-posting).
-                Switches the visible plan cards between manual and auto
-                pricing; the underlying activePlan ids differ
-                (prime-Studio vs prime-AI) so checkout routes correctly. */}
+            {/* Mode toggle: one manual Studio plan or the AI tier catalog. */}
             <div
               role="tablist"
               aria-label="Plan mode"
@@ -338,7 +335,12 @@ export default function PricingPage() {
               })}
             </div>
 
-            <div className="grid gap-6 md:grid-cols-3 items-stretch max-w-6xl mx-auto">
+            <div
+              className={cn(
+                'grid gap-6 items-stretch mx-auto',
+                visiblePlans.length === 1 ? 'max-w-md' : 'max-w-6xl md:grid-cols-3'
+              )}
+            >
               {visiblePlans.map((p) => (
                 <motion.div
                   variants={scaleIn}

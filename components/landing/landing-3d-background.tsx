@@ -7,6 +7,9 @@ const TOTAL_FRAMES = 634;
 const LERP_SPEED = 0.22;
 /** How many frames to fetch in parallel while filling the contiguous window. */
 const LOAD_BATCH_SIZE = 12;
+/** Fewer parallel fetches on a `3g`-tier connection so the frame sequence
+ *  doesn't starve fonts/JS/other requests of bandwidth. */
+const LOAD_BATCH_SIZE_SLOW = 4;
 /** Hero scroll fade only after this many contiguous frames are ready. */
 const HERO_READY_FRAMES = 24;
 const FRAME_BASE_PATH_DESKTOP = '/frames-webp/frame_';
@@ -15,6 +18,32 @@ const FRAME_BASE_PATH_MOBILE = '/frames-webp-mobile/frame_';
 function isMobileViewport(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(max-width: 820px), (pointer: coarse)').matches;
+}
+
+type ConnectionTier = 'offline-or-tiny' | 'slow' | 'normal';
+
+/**
+ * Network Information API isn't available everywhere (no Safari/Firefox
+ * support) — treat "unknown" the same as "normal" rather than penalizing
+ * browsers that simply don't expose it.
+ */
+function getConnectionTier(): ConnectionTier {
+  if (typeof navigator === 'undefined') return 'normal';
+  const conn = (
+    navigator as Navigator & {
+      connection?: {
+        saveData?: boolean;
+        effectiveType?: string;
+      };
+    }
+  ).connection;
+  if (!conn) return 'normal';
+  if (conn.saveData) return 'offline-or-tiny';
+  if (conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g') {
+    return 'offline-or-tiny';
+  }
+  if (conn.effectiveType === '3g') return 'slow';
+  return 'normal';
 }
 
 function framePath(index: number, basePath: string): string {
@@ -34,6 +63,14 @@ export function Landing3DBackground({
     const reducedMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)'
     ).matches;
+    const connectionTier = getConnectionTier();
+    // On Save-Data / 2G, hold a single static frame instead of streaming the
+    // full sequence — the scroll-linked hero text motion still runs (that's
+    // just a CSS transform, not a network cost), only the background stops
+    // fetching more frames.
+    const singleFrameOnly = reducedMotion || connectionTier === 'offline-or-tiny';
+    const loadBatchSize =
+      connectionTier === 'slow' ? LOAD_BATCH_SIZE_SLOW : LOAD_BATCH_SIZE;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -66,8 +103,8 @@ export function Landing3DBackground({
     }
 
     function scheduleLoads() {
-      if (cancelled || reducedMotion) return;
-      while (inFlight < LOAD_BATCH_SIZE && nextToLoad < TOTAL_FRAMES) {
+      if (cancelled || singleFrameOnly) return;
+      while (inFlight < loadBatchSize && nextToLoad < TOTAL_FRAMES) {
         const frameIndex = nextToLoad++;
         inFlight++;
         const img = new Image();
@@ -84,7 +121,7 @@ export function Landing3DBackground({
       }
     }
 
-    if (!reducedMotion) {
+    if (!singleFrameOnly) {
       scheduleLoads();
     } else {
       const img = new Image();

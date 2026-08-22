@@ -1,19 +1,8 @@
 export const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 export type SocialPlatform = (typeof PLATFORM_ORDER)[number];
 
-/**
- * Per-plan platform cap. Auto and Manual modes within the same tier share the
- * same cap (prime=1, elite=2, legacy=3) — the mode suffix only changes
- * automation behavior, not the platform allowance.
- */
-export const PLAN_MAX_SOCIAL: Record<string, number> = {
-  'prime-AI': 1,
-  'prime-Studio': 1,
-  'elite-AI': 2,
-  'elite-Studio': 2,
-  'legacy-AI': 3,
-  'legacy-Studio': 3,
-};
+/** Manual creation, scheduling, analytics, and connections are open on all paid plans. */
+export const ALL_PAID_PLATFORM_LIMIT = 3;
 
 export function listEnabledPlatforms(
   selectedAccounts: Partial<Record<SocialPlatform, boolean>> | null | undefined
@@ -33,14 +22,14 @@ export function isPlatformSelectionComplete(args: {
   activePlan: string;
   selected: Partial<Record<SocialPlatform, boolean>> | null | undefined;
 }): boolean {
-  const maxAllowed = PLAN_MAX_SOCIAL[args.activePlan] ?? 0;
+  const maxAllowed = args.activePlan && args.activePlan !== 'non-subscribed' ? ALL_PAID_PLATFORM_LIMIT : 0;
   if (maxAllowed <= 0) return true;
   return countEnabledPlatforms(args.selected) >= maxAllowed;
 }
 
 /** Plans that already include all three platforms — no upgrade path for more slots. */
 export function isMaxPlatformPlan(activePlan: string): boolean {
-  return (PLAN_MAX_SOCIAL[activePlan] ?? 0) >= 3;
+  return Boolean(activePlan && activePlan !== 'non-subscribed');
 }
 
 export function validateGenerationPlatformSelection(args: {
@@ -60,8 +49,8 @@ export function validateGenerationPlatformSelection(args: {
     }
   }
 
-  const maxAllowed = PLAN_MAX_SOCIAL[activePlan ?? ''];
-  if (maxAllowed !== undefined && selected.length > maxAllowed) {
+  const maxAllowed = activePlan && activePlan !== 'non-subscribed' ? ALL_PAID_PLATFORM_LIMIT : 0;
+  if (selected.length > maxAllowed) {
     return {
       ok: false,
       error: `Your ${activePlan} plan allows up to ${maxAllowed} platform(s) per run`,

@@ -68,11 +68,19 @@ export const getScheduledPosts = async (params?: {
 export const getScheduledPostsInRange = async (params: {
   fromMs: number;
   toMs: number;
+  tab?: ScheduledPostsTab;
+  excludeRemovedRejected?: boolean;
 }) => {
   const search = new URLSearchParams({
     fromMs: String(params.fromMs),
     toMs: String(params.toMs),
   });
+  if (params.tab && params.tab !== 'all') {
+    search.set('tab', params.tab);
+  }
+  if (params.excludeRemovedRejected) {
+    search.set('excludeRemovedRejected', 'true');
+  }
   const response = await axiosClient.get(
     `/api/v1/automated-post/get-scheduled-posts?${search.toString()}`
   );

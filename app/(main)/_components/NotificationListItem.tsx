@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 
 export function NotificationNewBadge() {
   return (
-    <span className="inline-flex items-center rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+    <span className="inline-flex items-center rounded-full bg-primary-purple px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
       New
     </span>
   );

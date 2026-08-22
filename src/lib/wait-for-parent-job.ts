@@ -237,7 +237,7 @@ export function waitForVideoGenerationDoc(args: {
 
     try {
       unsub = onSnapshot(
-        doc(db, 'users', uid, 'videoGeneration', docId),
+        doc(db, 'users', uid, 'content', docId),
         (snap) => {
           if (!snap.exists()) return;
           const data = snap.data() as Record<string, unknown>;
@@ -359,7 +359,7 @@ export function waitForCampaignDraftRegen(args: {
 
     try {
       unsub = onSnapshot(
-        doc(db, 'users', uid, 'campaignDrafts', draftId),
+        doc(db, 'users', uid, 'content', draftId),
         (snap) => {
           if (!snap.exists()) {
             finish({

@@ -21,6 +21,7 @@ import {
   useTimestampFormatter,
   type TimestampInput,
 } from '@/lib/user-timezone';
+import { workspacePageTitleClass } from '@/lib/workspace-ui';
 
 function transactionTypeLabel(type: string | undefined): string {
   if (type === 'purchase') return 'Credit purchase';
@@ -48,13 +49,13 @@ function spendOnLinkLabel(path: string): string {
 
 function InvoiceCell({ invoiceUrl }: { invoiceUrl?: string }) {
   const raw = invoiceUrl?.trim();
-  if (!raw) return <span className="text-slate-500">—</span>;
+  if (!raw) return <span className="text-muted-foreground">—</span>;
   return (
     <a
       href={raw}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-medium text-indigo-600 hover:underline underline-offset-2"
+      className="font-medium text-primary-purple hover:underline underline-offset-2"
     >
       View invoice
     </a>
@@ -103,15 +104,15 @@ export default function TransactionsPage() {
   return (
     <div className="max-w-[min(100%,80rem)] w-full mx-auto px-4 sm:px-6 animate-in fade-in duration-500">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+        <h1 className={workspacePageTitleClass}>
           Payment History
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-muted-foreground">
           Credit top-ups and plan purchases recorded for your account. For
           subscriptions and packs, see{' '}
           <Link
             href="/settings/billings"
-            className="font-medium text-indigo-600 hover:underline"
+            className="font-medium text-primary-purple hover:underline"
           >
             Billing &amp; Credits
           </Link>
@@ -120,15 +121,15 @@ export default function TransactionsPage() {
       </div>
 
       <section className="glass-card rounded-3xl p-6 sm:p-8">
-        <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-          <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
+        <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
+          <div className="p-2 bg-muted rounded-lg text-foreground">
             <Receipt className="h-5 w-5" />
           </div>
-          <h2 className="text-xl font-semibold text-slate-900">Activity</h2>
+          <h2 className="text-xl font-semibold text-foreground">Activity</h2>
         </div>
 
         {transactions.length === 0 ? (
-          <p className="text-sm text-slate-600 py-8 text-center">
+          <p className="text-sm text-muted-foreground py-8 text-center">
             No transactions yet. Purchases and top-ups will appear here.
           </p>
         ) : (
@@ -138,25 +139,25 @@ export default function TransactionsPage() {
             >
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 w-[16%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground w-[16%]">
                     Date
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 w-[11%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground w-[11%]">
                     Type
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 min-w-0 w-[26%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground min-w-0 w-[26%]">
                     Description
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right w-[9%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground text-right w-[9%]">
                     Amount (INR)
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right w-[9%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground text-right w-[9%]">
                     Credits
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right w-[9%]">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground text-right w-[9%]">
                     Balance after
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right w-[8%] min-w-28">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground text-right w-[8%] min-w-28">
                     Invoice
                   </TableHead>
                 </TableRow>
@@ -164,22 +165,22 @@ export default function TransactionsPage() {
               <TableBody>
                 {transactions.map((row, index) => (
                   <TableRow key={`${formatTransactionDate(row.createdAt as TimestampInput)}-${index}`}>
-                    <TableCell className="text-slate-900 tabular-nums align-top whitespace-normal wrap-break-word">
+                    <TableCell className="text-foreground tabular-nums align-top whitespace-normal wrap-break-word">
                       {formatTransactionDate(row.createdAt as TimestampInput)}
                     </TableCell>
-                    <TableCell className="text-slate-700 align-top whitespace-normal wrap-break-word">
+                    <TableCell className="text-foreground align-top whitespace-normal wrap-break-word">
                       {transactionTypeLabel(row.type)}
                     </TableCell>
-                    <TableCell className="text-slate-700 align-top min-w-0 whitespace-normal wrap-break-word">
+                    <TableCell className="text-foreground align-top min-w-0 whitespace-normal wrap-break-word">
                       {row.description ?? '—'}
                     </TableCell>
-                    <TableCell className="text-right text-slate-900 tabular-nums align-top">
+                    <TableCell className="text-right text-foreground tabular-nums align-top">
                       {formatAmountInr(row)}
                     </TableCell>
-                    <TableCell className="text-right text-slate-900 tabular-nums align-top">
+                    <TableCell className="text-right text-foreground tabular-nums align-top">
                       {typeof row.credits === 'number' ? row.credits : '—'}
                     </TableCell>
-                    <TableCell className="text-right text-slate-900 tabular-nums align-top">
+                    <TableCell className="text-right text-foreground tabular-nums align-top">
                       {typeof row.balanceAfter === 'number' ? row.balanceAfter : '—'}
                     </TableCell>
                     <TableCell className="align-top text-right whitespace-normal min-w-0">

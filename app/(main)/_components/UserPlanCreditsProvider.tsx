@@ -32,20 +32,30 @@ export type UserPlanCredits = {
   planStartedAt: FirestoreTimestamp | null;
   isTopupCreditsExpired: boolean;
   preferences: {
-    Need_Approval?: boolean;
+    approvalMode?: 'manual' | 'auto';
     preferredTime?: string;
     /**
      * IANA timezone name (e.g. `Asia/Kolkata`, `America/New_York`). Drives
      * how timestamps render throughout the app — see `lib/user-timezone.tsx`.
      */
-    TimeZone?: string;
-    useAnalyticsOptimalPostingTime?: boolean;
+    timeZone?: string;
+    analyticsOptimalPosting?: boolean;
     optimalFacebookTime?: string;
     optimalInstagramTime?: string;
     optimalLinkedinTime?: string;
   };
   subscription?: string;
   selected?: {
+    facebook: boolean;
+    instagram: boolean;
+    linkedin: boolean;
+  };
+  connected?: {
+    facebook: boolean;
+    instagram: boolean;
+    linkedin: boolean;
+  };
+  aiPlanSelected?: {
     facebook: boolean;
     instagram: boolean;
     linkedin: boolean;
@@ -74,9 +84,43 @@ type FirestoreTimestamp = {
   nanoseconds: number;
 };
 
-function timestampMillis(ts: FirestoreTimestamp | null | undefined): number | null {
-  if (!ts || typeof ts.seconds !== 'number') return null;
-  return ts.seconds * 1000 + (ts.nanoseconds ?? 0) / 1e6;
+function normalizeTimestamp(value: unknown): FirestoreTimestamp | null {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Record<string, unknown> & { toDate?: () => Date };
+  if (typeof row.toDate === 'function') {
+    try {
+      const date = row.toDate();
+      if (date instanceof Date && !Number.isNaN(date.getTime())) {
+        const millis = date.getTime();
+        return {
+          seconds: Math.floor(millis / 1000),
+          nanoseconds: (millis % 1000) * 1e6,
+        };
+      }
+    } catch {
+      return null;
+    }
+  }
+  const seconds =
+    typeof row.seconds === 'number'
+      ? row.seconds
+      : typeof row._seconds === 'number'
+        ? row._seconds
+        : null;
+  if (seconds == null || !Number.isFinite(seconds)) return null;
+  const nanoseconds =
+    typeof row.nanoseconds === 'number'
+      ? row.nanoseconds
+      : typeof row._nanoseconds === 'number'
+        ? row._nanoseconds
+        : 0;
+  return { seconds, nanoseconds };
+}
+
+function timestampMillis(value: unknown): number | null {
+  const ts = normalizeTimestamp(value);
+  if (!ts) return null;
+  return ts.seconds * 1000 + ts.nanoseconds / 1e6;
 }
 
 /** 24-hour display helper (UTC). Prefer `useTimestampFormatter` in UI. */
@@ -120,21 +164,29 @@ function parseBilling(
   data: Record<string, unknown> | undefined
 ): UserPlanCredits | null {
   if (!data) return null;
-  const planCredits = numField(data.planCredits);
-  const topupCredits = numField(data.topupCredits);
-  const hasNumericPoolField =
-    typeof data.planCredits === 'number' || typeof data.topupCredits === 'number';
-  const hasPoolExpiry =
-    data.planCreditsExpiresAt != null || data.topupCreditsExpiresAt != null;
-  const usesSplitCreditPools =
-    hasNumericPoolField &&
-    (planCredits + topupCredits > 0 || hasPoolExpiry);
-  const topupExpiresMs = timestampMillis(
-    data.topupCreditsExpiresAt as FirestoreTimestamp | null
+  const plan = (data.plan && typeof data.plan === 'object' ? data.plan : {}) as Record<string, unknown>;
+  const creditsData = (data.credits && typeof data.credits === 'object' ? data.credits : {}) as Record<string, unknown>;
+  const account = (data.account && typeof data.account === 'object' ? data.account : {}) as Record<string, unknown>;
+  const aiPlan = (data.aiPlan && typeof data.aiPlan === 'object' ? data.aiPlan : {}) as Record<string, unknown>;
+  const rawPreferences = (data.preferences && typeof data.preferences === 'object'
+    ? data.preferences
+    : {}) as Record<string, unknown>;
+  const socialSummary = (data.socialSummary && typeof data.socialSummary === 'object' ? data.socialSummary : {}) as Record<string, { connected?: unknown }>;
+  const planCredits = numField(creditsData.planBalance);
+  const topupCredits = numField(creditsData.topupBalance);
+  const usesSplitCreditPools = true;
+  const normalizedPlanExpiresAt = normalizeTimestamp(
+    plan.expiresAt ?? creditsData.planExpiresAt ?? data.planExpiresAt
   );
-  const planExpiresMs = timestampMillis(
-    data.planCreditsExpiresAt as FirestoreTimestamp | null
+  const normalizedPlanStartedAt = normalizeTimestamp(
+    plan.startedAt ?? data.planStartedAt
   );
+  const normalizedPlanCreditsExpiresAt = normalizeTimestamp(
+    creditsData.planExpiresAt ?? plan.expiresAt ?? data.planExpiresAt
+  );
+  const normalizedTopupExpiresAt = normalizeTimestamp(creditsData.topupExpiresAt);
+  const topupExpiresMs = timestampMillis(normalizedTopupExpiresAt);
+  const planExpiresMs = timestampMillis(normalizedPlanCreditsExpiresAt);
   const now = Date.now();
   const isTopupCreditsExpired =
     topupCredits > 0 ? topupExpiresMs == null || topupExpiresMs < now : true;
@@ -143,40 +195,74 @@ function parseBilling(
   const credits =
     numField(isPlanCreditsExpired ? 0 : planCredits) +
     numField(isTopupCreditsExpired ? 0 : topupCredits);
+  const paidPlanActive =
+    typeof plan.id === 'string' &&
+    plan.id !== '' &&
+    plan.id !== 'non-subscribed' &&
+    plan.status === 'active' &&
+    account.frozen !== true;
+  const connected = parseSelectedPlatforms(Object.fromEntries(
+    ['facebook', 'instagram', 'linkedin'].map((platform) => [
+      platform,
+      socialSummary[platform]?.connected === true,
+    ])
+  ));
 
   return {
     usesSplitCreditPools,
     isTopupCreditsExpired,
     credits,
     planCredits,
-    planCreditsExpiresAt:
-      (data.planCreditsExpiresAt as FirestoreTimestamp | null | undefined) ?? null,
+    planCreditsExpiresAt: normalizedPlanCreditsExpiresAt,
     topupCredits: isTopupCreditsExpired ? 0 : topupCredits,
-    topupCreditsExpiresAt:
-      (data.topupCreditsExpiresAt as FirestoreTimestamp | null | undefined) ?? null,
+    topupCreditsExpiresAt: normalizedTopupExpiresAt,
     activePlan:
-      typeof data.activePlan === 'string' ? data.activePlan : 'non-subscribed',
+      typeof plan.id === 'string' ? plan.id : 'non-subscribed',
     mode:
-      data.mode === 'auto' || data.mode === 'manual' ? data.mode : null,
-    isAccountFrozen: data.isAccountFrozen === true,
-    planExpiresAt: (data.planExpiresAt as FirestoreTimestamp | null | undefined) ?? null,
-    planStartedAt: (data.planStartedAt as FirestoreTimestamp | null | undefined) ?? null,
-    preferences:
-      (data.preferences as UserPlanCredits['preferences'] | null | undefined) ??
-      { Need_Approval: false },
+      plan.mode === 'auto' || plan.mode === 'manual' ? plan.mode : null,
+    isAccountFrozen: account.frozen === true,
+    planExpiresAt: normalizedPlanExpiresAt,
+    planStartedAt: normalizedPlanStartedAt,
+    preferences: {
+      approvalMode:
+        rawPreferences.approvalMode === 'manual' ? 'manual' : 'auto',
+      preferredTime:
+        typeof rawPreferences.preferredTime === 'string'
+          ? rawPreferences.preferredTime
+          : undefined,
+      timeZone:
+        typeof rawPreferences.timeZone === 'string'
+          ? rawPreferences.timeZone
+          : undefined,
+      analyticsOptimalPosting:
+        rawPreferences.analyticsOptimalPosting === true,
+      optimalFacebookTime: rawPreferences.optimalFacebookTime as string | undefined,
+      optimalInstagramTime: rawPreferences.optimalInstagramTime as string | undefined,
+      optimalLinkedinTime: rawPreferences.optimalLinkedinTime as string | undefined,
+    },
     subscription:
       typeof data.subscription === 'string' ? data.subscription : undefined,
-    selected: parseSelectedPlatforms(data.selected),
-    selectedPlatformsLocked: data.selectedPlatformsLocked === true,
-    campaignSeedPendingPlatformConfirm:
-      data.campaignSeedPendingPlatformConfirm === true,
-    pendingSelected:
-      data.pendingSelected == null
-        ? null
-        : parseSelectedPlatforms(data.pendingSelected),
+    // Every active paid plan unlocks all platforms for manual generation.
+    selected: paidPlanActive
+      ? { facebook: true, instagram: true, linkedin: true }
+      : { facebook: false, instagram: false, linkedin: false },
+    connected,
+    aiPlanSelected: parseSelectedPlatforms(
+      Array.isArray(aiPlan.selectedPlatforms)
+        ? Object.fromEntries((aiPlan.selectedPlatforms as string[]).map((platform) => [platform, true]))
+        : null
+    ),
+    selectedPlatformsLocked: aiPlan.lockedAt != null,
+    campaignSeedPendingPlatformConfirm: aiPlan.status === 'awaiting_selection',
+    pendingSelected: aiPlan.nextCycle && typeof aiPlan.nextCycle === 'object'
+      ? parseSelectedPlatforms(Object.fromEntries(
+          (((aiPlan.nextCycle as Record<string, unknown>).selectedPlatforms as string[] | undefined) ?? [])
+            .map((platform) => [platform, true])
+        ))
+      : null,
     pendingSelectedForPlan:
-      typeof data.pendingSelectedForPlan === 'string'
-        ? data.pendingSelectedForPlan
+      aiPlan.nextCycle && typeof aiPlan.nextCycle === 'object' && typeof (aiPlan.nextCycle as Record<string, unknown>).planId === 'string'
+        ? String((aiPlan.nextCycle as Record<string, unknown>).planId)
         : null,
   };
 }

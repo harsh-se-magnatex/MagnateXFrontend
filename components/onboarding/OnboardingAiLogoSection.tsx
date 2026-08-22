@@ -14,6 +14,7 @@ export const MAX_ONBOARDING_AI_LOGOS = 2;
 export type OnboardingLogoPick = {
   preview: string;
   url: string;
+  designStory?: string;
 };
 
 type OnboardingAiLogoSectionProps = {
@@ -51,7 +52,9 @@ export function OnboardingAiLogoSection({
 
   const limitReached = generationUsed >= MAX_ONBOARDING_AI_LOGOS;
   const canGenerate =
-    Boolean(businessName.trim() && industry.trim()) && !limitReached && !generating;
+    Boolean(businessName.trim() && industry.trim()) &&
+    !limitReached &&
+    !generating;
 
   const runGeneration = useCallback(async () => {
     if (!businessName.trim() || !industry.trim()) {
@@ -74,11 +77,12 @@ export function OnboardingAiLogoSection({
       });
       const nextPreview = response?.data?.picks?.[0];
       const nextUrl = response?.data?.urls?.[0] || nextPreview;
+      const designStory = response?.data?.designStory;
       if (!nextPreview || !nextUrl) {
         throw new Error('No logo was generated.');
       }
       onPicksChange(
-        [{ preview: nextPreview, url: nextUrl }, ...picks].slice(
+        [{ preview: nextPreview, url: nextUrl, designStory }, ...picks].slice(
           0,
           MAX_ONBOARDING_AI_LOGOS
         )
@@ -94,7 +98,9 @@ export function OnboardingAiLogoSection({
       toast.success('Logo ready — pick one to use.');
     } catch (error: unknown) {
       showErrorToast(
-        error instanceof Error ? error.message : 'Failed to generate AI logo. Please Try Again Later.'
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate AI logo. Please Try Again Later.'
       );
     } finally {
       setGenerating(false);
@@ -189,32 +195,48 @@ export function OnboardingAiLogoSection({
           {picks.map((pick, idx) => {
             const active = selectedUrl === pick.url;
             return (
-              <button
-                key={`${pick.url}-${idx}`}
-                type="button"
-                onClick={() =>
-                  onSelect({ url: pick.url, preview: pick.preview })
-                }
-                style={{ backgroundColor: '#ffffff' }}
-                className={cn(
-                  'group relative aspect-square overflow-hidden rounded-xl border p-2 transition',
-                  active
-                    ? 'border-primary-purple ring-2 ring-primary-purple/25'
-                    : 'border-border hover:border-primary-purple/40'
+              <div key={`${pick.url}-${idx}`} className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onSelect({ url: pick.url, preview: pick.preview })
+                  }
+                  style={{
+                    backgroundImage:
+                      'repeating-conic-gradient(#f1f3f5 0% 25%, #ffffff 0% 50%)',
+                    backgroundSize: '16px 16px',
+                  }}
+                  className={cn(
+                    'group relative aspect-square w-full overflow-hidden rounded-xl border p-2 transition',
+                    active
+                      ? 'border-primary-purple ring-2 ring-primary-purple/25'
+                      : 'border-border hover:border-primary-purple/40'
+                  )}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={pick.preview}
+                    alt={`AI logo option ${idx + 1}`}
+                    className="h-full w-full object-contain"
+                    style={{ mixBlendMode: 'multiply' }}
+                  />
+                  {active && (
+                    <span className="absolute right-1.5 top-1.5 inline-flex size-6 items-center justify-center rounded-full bg-gradient-primary text-white shadow">
+                      <Check className="size-3.5" />
+                    </span>
+                  )}
+                </button>
+                {pick.designStory && (
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
+                      Design story
+                    </p>
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                      {pick.designStory}
+                    </p>
+                  </div>
                 )}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={pick.preview}
-                  alt={`AI logo option ${idx + 1}`}
-                  className="h-full w-full object-contain"
-                />
-                {active && (
-                  <span className="absolute right-1.5 top-1.5 inline-flex size-6 items-center justify-center rounded-full bg-gradient-primary text-white shadow">
-                    <Check className="size-3.5" />
-                  </span>
-                )}
-              </button>
+              </div>
             );
           })}
         </div>

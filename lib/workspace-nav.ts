@@ -1,15 +1,15 @@
 /** Sidebar labels and matching routes — single source of truth for workspace navigation. */
 
 export const WORKSPACE_NAV_HREFS = {
-  quickCreate: '/content-studio',
-  productAdvert: '/product-ads',
-  videoGeneration: '/video-generator',
-  festivePost: '/event-studio',
+  quickCreate: '/create-post',
+  productAdvert: '/product-posts',
+  videoGeneration: '/short-videos',
+  festivePost: '/occasion-posts',
   createCampaign: '/campaigns',
   carouselCreate: '/carousel-posts',
-  schedulePost: '/post-scheduler',
-  postQueue: '/scheduled-posts',
-  contentPlan: '/content-calendar',
+  schedulePost: '/schedule-post',
+  postQueue: '/upcoming-posts',
+  contentPlan: '/ai-plan',
   gallery: '/media-library',
   linkedProfiles: '/connected-accounts',
   analytics: '/analytics',
@@ -18,16 +18,25 @@ export const WORKSPACE_NAV_HREFS = {
 /** Old app paths → current workspace routes (bookmarks, emails, stored `spendedOn`). */
 export const WORKSPACE_LEGACY_PATH_REDIRECTS: Record<string, string> = {
   '/instant-generation': WORKSPACE_NAV_HREFS.quickCreate,
+  '/content-studio': WORKSPACE_NAV_HREFS.quickCreate,
   '/product-advert': WORKSPACE_NAV_HREFS.productAdvert,
+  '/product-ads': WORKSPACE_NAV_HREFS.productAdvert,
   '/video-generation': WORKSPACE_NAV_HREFS.videoGeneration,
+  '/video-generator': WORKSPACE_NAV_HREFS.videoGeneration,
   '/festive-post': WORKSPACE_NAV_HREFS.festivePost,
+  '/event-studio': WORKSPACE_NAV_HREFS.festivePost,
   '/create-campaign': WORKSPACE_NAV_HREFS.createCampaign,
   '/create/carousel-generation': WORKSPACE_NAV_HREFS.carouselCreate,
   '/carousel-generation': WORKSPACE_NAV_HREFS.carouselCreate,
+  '/post-scheduler': WORKSPACE_NAV_HREFS.schedulePost,
   '/scheduled-post': WORKSPACE_NAV_HREFS.postQueue,
+  '/scheduled-posts': WORKSPACE_NAV_HREFS.postQueue,
   '/content-plan': WORKSPACE_NAV_HREFS.contentPlan,
+  '/content-calendar': WORKSPACE_NAV_HREFS.contentPlan,
   '/social-media-integration': WORKSPACE_NAV_HREFS.linkedProfiles,
   '/batch-generation': WORKSPACE_NAV_HREFS.quickCreate,
+  '/ai-engine': '/autopilot',
+  '/template-dna': '/brand-dna',
 };
 
 export function resolveWorkspacePath(pathname: string): string {
@@ -51,25 +60,25 @@ export type WorkspaceNavItem = {
 
 export const WORKSPACE_NAV: WorkspaceNavItem[] = [
   {
-    name: 'Content Studio',
+    name: 'Create Post',
     href: WORKSPACE_NAV_HREFS.quickCreate,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.quickCreate),
   },
   {
-    name: 'Product Ads',
+    name: 'Product Posts',
     href: WORKSPACE_NAV_HREFS.productAdvert,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.productAdvert),
   },
   {
-    name: 'Video Generator',
+    name: 'Short Videos',
     href: WORKSPACE_NAV_HREFS.videoGeneration,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.videoGeneration),
   },
   {
-    name: 'Event Studio',
+    name: 'Occasion Posts',
     href: WORKSPACE_NAV_HREFS.festivePost,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.festivePost),
@@ -87,19 +96,19 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.carouselCreate),
   },
   {
-    name: 'Post Scheduler',
+    name: 'Schedule a Post',
     href: WORKSPACE_NAV_HREFS.schedulePost,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.schedulePost),
   },
   {
-    name: 'Content Calendar',
+    name: 'AI Plan',
   href: WORKSPACE_NAV_HREFS.contentPlan,
   match: (pathname) =>
     !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.contentPlan),
   },
   {
-    name: 'Scheduled Posts',
+    name: 'Upcoming Posts',
     href: WORKSPACE_NAV_HREFS.postQueue,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.postQueue),

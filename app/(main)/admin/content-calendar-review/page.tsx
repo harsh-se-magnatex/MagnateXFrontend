@@ -124,21 +124,21 @@ function statusLabel(status: AdminContentPlanGeneratedItem['status']): string {
 function cellToneClass(kind: string): string {
   switch (kind) {
     case 'campaign':
-      return 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300';
+      return 'bg-emerald-500/20 text-emerald-300';
     case 'festival':
     case 'festive':
-      return 'bg-amber-500/25 text-amber-700 dark:text-amber-300';
+      return 'bg-amber-500/25 text-amber-300';
     case 'quick-create':
-      return 'bg-sky-500/20 text-sky-600 dark:text-sky-400';
+      return 'bg-sky-500/20 text-sky-400';
     case 'product-advert':
-      return 'bg-fuchsia-500/20 text-fuchsia-700 dark:text-fuchsia-300';
+      return 'bg-fuchsia-500/20 text-fuchsia-300';
     case 'video-generation':
-      return 'bg-cyan-500/20 text-cyan-600 dark:text-cyan-400';
+      return 'bg-cyan-500/20 text-cyan-400';
     case 'carousel':
-      return 'bg-teal-500/20 text-teal-600 dark:text-teal-400';
+      return 'bg-teal-500/20 text-teal-400';
     case 'bulk-create':
     case 'ai-engine':
-      return 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300';
+      return 'bg-primary-purple/20 text-primary-purple';
     case 'empty':
       return 'bg-muted/50 text-muted-foreground';
     default:
@@ -838,7 +838,7 @@ function PreferencesStrip({
 
   if (
     rows.every((r) => !r.optimal && !r.preferred) &&
-    preferences.useAnalyticsOptimalPostingTime == null
+    preferences.analyticsOptimalPosting == null
   ) {
     return null;
   }
@@ -860,11 +860,11 @@ function PreferencesStrip({
           </span>
         </div>
       ))}
-      {preferences.useAnalyticsOptimalPostingTime != null ? (
+      {preferences.analyticsOptimalPosting != null ? (
         <div className="text-muted-foreground sm:col-span-2 lg:col-span-3">
           Use analytics optimal posting time:{' '}
           <span className="font-medium text-foreground">
-            {preferences.useAnalyticsOptimalPostingTime ? 'Yes' : 'No'}
+            {preferences.analyticsOptimalPosting ? 'Yes' : 'No'}
           </span>
         </div>
       ) : null}

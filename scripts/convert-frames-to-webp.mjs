@@ -14,13 +14,13 @@ const JOBS = [
   {
     src: path.join(frontendRoot, 'public', 'frames-jpg'),
     dest: path.join(frontendRoot, 'public', 'frames-webp'),
-    quality: 80,
+    quality: 92,
     label: 'desktop',
   },
   {
     src: path.join(frontendRoot, 'public', 'frames-jpg-mobile'),
     dest: path.join(frontendRoot, 'public', 'frames-webp-mobile'),
-    quality: 75,
+    quality: 86,
     label: 'mobile',
   },
 ];
@@ -52,7 +52,7 @@ async function convertDir({ src, dest, quality, label }) {
       const file = files[i++];
       const inPath = path.join(src, file);
       const outPath = path.join(dest, file.replace(/\.jpg$/i, '.webp'));
-      await sharp(inPath).webp({ quality, effort: 4 }).toFile(outPath);
+      await sharp(inPath).webp({ quality, effort: 5, smartSubsample: true }).toFile(outPath);
       done++;
       if (done % 50 === 0 || done === files.length) {
         console.log(`[${label}] ${done}/${files.length}`);

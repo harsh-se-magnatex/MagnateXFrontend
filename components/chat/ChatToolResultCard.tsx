@@ -209,7 +209,7 @@ export function ChatToolResultCard({
           })}
         </ul>
         <p className="mt-1.5 text-[11px] text-muted-foreground">
-          Pick the event on the Event Studio page — the engine writes the caption
+          Pick the event on the Occasion Posts page — the engine writes the caption
           and image for you from your brand context.
         </p>
         <DismissButton onDismiss={onDismiss} />

@@ -43,7 +43,6 @@ import { useTimestampFormatter } from '@/lib/user-timezone';
 import {
   countEnabledPlatforms,
   isPlatformSelectionComplete,
-  PLAN_MAX_SOCIAL,
 } from '@/lib/platform-selection';
 import { buildBusinessSocialProfileUrl } from '@/lib/business-social-profile-url';
 
@@ -168,10 +167,10 @@ export default function AnalyticsPage() {
   const { billing, loading: billingLoading } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
   const router = useRouter();
-  const selected = billing?.selected;
+  const selected = billing?.connected;
   const activePlan = billing?.activePlan ?? 'non-subscribed';
   const selectedCount = countEnabledPlatforms(selected);
-  const maxPlatforms = PLAN_MAX_SOCIAL[activePlan] ?? 0;
+  const maxPlatforms: number = activePlan !== 'non-subscribed' ? 3 : 0;
 
   const showSelectionIncompleteNotice =
     !billingLoading &&
@@ -695,7 +694,7 @@ export default function AnalyticsPage() {
             type="button"
             size="sm"
             className="shrink-0 self-start sm:self-auto"
-            onClick={() => router.push('/ai-engine')}
+            onClick={() => router.push('/autopilot')}
           >
             Select platforms
           </Button>

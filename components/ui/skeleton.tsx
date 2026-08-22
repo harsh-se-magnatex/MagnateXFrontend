@@ -4,7 +4,10 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="skeleton"
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      // The travelling highlight comes from `[data-slot="skeleton"]::after`
+      // in globals.css. `animate-pulse` is deliberately gone — running both
+      // reads as two unrelated things breathing at different rates.
+      className={cn("rounded-md bg-muted", className)}
       {...props}
     />
   )

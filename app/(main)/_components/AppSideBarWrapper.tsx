@@ -7,7 +7,7 @@ import { useUserPlanCredits } from './UserPlanCreditsProvider';
 export function AppSidebarWrapper() {
   const { user } = useUser();
   const { billing } = useUserPlanCredits();
-  const isNeedApproval = billing?.preferences.Need_Approval ?? false;
+  const isNeedApproval = billing?.preferences.approvalMode === 'manual';
   const isAccountFrozen = billing?.isAccountFrozen === true;
   return (
     <AppSidebar

@@ -8,6 +8,7 @@ import { Footer } from '@/components/shared/Footer';
 import {
   SocialPreviewEmbed,
 } from '@/components/landing/social-preview/social-preview-embed';
+import { SevenVisualsEmbed } from '@/components/landing/seven-visuals/seven-visuals-embed';
 
 const fadeIn = {
   hidden: { opacity: 0, y: 24 },
@@ -54,6 +55,30 @@ export function SocialPreviewPage() {
           <motion.div variants={fadeIn} className="mt-10">
             <SocialPreviewEmbed />
           </motion.div>
+
+          <motion.section
+            variants={fadeIn}
+            className="mt-24 border-t border-border/50 pt-20"
+            aria-labelledby="seven-visuals-heading"
+          >
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary-purple">
+                Page styles
+              </p>
+              <h2
+                id="seven-visuals-heading"
+                className="mt-3 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl"
+              >
+                See your brand in seven different styles.
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-base leading-relaxed text-muted-foreground sm:text-lg">
+                Explore how the same page can feel minimalist, vibrant, elegant, or bold—then open each visual to see its caption and full-size artwork.
+              </p>
+            </div>
+            <div className="mt-10">
+              <SevenVisualsEmbed />
+            </div>
+          </motion.section>
 
           <motion.div variants={fadeIn} className="mt-8">
             <div className="flex flex-wrap items-center justify-center gap-3">

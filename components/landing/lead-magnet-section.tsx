@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Loader2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import {
   claimLeadMagnetEmail,
@@ -33,6 +34,191 @@ const PLATFORMS: { id: LeadMagnetPlatform; label: string }[] = [
 const PREVIEW_TIMEOUT_MS = 90_000;
 const POLL_INTERVAL_MS = 2_000;
 const POLL_TIMEOUT_MS = 12 * 60_000;
+
+/** User-facing stages. The internal `loading` / `generating` waits belong to
+ *  the stage they resolve, and `result` is the payoff rather than a step. */
+const FLOW_STAGES = [
+  { key: 'site', label: 'Website', steps: ['website'] },
+  { key: 'email', label: 'Email', steps: ['email', 'loading'] },
+  { key: 'brand', label: 'Brand', steps: ['brand'] },
+  { key: 'platform', label: 'Platform', steps: ['platform', 'generating'] },
+] as const;
+
+function FlowProgress({ step }: { step: Step }) {
+  if (step === 'result') return null;
+
+  const activeIndex = Math.max(
+    0,
+    FLOW_STAGES.findIndex((s) => (s.steps as readonly string[]).includes(step))
+  );
+
+  return (
+    <ol className="mb-8 flex items-center justify-center gap-2 sm:gap-3">
+      {FLOW_STAGES.map((stage, i) => {
+        const done = i < activeIndex;
+        const active = i === activeIndex;
+        return (
+          <li key={stage.key} className="flex items-center gap-2 sm:gap-3">
+            <span
+              className="flex items-center gap-2"
+              aria-current={active ? 'step' : undefined}
+            >
+              <span
+                className={[
+                  'h-1.5 w-1.5 rounded-full transition-all duration-500',
+                  active
+                    ? 'scale-125 bg-white shadow-[0_0_10px_2px_rgba(199,184,253,0.55)]'
+                    : done
+                      ? 'bg-white/55'
+                      : 'bg-white/20',
+                ].join(' ')}
+                aria-hidden
+              />
+              <span
+                className={[
+                  'landing-body text-[11px] uppercase tracking-[0.16em] transition-colors duration-500',
+                  active
+                    ? 'text-white/85'
+                    : done
+                      ? 'text-white/45'
+                      : 'text-white/25',
+                ].join(' ')}
+              >
+                {stage.label}
+              </span>
+            </span>
+            {i < FLOW_STAGES.length - 1 ? (
+              <span
+                className={[
+                  'hidden h-px w-5 transition-colors duration-500 sm:block',
+                  i < activeIndex ? 'bg-white/35' : 'bg-white/12',
+                ].join(' ')}
+                aria-hidden
+              />
+            ) : null}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/**
+ * What the pipeline is actually doing, in the user's words. Shown in order
+ * while the job runs so a multi-minute wait reads as progress rather than a
+ * hang — the single biggest reason people abandon this flow.
+ */
+const GENERATING_STAGES = [
+  { at: 0, label: 'Reading your website' },
+  { at: 14, label: 'Learning your brand voice' },
+  { at: 32, label: 'Choosing an angle that fits' },
+  { at: 52, label: 'Designing the visual' },
+  { at: 76, label: 'Writing your caption' },
+] as const;
+
+/** Expected run in seconds — the ring paces against this, never completing early. */
+const GENERATING_EXPECTED_S = 100;
+
+function GeneratingState({
+  elapsedMs,
+  businessName,
+  platformLabel,
+}: {
+  elapsedMs: number;
+  businessName?: string;
+  platformLabel?: string;
+}) {
+  const elapsedS = Math.max(0, Math.floor(elapsedMs / 1000));
+
+  const stageIndex = GENERATING_STAGES.reduce(
+    (acc, stage, i) => (elapsedS >= stage.at ? i : acc),
+    0
+  );
+  const stage = GENERATING_STAGES[stageIndex];
+
+  // Ease toward — but never reach — completion, so the ring never implies
+  // "done" while the job is still running. Caps at 92%.
+  const progress = Math.min(0.92, 1 - Math.exp(-elapsedS / GENERATING_EXPECTED_S));
+
+  const R = 34;
+  const CIRC = 2 * Math.PI * R;
+
+  return (
+    <div className="flex flex-col items-center gap-5 py-10 text-center">
+      <div className="relative h-24 w-24">
+        <svg
+          className="h-full w-full -rotate-90"
+          viewBox="0 0 80 80"
+          aria-hidden
+        >
+          <circle
+            cx="40"
+            cy="40"
+            r={R}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-white/10"
+          />
+          <circle
+            cx="40"
+            cy="40"
+            r={R}
+            fill="none"
+            stroke="url(#lm-ring)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeDasharray={CIRC}
+            strokeDashoffset={CIRC * (1 - progress)}
+            style={{ transition: 'stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1)' }}
+          />
+          <defs>
+            <linearGradient id="lm-ring" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#c7b8fd" />
+              <stop offset="100%" stopColor="#7c6bf5" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-white/45" aria-hidden />
+        </span>
+      </div>
+
+      <div className="space-y-2" role="status" aria-live="polite">
+        <p className="landing-display text-lg text-white">{stage.label}…</p>
+        <p className="landing-body mx-auto max-w-sm text-sm text-white/50">
+          {businessName
+            ? `Crafting a ${platformLabel ?? ''} sample for ${businessName}.`.replace(
+                /\s+/g,
+                ' '
+              )
+            : 'This usually takes a minute or two.'}
+        </p>
+      </div>
+
+      {/* Stage rail — position in the sequence, without a fake countdown. */}
+      <div className="flex items-center gap-1.5" aria-hidden>
+        {GENERATING_STAGES.map((s, i) => (
+          <span
+            key={s.at}
+            className={
+              i <= stageIndex
+                ? 'h-1 w-6 rounded-full bg-white/55 transition-colors duration-500'
+                : 'h-1 w-6 rounded-full bg-white/12 transition-colors duration-500'
+            }
+          />
+        ))}
+      </div>
+
+      {elapsedS > 75 ? (
+        <p className="landing-body text-xs text-white/40">
+          Still working — this one&apos;s taking a little longer. We&apos;ll show
+          it the moment it&apos;s ready.
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 function BrandColorSwatch({ hex, label }: { hex: string; label: string }) {
   const color = hex.trim();
@@ -173,7 +359,9 @@ export function LeadMagnetSection() {
 
   React.useEffect(() => {
     if (step !== 'generating' || generatingSince == null) return;
-    const id = window.setInterval(() => setTick((n) => n + 1), 15_000);
+    // 2s cadence so the progress ring eases and stage labels advance on time.
+    // Cost is negligible; the alternative is a wait that looks frozen.
+    const id = window.setInterval(() => setTick((n) => n + 1), 2_000);
     return () => window.clearInterval(id);
   }, [step, generatingSince]);
 
@@ -348,6 +536,15 @@ export function LeadMagnetSection() {
         </p>
 
         <div className="mt-12 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-md md:p-8">
+          <FlowProgress step={step} />
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            >
           {step === 'website' && (
             <form onSubmit={onContinueWebsite} className="space-y-4">
               <label className="landing-body block text-sm text-white/70">
@@ -527,24 +724,11 @@ export function LeadMagnetSection() {
           )}
 
           {step === 'generating' && (
-            <div className="flex flex-col items-center gap-4 py-10 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-white/70" />
-              <p className="landing-display text-lg text-white">
-                Creating your post…
-              </p>
-              <p className="landing-body max-w-sm text-sm text-white/50">
-                {dna?.businessName
-                  ? `Crafting a ${PLATFORMS.find((p) => p.id === platform)?.label ?? ''} sample for ${dna.businessName}.`
-                  : 'This usually takes a minute or two.'}
-              </p>
-              {generatingSince != null &&
-              Date.now() - generatingSince > 60_000 ? (
-                <p className="landing-body text-xs text-white/40">
-                  Still working — hang tight, we&apos;ll show it when it&apos;s
-                  ready.
-                </p>
-              ) : null}
-            </div>
+            <GeneratingState
+              elapsedMs={generatingSince != null ? Date.now() - generatingSince : 0}
+              businessName={dna?.businessName || undefined}
+              platformLabel={PLATFORMS.find((p) => p.id === platform)?.label}
+            />
           )}
 
           {step === 'result' && post && (
@@ -600,14 +784,19 @@ export function LeadMagnetSection() {
               </div>
             </div>
           )}
+            </motion.div>
+          </AnimatePresence>
 
           {error ? (
-            <p
+            <motion.p
               className="landing-body mt-4 text-sm text-rose-300/90"
               role="alert"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
             >
               {error}
-            </p>
+            </motion.p>
           ) : null}
         </div>
       </div>

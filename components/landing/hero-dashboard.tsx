@@ -31,19 +31,19 @@ const ACTIVITY_ITEMS: {
 }[] = [
   {
     platform: 'instagram',
-    description: 'Product Ads · Awaiting your review',
+    description: 'Product Posts · Awaiting your review',
     time: '2:30 PM',
     state: 'pending',
   },
   {
     platform: 'linkedin',
-    description: 'AI Engine · Scheduled for 4:00 PM',
+    description: 'Autopilot · Scheduled for 4:00 PM',
     time: '4:00 PM',
     state: 'approved',
   },
   {
     platform: 'facebook',
-    description: 'Event Studio · Scheduled for 6:15 PM',
+    description: 'Occasion Posts · Scheduled for 6:15 PM',
     time: '6:15 PM',
     state: 'approved',
   },

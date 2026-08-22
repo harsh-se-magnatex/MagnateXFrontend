@@ -4,7 +4,7 @@
  * User-preferred timezone helpers.
  *
  * All timestamp display in the app flows through these helpers so that:
- *   • The user's preferred timezone (saved in `users/{uid}.preferences.TimeZone`)
+ *   • The user's preferred timezone (saved in `users/{uid}.preferences.timeZone`)
  *     drives what they see, regardless of browser locale.
  *   • Output is always 24-hour clock (`HH:mm`) — no AM/PM ambiguity.
  *   • Daylight Saving Time transitions are handled correctly: date-fns-tz's
@@ -170,7 +170,7 @@ export function formatTimestampInTz(
  */
 export function useUserTimezone(): string {
   const ctx = useContext(UserPlanCreditsContext);
-  const preferred = ctx?.billing?.preferences?.TimeZone;
+  const preferred = ctx?.billing?.preferences?.timeZone;
   return useMemo(() => {
     if (typeof preferred === 'string' && preferred.trim()) return preferred;
     return getBrowserTimeZone();

@@ -206,7 +206,7 @@ export type ContentCalendarReviewPreferences = {
   optimalFacebookTime: string | null;
   optimalInstagramTime: string | null;
   optimalLinkedinTime: string | null;
-  useAnalyticsOptimalPostingTime: boolean | null;
+  analyticsOptimalPosting: boolean | null;
   timeZone: string | null;
 };
 

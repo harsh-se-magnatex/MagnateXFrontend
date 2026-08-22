@@ -6,24 +6,8 @@
  * the mapping in one place stops the two pages from drifting (e.g. relabelling
  * `pending` differently or applying different colours).
  *
- * Status resolution priority (high → low):
- *   1. `removedByUser === true`         → Removed by you (terminal user action,
- *                                          beats every backend status)
- *   2. `postStatus === 'removed'` or
- *      `UserApprovalStatus === 'removed'` → Removed by admin
- *   3. `postStatus === 'failed'`        → Failed (with reason from `error` or
- *                                          `errors[]`)
- *   4. `postStatus === 'posted'`        → Posted
- *   5. `UserApprovalStatus === 'rejected'`
- *      or `postStatus === 'rejected'`   → Rejected by user / Rejected by admin
- *   6. `UserApprovalStatus !== 'approved'` → Approval pending by you
- *      (user-side approval check intentionally wins over
- *      `postStatus === 'approved'`, because the AI engine sometimes
- *      pre-stamps `postStatus: 'approved'` while still leaving
- *      `UserApprovalStatus: 'pending'`)
- *   7. `postStatus === 'approved'`      → Approved
- *   8. `postStatus === 'processing'`    → Processing
- *   9. otherwise                        → Approval pending by admin
+ * The backend exposes one canonical lifecycle and one approval stage. The UI
+ * does not translate or merge any retired scheduling status fields.
  */
 
 import {
@@ -36,21 +20,16 @@ import {
 import { cn } from './utils';
 
 export type ScheduledPostStatusInput = {
-  postStatus?: string | null;
-  UserApprovalStatus?: string | null;
-  /**
-   * `true` when the *end user* (not an admin) deleted the post from the queue.
-   * Terminal state — beats every other status because it reflects the user's
-   * own explicit action, which is the most useful signal to surface back.
-   */
-  removedByUser?: boolean | null;
-  /**
-   * `true` when the end user rejected the post from their approval queue.
-   * Distinguishes admin rejects (`postStatus === 'rejected'`) from user rejects.
-   */
-  rejectedByUser?: boolean | null;
-  error?: string | null;
-  errors?: string[] | null;
+  lifecycle?: string | null;
+  approval?: {
+    status?: string | null;
+    stage?: string | null;
+    actor?: string | null;
+  } | null;
+  publication?: {
+    lastError?: string | null;
+    errors?: string[] | null;
+  } | null;
 };
 
 export type DisplayStatusVariant =
@@ -74,11 +53,11 @@ export type DisplayStatus = {
 export function extractFailureReason(
   post: ScheduledPostStatusInput
 ): string | null {
-  if (typeof post.error === 'string' && post.error.trim()) {
-    return post.error.trim();
+  if (typeof post.publication?.lastError === 'string' && post.publication.lastError.trim()) {
+    return post.publication.lastError.trim();
   }
-  if (Array.isArray(post.errors)) {
-    const cleaned = post.errors
+  if (Array.isArray(post.publication?.errors)) {
+    const cleaned = post.publication.errors
       .map((e) => (typeof e === 'string' ? e.trim() : ''))
       .filter((e) => e.length > 0);
     if (cleaned.length > 0) return cleaned.join('\n');
@@ -87,19 +66,14 @@ export function extractFailureReason(
 }
 
 export function getDisplayStatus(post: ScheduledPostStatusInput): DisplayStatus {
-  const ps = String(post.postStatus ?? '').toLowerCase();
-  const ua = String(post.UserApprovalStatus ?? '').toLowerCase();
+  const lifecycle = String(post.lifecycle ?? '').toLowerCase();
+  const stage = String(post.approval?.stage ?? '').toLowerCase();
+  const actor = String(post.approval?.actor ?? '').toLowerCase();
 
-  // Removal beats every other status — it's a terminal user/admin action
-  // and the most relevant thing to surface back. The `removedByUser` flag
-  // is what the current Remove button writes; `postStatus === 'removed'` and
-  // `UserApprovalStatus === 'removed'` are kept here for forward
-  // compatibility with an admin-side remove action (no producer in-tree yet,
-  // but the badge is ready when it lands).
-  if (post.removedByUser === true) {
-    return { label: 'Removed by you', variant: 'removedByYou', reason: null };
-  }
-  if (ps === 'removed' || ua === 'removed') {
+  if (lifecycle === 'removed') {
+    if (actor === 'user') {
+      return { label: 'Removed by you', variant: 'removedByYou', reason: null };
+    }
     return {
       label: 'Removed by admin',
       variant: 'removedByAdmin',
@@ -107,17 +81,17 @@ export function getDisplayStatus(post: ScheduledPostStatusInput): DisplayStatus 
     };
   }
 
-  if (ps === 'failed') {
+  if (lifecycle === 'failed') {
     return {
       label: 'Failed',
       variant: 'failed',
       reason: extractFailureReason(post),
     };
   }
-  if (ps === 'posted')
+  if (lifecycle === 'published')
     return { label: 'Posted', variant: 'posted', reason: null };
-  if (ua === 'rejected' || ps === 'rejected') {
-    const byAdmin = ps === 'rejected' && post.rejectedByUser !== true;
+  if (lifecycle === 'rejected') {
+    const byAdmin = actor !== 'user';
     return {
       label: byAdmin ? 'Rejected by admin' : 'Rejected by user',
       variant: 'rejected',
@@ -125,7 +99,7 @@ export function getDisplayStatus(post: ScheduledPostStatusInput): DisplayStatus 
     };
   }
 
-  if (ua !== 'approved') {
+  if (lifecycle === 'review_pending' && stage === 'user') {
     return {
       label: 'Approval pending by you',
       variant: 'pendingByYou',
@@ -133,9 +107,9 @@ export function getDisplayStatus(post: ScheduledPostStatusInput): DisplayStatus 
     };
   }
 
-  if (ps === 'approved')
+  if (lifecycle === 'scheduled')
     return { label: 'Approved', variant: 'approved', reason: null };
-  if (ps === 'processing')
+  if (lifecycle === 'publishing' || lifecycle === 'generating')
     return { label: 'Processing', variant: 'processing', reason: null };
   return {
     label: 'Approval pending by admin',
@@ -199,18 +173,16 @@ export type ActivityScheduleState = 'posted' | 'failed' | 'approved' | 'pending'
 export function getActivityScheduleState(
   post: ScheduledPostStatusInput
 ): ActivityScheduleState | null {
-  const ps = String(post.postStatus ?? '').toLowerCase();
-  const ua = String(post.UserApprovalStatus ?? '').toLowerCase();
-
-  if (ps === 'posted') return 'posted';
-  if (ps === 'failed') return 'failed';
-  if (ua === 'pending' || ps === 'pending') return 'pending';
-  if (ua === 'approved' && ps === 'approved') return 'approved';
+  const lifecycle = String(post.lifecycle ?? '').toLowerCase();
+  if (lifecycle === 'published') return 'posted';
+  if (lifecycle === 'failed') return 'failed';
+  if (lifecycle === 'review_pending') return 'pending';
+  if (lifecycle === 'scheduled') return 'approved';
   return null;
 }
 
 export type ScheduledPostScheduleInput = ScheduledPostStatusInput & {
-  scheduleAt?: { _seconds: number } | null;
+  schedule?: { at?: { _seconds: number } | null } | null;
 };
 
 /**
@@ -221,13 +193,9 @@ export function isUpcomingScheduledPost(
   post: ScheduledPostScheduleInput,
   scheduleFloorMs: number = Date.now()
 ): boolean {
-  const ps = String(post.postStatus ?? '').toLowerCase();
-  const ua = String(post.UserApprovalStatus ?? '').toLowerCase();
-  if (post.removedByUser === true) return false;
-  if (ua === 'rejected' || ua === 'removed') return false;
-  if (ps === 'posted' || ps === 'failed' || ps === 'removed') return false;
-  if (!['pending', 'processing', 'approved'].includes(ps)) return false;
-  const scheduleMs = (post.scheduleAt?._seconds ?? 0) * 1000;
+  const lifecycle = String(post.lifecycle ?? '').toLowerCase();
+  if (!['review_pending', 'scheduled', 'publishing'].includes(lifecycle)) return false;
+  const scheduleMs = (post.schedule?.at?._seconds ?? 0) * 1000;
   return scheduleMs >= scheduleFloorMs;
 }
 
@@ -238,23 +206,23 @@ export function generatedByLabel(value: string | undefined): string | null {
   if (!trimmed) return null;
   switch (trimmed.toLowerCase()) {
     case 'ai-engine':
-      return 'AI Engine';
+      return 'Autopilot';
     case 'batch-generation':
       return 'Legacy bulk';
     case 'events-post':
-      return 'Event Studio';
+      return 'Occasion Posts';
     case 'product-advert':
-      return 'Product Ads';
+      return 'Product Posts';
     case 'video-generation':
-      return 'Video Generator';
+      return 'Short Videos';
     case 'scheduler':
-      return 'Post Scheduler';
+      return 'Schedule a Post';
     case 'instant-generation':
-      return 'Content Studio';
+      return 'Create Post';
     case 'bulk-create':
       return 'Legacy bulk';
     case 'quick-create':
-      return 'Content Studio';
+      return 'Create Post';
     case 'campaign':
     case 'create-campaign':
       return 'Campaigns';

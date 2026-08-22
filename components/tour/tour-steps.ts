@@ -80,7 +80,7 @@ const BRAND_MEMORY_STEPS: TourStep[] = [
 
 /** Tour C — platform walkthrough (17 steps, cross-page) */
 const PLATFORM_STEPS: TourStep[] = [
-  // 8a. Home → Content Studio (2 steps)
+  // 8a. Home → Create Post (2 steps)
   {
     element: '#tour-home-command',
     path: '/home',
@@ -93,11 +93,11 @@ const PLATFORM_STEPS: TourStep[] = [
     element: '#tour-nav-content-studio',
     path: '/home',
     side: 'right',
-    title: 'Content Studio',
+    title: 'Create Post',
     description:
       "Let's start with single, on-demand posts. Click Next to take a look inside.",
   },
-  // 8b. Content Studio (3 steps)
+  // 8b. Create Post (3 steps)
   {
     element: '#tour-qc-prompt',
     path: WORKSPACE_NAV_HREFS.quickCreate,
@@ -125,7 +125,7 @@ const PLATFORM_STEPS: TourStep[] = [
       "Hit Generate (one credit per platform). The Schedule panel on the right unlocks the moment a post appears — pick a date and time and you're done.",
     paid: true,
   },
-  // 8d. Product Ads (3 steps)
+  // 8d. Product Posts (3 steps)
   {
     element: '#tour-pa-upload',
     path: WORKSPACE_NAV_HREFS.productAdvert,
@@ -153,7 +153,7 @@ const PLATFORM_STEPS: TourStep[] = [
       'Generates the ad image AND a complete caption, headline, CTA, and hashtags — ready to publish. Costs more credits but saves you the writing.',
     paid: true,
   },
-  // 8e. Event Studio (1 step)
+  // 8e. Occasion Posts (1 step)
   {
     element: '#tour-fp-events',
     path: WORKSPACE_NAV_HREFS.festivePost,
@@ -163,17 +163,17 @@ const PLATFORM_STEPS: TourStep[] = [
       'Pick from pre-loaded festivals or add your own. Each selected event becomes a generated post, scheduled for that day.',
     paid: true,
   },
-  // 8f. Post Scheduler (1 step)
+  // 8f. Schedule a Post (1 step)
   {
     element: '#tour-ps-form',
-    path: '/post-scheduler',
+    path: '/schedule-post',
     side: 'bottom',
     title: 'Manual posts too',
     description:
       'Beyond AI generation, you can compose a post from scratch right here — image, caption, platform, date, time. Everything we publish for you flows through this page.',
     paid: true,
   },
-  // 8g. Scheduled Posts (1 step)
+  // 8g. Upcoming Posts (1 step)
   {
     element: '#tour-pq-list',
     path: WORKSPACE_NAV_HREFS.postQueue,
@@ -227,7 +227,7 @@ const PLATFORM_STEPS: TourStep[] = [
     side: 'bottom',
     title: 'Quick jumps up top',
     description:
-      'From any page: Home for the dashboard, AI Engine to tune prompts, Brand DNA to edit everything you set up in onboarding and Business Data, Contact Us for support — and the sign-out button on the right.',
+      'From any page: Home for the dashboard, Brand DNA to edit everything you set up in onboarding and Business Data, Contact Us for support — and the sign-out button on the right.',
   },
   // 8l. Final CTA
   FINAL_STEP,

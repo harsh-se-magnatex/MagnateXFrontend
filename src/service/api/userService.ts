@@ -46,9 +46,10 @@ export const checkEmailExistsinDeletedUsers = async (email: string) => {
 };
 
 export const checkEmailRegistered = async (email: string) => {
-  return apiPost<
-    ApiEnvelope<{ registered: boolean; providers: string[] }>
-  >('/api/v1/user/check-email-registered', { email });
+  return apiPost<ApiEnvelope<{ registered: boolean; providers: string[] }>>(
+    '/api/v1/user/check-email-registered',
+    { email }
+  );
 };
 
 /** Same endpoint as email check; body uses `phoneNumber` (E.164, e.g. +919876543210). */
@@ -98,6 +99,20 @@ export const uploadLogo = async (
       colorTemplatesGenerationStarted?: boolean;
     }>
   >('/api/v1/user/upload-logo', formData);
+};
+
+export const uploadVideoAvatar = async (avatar: File) => {
+  const formData = new FormData();
+  formData.append('avatar', avatar);
+  return apiPost<
+    ApiEnvelope<{ avatarUrl: string; enabled: boolean }>
+  >('/api/v1/user/upload-video-avatar', formData);
+};
+
+export const setVideoAvatarPreference = async (enabled: boolean) => {
+  return apiPut<
+    ApiEnvelope<{ enabled: boolean; avatarUrl: string | null }>
+  >('/api/v1/user/video-avatar-preference', { enabled });
 };
 
 export const getProfile = async () => {
@@ -211,24 +226,17 @@ export const scheduleUserPost = async (params: ScheduleUserPostInput) => {
     formData.append('message', message);
     formData.append('time', time);
     formData.append('platform', platform);
-    return apiPost<ApiEnvelope>(
-      '/api/v1/user/schedule-user-post',
-      formData
-    );
+    return apiPost<ApiEnvelope>('/api/v1/user/schedule-user-post', formData);
   }
-  const {
-    message,
-    time,
-    platform,
-    source,
-    ...media
-  } = params;
+  const { message, time, platform, source, ...media } = params;
   const body =
     media.mediaType === 'carousel'
       ? {
           mediaType: 'carousel' as const,
           carouselSlides: media.carouselSlides,
-          ...(media.imageFilePath ? { imageFilePath: media.imageFilePath } : {}),
+          ...(media.imageFilePath
+            ? { imageFilePath: media.imageFilePath }
+            : {}),
           ...(media.imageUrl ? { imageUrl: media.imageUrl } : {}),
         }
       : media.mediaType === 'video'
@@ -242,23 +250,22 @@ export const scheduleUserPost = async (params: ScheduleUserPostInput) => {
             ...(media.videoPosterUrl
               ? { videoPosterUrl: media.videoPosterUrl }
               : {}),
-            ...(media.imageFilePath ? { imageFilePath: media.imageFilePath } : {}),
+            ...(media.imageFilePath
+              ? { imageFilePath: media.imageFilePath }
+              : {}),
             ...(media.imageUrl ? { imageUrl: media.imageUrl } : {}),
           }
         : {
             imageFilePath: media.imageFilePath,
             imageUrl: media.imageUrl,
           };
-  return apiPost<ApiEnvelope>(
-    '/api/v1/user/schedule-user-post',
-    {
-      ...body,
-      message,
-      time,
-      platform,
-      ...(source ? { source } : {}),
-    }
-  );
+  return apiPost<ApiEnvelope>('/api/v1/user/schedule-user-post', {
+    ...body,
+    message,
+    time,
+    platform,
+    ...(source ? { source } : {}),
+  });
 };
 
 export const editUserPreferences = async (
@@ -267,10 +274,10 @@ export const editUserPreferences = async (
   socialSalesEmailUsage: boolean,
   socialSalesContactUsage: boolean,
   Caption_Object: { instagram: string; facebook: string; linkedin: string },
-  Need_Approval: boolean,
-  TimeZone: string,
+  approvalMode: 'manual' | 'auto',
+  timeZone: string,
   preferredTime: string,
-  useAnalyticsOptimalPostingTime: boolean
+  analyticsOptimalPosting: boolean
 ) => {
   return apiPost<ApiEnvelope>('/api/v1/user/edit-user-preference', {
     logoPreference,
@@ -278,10 +285,10 @@ export const editUserPreferences = async (
     socialSalesEmailUsage,
     socialSalesContactUsage,
     Caption_Object,
-    Need_Approval,
-    TimeZone,
+    approvalMode,
+    timeZone,
     preferredTime,
-    useAnalyticsOptimalPostingTime,
+    analyticsOptimalPosting,
   });
 };
 
@@ -297,7 +304,7 @@ export type OptimalPostingMeta = {
 export type UserPreferencesResponse = {
   preferences: {
     [key: string]: any;
-    useAnalyticsOptimalPostingTime?: boolean;
+    analyticsOptimalPosting?: boolean;
     optimalFacebookTime?: string;
     optimalInstagramTime?: string;
     optimalLinkedinTime?: string;
@@ -389,6 +396,16 @@ export const generateExamplePostsApi = async () => {
       postsPerPlatform: number;
     }>
   >('/api/v1/user/generate-example-posts');
+};
+
+export const getExamplePostsApi = async () => {
+  return apiGet<
+    ApiEnvelope<{
+      onboarded: boolean;
+      examplePostsMeta: ExamplePostsMeta;
+      examplePosts: ExamplePostItem[];
+    }>
+  >('/api/v1/user/example-posts');
 };
 
 export const updateAiEngineSetup = async (body: {
@@ -568,12 +585,13 @@ export const saveLogoVariants = async (
   variants: string[],
   options?: { isRegeneration?: boolean }
 ) => {
-  return apiPost<
-    ApiEnvelope<{ variants: string[]; regenerateCount?: number }>
-  >('/api/v1/user/logo-variants/save', {
-    variants,
-    isRegeneration: options?.isRegeneration === true,
-  });
+  return apiPost<ApiEnvelope<{ variants: string[]; regenerateCount?: number }>>(
+    '/api/v1/user/logo-variants/save',
+    {
+      variants,
+      isRegeneration: options?.isRegeneration === true,
+    }
+  );
 };
 
 export const setLogoVariantsForImagesPreference = async (
@@ -604,6 +622,7 @@ export const generateAiLogoPicks = async (
     ApiEnvelope<{
       picks: string[];
       urls?: string[];
+      designStory?: string;
       generatedAt: string;
       remaining?: number;
     }>
@@ -611,9 +630,7 @@ export const generateAiLogoPicks = async (
     requirements,
     count,
     ...(options?.context ? { context: options.context } : {}),
-    ...(options?.businessName
-      ? { businessName: options.businessName }
-      : {}),
+    ...(options?.businessName ? { businessName: options.businessName } : {}),
     ...(options?.industry ? { industry: options.industry } : {}),
   });
 };
@@ -627,7 +644,7 @@ export const useAiGeneratedLogo = async (publicUrl: string) => {
 export const getAiGeneratedLogos = async () => {
   return apiGet<
     ApiEnvelope<{
-      logos: { url: string; createdAt: string }[];
+      logos: { url: string; createdAt: string; designStory?: string }[];
       totalGeneratedLogos?: number;
       onboardingAiLogoGenerations?: number;
     }>

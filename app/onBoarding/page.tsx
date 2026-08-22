@@ -186,7 +186,8 @@ const questions: Question[] = [
   {
     name: 'primaryColor',
     label: 'Primary Brand Color',
-    description: 'Dominant brand color — check suggestions for extracted hex values.',
+    description:
+      'Dominant brand color — check suggestions for extracted hex values.',
     type: 'color',
     icon: Palette,
   },
@@ -462,10 +463,10 @@ export default function OnboardingMenu() {
     };
     return Boolean(
       trim('businessName') ||
-        trim('industry') ||
-        trim('location') ||
-        trim('website') ||
-        trim('brandDescription')
+      trim('industry') ||
+      trim('location') ||
+      trim('website') ||
+      trim('brandDescription')
     );
   };
 
@@ -644,12 +645,12 @@ export default function OnboardingMenu() {
       // users get them later when they first fill Template DNA.
       if (hasSuggestContext(dataToSave as Record<string, unknown>)) {
         const copy = await ensureBrandCopySuggestions();
-        const recommendedHashtags =
-          copy?.hashtags?.length
-            ? copy.hashtags
-            : fieldSuggestions.hashtags;
-        const recommendedSlogans =
-          copy?.slogans?.length ? copy.slogans : fieldSuggestions.slogans;
+        const recommendedHashtags = copy?.hashtags?.length
+          ? copy.hashtags
+          : fieldSuggestions.hashtags;
+        const recommendedSlogans = copy?.slogans?.length
+          ? copy.slogans
+          : fieldSuggestions.slogans;
         if (recommendedHashtags.length > 0) {
           dataToSave.recommendedHashtags = recommendedHashtags;
         }
@@ -692,7 +693,7 @@ export default function OnboardingMenu() {
       }
       setFetchingBusinessData(true);
       try {
-        const response = await scrapeUrl(url) as {
+        const response = (await scrapeUrl(url)) as {
           data?: { dna?: Record<string, unknown> };
           dna?: Record<string, unknown>;
         };
@@ -720,10 +721,7 @@ export default function OnboardingMenu() {
                 ? suggestions.colors.accent
                 : prev.colors.accent,
           },
-          hashtags: uniqueHashtags([
-            ...prev.hashtags,
-            ...suggestions.hashtags,
-          ]),
+          hashtags: uniqueHashtags([...prev.hashtags, ...suggestions.hashtags]),
           slogans: uniqueStrings([...prev.slogans, ...suggestions.slogans]),
         }));
         setSuggestionSource(source);
@@ -738,7 +736,9 @@ export default function OnboardingMenu() {
           force: true,
         });
       } catch (error) {
-        showErrorToast('Failed to extract business data. Please Try Again Later.');
+        showErrorToast(
+          'Failed to extract business data. Please Try Again Later.'
+        );
       } finally {
         setFetchingBusinessData(false);
       }
@@ -800,7 +800,9 @@ export default function OnboardingMenu() {
         console.warn('[onboarding] catalog extract warnings:', apiWarnings);
       }
     } catch (error) {
-      showErrorToast('Failed to extract business data from catalog. Please Try Again Later.');
+      showErrorToast(
+        'Failed to extract business data from catalog. Please Try Again Later.'
+      );
       throw error;
     } finally {
       setFetchingBusinessData(false);
@@ -836,9 +838,7 @@ export default function OnboardingMenu() {
   const stepNextDisabled =
     loading ||
     fetchingBusinessData ||
-    (current.name === 'website' &&
-      sourceMode === 'catalog' &&
-      !catalogFile);
+    (current.name === 'website' && sourceMode === 'catalog' && !catalogFile);
 
   const Icon = current.icon;
   const totalSteps = questions.length;
@@ -863,12 +863,14 @@ export default function OnboardingMenu() {
     void (async () => {
       try {
         const res = await getAiGeneratedLogos();
-        const data = (res as {
-          data?: {
-            logos?: { url: string }[];
-            onboardingAiLogoGenerations?: number;
-          };
-        })?.data;
+        const data = (
+          res as {
+            data?: {
+              logos?: { url: string; designStory?: string }[];
+              onboardingAiLogoGenerations?: number;
+            };
+          }
+        )?.data;
         const logos = Array.isArray(data?.logos) ? data.logos : [];
         const used = Number(data?.onboardingAiLogoGenerations ?? logos.length);
         if (used > 0 || logos.length > 0) {
@@ -876,9 +878,11 @@ export default function OnboardingMenu() {
             Math.min(MAX_ONBOARDING_AI_LOGOS, Math.max(used, logos.length))
           );
           setAiLogoPicks(
-            logos
-              .slice(0, MAX_ONBOARDING_AI_LOGOS)
-              .map((logo) => ({ url: logo.url, preview: logo.url }))
+            logos.slice(0, MAX_ONBOARDING_AI_LOGOS).map((logo) => ({
+              url: logo.url,
+              preview: logo.url,
+              designStory: logo.designStory,
+            }))
           );
           setAiLogoSectionOpen(true);
         }
@@ -1046,8 +1050,7 @@ export default function OnboardingMenu() {
               <label
                 htmlFor="catalog-upload"
                 className={cn(
-                  'group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card/60 px-6 py-10 text-center transition-all',
-                  'hover:border-primary-blue/50 hover:bg-primary-blue/5'
+                  'app-dropzone group flex cursor-pointer flex-col items-center justify-center gap-3 px-6 py-10 text-center'
                 )}
               >
                 {catalogFile ? (
@@ -1196,8 +1199,7 @@ export default function OnboardingMenu() {
           <label
             htmlFor={current.name}
             className={cn(
-              'group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-card/60 px-6 py-10 text-center transition-all',
-              'hover:border-primary-blue/50 hover:bg-primary-blue/5'
+              'app-dropzone group flex cursor-pointer flex-col items-center justify-center gap-3 px-6 py-10 text-center'
             )}
           >
             {hasLogo && logoSrc ? (
@@ -1396,114 +1398,116 @@ export default function OnboardingMenu() {
             )}
           >
             <div className="flex min-w-0 flex-1 flex-col gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-              <span>
-                Step{' '}
-                <span className="text-foreground">{step + 1}</span> of{' '}
-                {totalSteps}
-              </span>
-              <span>{Math.round(progressValue)}%</span>
-            </div>
-            <Progress value={progressValue} className="h-1.5" />
-          </div>
-
-          <Card
-            id="tour-onb-card"
-            className="overflow-visible rounded-3xl border-border/60 bg-card/90 p-6 shadow-lg backdrop-blur-sm sm:p-8"
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={current.name}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                className="space-y-6"
-              >
-                <div className="flex items-start gap-4">
-                  <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-sm">
-                    <Icon className="size-5" />
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                  <span>
+                    Step <span className="text-foreground">{step + 1}</span> of{' '}
+                    {totalSteps}
                   </span>
-                  <div className="space-y-1.5">
-                    <h2 className="bg-gradient-primary-text text-2xl font-bold leading-tight tracking-tight sm:text-[28px]">
-                      {current.label}
-                    </h2>
-                    {current.description && (
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {current.description}
-                      </p>
+                  <span>{Math.round(progressValue)}%</span>
+                </div>
+                <Progress value={progressValue} className="h-1.5" />
+              </div>
+
+              <Card
+                id="tour-onb-card"
+                className="overflow-visible rounded-3xl border-border/60 bg-card/90 p-6 shadow-lg backdrop-blur-sm sm:p-8"
+              >
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={current.name}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                    className="space-y-6"
+                  >
+                    <div className="flex items-start gap-4">
+                      <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-sm">
+                        <Icon className="size-5" />
+                      </span>
+                      <div className="space-y-1.5">
+                        <h2 className="bg-gradient-primary-text text-2xl font-bold leading-tight tracking-tight sm:text-[28px]">
+                          {current.label}
+                        </h2>
+                        {current.description && (
+                          <p className="text-sm leading-relaxed text-muted-foreground">
+                            {current.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>{renderField()}</div>
+                  </motion.div>
+                </AnimatePresence>
+
+                <div
+                  id="tour-onb-controls"
+                  className="mt-8 flex items-center gap-3"
+                >
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setStep((prev) => Math.max(prev - 1, 0))}
+                    disabled={step === 0 || loading || fetchingBusinessData}
+                    className="h-11 flex-1 rounded-xl"
+                  >
+                    <ArrowLeft className="size-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => void handleStepNext()}
+                    disabled={stepNextDisabled}
+                    aria-busy={loading || fetchingBusinessData}
+                    className="h-11 flex-1 rounded-xl bg-gradient-primary text-white shadow-md shadow-primary-blue/20 transition-all hover:shadow-lg hover:shadow-primary-blue/25"
+                  >
+                    {fetchingBusinessData ? (
+                      <>
+                        <Spinner className="size-4 text-white" />
+                        Fetching…
+                      </>
+                    ) : loading ? (
+                      <>
+                        <Spinner className="size-4 text-white" />
+                        {step === totalSteps - 1 ? 'Finishing…' : 'Saving…'}
+                      </>
+                    ) : step === totalSteps - 1 ? (
+                      <>
+                        Finish
+                        <CheckCircle2 className="size-4" />
+                      </>
+                    ) : (
+                      <>
+                        Next
+                        <ArrowRight className="size-4" />
+                      </>
                     )}
-                  </div>
+                  </Button>
                 </div>
 
-                <div>{renderField()}</div>
-              </motion.div>
-            </AnimatePresence>
-
-            <div
-              id="tour-onb-controls"
-              className="mt-8 flex items-center gap-3"
-            >
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setStep((prev) => Math.max(prev - 1, 0))}
-                disabled={step === 0 || loading || fetchingBusinessData}
-                className="h-11 flex-1 rounded-xl"
-              >
-                <ArrowLeft className="size-4" />
-                Previous
-              </Button>
-              <Button
-                type="button"
-                onClick={() => void handleStepNext()}
-                disabled={stepNextDisabled}
-                aria-busy={loading || fetchingBusinessData}
-                className="h-11 flex-1 rounded-xl bg-gradient-primary text-white shadow-md shadow-primary-blue/20 transition-all hover:shadow-lg hover:shadow-primary-blue/25"
-              >
-                {fetchingBusinessData ? (
-                  <>
-                    <Spinner className="size-4 text-white" />
-                    Fetching…
-                  </>
-                ) : loading ? (
-                  <>
-                    <Spinner className="size-4 text-white" />
-                    {step === totalSteps - 1 ? 'Finishing…' : 'Saving…'}
-                  </>
-                ) : step === totalSteps - 1 ? (
-                  <>
-                    Finish
-                    <CheckCircle2 className="size-4" />
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <ArrowRight className="size-4" />
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <div
-              id="tour-onb-progress"
-              className="mt-5 flex items-center justify-between border-t border-border/50 pt-4"
-            >
-              <p className="text-xs text-muted-foreground">
-                You can edit any of this later in{' '}
-                <span className="font-medium text-foreground">Brand DNA</span>.
-              </p>
-              <button
-                type="button"
-                onClick={skipCurrentStep}
-                disabled={loading || fetchingBusinessData}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary-blue disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Skip this step
-              </button>
-            </div>
-          </Card>
+                <div
+                  id="tour-onb-progress"
+                  className="mt-5 flex items-center justify-between border-t border-border/50 pt-4"
+                >
+                  <p className="text-xs text-muted-foreground">
+                    You can edit any of this later in{' '}
+                    <span className="font-medium text-foreground">
+                      Brand DNA
+                    </span>
+                    .
+                  </p>
+                  <button
+                    type="button"
+                    onClick={skipCurrentStep}
+                    disabled={loading || fetchingBusinessData}
+                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary-blue disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Skip this step
+                  </button>
+                </div>
+              </Card>
             </div>
 
             {showSuggestionsPanel && (

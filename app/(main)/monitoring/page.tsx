@@ -304,18 +304,18 @@ export default function MonitoringPage() {
     <div className="flex min-h-0 w-full flex-col">
       <div className="min-w-0 flex-1 pt-4 lg:pt-0">
         <header className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Monitoring
           </h1>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-600 ">
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground ">
             Admin view of scheduled posts with status &quot;pending&quot;. Click
             a card to see full details.
           </p>
         </header>
 
-        <section className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
+        <section className="mt-6 pt-6 border-t border-border">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-semibold text-zinc-900">
+            <h2 className="text-lg font-semibold text-foreground">
               Pending scheduled posts
             </h2>
             <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-muted p-1">
@@ -348,22 +348,22 @@ export default function MonitoringPage() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-zinc-200  bg-white  overflow-hidden animate-pulse"
+                  className="rounded-xl border border-border  bg-card  overflow-hidden animate-pulse"
                 >
                   <div className="flex flex-col sm:flex-row gap-4 p-4">
-                    <div className="sm:w-32 h-24 rounded-lg bg-zinc-200 dark:bg-zinc-700 shrink-0" />
+                    <div className="sm:w-32 h-24 rounded-lg bg-muted shrink-0" />
                     <div className="min-w-0 flex-1 space-y-3">
-                      <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-full max-w-md" />
-                      <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-2/3" />
-                      <div className="h-6 bg-zinc-200 dark:bg-zinc-700 rounded w-24" />
+                      <div className="h-4 bg-muted rounded w-full max-w-md" />
+                      <div className="h-4 bg-muted rounded w-2/3" />
+                      <div className="h-6 bg-muted rounded w-24" />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : visiblePosts.length === 0 ? (
-            <div className="rounded-xl border border-zinc-200 bg-zinc-50 py-6 text-center">
-              <p className="text-sm text-zinc-500">
+            <div className="rounded-xl border border-border bg-muted/50 py-6 text-center">
+              <p className="text-sm text-muted-foreground">
                 No {dateTab} pending scheduled posts.
               </p>
               {tabState.hasMore ? (
@@ -371,7 +371,7 @@ export default function MonitoringPage() {
                   type="button"
                   onClick={() => fetchPending(dateTab)}
                   disabled={tabState.loadingMore}
-                  className="mt-3 rounded-lg border border-zinc-200 bg-white px-4 py-2 text-xs font-semibold text-zinc-700 transition-colors hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-60"
+                  className="mt-3 rounded-lg border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-60"
                 >
                   {tabState.loadingMore
                     ? 'Loading more...'
@@ -399,7 +399,7 @@ export default function MonitoringPage() {
                       }
                     },
                     className:
-                      'rounded-xl border border-zinc-200  bg-white  shadow-sm overflow-hidden cursor-pointer hover:border-zinc-300  transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400 ',
+                      'rounded-xl border border-border  bg-card  shadow-sm overflow-hidden cursor-pointer hover:border-border  transition-colors focus:outline-none focus:ring-2 focus:ring-primary-purple/30 ',
                   };
                   const cardInner = (
                     <div className="flex flex-col sm:flex-row gap-4 p-4">
@@ -413,8 +413,8 @@ export default function MonitoringPage() {
                           <div className="sm:w-32 shrink-0">
                             <PostMediaPreview
                               preview={mediaPreview}
-                              className="w-full h-24 object-cover  rounded-lg bg-zinc-100 dark:bg-zinc-800"
-                              videoClassName="w-full h-24 object-cover rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                              className="w-full h-24 object-cover  rounded-lg bg-muted"
+                              videoClassName="w-full h-24 object-cover rounded-lg bg-muted"
                               controls={false}
                               muted
                             />
@@ -429,10 +429,10 @@ export default function MonitoringPage() {
                         );
                       })()}
                       <div className="min-w-0 flex-1 space-y-2">
-                        <p className="text-sm text-zinc-700  line-clamp-2">
+                        <p className="text-sm text-foreground  line-clamp-2">
                           {post.message || 'No message'}
                         </p>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-500 ">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground ">
                           <span className="font-medium capitalize">
                             {post.platform}
                           </span>
@@ -495,13 +495,13 @@ export default function MonitoringPage() {
               </ul>
               {tabState.loadingMore && (
                 <div
-                  className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 py-4 text-sm text-zinc-600"
+                  className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-border bg-muted/50 py-4 text-sm text-muted-foreground"
                   aria-busy="true"
                   aria-live="polite"
                   aria-label="Loading more posts"
                 >
                   <span
-                    className="size-4 shrink-0 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-600"
+                    className="size-4 shrink-0 animate-spin rounded-full border-2 border-border border-t-primary-purple"
                     aria-hidden
                   />
                   Loading more…
@@ -558,20 +558,20 @@ function DetailModal({
       aria-labelledby="detail-modal-title"
     >
       <div
-        className="rounded-xl border border-zinc-200  bg-white  shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="rounded-xl border border-border  bg-card  shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-zinc-200  flex items-center justify-between">
+        <div className="p-4 border-b border-border  flex items-center justify-between">
           <h2
             id="detail-modal-title"
-            className="text-lg font-semibold text-zinc-900 "
+            className="text-lg font-semibold text-foreground "
           >
             Scheduled post details
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700  focus:outline-none focus:ring-2 focus:ring-zinc-400"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground  focus:outline-none focus:ring-2 focus:ring-primary-purple/30"
             aria-label="Close"
           >
             <svg
@@ -592,14 +592,14 @@ function DetailModal({
         <div className="p-4 space-y-4">
           {hasMedia && openUrl ? (
             <div className="">
-              <p className="text-xs font-medium text-zinc-500 mb-1">
+              <p className="text-xs font-medium text-muted-foreground mb-1">
                 {mediaPreview.isVideo ? 'Video' : 'Image'}
               </p>
               <div className="relative">
               <PostMediaPreview
                 preview={mediaPreview}
-                className="w-full max-h-64 object-contain rounded-lg bg-zinc-100"
-                videoClassName="w-full max-h-64 object-contain rounded-lg bg-zinc-100"
+                className="w-full max-h-64 object-contain rounded-lg bg-muted"
+                videoClassName="w-full max-h-64 object-contain rounded-lg bg-muted"
                 controls={mediaPreview.isVideo}
                 muted={false}
               />
@@ -640,8 +640,8 @@ function DetailModal({
               value={generatedByLabel(post.GeneratedBy) as string}
             />
           ) : null}
-          <div className="pt-4 border-t border-zinc-200 ">
-            <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-3">
+          <div className="pt-4 border-t border-border ">
+            <p className="text-xs font-medium text-muted-foreground mb-3">
               Actions
             </p>
             <ActionButtons
@@ -675,9 +675,9 @@ function DetailRow({
 }) {
   return (
     <div>
-      <p className="text-xs font-medium text-zinc-500  mb-0.5">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground  mb-0.5">{label}</p>
       <p
-        className={`text-sm text-zinc-800 ${long ? 'whitespace-pre-wrap wrap-break-word' : ''
+        className={`text-sm text-foreground ${long ? 'whitespace-pre-wrap wrap-break-word' : ''
           }`}
       >
         {value}

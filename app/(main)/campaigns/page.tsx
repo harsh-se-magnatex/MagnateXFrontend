@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { AnimatePresence, motion } from 'framer-motion';
 
 import { cn } from '@/lib/utils';
+import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -115,7 +116,7 @@ function preferredScheduleTimeForPlatform(
   prefs:
     | {
         preferredTime?: string;
-        useAnalyticsOptimalPostingTime?: boolean;
+        analyticsOptimalPosting?: boolean;
         optimalFacebookTime?: string;
         optimalInstagramTime?: string;
         optimalLinkedinTime?: string;
@@ -129,7 +130,7 @@ function preferredScheduleTimeForPlatform(
       ? (key as SocialPlatform)
       : null;
   if (!prefs) return normalizePreferredPostingTime(undefined);
-  if (social && prefs.useAnalyticsOptimalPostingTime) {
+  if (social && prefs.analyticsOptimalPosting) {
     const optimal = prefs[OPTIMAL_TIME_FIELD[social]];
     if (optimal) return normalizePreferredPostingTime(optimal, optimal);
   }
@@ -742,7 +743,7 @@ export default function CreateCampaignPage() {
         if (uid && response.parentJobId && expected > 0) {
           const wait = await waitForParentJobDocs({
             uid,
-            collectionName: 'campaignDrafts',
+            collectionName: 'content',
             parentJobId: response.parentJobId,
             expectedCount: expected,
           });
@@ -817,7 +818,7 @@ export default function CreateCampaignPage() {
     <div className="mx-auto animate-in fade-in duration-500 pb-20">
       <header className="mb-8 w-full flex flex-col md:flex-row md:items-start justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-3">
+          <h1 className={cn(workspacePageTitleClass, 'flex items-center gap-3')}>
             {workspacePageTitle(WORKSPACE_NAV_HREFS.createCampaign)}
           </h1>
         </div>
@@ -883,7 +884,7 @@ export default function CreateCampaignPage() {
               <button
                 type="button"
                 onClick={handleAutoFillDates}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
                 disabled={!hasValidAnchorRange}
               >
                 <CalendarDays className="h-3.5 w-3.5" />
@@ -892,7 +893,7 @@ export default function CreateCampaignPage() {
               <button
                 type="button"
                 onClick={clearAllDates}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
                 disabled={datedDays.length === 0}
               >
                 Clear dates
@@ -980,17 +981,17 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
     <div className="space-y-6">
       <section
         id="tour-campaign-builder"
-        className="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden"
+        className="glass-card rounded-3xl border border-border shadow-sm overflow-hidden"
       >
         <div className="p-6 border-b border-border flex items-center gap-3 bg-card/50">
-          <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+          <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
             <Wand2 className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-slate-900">
+            <h2 className="text-lg font-bold text-foreground">
               1. Pick a campaign idea
             </h2>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {autoSeeded && pickedSuggestionId
                 ? 'Auto mode already chose one idea for you (see the badge below). You can still pick a different card.'
                 : `Optional: tell the AI what the campaign should focus on, then hit Generate. Each idea is a ${effectiveMaxDays}-day plan you can fully edit after picking.`}
@@ -1000,9 +1001,9 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
 
         <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-end">
           <label className="flex-1 block">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Campaign goal
-              <span className="ml-1 text-slate-400 normal-case font-normal tracking-normal">
+              <span className="ml-1 text-muted-foreground/70 normal-case font-normal tracking-normal">
                 (optional)
               </span>
             </span>
@@ -1017,7 +1018,8 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
             type="button"
             onClick={onGenerateSet}
             disabled={isLoading}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+            aria-busy={isLoading}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-action px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-primary-purple/25 transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
           >
             {isLoading ? (
               <>
@@ -1028,8 +1030,8 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
               <>
                 <Sparkles className="h-4 w-4" />
                 {suggestions.length === 0
-                  ? 'Generate campaign ideas'
-                  : 'Regenerate all ideas'}
+                  ? 'Suggest campaign ideas'
+                  : 'Suggest new ideas'}
               </>
             )}
           </button>
@@ -1037,11 +1039,11 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
       </section>
 
       {autoSeeded && pickedReason ? (
-        <div className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
+        <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-foreground">
             Why auto mode picked this
           </p>
-          <p className="mt-1 leading-relaxed text-slate-900">{pickedReason}</p>
+          <p className="mt-1 leading-relaxed text-foreground">{pickedReason}</p>
         </div>
       ) : null}
 
@@ -1057,12 +1059,12 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
       )}
 
       {!showSkeleton && suggestions.length === 0 && (
-        <section className="glass-card rounded-3xl border border-dashed border-slate-300 bg-slate-50/40 p-10 text-center">
-          <Sparkles className="mx-auto h-8 w-8 text-indigo-400" />
-          <h3 className="mt-3 text-base font-semibold text-slate-800">
+        <section className="glass-card rounded-3xl border border-dashed border-border bg-muted/40 p-10 text-center">
+          <Sparkles className="mx-auto h-8 w-8 text-primary-purple/60" />
+          <h3 className="mt-3 text-base font-semibold text-foreground">
             No campaign ideas yet
           </h3>
-          <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">
+          <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
             Click <span className="font-semibold">Generate campaign
             ideas</span> above to get {DEFAULT_CAMPAIGN_SET_SIZE} distinct
             multi-day concepts tailored to your brand.
@@ -1122,25 +1124,25 @@ function SuggestionCard(props: SuggestionCardProps) {
   return (
     <div
       className={cn(
-        'group relative flex h-full flex-col rounded-3xl border bg-card p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md',
+        'group relative flex h-full flex-col rounded-3xl border bg-card p-5 shadow-sm transition hover:border-primary-purple/40 hover:shadow-md',
         isAiPicked
-          ? 'border-indigo-400 ring-2 ring-indigo-100'
+          ? 'border-primary-purple ring-2 ring-primary-purple/20'
           : 'border-border',
         isRegenerating && 'opacity-70'
       )}
     >
       {isAiPicked ? (
-        <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-indigo-600 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
+        <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-primary-purple px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white">
           <Sparkles className="h-3 w-3" />
           AI picked for you
         </span>
       ) : null}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-bold text-slate-900 line-clamp-2">
+          <h3 className="text-base font-bold text-foreground line-clamp-2">
             {suggestion.theme}
           </h3>
-          <p className="mt-1 text-xs text-slate-500 line-clamp-3">
+          <p className="mt-1 text-xs text-muted-foreground line-clamp-3">
             {suggestion.description}
           </p>
         </div>
@@ -1150,7 +1152,7 @@ function SuggestionCard(props: SuggestionCardProps) {
           disabled={anyRegenerating}
           aria-label="Regenerate this campaign"
           title="Regenerate this campaign"
-          className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-slate-500 transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary-purple/40 hover:bg-primary-purple/10 hover:text-primary-purple disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RefreshCcw
             className={cn('h-4 w-4', isRegenerating && 'animate-spin')}
@@ -1159,7 +1161,7 @@ function SuggestionCard(props: SuggestionCardProps) {
       </div>
 
       {suggestion.goal && (
-        <p className="mt-3 inline-flex w-fit max-w-full items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-indigo-700 line-clamp-1">
+        <p className="mt-3 inline-flex w-fit max-w-full items-center gap-1 rounded-full bg-primary-purple/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-purple line-clamp-1">
           Goal: {suggestion.goal}
         </p>
       )}
@@ -1168,33 +1170,33 @@ function SuggestionCard(props: SuggestionCardProps) {
         {suggestion.days.slice(0, 4).map((day) => (
           <li
             key={day.dayNumber}
-            className="flex items-start gap-2 text-xs text-slate-600"
+            className="flex items-start gap-2 text-xs text-muted-foreground"
           >
-            <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-700">
+            <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-foreground">
               {day.dayNumber}
             </span>
             <span className="line-clamp-2">
-              <span className="font-semibold text-slate-800">{day.title}</span>{' '}
-              <span className="text-slate-500">— {day.reference}</span>
+              <span className="font-semibold text-foreground">{day.title}</span>{' '}
+              <span className="text-muted-foreground">— {day.reference}</span>
             </span>
           </li>
         ))}
         {suggestion.days.length > 4 && (
-          <li className="text-[11px] italic text-slate-400">
+          <li className="text-[11px] italic text-muted-foreground/70">
             +{suggestion.days.length - 4} more day(s)
           </li>
         )}
       </ul>
 
       <div className="mt-5 flex items-center justify-between gap-3">
-        <span className="text-[11px] text-slate-400">
+        <span className="text-[11px] text-muted-foreground/70">
           {suggestion.days.length} day{suggestion.days.length === 1 ? '' : 's'}
         </span>
         <button
           type="button"
           onClick={onSelect}
           disabled={anyRegenerating}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-primary-purple px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Use this campaign
         </button>
@@ -1217,25 +1219,25 @@ type EditorHeaderProps = {
 function EditorHeader(props: EditorHeaderProps) {
   const { theme, description, effectiveMaxDays, onBack } = props;
   return (
-    <section className="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    <section className="glass-card rounded-3xl border border-border shadow-sm overflow-hidden">
       <div className="p-6 border-b border-border flex items-start justify-between gap-3 bg-card/50">
         <div className="flex items-start gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-slate-600 transition hover:bg-slate-50"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-accent"
             aria-label="Back to campaign ideas"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">{theme}</h2>
-            <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+            <h2 className="text-lg font-bold text-foreground">{theme}</h2>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
               {description}
             </p>
           </div>
         </div>
-        <span className="hidden md:inline-flex shrink-0 items-center gap-1.5 self-start rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+        <span className="hidden md:inline-flex shrink-0 items-center gap-1.5 self-start rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Up to {effectiveMaxDays} day{effectiveMaxDays === 1 ? '' : 's'}
         </span>
       </div>
@@ -1266,7 +1268,7 @@ function DayDraftList(props: DayDraftListProps) {
 
   if (days.length === 0) {
     return (
-      <section className="glass-card rounded-3xl border border-dashed border-slate-300 bg-slate-50/40 p-8 text-center text-sm text-slate-600">
+      <section className="glass-card rounded-3xl border border-dashed border-border bg-muted/40 p-8 text-center text-sm text-muted-foreground">
         No days in this campaign. Go back and pick a campaign idea to start.
       </section>
     );
@@ -1282,31 +1284,31 @@ function DayDraftList(props: DayDraftListProps) {
     : `Pick a start date (${formatDisplayDate(firstPickBounds.min)} – ${formatDisplayDate(firstPickBounds.max)}) to open a ${MAX_CAMPAIGN_DAYS}-day window`;
 
   return (
-    <section className="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    <section className="glass-card rounded-3xl border border-border shadow-sm overflow-hidden">
       <div className="p-6 border-b border-border flex items-center gap-3 bg-card/50">
-        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+        <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
           <CalendarDays className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h2 className="text-lg font-bold text-slate-900">
+          <h2 className="text-lg font-bold text-foreground">
             2. Pick dates &amp; tweak briefs
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Your first date sets a {MAX_CAMPAIGN_DAYS}-day window. All posts
             must fall inside that range before your plan ends.{' '}
-            <span className="font-medium text-slate-600">{windowHint}</span>
+            <span className="font-medium text-muted-foreground">{windowHint}</span>
           </p>
         </div>
       </div>
 
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-border">
         {days.map((day) => {
           const isAnchorCell = dateAnchor != null && day.date === dateAnchor;
           return (
             <li key={day.dayNumber} className="p-5 sm:p-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="shrink-0 flex flex-row sm:flex-col items-center sm:items-start gap-3 sm:w-32">
-                  <div className="rounded-2xl bg-indigo-600 text-white px-3 py-2 text-center shadow-sm shadow-indigo-600/20">
+                  <div className="rounded-2xl bg-gradient-action text-white px-3 py-2 text-center shadow-sm shadow-primary-purple/25">
                     <p className="text-[10px] uppercase tracking-wider font-semibold opacity-80">
                       Day
                     </p>
@@ -1315,7 +1317,7 @@ function DayDraftList(props: DayDraftListProps) {
                     </p>
                   </div>
                   <label className="flex-1 sm:flex-none sm:mt-2 w-full">
-                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                       Date
                     </span>
                     <input
@@ -1327,7 +1329,7 @@ function DayDraftList(props: DayDraftListProps) {
                         const next = e.target.value || null;
                         onPickDate(day.dayNumber, next);
                       }}
-                      className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                      className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground focus:border-primary-purple focus:ring-1 focus:ring-primary-purple outline-none"
                     />
                   </label>
                   {days.length > 1 ? (
@@ -1344,7 +1346,7 @@ function DayDraftList(props: DayDraftListProps) {
 
                 <div className="flex-1 space-y-2">
                   <label className="block">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Title
                     </span>
                     <Input
@@ -1357,7 +1359,7 @@ function DayDraftList(props: DayDraftListProps) {
                     />
                   </label>
                   <label className="block">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Reference brief
                     </span>
                     <Textarea
@@ -1371,9 +1373,9 @@ function DayDraftList(props: DayDraftListProps) {
                     />
                   </label>
                   <label className="block">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       Caption seed
-                      <span className="ml-1 text-slate-400 normal-case font-normal tracking-normal">
+                      <span className="ml-1 text-muted-foreground/70 normal-case font-normal tracking-normal">
                         (optional)
                       </span>
                     </span>
@@ -1445,22 +1447,22 @@ function CampaignWeeksOverview({
     : formatScheduleSpanLabel(datedDays.map((d) => d.date));
 
   return (
-    <section className="glass-card rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+    <section className="glass-card rounded-3xl border border-border shadow-sm overflow-hidden">
       <div className="p-6 border-b border-border flex items-center gap-3 bg-card/50">
-        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+        <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
           <CalendarRange className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h2 className="text-lg font-bold text-slate-900">
+          <h2 className="text-lg font-bold text-foreground">
             Schedule overview
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             {dateAnchor
               ? `${MAX_CAMPAIGN_DAYS}-day window · ${spanLabel}`
               : spanLabel}
           </p>
         </div>
-        <span className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">
+        <span className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {datedDays.length} / {days.length} day
           {days.length === 1 ? '' : 's'}
         </span>
@@ -1469,20 +1471,20 @@ function CampaignWeeksOverview({
         {datedDays.map((day) => (
           <li
             key={day.dayNumber}
-            className="flex items-start gap-3 rounded-xl bg-slate-50/70 px-3 py-2"
+            className="flex items-start gap-3 rounded-xl bg-muted/50 px-3 py-2"
           >
-            <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white">
+            <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-purple text-[11px] font-bold text-white">
               {day.dayNumber}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-800 truncate">
+              <p className="text-xs font-semibold text-foreground truncate">
                 {day.title || `Day ${day.dayNumber}`}
               </p>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                 {format(parseISO(day.date), 'EEE, MMM d')}
               </p>
               {day.reference && (
-                <p className="mt-1 text-[11px] text-slate-500 line-clamp-2">
+                <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2">
                   {day.reference}
                 </p>
               )}
@@ -1541,28 +1543,28 @@ function CampaignSummary(props: CampaignSummaryProps) {
     <aside className="lg:sticky lg:top-4 self-start">
       <section
         id="tour-campaign-confirm"
-        className="glass-card rounded-3xl p-6 border border-indigo-100/60 bg-indigo-50/20 shadow-sm"
+        className="glass-card rounded-3xl p-6 border border-primary-purple/20 bg-primary-purple/5 shadow-sm"
       >
-        <h2 className="text-lg font-bold text-slate-900 mb-6">
+        <h2 className="text-lg font-bold text-foreground mb-6">
           3. Confirm &amp; create
         </h2>
 
         <div className="space-y-4 text-sm mb-6">
           <div className="space-y-2">
-            <span className="font-medium text-slate-600">Post platforms:</span>
+            <span className="font-medium text-muted-foreground">Post platforms:</span>
             {!hasSelectablePlatforms ? (
               <div
                 role="status"
-                className="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950"
+                className="rounded-xl border border-amber-500/30 bg-amber-500/15 px-4 py-3 text-sm text-amber-200"
               >
                 <p className="font-medium">Select your accounts first</p>
-                <p className="mt-1 text-amber-900/90">
+                <p className="mt-1 text-amber-300/90">
                   Choose which platforms you use in onboarding or social
                   settings, then come back to launch the campaign.
                 </p>
                 <Link
                   href={WORKSPACE_NAV_HREFS.linkedProfiles}
-                  className="mt-2 inline-block text-sm font-semibold text-amber-950 underline underline-offset-2 hover:text-amber-900"
+                  className="mt-2 inline-block text-sm font-semibold text-amber-200 underline underline-offset-2 hover:text-amber-300"
                 >
                   {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                 </Link>
@@ -1574,14 +1576,14 @@ function CampaignSummary(props: CampaignSummaryProps) {
                     <label
                       key={p}
                       htmlFor={`campaign-platform-${p}`}
-                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-800"
+                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
                     >
                       <input
                         id={`campaign-platform-${p}`}
                         type="checkbox"
                         checked={genPlatforms.includes(p)}
                         onChange={() => onTogglePlatform(p)}
-                        className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/30"
+                        className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
                       />
                       <span>{platformLabel(p)}</span>
                     </label>
@@ -1589,14 +1591,14 @@ function CampaignSummary(props: CampaignSummaryProps) {
                   {allowedPlatforms.length > 1 && (
                     <label
                       htmlFor="campaign-platform-all"
-                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-800"
+                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
                     >
                       <input
                         id="campaign-platform-all"
                         type="checkbox"
                         checked={allPlatformsSelected}
                         onChange={onSelectAllPlatforms}
-                        className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/30"
+                        className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
                       />
                       <span>
                         {allPlatformsSelectionLabel(allowedPlatforms.length)}
@@ -1605,7 +1607,7 @@ function CampaignSummary(props: CampaignSummaryProps) {
                   )}
                 </div>
                 {!platformSelection.ok && (
-                  <p className="text-xs text-amber-700">
+                  <p className="text-xs text-amber-300">
                     {platformSelection.error}
                   </p>
                 )}
@@ -1613,34 +1615,34 @@ function CampaignSummary(props: CampaignSummaryProps) {
             )}
           </div>
 
-          <div className="flex justify-between items-center text-slate-600">
+          <div className="flex justify-between items-center text-muted-foreground">
             <span className="font-medium">Days planned:</span>
-            <span className="font-bold text-slate-900">
+            <span className="font-bold text-foreground">
               {datedDays} / {totalDays || '—'}
             </span>
           </div>
-          <div className="flex justify-between items-center text-slate-600">
+          <div className="flex justify-between items-center text-muted-foreground">
             <span className="font-medium">Cost per day:</span>
-            <span className="font-bold text-slate-900">
+            <span className="font-bold text-foreground">
               {CAMPAIGN_CREDIT_PER_DAY} × {Math.max(genPlatforms.length, 1)}{' '}
               ={' '}
               {CAMPAIGN_CREDIT_PER_DAY * Math.max(genPlatforms.length, 1)}{' '}
               credits
             </span>
           </div>
-          <div className="flex justify-between items-center text-slate-600">
+          <div className="flex justify-between items-center text-muted-foreground">
             <span className="font-medium">Credits to charge:</span>
             <span
               className={cn(
                 'font-extrabold',
-                insufficientCredits ? 'text-rose-600' : 'text-indigo-700'
+                insufficientCredits ? 'text-destructive' : 'text-primary-purple'
               )}
             >
               {totalCost}
             </span>
           </div>
           {insufficientCredits && (
-            <div className="rounded-xl border border-rose-200 bg-rose-50/80 px-3 py-2 text-xs text-rose-800">
+            <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
               You need {totalCost} credits but only have {userCredits}.{' '}
               <Link
                 href="/settings/billings"
@@ -1657,24 +1659,23 @@ function CampaignSummary(props: CampaignSummaryProps) {
           type="button"
           onClick={onCreate}
           disabled={!canSubmit}
-          className="w-full rounded-xl bg-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+          aria-busy={isSubmitting}
+          className="w-full rounded-xl bg-gradient-action px-4 py-3.5 text-sm font-bold text-white shadow-md shadow-primary-purple/25 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-purple/35 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
         >
-          {isSubmitting
-            ? 'Generating drafts…'
-            : `Generate drafts (${totalCost || 0} credits)`}
+          {isSubmitting ? 'Writing your campaign…' : 'Create campaign'}
         </button>
 
         <button
           type="button"
           onClick={onViewDrafts}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent"
         >
           <Inbox className="h-4 w-4" />
           View drafts
         </button>
 
         {isSubmitting && (
-          <p className="mt-4 text-xs font-medium text-indigo-700">
+          <p className="mt-4 text-xs font-medium text-primary-purple">
             Generating drafts…
           </p>
         )}
@@ -1965,7 +1966,7 @@ function DraftsDrawer(props: DraftsDrawerProps) {
                         {box.weekLabel}
                       </span>
                       {box.items.some((d) => d.autoSeeded === true) ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-violet-500/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-violet-700">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-primary-purple/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-purple">
                           <Sparkles className="h-3 w-3" />
                           AI generated
                         </span>
@@ -2223,16 +2224,16 @@ function DraftRow(props: DraftRowProps) {
         )}
 
         {isUserRemoved ? (
-          <div className="mt-auto rounded-xl border border-slate-300 bg-slate-100 px-3 py-3 text-center">
-            <p className="text-sm font-bold text-slate-800">Removed by you</p>
-            <p className="mt-1 text-[11px] text-slate-500">
+          <div className="mt-auto rounded-xl border border-border bg-muted px-3 py-3 text-center">
+            <p className="text-sm font-bold text-foreground">Removed by you</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
               This draft stays in your campaign history and will not be
               scheduled.
             </p>
           </div>
         ) : isScheduled ? (
           <div className="mt-auto space-y-3">
-            <div className="rounded-xl border border-emerald-600/30 bg-emerald-50 px-3 py-2 text-[11px] font-semibold text-emerald-900">
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] font-semibold text-emerald-300">
               <p className="inline-flex items-center gap-1">
                 <CalendarCheck2 className="h-3.5 w-3.5" />
                 {scheduledAtDate
@@ -2343,7 +2344,7 @@ function DraftRow(props: DraftRowProps) {
               type="button"
               onClick={handleSchedule}
               disabled={scheduling || isRegenerating || isRemoving}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white shadow-sm shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-action px-3 py-2 text-xs font-bold text-white shadow-sm shadow-primary-purple/25 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {scheduling ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

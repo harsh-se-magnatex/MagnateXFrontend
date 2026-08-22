@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Bell,
-  Brain,
   Fingerprint,
   Home,
   Loader2,
@@ -36,8 +35,7 @@ import {
 const topNav = [
   { name: 'Home', href: '/home', icon: Home },
   { name: 'Contact Us', href: '/settings/support-legal', icon: MessageSquare },
-  { name: 'AI Engine', href: '/ai-engine', icon: Brain },
-  { name: 'Brand DNA', href: '/template-dna', icon: Fingerprint },
+  { name: 'Brand DNA', href: '/brand-dna', icon: Fingerprint },
 ] as const;
 
 
@@ -86,8 +84,8 @@ export function TopNav() {
         <nav id="tour-topnav-wrapper" className="flex items-center gap-1">
           {topNav.map((item) => {
             const isActive =
-              item.href === '/template-dna'
-                ? pathname?.startsWith('/template-dna')
+              item.href === '/brand-dna'
+                ? pathname?.startsWith('/brand-dna')
                 : pathname === item.href;
 
             return (

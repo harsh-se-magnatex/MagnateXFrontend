@@ -35,6 +35,16 @@ function enableGaDebugMode(): void {
   window.gtag('config', measurementId, { debug_mode: true });
 }
 
+function clearAnalyticsCookies(): void {
+  if (typeof document === 'undefined') return;
+
+  for (const cookie of document.cookie.split(';')) {
+    const name = cookie.split('=')[0]?.trim();
+    if (!name || !/^_ga(?:_.+)?$|^_gid$|^_gat(?:_.+)?$/.test(name)) continue;
+    document.cookie = `${name}=; Max-Age=0; path=/`;
+  }
+}
+
 async function getOrInitAnalytics(): Promise<Analytics | null> {
   if (typeof window === 'undefined' || !hasMeasurementId()) return null;
   if (analyticsInstance) return analyticsInstance;
@@ -54,14 +64,15 @@ async function getOrInitAnalytics(): Promise<Analytics | null> {
 }
 
 export async function applyAnalyticsConsent(enabled: boolean): Promise<void> {
-  if (!hasMeasurementId()) return;
-
   if (!enabled) {
+    clearAnalyticsCookies();
     if (analyticsInstance) {
       setAnalyticsCollectionEnabled(analyticsInstance, false);
     }
     return;
   }
+
+  if (!hasMeasurementId()) return;
 
   const analytics = await getOrInitAnalytics();
   if (analytics) {

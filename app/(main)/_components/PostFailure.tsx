@@ -60,7 +60,7 @@ export function PostFailureAlerts() {
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <ul className="divide-y divide-zinc-100">
           {failureNotifications.map((notification) => {
             const isNew = isUnread(

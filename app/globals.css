@@ -46,9 +46,18 @@
   --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: #2a3548;
   --sidebar-ring: var(--primary-blue);
-  /* --font-sans: var(--font-sora), var(--font-dm-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; */
+  /* One typeface app-wide (see app/layout.tsx) — weight carries hierarchy
+     instead of mixing families. Retired families alias to Inter so every
+     existing font-(--font-x) className keeps resolving post-consolidation. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  --font-sora: var(--font-inter);
+  --font-dm-sans: var(--font-inter);
+  --font-bricolage: var(--font-inter);
+  --font-geist-sans: var(--font-inter);
+  --font-geist-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
   /* --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; */
-  /* --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; */
   --radius: 0.625rem;
   --shadow-x: 0;
   --shadow-y: 1px;
@@ -109,7 +118,18 @@
   --sidebar-accent-foreground: #f1f5f9;
   --sidebar-border: #2a3548;
   --sidebar-ring: var(--primary-blue);
-  /* --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'; */
+  /* One typeface app-wide (see app/layout.tsx). Weight carries hierarchy,
+     the way SF Pro does on Apple platforms, instead of mixing families. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
+  /* Retired families aliased to Inter so every existing font-(--font-x)
+     className across the app keeps resolving correctly post-consolidation. */
+  --font-sora: var(--font-inter);
+  --font-dm-sans: var(--font-inter);
+  --font-bricolage: var(--font-inter);
+  --font-geist-sans: var(--font-inter);
+  --font-geist-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
   --radius: 0.625rem;
   --shadow-x: 0;
   --shadow-y: 1px;
@@ -164,7 +184,9 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* --font-sans: var(--font-sans); */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    'Noto Sans', sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -211,6 +233,17 @@
     background-clip: text;
   }
 
+  /* Soft brand-color glow behind the gradient "Genie" wordmark next to the logo */
+  .brand-wordmark-glow {
+    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--primary-purple) 45%, transparent))
+      drop-shadow(0 0 22px color-mix(in srgb, var(--primary-blue) 30%, transparent));
+    transition: filter 0.3s ease;
+  }
+  .group:hover .brand-wordmark-glow {
+    filter: drop-shadow(0 0 14px color-mix(in srgb, var(--primary-purple) 60%, transparent))
+      drop-shadow(0 0 30px color-mix(in srgb, var(--primary-blue) 45%, transparent));
+  }
+
   /* App shell backgrounds */
   .app-gradient-base--subtle {
     background:
@@ -235,10 +268,39 @@
 
   /* Glass card effect */
   .glass-card {
-    background: rgba(18, 24, 32, 0.88);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    position: relative;
+    /* Faint violet cast falling from the top-left, so the panel reads as
+       lit from somewhere rather than as a flat fill. */
+    background:
+      linear-gradient(
+        158deg,
+        color-mix(in srgb, var(--primary-purple) 8%, transparent) 0%,
+        transparent 46%
+      ),
+      rgba(18, 24, 32, 0.88);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
     border: 1px solid rgba(42, 53, 72, 0.45);
+    /* Thin top specular line + soft ambient falloff — the "light catching
+       the rim of glass" cue that reads as glass rather than a flat panel. */
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+      0 24px 60px -32px rgba(0, 0, 0, 0.65);
+    transition:
+      border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Deliberately border + glow only, no lift. This class wraps both small
+     tiles and full-width page sections, and a section-sized panel rising
+     off the page on hover reads as a glitch. Lifting is `.app-tile`'s job,
+     applied only where the whole card is genuinely clickable. */
+  .glass-card:hover {
+    border-color: color-mix(in srgb, var(--primary-purple) 32%, transparent);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.12) inset,
+      0 24px 60px -32px rgba(0, 0, 0, 0.7),
+      0 0 40px -14px color-mix(in srgb, var(--primary-purple) 45%, transparent);
   }
 
   .workflow-step-card {
@@ -261,9 +323,28 @@
       radial-gradient(circle at top right, rgba(88, 78, 165, 0.4) 0%, rgba(12, 12, 18, 0.98) 68%),
       #0c0c12;
   }
+  /* Kept in sync with the base rule above — this override would otherwise
+     revert the lit-panel treatment everywhere, since the app runs dark. */
   .dark .glass-card {
-    background: rgba(18, 24, 32, 0.88);
+    background:
+      linear-gradient(
+        158deg,
+        color-mix(in srgb, var(--primary-purple) 8%, transparent) 0%,
+        transparent 46%
+      ),
+      rgba(18, 24, 32, 0.88);
     border-color: rgba(42, 53, 72, 0.45);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+      0 24px 60px -32px rgba(0, 0, 0, 0.65);
+  }
+
+  .dark .glass-card:hover {
+    border-color: color-mix(in srgb, var(--primary-purple) 32%, transparent);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.12) inset,
+      0 24px 60px -32px rgba(0, 0, 0, 0.7),
+      0 0 40px -14px color-mix(in srgb, var(--primary-purple) 45%, transparent);
   }
 
   /* Subtle grid pattern background */
@@ -527,14 +608,75 @@
   color: #ffffff;
 }
 
-/* Primary action buttons only — explicit gradient / legacy indigo classes */
+/* Primary action buttons only — explicit gradient / legacy indigo classes.
+ *
+ * Scoped to `button.` / `a.` on purpose: `bg-gradient-action` is also used
+ * on plain `<div>`s as a decorative fill (e.g. the campaigns date chip),
+ * and those must not become interactive-looking.
+ *
+ * Everything below is additive, so the ~15 pages that use this class get
+ * press feedback, a lift and a light sweep without a single page edit. */
 .app-shell button.bg-gradient-action,
 .app-shell a.bg-gradient-action,
 .app-shell button.bg-gradient-primary,
 .app-shell a.bg-gradient-primary {
+  overflow: hidden;
+  isolation: isolate;
   background: var(--gradient-action);
   color: #ffffff;
   border-color: color-mix(in srgb, var(--primary-purple) 35%, transparent);
+  transition:
+    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * The sheen is absolutely positioned, so the button needs to be a
+ * positioning context — but this must never overwrite a button that has
+ * already positioned itself.
+ *
+ * These rules are unlayered and therefore beat Tailwind's layered
+ * utilities, so a blanket `position: relative` silently outranked
+ * `fixed`/`absolute` on any button matching this selector. The shadcn
+ * Button's *default* variant carries `bg-gradient-primary`, so the
+ * selector reaches far more than the hand-written gradient buttons: it
+ * took the chat launcher (`fixed bottom-5 right-5`) out of the viewport
+ * and would have done the same to the dialog and sheet close buttons
+ * (`absolute top-2 right-2`).
+ *
+ * Guarding on the utility class names keeps `relative` for the static
+ * buttons that need it and leaves positioned ones alone.
+ */
+.app-shell button.bg-gradient-action:not(.fixed):not(.absolute):not(.sticky),
+.app-shell a.bg-gradient-action:not(.fixed):not(.absolute):not(.sticky),
+.app-shell button.bg-gradient-primary:not(.fixed):not(.absolute):not(.sticky),
+.app-shell a.bg-gradient-primary:not(.fixed):not(.absolute):not(.sticky) {
+  position: relative;
+}
+
+/* The sweep. Parked off the left edge and only animated on hover, so it
+   costs nothing at rest. `pointer-events: none` keeps it from swallowing
+   the click, and z-index -1 keeps it under the label. */
+.app-shell button.bg-gradient-action::after,
+.app-shell a.bg-gradient-action::after,
+.app-shell button.bg-gradient-primary::after,
+.app-shell a.bg-gradient-primary::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  z-index: -1;
+  width: 45%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.35),
+    transparent
+  );
+  transform: skewX(-20deg);
+  pointer-events: none;
 }
 
 .app-shell button.bg-gradient-action:hover:not(:disabled),
@@ -543,6 +685,53 @@
 .app-shell a.bg-gradient-primary:hover,
 .app-shell .hover\:bg-indigo-700:hover:not(:disabled) {
   filter: brightness(1.06);
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 30px -10px color-mix(in srgb, var(--primary-purple) 75%, transparent),
+    0 0 40px -16px color-mix(in srgb, var(--primary-blue) 60%, transparent);
+}
+
+.app-shell button.bg-gradient-action:hover:not(:disabled)::after,
+.app-shell a.bg-gradient-action:hover::after,
+.app-shell button.bg-gradient-primary:hover:not(:disabled)::after,
+.app-shell a.bg-gradient-primary:hover::after {
+  animation: appBtnSweep 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Shorter duration than the hover transition — a press should register
+   instantly, while the release can ease back out. */
+.app-shell button.bg-gradient-action:active:not(:disabled),
+.app-shell a.bg-gradient-action:active,
+.app-shell button.bg-gradient-primary:active:not(:disabled),
+.app-shell a.bg-gradient-primary:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.1s;
+}
+
+.app-shell button.bg-gradient-action:focus-visible,
+.app-shell a.bg-gradient-action:focus-visible,
+.app-shell button.bg-gradient-primary:focus-visible,
+.app-shell a.bg-gradient-primary:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--background),
+    0 0 0 4px color-mix(in srgb, var(--primary-purple) 70%, transparent);
+}
+
+.app-shell button.bg-gradient-action:disabled,
+.app-shell button.bg-gradient-primary:disabled {
+  transform: none;
+  box-shadow: none;
+}
+
+.app-shell button.bg-gradient-action:disabled::after,
+.app-shell button.bg-gradient-primary:disabled::after {
+  display: none;
+}
+
+@keyframes appBtnSweep {
+  from { left: -60%; }
+  to { left: 130%; }
 }
 
 /* Sidebar: always solid, never show page background through */
@@ -973,4 +1162,693 @@ input[type="date"].date-input-light::-webkit-calendar-picker-indicator {
 
 .app-shell input[type="date"].date-input-light:invalid::-webkit-datetime-edit {
   color: #94a3b8;
+}
+/* ══ Premium surface treatments (landing / marketing) ═══════════ */
+
+/*
+ * Feature card — interaction treatment that behaves identically on touch
+ * and pointer devices. Nothing here depends on cursor position, so a
+ * phone gets the same affordance a desktop does.
+ *
+ * Three layers:
+ *   1. a gradient edge that fades in on engage
+ *   2. a soft interior wash for depth
+ *   3. a one-shot sheen that sweeps across on engage
+ *
+ * "Engage" = :hover on hover-capable devices, :active everywhere, so a
+ * tap triggers the same thing a hover does.
+ */
+.feature-card {
+  position: relative;
+  isolation: isolate;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  overflow: hidden;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Gradient edge, masked to the 1px border. */
+.feature-card__edge {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1px;
+  opacity: 0;
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary-purple) 90%, transparent) 0%,
+    color-mix(in srgb, var(--primary-blue) 70%, transparent) 45%,
+    transparent 75%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Interior wash — anchored to the top-left, no cursor needed. */
+.feature-card__wash {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  background: radial-gradient(
+    120% 90% at 0% 0%,
+    color-mix(in srgb, var(--primary-purple) 16%, transparent),
+    transparent 60%
+  );
+}
+
+/* One-shot diagonal sheen. */
+.feature-card__sheen {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -55%;
+  width: 40%;
+  z-index: 2;
+  pointer-events: none;
+  transform: skewX(-18deg);
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in srgb, var(--foreground) 12%, transparent),
+    transparent
+  );
+}
+
+/* Shared engaged state. Declared once, triggered by both inputs below. */
+.feature-card:active {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--primary-purple) 42%, transparent);
+  background: color-mix(in srgb, var(--card) 100%, transparent);
+}
+.feature-card:active .feature-card__edge,
+.feature-card:active .feature-card__wash {
+  opacity: 1;
+}
+.feature-card:active .feature-card__sheen {
+  animation: sg-card-sheen 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .feature-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--primary-purple) 42%, transparent);
+    background: color-mix(in srgb, var(--card) 100%, transparent);
+  }
+  .feature-card:hover .feature-card__edge,
+  .feature-card:hover .feature-card__wash {
+    opacity: 1;
+  }
+  .feature-card:hover .feature-card__sheen {
+    animation: sg-card-sheen 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+/* Touch devices get a firmer press cue instead of a lift that would be
+   hidden under the finger. */
+@media (hover: none) {
+  .feature-card:active {
+    transform: scale(0.985);
+  }
+}
+
+@keyframes sg-card-sheen {
+  from { left: -55%; }
+  to { left: 130%; }
+}
+
+/*
+ * Rotating conic border for the one element that should feel alive —
+ * the featured pricing plan. @property lets the angle animate smoothly;
+ * browsers without it fall back to a static gradient edge.
+ */
+@property --sg-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.animated-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.animated-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--sg-angle),
+    transparent 0%,
+    var(--primary-purple) 12%,
+    var(--primary-blue) 25%,
+    transparent 42%,
+    transparent 100%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: sg-border-spin 6s linear infinite;
+}
+
+@keyframes sg-border-spin {
+  to {
+    --sg-angle: 360deg;
+  }
+}
+
+/* Slow-drifting aurora wash — gives flat sections ambient movement. */
+.aurora-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.aurora-field::before,
+.aurora-field::after {
+  content: '';
+  position: absolute;
+  width: 60vw;
+  height: 60vw;
+  max-width: 780px;
+  max-height: 780px;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.5;
+}
+
+.aurora-field::before {
+  top: -22%;
+  left: -12%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--primary-purple) 34%, transparent),
+    transparent 68%
+  );
+  animation: sg-aurora-a 22s ease-in-out infinite alternate;
+}
+
+.aurora-field::after {
+  bottom: -28%;
+  right: -14%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--primary-blue) 30%, transparent),
+    transparent 68%
+  );
+  animation: sg-aurora-b 27s ease-in-out infinite alternate;
+}
+
+@keyframes sg-aurora-a {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(8%, 12%, 0) scale(1.16); }
+}
+
+@keyframes sg-aurora-b {
+  from { transform: translate3d(0, 0, 0) scale(1.1); }
+  to   { transform: translate3d(-10%, -8%, 0) scale(1); }
+}
+
+/* Gradient headline text with a light sweep travelling across it. */
+/*
+ * Every stop stays in the light range — the brand hexes (#7c3aed /
+ * #5865f2) are mid-dark and drop to near-invisible against the near-black
+ * hero, so the sweep is built from light violet tints instead. Movement
+ * comes from the highlight travelling, never from text going dim.
+ */
+.shimmer-text {
+  background: linear-gradient(
+    100deg,
+    #c7b8fd 0%,
+    #ddd0ff 18%,
+    #ffffff 38%,
+    #e4dcff 56%,
+    #b6c0fb 76%,
+    #c7b8fd 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: sg-shimmer 7s linear infinite;
+}
+
+@keyframes sg-shimmer {
+  to { background-position: -220% 0; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Workspace motion primitives
+   Shared styles for the authenticated app. Everything here is additive —
+   no layout, spacing or position changes — so pages inherit motion
+   without being edited individually.
+   ════════════════════════════════════════════════════════════════════ */
+
+/*
+ * Clickable tile. The lifting counterpart to `.glass-card`, applied only
+ * where the whole card is a link/button, so that section-sized panels
+ * never float off the page on hover.
+ */
+.app-tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Gradient edge, masked to the 1px border — same technique as
+   `.feature-card` on the landing side. */
+.app-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 1px;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary-purple) 90%, transparent) 0%,
+    color-mix(in srgb, var(--primary-blue) 70%, transparent) 45%,
+    transparent 75%
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.app-tile::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -55%;
+  z-index: 2;
+  width: 40%;
+  pointer-events: none;
+  transform: skewX(-18deg);
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+}
+
+/* `:active` as well as `:hover` so a tap on a touch device produces the
+   same result a hover does. */
+.app-tile:hover,
+.app-tile:active {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--primary-purple) 45%, transparent);
+  box-shadow: 0 18px 44px -20px color-mix(in srgb, var(--primary-purple) 70%, transparent);
+}
+
+.app-tile:hover::before,
+.app-tile:active::before {
+  opacity: 1;
+}
+
+.app-tile:hover::after,
+.app-tile:active::after {
+  animation: appTileSheen 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes appTileSheen {
+  from { left: -55%; }
+  to { left: 130%; }
+}
+
+/*
+ * Upload dropzone.
+ *
+ * Uses a real `border: dashed` rather than the usual "marching ants"
+ * background-gradient trick: gradients are drawn on straight edges and
+ * cannot follow a border-radius, so marching ants on a rounded box leaves
+ * the corners visibly unpainted. A real dashed border rounds correctly;
+ * the motion comes from the drag pulse and the hover spotlight instead.
+ */
+.app-dropzone {
+  position: relative;
+  isolation: isolate;
+  border: 2px dashed var(--border);
+  border-radius: 1rem;
+  background-color: color-mix(in srgb, var(--muted) 40%, transparent);
+  transition:
+    border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Soft violet spotlight that fades in from the centre on hover. */
+.app-dropzone::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  background: radial-gradient(
+    120% 90% at 50% 50%,
+    color-mix(in srgb, var(--primary-purple) 16%, transparent),
+    transparent 70%
+  );
+}
+
+.app-dropzone:hover {
+  border-color: color-mix(in srgb, var(--primary-purple) 45%, transparent);
+  background-color: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+
+.app-dropzone:hover::before {
+  opacity: 1;
+}
+
+/* Drag-active. The pulse is what tells you the drop will land. */
+.app-dropzone--active {
+  border-color: color-mix(in srgb, var(--primary-purple) 75%, transparent);
+  background-color: color-mix(in srgb, var(--primary-purple) 8%, transparent);
+  animation: appDropPulse 1.4s ease-in-out infinite;
+}
+
+.app-dropzone--active::before {
+  opacity: 1;
+}
+
+@keyframes appDropPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary-purple) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--primary-purple) 0%, transparent);
+  }
+}
+
+/* The upload icon leans in while a file is over the zone. */
+.app-dropzone--active .app-dropzone__icon {
+  transform: scale(1.12) translateY(-2px);
+}
+
+.app-dropzone__icon {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * Media frame — the container photos and video previews sit in.
+ *
+ * The placeholder tint is static rather than a running shimmer on
+ * purpose: a media-library grid can hold dozens of these, and dozens of
+ * infinite background animations is real, permanent CPU cost for
+ * something that is covered by the image a few hundred milliseconds
+ * later. Shimmer belongs on `Skeleton`, which exists to be visible.
+ */
+.app-media-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.85rem;
+  background-color: color-mix(in srgb, var(--muted) 60%, transparent);
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Gradient ring, masked to the border so it never crops the picture. */
+.app-media-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--primary-purple) 55%, transparent),
+    color-mix(in srgb, var(--primary-blue) 35%, transparent) 50%,
+    rgba(255, 255, 255, 0.08)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* Deliberately no `width: 100%` here. Sizing stays with the call site —
+   the media-library grid wants `w-full object-cover`, while the Create
+   Post reference preview is a natural-width, centred `object-contain`
+   image that a forced full width would stretch across the whole row. */
+.app-media-frame > img,
+.app-media-frame > video {
+  display: block;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: appMediaIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-media-frame:hover > img,
+  .app-media-frame:hover > video {
+    transform: scale(1.05);
+  }
+
+  .app-media-frame:hover {
+    box-shadow: 0 18px 40px -20px color-mix(in srgb, var(--primary-purple) 60%, transparent);
+  }
+}
+
+@keyframes appMediaIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/*
+ * Page entrance stagger.
+ *
+ * Targeted structurally rather than per page: `.app-main` is on <main> in
+ * the workspace layout, its child is whatever root element the page
+ * returns, and *its* children are the page's top-level sections. That is
+ * the one selector that works across all ~25 pages, whose root wrappers
+ * are otherwise inconsistent (21 use `animate-in fade-in`, 5 use
+ * `.page-enter`, some neither).
+ *
+ * Two deliberate choices here, both about not breaking pages:
+ *
+ * 1. The hidden state comes from `animation-fill-mode`, never a bare
+ *    `opacity: 0`. If the animation is cancelled or unsupported, the
+ *    element resolves to visible rather than staying blank.
+ *
+ * 2. `backwards`, not `both`. `both` would retain the final
+ *    `transform: translateY(0)` forever, and any transform — even a zero
+ *    one — makes the element a containing block for `position: fixed`
+ *    descendants. Several pages (media-library, approval, upcoming-posts,
+ *    monitoring) render full-screen `fixed inset-0` modals inside their
+ *    sections, and those would have been re-anchored to the section
+ *    instead of the viewport. `backwards` applies the from-state during
+ *    the delay and retains nothing afterwards.
+ */
+.app-main > * > * {
+  animation: appSectionIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.app-main > * > *:nth-child(1) { animation-delay: 0.02s; }
+.app-main > * > *:nth-child(2) { animation-delay: 0.06s; }
+.app-main > * > *:nth-child(3) { animation-delay: 0.1s; }
+.app-main > * > *:nth-child(4) { animation-delay: 0.14s; }
+.app-main > * > *:nth-child(5) { animation-delay: 0.18s; }
+.app-main > * > *:nth-child(6) { animation-delay: 0.22s; }
+.app-main > * > *:nth-child(7) { animation-delay: 0.26s; }
+
+/* Capped. Without this a 40-row list would leave the last row invisible
+   for well over a second. */
+.app-main > * > *:nth-child(n + 8) { animation-delay: 0.3s; }
+
+@keyframes appSectionIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sidebar navigation — styled via the data-slot rather than the item
+   class string, which is repeated ~15 times in app-sidebar.tsx. */
+[data-slot='sidebar-menu-button'] {
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-slot='sidebar-menu-button']:hover {
+  transform: translateX(3px);
+}
+
+[data-slot='sidebar-menu-button']:active {
+  transform: translateX(3px) scale(0.98);
+}
+
+/* Violet indicator that grows in on the active item. */
+[data-slot='sidebar-menu-button'][data-active='true'] {
+  position: relative;
+}
+
+[data-slot='sidebar-menu-button'][data-active='true']::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -4px;
+  width: 3px;
+  height: 60%;
+  border-radius: 9999px;
+  background: var(--gradient-action);
+  transform: translateY(-50%) scaleY(0);
+  transform-origin: center;
+  animation: appNavIndicator 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes appNavIndicator {
+  to { transform: translateY(-50%) scaleY(1); }
+}
+
+/* Skeleton: a travelling highlight instead of a whole-block opacity
+   pulse. Reuses the `shimmer` keyframes already defined above. */
+[data-slot='skeleton'] {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-slot='skeleton']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--foreground) 8%, transparent) 50%,
+    transparent 80%
+  );
+  animation: shimmer 1.6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-border::before,
+  .aurora-field::before,
+  .aurora-field::after,
+  .shimmer-text {
+    animation: none;
+  }
+  .feature-card:hover,
+  .feature-card:active {
+    transform: none;
+  }
+  .feature-card__sheen {
+    animation: none !important;
+  }
+  /* `.page-enter` wraps most authenticated pages and translates on mount —
+     keep the page, drop the movement. */
+  .page-enter {
+    animation: none;
+  }
+
+  /* ── Workspace primitives ──────────────────────────────────────────
+     MotionProvider's reducedMotion="user" only reaches Framer Motion,
+     which animates via inline styles. Everything below is CSS and is
+     invisible to it, so it has to be switched off by hand here. */
+
+  /* This one matters most: the stagger relies on `fill-mode: both` to
+     stay hidden before its delay. Cancelling the animation alone would
+     be enough, but opacity/transform are pinned explicitly so there is
+     no path where a page renders blank. */
+  .app-main > * > * {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-slot='sidebar-menu-button'][data-active='true']::before {
+    animation: none;
+    transform: translateY(-50%) scaleY(1);
+  }
+
+  [data-slot='skeleton']::after {
+    animation: none;
+  }
+
+  .app-shell button.bg-gradient-action:hover:not(:disabled),
+  .app-shell a.bg-gradient-action:hover,
+  .app-shell button.bg-gradient-primary:hover:not(:disabled),
+  .app-shell a.bg-gradient-primary:hover,
+  .app-shell button.bg-gradient-action:active:not(:disabled),
+  .app-shell button.bg-gradient-primary:active:not(:disabled),
+  .app-tile:hover,
+  .app-tile:active,
+  [data-slot='sidebar-menu-button']:hover,
+  [data-slot='sidebar-menu-button']:active,
+  .app-media-frame:hover > img,
+  .app-media-frame:hover > video,
+  .app-dropzone--active .app-dropzone__icon {
+    transform: none;
+  }
+
+  .app-shell button.bg-gradient-action:hover:not(:disabled)::after,
+  .app-shell a.bg-gradient-action:hover::after,
+  .app-shell button.bg-gradient-primary:hover:not(:disabled)::after,
+  .app-shell a.bg-gradient-primary:hover::after,
+  .app-tile:hover::after,
+  .app-tile:active::after {
+    animation: none;
+  }
+
+  .app-dropzone--active {
+    animation: none;
+  }
+
+  .app-media-frame > img,
+  .app-media-frame > video {
+    animation: none;
+  }
 }

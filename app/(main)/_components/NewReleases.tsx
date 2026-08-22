@@ -44,7 +44,7 @@ export function NewReleasesAlerts() {
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <ul className="divide-y divide-zinc-100">
           {releases.map((release) => {
             const isNew = isUnread(release.createdAt);
@@ -73,7 +73,7 @@ export function NewReleasesAlerts() {
                 <div className="flex shrink-0 items-center gap-3">
                   <Link
                     href={`/home`}
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
+                    className="text-sm font-medium text-primary-purple hover:brightness-110 hover:underline"
                   >
                     View Release
                   </Link>

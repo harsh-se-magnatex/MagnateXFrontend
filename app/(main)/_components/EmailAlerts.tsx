@@ -76,7 +76,7 @@ export function EmailAlerts() {
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <ul className="divide-y divide-zinc-100">
           {notifications.map((message) => {
             const isNew = isUnread(message.createdAt);

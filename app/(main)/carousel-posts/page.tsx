@@ -234,7 +234,7 @@ export default function CarouselGenerationPage() {
       });
       const wait = await waitForParentJobDocs({
         uid,
-        collectionName: 'carouselGeneratedPosts',
+        collectionName: 'content',
         parentJobId: response.parentJobId,
         expectedCount: 1,
       });
@@ -307,22 +307,22 @@ export default function CarouselGenerationPage() {
             <h1 className={workspacePageTitleClass}>Carousel Posts</h1>
           </div>
           <p className={workspacePageDescriptionClass}>
-            Generate a 2–7 slide portrait carousel (1080×1350) with storyboarding
-            and brand asset selection.
+            A swipeable 2–7 slide post. Leave the topic blank and we&apos;ll pick
+            one that fits your brand.
           </p>
         </div>
         <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+          <div className="p-2 rounded-lg bg-primary-purple/10 text-primary-purple">
             <CreditCard className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Credits:{' '}
-              <span className="font-semibold text-black text-sm">
+              <span className="font-semibold text-foreground text-sm">
                 {billingLoading ? '…' : (credits ?? '—')}
               </span>
             </p>
-            <span className="text-xs font-normal text-slate-500">
+            <span className="text-xs font-normal text-muted-foreground">
               Cost:
               <span className="font-semibold">&nbsp;{creditCost}</span>
             </span>
@@ -348,16 +348,16 @@ export default function CarouselGenerationPage() {
             {showSelectAccountsFirst ? (
               <div
                 role="status"
-                className="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950"
+                className="rounded-xl border border-amber-500/30 bg-amber-500/15 px-4 py-3 text-sm text-amber-200"
               >
                 <p className="font-medium">Select your accounts first</p>
-                <p className="mt-1 text-amber-900/90">
+                <p className="mt-1 text-amber-300/90">
                   Choose which platforms you use in onboarding or social
                   settings, then come back here to generate carousels.
                 </p>
                 <Link
                   href={WORKSPACE_NAV_HREFS.linkedProfiles}
-                  className="mt-2 inline-block text-sm font-semibold text-amber-950 underline underline-offset-2 hover:text-amber-900"
+                  className="mt-2 inline-block text-sm font-semibold text-amber-200 underline underline-offset-2 hover:text-amber-300"
                 >
                   {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                 </Link>
@@ -369,7 +369,7 @@ export default function CarouselGenerationPage() {
                     <label
                       key={p}
                       htmlFor={`carousel-platform-${p}`}
-                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-slate-800"
+                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
                     >
                       <input
                         id={`carousel-platform-${p}`}
@@ -377,13 +377,13 @@ export default function CarouselGenerationPage() {
                         checked={platform === p}
                         disabled={isGenerating}
                         onChange={() => setPlatform(p)}
-                        className="size-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/30"
+                        className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
                       />
                       <span>{platformLabel(p)}</span>
                     </label>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-muted-foreground">
                   Carousel size and caption follow this platform&apos;s format.
                 </p>
               </>
@@ -471,34 +471,41 @@ export default function CarouselGenerationPage() {
           )}
         </div>
 
-        {isGenerating && (
-          <p className="text-sm text-muted-foreground flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            Generating…
-          </p>
-        )}
-
         <Button
           type="button"
           className="w-full"
           disabled={isGenerating || showSelectAccountsFirst || !creditOk}
+          aria-busy={isGenerating}
           onClick={() => void handleGenerate()}
         >
-          <Sparkles className="h-4 w-4 mr-2" />
-          {isGenerating
-            ? 'Generating…'
-            : !creditOk
-              ? 'Generate carousel (Insufficient credits)'
-              : 'Generate carousel'}
+          {isGenerating ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden />
+          ) : (
+            <Sparkles className="h-4 w-4 mr-2" aria-hidden />
+          )}
+          {isGenerating ? 'Building your slides…' : 'Create carousel'}
         </Button>
 
+        {!creditOk && (
+          <p className="text-center text-xs text-muted-foreground">
+            Needs {creditCost} {creditCost === 1 ? 'credit' : 'credits'} — you
+            have {credits ?? 0}.{' '}
+            <Link
+              href="/settings/billings"
+              className="font-semibold text-primary-purple underline underline-offset-2"
+            >
+              Top up
+            </Link>
+          </p>
+        )}
+
         {generatedCarousel ? (
-          <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/60 p-5 space-y-4">
+          <div className="mt-6 rounded-2xl border border-border bg-muted/50 p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Generated output
               </p>
-              <p className="text-xs text-indigo-600 font-medium">
+              <p className="text-xs text-primary-purple font-medium">
                 {generatedCarousel.slideCount} slides
               </p>
             </div>
@@ -512,13 +519,13 @@ export default function CarouselGenerationPage() {
             />
 
             {generatedCarousel.caption ? (
-              <p className="text-sm text-slate-800 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
                 {generatedCarousel.caption}
               </p>
             ) : null}
 
             <Button type="button" className="w-full" onClick={handleSendToScheduler}>
-              Continue to Post Scheduler
+              Continue to Schedule a Post
             </Button>
           </div>
         ) : null}

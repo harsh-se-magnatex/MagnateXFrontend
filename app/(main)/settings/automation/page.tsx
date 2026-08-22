@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
+import { workspacePageTitleClass } from '@/lib/workspace-ui';
 
 const LOGO_CORNER_PREFERENCES = [
   'top-left',
@@ -71,7 +72,7 @@ import {
 } from '@/utils/preferredPostingTime';
 
 const inputBase =
-  'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all';
+  'w-full rounded-xl border border-border bg-muted px-4 py-3 text-foreground focus:border-primary-purple focus:outline-none focus:ring-2 focus:ring-primary-purple/20 transition-all';
 
 const InstagramOptions = [
   {
@@ -283,7 +284,7 @@ export default function AutomationPreferencePage() {
         if (response.success) {
           setEmojiUsage(response.data.preferences.emojiUsage ?? true);
           setCaptionObject(
-            response.data.preferences.Caption_Length || {
+            response.data.preferences.captionLengths || {
               instagram: '',
               facebook: '',
               linkedin: '',
@@ -291,15 +292,15 @@ export default function AutomationPreferencePage() {
           );
           setSocialSalesEmailUsage(response.data.preferences.socialSalesEmailUsage ?? true);
           setSocialSalesContactUsage(response.data.preferences.socialSalesContactUsage ?? true);
-          setNeedApproval(response.data.preferences.Need_Approval ?? true);
-          setTimeZone(response.data.preferences.TimeZone || 'Asia/Calcutta');
+          setNeedApproval(response.data.preferences.approvalMode === 'manual');
+          setTimeZone(response.data.preferences.timeZone || 'Asia/Calcutta');
           setPreferredTime(
             normalizePreferredPostingTime(
               response.data.preferences.preferredTime
             )
           );
           setUseAnalyticsOptimalPostingTime(
-            response.data.preferences.useAnalyticsOptimalPostingTime === true
+            response.data.preferences.analyticsOptimalPosting === true
           );
           setLogoPreference(
             normalizeLogoPreference(response.data.preferences.logoPreference)
@@ -369,7 +370,7 @@ export default function AutomationPreferencePage() {
         }
         return next;
       });
-      const flag = prefs.useAnalyticsOptimalPostingTime;
+      const flag = prefs.analyticsOptimalPosting;
       if (typeof flag === 'boolean') {
         setUseAnalyticsOptimalPostingTime(flag);
       }
@@ -452,7 +453,7 @@ export default function AutomationPreferencePage() {
         currentSalesEmailUsage,
         currentSalesContactUsage,
         currentCaptionObject,
-        currentApproval,
+        currentApproval ? 'manual' : 'auto',
         curentTimeZone,
         normalizePreferredPostingTime(currentPreferredTime),
         currentUseAnalyticsOptimalPostingTime
@@ -481,10 +482,10 @@ export default function AutomationPreferencePage() {
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+        <h1 className={workspacePageTitleClass}>
           Automation Preferences
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-muted-foreground">
           Configure how SocioGenie generated content behaves, default languages,
           and auto-posting rules.
         </p>
@@ -493,21 +494,21 @@ export default function AutomationPreferencePage() {
       <div className="space-y-8">
         {/* Language & Output Section */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+          <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
+            <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
               <Bot className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-foreground">
               AI Output Settings
             </h2>
           </div>
 
           <div className="flex sm:flex-row-reverse flex-col-reverse gap-4 justify-between">
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">
+              <label className="text-sm font-semibold text-foreground block mb-2">
                 Emoji Usage
               </label>
-              <p className="text-xs text-slate-500 mb-3">
+              <p className="text-xs text-muted-foreground mb-3">
                 Include emojis in generated captions automatically.
               </p>
               <div className="mt-4 flex items-center gap-3">
@@ -530,8 +531,8 @@ export default function AutomationPreferencePage() {
                     );
                   }}
                   className={cn(
-                    'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                    emojiUsage ? 'bg-indigo-600' : 'bg-slate-200'
+                    'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-primary-purple focus:ring-offset-2',
+                    emojiUsage ? 'bg-primary-purple' : 'bg-muted'
                   )}
                 >
                   <span
@@ -541,22 +542,22 @@ export default function AutomationPreferencePage() {
                     )}
                   />
                 </button>
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-foreground">
                   {emojiUsage ? 'Enabled' : 'Disabled'}
                 </span>
                 <Smile
                   className={cn(
                     'h-4 w-4 ml-1',
-                    emojiUsage ? 'text-indigo-500' : 'text-slate-400'
+                    emojiUsage ? 'text-primary-purple' : 'text-muted-foreground'
                   )}
                 />
               </div>
             </div>
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">
+              <label className="text-sm font-semibold text-foreground block mb-2">
                 Logo Preference
               </label>
-              <p className="text-xs text-slate-500 mb-3">
+              <p className="text-xs text-muted-foreground mb-3">
                 Where to place the logo in the generated image.
               </p>
               <div className="mt-4 flex items-center gap-3">
@@ -593,10 +594,10 @@ export default function AutomationPreferencePage() {
           </div>
           <div className='flex justify-between'>
           <div className="mt-8">
-            <label className="text-sm font-semibold text-slate-700 block mb-2">
+            <label className="text-sm font-semibold text-foreground block mb-2">
               Social Sales Email Usage
             </label>
-            <p className="text-xs text-slate-500 mb-3">
+            <p className="text-xs text-muted-foreground mb-3">
               Include your social sales email in the
               generated captions automatically.
             </p>
@@ -620,8 +621,8 @@ export default function AutomationPreferencePage() {
                   );
                 }}
                 className={cn(
-                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                  socialSalesEmailUsage ? 'bg-indigo-600' : 'bg-slate-200'
+                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-primary-purple focus:ring-offset-2',
+                  socialSalesEmailUsage ? 'bg-primary-purple' : 'bg-muted'
                 )}
               >
                 <span
@@ -631,22 +632,22 @@ export default function AutomationPreferencePage() {
                   )}
                 />
               </button>
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-foreground">
                 {socialSalesEmailUsage ? 'Enabled' : 'Disabled'}
               </span>
               <Mail
                 className={cn(
                   'h-4 w-4 ml-1',
-                  socialSalesEmailUsage ? 'text-indigo-500' : 'text-slate-400'
+                  socialSalesEmailUsage ? 'text-primary-purple' : 'text-muted-foreground'
                 )}
               />
             </div>
           </div>
           <div className="mt-8">
-            <label className="text-sm font-semibold text-slate-700 block mb-2">
+            <label className="text-sm font-semibold text-foreground block mb-2">
               Social Sales Contact Usage
             </label>
-            <p className="text-xs text-slate-500 mb-3 ">
+            <p className="text-xs text-muted-foreground mb-3 ">
               Include your social sales contact number in the
               generated captions automatically.
             </p>
@@ -670,8 +671,8 @@ export default function AutomationPreferencePage() {
                   );
                 }}
                 className={cn(
-                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
-                  socialSalesContactUsage ? 'bg-indigo-600' : 'bg-slate-200'
+                  'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-primary-purple focus:ring-offset-2',
+                  socialSalesContactUsage ? 'bg-primary-purple' : 'bg-muted'
                 )}
               >
                 <span
@@ -681,13 +682,13 @@ export default function AutomationPreferencePage() {
                   )}
                 />
               </button>
-              <span className="text-sm font-medium text-slate-700">
+              <span className="text-sm font-medium text-foreground">
                 {socialSalesContactUsage ? 'Enabled' : 'Disabled'}
               </span>
               <Phone
                 className={cn(
                   'h-4 w-4 ml-1',
-                  socialSalesEmailUsage ? 'text-indigo-500' : 'text-slate-400'
+                  socialSalesEmailUsage ? 'text-primary-purple' : 'text-muted-foreground'
                 )}
               />
             </div>
@@ -697,16 +698,16 @@ export default function AutomationPreferencePage() {
 
         {/* Content Length Section */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
             <div className="p-2 bg-pink-50 rounded-lg text-pink-600">
               <Type className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-foreground">
               Caption Length
             </h2>
           </div>
 
-          <p className="text-sm text-slate-500 mb-5">
+          <p className="text-sm text-muted-foreground mb-5">
             Preferred length for AI auto-generated captions across your posts.
           </p>
 
@@ -746,7 +747,7 @@ export default function AutomationPreferencePage() {
                   )}
                 >
                   {isSelected && (
-                    <div className="absolute top-0 inset-x-0 h-1 bg-indigo-600" />
+                    <div className="absolute top-0 inset-x-0 h-1 bg-primary-purple" />
                   )}
                   <span
                     className={cn(
@@ -756,7 +757,7 @@ export default function AutomationPreferencePage() {
                   >
                     {len.id}
                   </span>
-                  <span className="block mt-1 text-xs text-slate-500">
+                  <span className="block mt-1 text-xs text-muted-foreground">
                     {len.id === 'instagram-short' && len.description}
                     {len.id === 'instagram-medium' && len.description}
                     {len.id === 'instagram-long' && len.description}
@@ -799,7 +800,7 @@ export default function AutomationPreferencePage() {
                   )}
                 >
                   {isSelected && (
-                    <div className="absolute top-0 inset-x-0 h-1 bg-indigo-600" />
+                    <div className="absolute top-0 inset-x-0 h-1 bg-primary-purple" />
                   )}
                   <span
                     className={cn(
@@ -809,7 +810,7 @@ export default function AutomationPreferencePage() {
                   >
                     {len.id}
                   </span>
-                  <span className="block mt-1 text-xs text-slate-500">
+                  <span className="block mt-1 text-xs text-muted-foreground">
                     {len.id === 'facebook-short' && len.description}
                     {len.id === 'facebook-medium' && len.description}
                     {len.id === 'facebook-long' && len.description}
@@ -852,7 +853,7 @@ export default function AutomationPreferencePage() {
                   )}
                 >
                   {isSelected && (
-                    <div className="absolute top-0 inset-x-0 h-1 bg-indigo-600" />
+                    <div className="absolute top-0 inset-x-0 h-1 bg-primary-purple" />
                   )}
                   <span
                     className={cn(
@@ -862,7 +863,7 @@ export default function AutomationPreferencePage() {
                   >
                     {len.id}
                   </span>
-                  <span className="block mt-1 text-xs text-slate-500">
+                  <span className="block mt-1 text-xs text-muted-foreground">
                     {len.id === 'linkedin-short' && len.description}
                     {len.id === 'linkedin-medium' && len.description}
                     {len.id === 'linkedin-long' && len.description}
@@ -875,28 +876,28 @@ export default function AutomationPreferencePage() {
 
         {/* Workflow Section */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
             <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
               <CheckSquare className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-foreground">
               Approval Workflow & Scheduling
             </h2>
           </div>
 
           <div className="grid gap-8 sm:grid-cols-2">
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">
+              <label className="text-sm font-semibold text-foreground block mb-2">
                 Post Approval Mode
               </label>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-muted-foreground mb-4">
                 In{' '}
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-foreground">
                   Auto Approve
                 </span>
                 , posts are reviewed by an admin and published automatically
                 without your input. With{' '}
-                <span className="font-semibold text-slate-700">
+                <span className="font-semibold text-foreground">
                   Manual Review
                 </span>
                 , every post must be reviewed and approved by you before it can
@@ -956,7 +957,7 @@ export default function AutomationPreferencePage() {
                       'w-full rounded-lg py-2.5 text-sm font-semibold transition-all duration-200',
                       needApproval === false
                         ? 'bg-emerald-400/80 text-black/90 shadow-sm ring-1 ring-emerald-600/20'
-                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                     )}
                   >
                     Auto Approve
@@ -967,12 +968,12 @@ export default function AutomationPreferencePage() {
 
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <Clock className="h-4 w-4 text-slate-400" />
-                <label className="text-sm font-semibold text-slate-700 block">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <label className="text-sm font-semibold text-foreground block">
                   Default Timezone
                 </label>
               </div>
-              <p className="text-xs text-slate-500 mb-3">
+              <p className="text-xs text-muted-foreground mb-3">
                 Used when generating schedules and publishing posts.
               </p>
               <select
@@ -1001,10 +1002,10 @@ export default function AutomationPreferencePage() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="text-sm font-semibold text-slate-700 block mb-2">
+              <label className="text-sm font-semibold text-foreground block mb-2">
                 Analytics-based optimal posting time
               </label>
-              <p className="text-xs text-slate-500 mb-3">
+              <p className="text-xs text-muted-foreground mb-3">
                 When enabled, AI-engine scheduled posts use your best posting
                 hour derived from synced social analytics. With fewer than 5
                 synced posts, the first posts try different times of day (e.g.
@@ -1033,10 +1034,10 @@ export default function AutomationPreferencePage() {
                     );
                   }}
                   className={cn(
-                    'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+                    'relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors border-2 border-transparent focus:outline-none focus:ring-2 focus:ring-primary-purple focus:ring-offset-2',
                     useAnalyticsOptimalPostingTime
-                      ? 'bg-indigo-600'
-                      : 'bg-slate-200'
+                      ? 'bg-primary-purple'
+                      : 'bg-muted'
                   )}
                 >
                   <span
@@ -1048,13 +1049,13 @@ export default function AutomationPreferencePage() {
                     )}
                   />
                 </button>
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-foreground">
                   {useAnalyticsOptimalPostingTime ? 'On' : 'Off'}
                 </span>
               </div>
               {selectedPlatforms.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-4 py-6 text-center text-sm text-slate-500">
-                  Select at least one social platform on the AI Engine page
+                <div className="rounded-xl border border-dashed border-border bg-muted/60 px-4 py-6 text-center text-sm text-muted-foreground">
+                  Select at least one social platform on the Autopilot page
                   to see per-platform optimal posting times here.
                 </div>
               ) : (
@@ -1101,10 +1102,10 @@ export default function AutomationPreferencePage() {
                               <Icon className="h-4 w-4" />
                             </span>
                             <div>
-                              <p className="text-sm font-semibold text-slate-900">
+                              <p className="text-sm font-semibold text-foreground">
                                 {PLATFORM_LABELS[platform]}
                               </p>
-                              <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
                                 {state.connected ? 'Connected' : 'Not connected'}
                               </p>
                             </div>
@@ -1121,10 +1122,10 @@ export default function AutomationPreferencePage() {
                                   : `Connect ${PLATFORM_LABELS[platform]} to enable refresh`
                               }
                               className={cn(
-                                'inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1',
+                                'inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-purple focus:ring-offset-1',
                                 disabledRefresh
-                                  ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-300'
-                                  : 'border-slate-200 bg-white text-slate-500 hover:border-indigo-300 hover:text-indigo-600'
+                                  ? 'cursor-not-allowed border-border bg-muted text-muted-foreground/50'
+                                  : 'border-border bg-card text-muted-foreground hover:border-primary-purple/40 hover:text-primary-purple'
                               )}
                             >
                               <RefreshCw
@@ -1138,16 +1139,16 @@ export default function AutomationPreferencePage() {
                         </div>
 
                         <div>
-                          <p className="text-2xl font-semibold tabular-nums text-slate-900">
+                          <p className="text-2xl font-semibold tabular-nums text-foreground">
                             {state.hhmm ?? '—'}
                           </p>
                           {!state.connected ? (
-                            <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
+                            <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                               <Plug className="h-3 w-3" />
                               Connect on the social-media integration page.
                             </p>
                           ) : state.hhmm ? (
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               {state.meta?.source === 'exploration'
                                 ? `Next posting time`
                                 : state.meta?.source === 'refining'
@@ -1166,7 +1167,7 @@ export default function AutomationPreferencePage() {
                                       : ''}
                             </p>
                           ) : (
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               Refresh to load the next warmup posting time, or
                               wait for the next scheduled post.
                             </p>
@@ -1180,9 +1181,9 @@ export default function AutomationPreferencePage() {
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-slate-700 block mb-2">
+              <label className="text-sm font-semibold text-foreground block mb-2">
                 Preferred Time
-                <p className="text-xs text-slate-500 mb-3">
+                <p className="text-xs text-muted-foreground mb-3">
                   Fallback when analytics-based optimal time is off or
                   unavailable. Used for manual scheduling preferences. Times
                   are 24-hour and interpreted in your selected timezone above
@@ -1239,7 +1240,7 @@ export default function AutomationPreferencePage() {
                     </Select>
                     <span
                       aria-hidden
-                      className="text-slate-500 font-semibold select-none"
+                      className="text-muted-foreground font-semibold select-none"
                     >
                       :
                     </span>
@@ -1265,7 +1266,7 @@ export default function AutomationPreferencePage() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <span className="text-xs text-slate-400 ml-1 hidden sm:inline">
+                    <span className="text-xs text-muted-foreground ml-1 hidden sm:inline">
                       24h
                     </span>
                   </div>

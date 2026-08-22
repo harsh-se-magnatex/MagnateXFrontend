@@ -71,8 +71,11 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
               alt="SocioGenie"
               className="h-10 w-10 shrink-0 rounded-xl shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 sm:h-12 sm:w-12"
             />
-            <span className="truncate font-[family-name:var(--font-bricolage)] text-xl font-bold tracking-[-0.03em] text-foreground sm:text-2xl">
-              Socio<span className="bg-gradient-primary-text">Genie</span>
+            <span className="truncate font-[family-name:var(--font-bricolage)] text-2xl font-extrabold tracking-[-0.035em] text-foreground sm:text-[1.75rem]">
+              Socio
+              <span className="brand-wordmark-glow bg-gradient-primary-text">
+                Genie
+              </span>
             </span>
           </Link>
           <div className="hidden md:flex items-center gap-8">

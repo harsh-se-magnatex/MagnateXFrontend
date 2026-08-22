@@ -19,9 +19,11 @@ import {
   Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import {
   PLAN_COMPARISON_BULLETS,
   PRICING_PLANS_BY_ID,
+  pricingPlansForMode,
   planButtonDisplayName,
   type PlanId,
 } from '@/lib/landing-pricing';
@@ -90,26 +92,9 @@ import {
 } from '@/lib/email-verification-for-purchase';
 import { isPlanInactive } from '@/lib/plan-access';
 
-/** Tier ladder shown left-to-right in the upgrade dialog. Studio/AI mode
- *  is chosen via a separate toggle; this controls only the tier order. */
-const PLAN_COMPARISON_ORDER = ['Prime', 'Elite', 'Legacy'] as const;
-type PlanTier = (typeof PLAN_COMPARISON_ORDER)[number];
 type PlanModeDisplay = 'AI' | 'Studio';
 type PlanMode = 'auto' | 'manual';
 const TOP_UP_PACK_LABELS = ['Starter', 'Basic', 'Growth', 'Business'] as const;
-
-/**
- * Platform limits keyed by canonical `activePlan` id (`prime-AI`, etc.).
- * Mirrors `PLAN_MAX_SOCIAL` in the backend.
- */
-const PLAN_PLATFORM_LIMIT: Record<string, number> = {
-  'prime-AI': 1,
-  'prime-Studio': 1,
-  'elite-AI': 2,
-  'elite-Studio': 2,
-  'legacy-AI': 3,
-  'legacy-Studio': 3,
-};
 
 /**
  * Fallback when API plan docs omit credits; aligns with upgrade copy
@@ -119,12 +104,10 @@ const PLAN_PLATFORM_LIMIT: Record<string, number> = {
  * generated free by the daily orchestrator.
  */
 const PLAN_MONTHLY_CREDITS_FALLBACK: Record<string, number> = {
-  'prime-Studio': 60,
+  studio: 100,
   'prime-AI': 50,
-  'elite-Studio': 120,
-  'elite-AI': 80,
-  'legacy-Studio': 180,
-  'legacy-AI': 110,
+  'elite-AI': 100,
+  'legacy-AI': 150,
 };
 
 /** Tab labels match the public pricing page (Studio vs AI). */
@@ -141,24 +124,14 @@ function displayModeToPlan(mode: PlanModeDisplay): PlanMode {
   return mode === 'AI' ? 'auto' : 'manual';
 }
 
-/** Canonical `activePlan` id used across billing + landing pricing. */
-function tierModeToLandingPlanId(tier: PlanTier, mode: PlanModeDisplay): PlanId {
-  return `${tier.toLowerCase()}-${mode}` as PlanId;
-}
-
-/** Firestore `plans/{id}` doc id used at checkout (may differ from `activePlan`). */
-function buildCheckoutPlanId(tier: PlanTier, mode: PlanModeDisplay): string {
-  const modeString = mode === 'AI' ? 'AI' : 'Studio';
-  return `${tier.charAt(0).toUpperCase()}${tier.slice(1).toLowerCase()}-${mode}`;
-}
-
 const PLAN_KEY_ALIASES: Record<string, PlanId> = {
-  'prime-AI': 'prime-AI',
-  'prime-Studio': 'prime-Studio',
-  'elite-AI': 'elite-AI',
-  'elite-Studio': 'elite-Studio',
-  'legacy-AI': 'legacy-AI',
-  'legacy-Studio': 'legacy-Studio',
+  studio: 'studio',
+  'prime-ai': 'prime-AI',
+  'elite-ai': 'elite-AI',
+  'legacy-ai': 'legacy-AI',
+  'prime-studio': 'studio',
+  'elite-studio': 'studio',
+  'legacy-studio': 'studio',
 };
 
 function normalizePlanKey(value: string | null | undefined): string {
@@ -173,22 +146,17 @@ function formatPlanDisplayName(value: string | null | undefined): string {
   return PRICING_PLANS_BY_ID[key]?.name ?? formatTitleCase(value);
 }
 
-/** When API omits tiers, still show Prime / Elite / Legacy rows in the modal,
- *  one entry per (tier, mode) combination. */
+/** Fallback catalog used while the API plan list is loading or incomplete. */
 const STATIC_PLAN_FALLBACK: Record<string, PlanSummary> = (
-  ['Prime', 'Elite', 'Legacy'] as const
-).reduce<Record<string, PlanSummary>>((acc, tier) => {
-  for (const mode of ['AI', 'Studio'] as const) {
-    const checkoutId = buildCheckoutPlanId(tier, mode);
-    const landingId = tierModeToLandingPlanId(tier, mode);
-    const landing = PRICING_PLANS_BY_ID[landingId];
-    acc[checkoutId] = {
-      id: checkoutId,
-      name: landingId,
+  Object.keys(PRICING_PLANS_BY_ID) as PlanId[]
+).reduce<Record<string, PlanSummary>>((acc, planId) => {
+    const landing = PRICING_PLANS_BY_ID[planId];
+    acc[planId] = {
+      id: planId,
+      name: planId,
       description: landing.subtitle,
       price: Number.parseFloat(landing.price.replace(/^\$/, '')),
     };
-  }
   return acc;
 }, {});
 
@@ -300,9 +268,10 @@ function planCreditsPerMonth(
   plan: PlanSummary | undefined,
   planNameKey: string
 ): number {
-  const extra = plan as PlanSummary & { credits?: number };
-  if (typeof extra?.credits === 'number' && extra.credits > 0)
-    return extra.credits;
+  const extra = plan as PlanSummary & { credits?: number; monthlyCredits?: number };
+  if (typeof extra?.monthlyCredits === 'number' && extra.monthlyCredits > 0)
+    return extra.monthlyCredits;
+  if (typeof extra?.credits === 'number' && extra.credits > 0) return extra.credits;
   return PLAN_MONTHLY_CREDITS_FALLBACK[planNameKey] ?? 150;
 }
 
@@ -498,12 +467,6 @@ export default function BillingsPage() {
     return formatPlanDisplayName(billing.activePlan);
   }, [subscriptionSummary?.planName, billing?.activePlan]);
 
-  const platformCount = useMemo(() => {
-    const k = normalizePlanKey(currentPlanKey);
-    if (k === 'non-subscribed' || !k) return 0;
-    return PLAN_PLATFORM_LIMIT[k] ?? 0;
-  }, [currentPlanKey]);
-
   const creditsPerMonthCopy = useMemo(() => {
     const k = normalizePlanKey(currentPlanKey);
     return planCreditsPerMonth(currentPlanRecord, k);
@@ -576,9 +539,9 @@ export default function BillingsPage() {
 
   const planComparisonRows = useMemo(() => {
     const modeDisplay = planModeToDisplay(upgradeMode);
-    return PLAN_COMPARISON_ORDER.map((tierKey) => {
-      const checkoutPlanId = buildCheckoutPlanId(tierKey, modeDisplay);
-      const landingPlanId = tierModeToLandingPlanId(tierKey, modeDisplay);
+    return pricingPlansForMode(modeDisplay).map((landingPlan) => {
+      const checkoutPlanId = landingPlan.id;
+      const landingPlanId = landingPlan.id;
       const fromApi = plans.find(
         (p) =>
           p.id === checkoutPlanId ||
@@ -586,8 +549,7 @@ export default function BillingsPage() {
           normalizePlanKey(p.name) === landingPlanId
       );
       const plan = fromApi ?? STATIC_PLAN_FALLBACK[checkoutPlanId];
-      const landingPlan = PRICING_PLANS_BY_ID[landingPlanId];
-      return { tierKey, checkoutPlanId, landingPlanId, landingPlan, plan };
+      return { tierKey: landingPlan.id, checkoutPlanId, landingPlanId, landingPlan, plan };
     });
   }, [plans, upgradeMode]);
 
@@ -798,10 +760,10 @@ export default function BillingsPage() {
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500 pb-12">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+        <h1 className={workspacePageTitleClass}>
           Billing &amp; subscription
         </h1>
-        <p className="mt-2 text-sm text-slate-500 max-w-2xl">
+        <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
           Manage your plan, credits, and billing activity. Personalized AI continues on its own schedule; credits cover on-demand actions only.
         </p>
       </div>
@@ -818,21 +780,21 @@ export default function BillingsPage() {
             isSubscribed && 'border-emerald-100 shadow-sm shadow-emerald-900/5'
           )}
         >
-          <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+          <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
+            <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
               <CreditCard className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-foreground">
               Current plan
             </h2>
           </div>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2.5">
-                <p className="text-lg font-semibold text-slate-900">
+                <p className="text-lg font-semibold text-foreground">
                   {displayPlanName}
                   {monthlyPriceDisplay ? (
-                    <span className="font-normal text-slate-600">
+                    <span className="font-normal text-muted-foreground">
                       {' '}
                       — {monthlyPriceDisplay}
                     </span>
@@ -856,7 +818,7 @@ export default function BillingsPage() {
                     ) : null}
                     {subscriptionSummary?.scheduledPlanChange ? (
                       <span
-                        className="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-indigo-800 ring-1 ring-indigo-200/90"
+                        className="inline-flex items-center rounded-full bg-primary-purple/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-primary-purple ring-1 ring-primary-purple/30"
                         title="A different plan will start on your next billing date"
                       >
                         Plan change scheduled
@@ -869,10 +831,10 @@ export default function BillingsPage() {
                 <>
                   <dl className="mt-5 grid overflow-hidden rounded-2xl border border-border bg-muted text-sm sm:grid-cols-3 sm:divide-x sm:divide-border">
                     <div className="border-b border-border px-4 py-3 sm:border-b-0">
-                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         Billing cycle
                       </dt>
-                      <dd className="mt-1 font-semibold text-slate-900">
+                      <dd className="mt-1 font-semibold text-foreground">
                         {billingFrequencyDisplay}
                       </dd>
                     </div>
@@ -880,7 +842,7 @@ export default function BillingsPage() {
                       <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         Started
                       </dt>
-                      <dd className="mt-1 font-semibold text-slate-900">
+                      <dd className="mt-1 font-semibold text-foreground">
                         {formatTxnDate(
                           subscriptionSummary.createdAt ??
                             billing?.planStartedAt
@@ -893,7 +855,7 @@ export default function BillingsPage() {
                           ? 'Access until'
                           : 'Next billing'}
                       </dt>
-                      <dd className="mt-1 font-semibold text-slate-900">
+                      <dd className="mt-1 font-semibold text-foreground">
                         {formatTxnDate(
                           subscriptionSummary.nextBillingDate ??
                             billing?.planExpiresAt
@@ -903,12 +865,12 @@ export default function BillingsPage() {
                   </dl>
                   {subscriptionSummary.scheduledPlanChange ? (
                     <div
-                      className="mt-5 flex flex-col gap-3 rounded-2xl border border-indigo-200/90 bg-indigo-50/70 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+                      className="mt-5 flex flex-col gap-3 rounded-2xl border border-primary-purple/25 bg-primary-purple/10 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                       role="region"
                       aria-label="Scheduled plan change"
                     >
                       <div className="min-w-0 space-y-2 text-sm">
-                        <p className="text-[11px] font-bold uppercase tracking-wide text-indigo-800">
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-primary-purple">
                           Scheduled plan change
                         </p>
                         <p className="font-semibold text-foreground">
@@ -928,7 +890,7 @@ export default function BillingsPage() {
                           applies the right accounts automatically.
                           <Link
                             href="/settings/next-plan-platforms"
-                            className="ml-1 font-semibold text-indigo-700 underline-offset-2 hover:underline"
+                            className="ml-1 font-semibold text-primary-purple underline-offset-2 hover:underline"
                           >
                             Select next-plan platforms
                           </Link>
@@ -1007,10 +969,10 @@ export default function BillingsPage() {
                 (billing?.planStartedAt || billing?.planExpiresAt) ? (
                 <dl className="mt-5 grid overflow-hidden rounded-2xl border border-border bg-muted text-sm sm:grid-cols-3 sm:divide-x sm:divide-border">
                   <div className="border-b border-border px-4 py-3 sm:border-b-0">
-                    <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Billing cycle
                     </dt>
-                    <dd className="mt-1 font-semibold text-slate-900">
+                    <dd className="mt-1 font-semibold text-foreground">
                       Monthly
                     </dd>
                   </div>
@@ -1018,7 +980,7 @@ export default function BillingsPage() {
                     <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Started
                     </dt>
-                    <dd className="mt-1 font-semibold text-slate-900">
+                    <dd className="mt-1 font-semibold text-foreground">
                       {billing?.planStartedAt
                         ? formatFirestoreDate(billing.planStartedAt)
                         : '—'}
@@ -1028,7 +990,7 @@ export default function BillingsPage() {
                     <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       Access until
                     </dt>
-                    <dd className="mt-1 font-semibold text-slate-900">
+                    <dd className="mt-1 font-semibold text-foreground">
                       {billing?.planExpiresAt
                         ? formatFirestoreDate(billing.planExpiresAt)
                         : '—'}
@@ -1103,16 +1065,16 @@ export default function BillingsPage() {
 
         {/* Payment method */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 border-b border-border pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+              <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
                 <Wallet className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">
+                <h2 className="text-xl font-semibold text-foreground">
                   Payment method
                 </h2>
-                <p className="text-sm text-slate-500 mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   The latest method used for your subscription or credit top-up.
                 </p>
               </div>
@@ -1123,15 +1085,15 @@ export default function BillingsPage() {
               <Spinner className="size-6" />
             </div>
           ) : !paymentSummary ? (
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Couldn&apos;t load payment details. Try again later.
             </p>
           ) : paymentSummary.dodoLinked && !paymentSummary.data ? (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-800">
+              <p className="text-sm font-medium text-foreground">
                 No saved payment method
               </p>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 Use the billing portal to add a payment method for future
                 purchases or renewals.
               </p>
@@ -1150,10 +1112,10 @@ export default function BillingsPage() {
             </div>
           ) : !paymentSummary.dodoLinked ? (
             <div className="space-y-2">
-              <p className="text-sm font-medium text-slate-800">
+              <p className="text-sm font-medium text-foreground">
                 No payment method
               </p>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 After you complete a purchase through our checkout, your saved
                 payment method appears here.
               </p>
@@ -1163,7 +1125,7 @@ export default function BillingsPage() {
               const d = paymentSummary.data;
               if (!d) {
                 return (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-muted-foreground">
                     Payment details are not available.
                   </p>
                 );
@@ -1181,13 +1143,13 @@ export default function BillingsPage() {
                         <CreditCard className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-purple">
                           Saved payment
                         </p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+                        <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
                           {channel.detail}
                         </p>
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-1 text-sm text-muted-foreground">
                           {channel.label}
                         </p>
                       </div>
@@ -1197,25 +1159,25 @@ export default function BillingsPage() {
                     </span>
                   </div>
 
-                  <div className="mt-6 flex flex-col gap-4 border-t border-slate-200 pt-5 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="mt-6 flex flex-col gap-4 border-t border-border pt-5 lg:flex-row lg:items-end lg:justify-between">
                     <dl className="grid flex-1 grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                       {d.cardHolderName ? (
                         <div>
-                          <dt className="text-slate-500">Cardholder</dt>
-                          <dd className="mt-1 font-medium text-slate-900">
+                          <dt className="text-muted-foreground">Cardholder</dt>
+                          <dd className="mt-1 font-medium text-foreground">
                             {d.cardHolderName}
                           </dd>
                         </div>
                       ) : null}
                       <div>
-                        <dt className="text-slate-500">Added on</dt>
-                        <dd className="mt-1 font-medium text-slate-900">
+                        <dt className="text-muted-foreground">Added on</dt>
+                        <dd className="mt-1 font-medium text-foreground">
                           {formatIsoDateTime(d.createdAt)}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-slate-500">Processed by</dt>
-                        <dd className="mt-1 font-medium text-slate-900">
+                        <dt className="text-muted-foreground">Processed by</dt>
+                        <dd className="mt-1 font-medium text-foreground">
                           Dodo Payments
                         </dd>
                       </div>
@@ -1224,7 +1186,7 @@ export default function BillingsPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        className="rounded-xl bg-white"
+                        className="rounded-xl bg-card"
                         onClick={handleChangePaymentMethod}
                         disabled={portalLoading}
                       >
@@ -1255,7 +1217,7 @@ export default function BillingsPage() {
                     </div>
                   </div>
                   {!canDeletePaymentMethod ? (
-                    <p className="mt-3 text-xs text-slate-500">
+                    <p className="mt-3 text-xs text-muted-foreground">
                       You can only delete this payment method after your
                       subscription ends.
                     </p>
@@ -1268,22 +1230,22 @@ export default function BillingsPage() {
 
         {/* Credits — planCredits / topupCredits (UserDocument pools) */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6 border-b border-border pb-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
                 <Coins className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-slate-900">
+                <h2 className="text-xl font-semibold text-foreground">
                   Credits balance
                 </h2>
-                <p className="text-sm text-slate-500 mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   Total usable:{' '}
-                  <span className="font-semibold tabular-nums text-slate-800">
+                  <span className="font-semibold tabular-nums text-foreground">
                     {billingLoading ? '…' : (billing?.credits ?? '—')}
                   </span>
                   {!billingLoading && billing != null ? (
-                    <span className="text-slate-500"> credits</span>
+                    <span className="text-muted-foreground"> credits</span>
                   ) : null}
                 </p>
               </div>
@@ -1319,18 +1281,18 @@ export default function BillingsPage() {
                 Included with your subscription; typically aligns with your
                 billing period.
               </p>
-              <p className="text-2xl font-bold text-slate-900 tabular-nums">
+              <p className="text-2xl font-bold text-foreground tabular-nums">
                 {billingLoading
                   ? '…'
                   : billing?.planCredits ?? '—'}
                 {!billingLoading && billing != null ? (
-                  <span className="text-base font-semibold text-slate-500 ml-2">
+                  <span className="text-base font-semibold text-muted-foreground ml-2">
                     credits
                   </span>
                 ) : null}
               </p>
-              <p className="text-sm text-slate-600 flex items-start gap-2 mt-3">
-                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-slate-400" />
+              <p className="text-sm text-muted-foreground flex items-start gap-2 mt-3">
+                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
                 <span>
                   {(() => {
                     const expiry = parseTimestampInput(
@@ -1343,7 +1305,7 @@ export default function BillingsPage() {
                     );
                   })()}
                   {' '}
-                  <span className="font-medium text-slate-800">
+                  <span className="font-medium text-foreground">
                     {formatFirestoreDate(billing?.planCreditsExpiresAt ?? null)}
                   </span>
                 </span>
@@ -1358,29 +1320,29 @@ export default function BillingsPage() {
               <p className="text-xs text-violet-900/85 mt-1 mb-3">
                 From purchased credit packs; separate pool from plan credits.
               </p>
-              <p className="text-2xl font-bold text-slate-900 tabular-nums">
+              <p className="text-2xl font-bold text-foreground tabular-nums">
                 {billingLoading
                   ? '…'
                   : billing?.usesSplitCreditPools === true
                     ? (billing.topupCredits ?? 0)
                     : 0}
                 {!billingLoading && billing != null ? (
-                  <span className="text-base font-semibold text-slate-500 ml-2">
+                  <span className="text-base font-semibold text-muted-foreground ml-2">
                     credits
                   </span>
                 ) : null}
               </p>
-              <p className="text-sm text-slate-600 flex items-start gap-2 mt-3">
-                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-slate-400" />
+              <p className="text-sm text-muted-foreground flex items-start gap-2 mt-3">
+                <Clock className="h-4 w-4 shrink-0 mt-0.5 text-muted-foreground" />
                 {billing?.isTopupCreditsExpired ? (
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-muted-foreground">
                     Top-up credits expired
                   </span>
                 ) : null}
                 {!billing?.isTopupCreditsExpired ? (
                   <span>
                     Expires on{' '}
-                    <span className="font-medium text-slate-800">
+                    <span className="font-medium text-foreground">
                       {billing?.usesSplitCreditPools === true
                         ? formatFirestoreDate(
                           billing?.topupCreditsExpiresAt ?? null
@@ -1397,21 +1359,21 @@ export default function BillingsPage() {
         {/* Explainer */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
+            <div className="p-2 bg-muted rounded-lg text-foreground">
               <Sparkles className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-semibold text-foreground">
               Credit usage
             </h2>
           </div>
-          <p className="text-sm text-slate-600 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
            Credit used per post by <strong>Manual Trigger</strong>
           </p>
-          <ul className="text-sm text-slate-700 space-y-2 list-none pl-0">
-            <li>· Product Ads: 4 credits</li>
+          <ul className="text-sm text-foreground space-y-2 list-none pl-0">
+            <li>· Product Posts: 4 credits</li>
             <li>· Campaign post: 3 credits per post</li>
-            <li>· Content Studio: 2 credits</li>
-            <li>· Event Studio: 2 credits</li>
+            <li>· Create Post: 2 credits</li>
+            <li>· Occasion Posts: 2 credits</li>
             <li>· Carousel: 3 credits per slide</li>
             <li>· Video Generation: 15 credits</li>
             <li>· Regeneration: 1 credit (First regen free)</li>
@@ -1420,18 +1382,18 @@ export default function BillingsPage() {
 
         {/* Billing history */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 border-b border-border pb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-slate-100 rounded-lg text-slate-700">
+              <div className="p-2 bg-muted rounded-lg text-foreground">
                 <ReceiptText className="h-5 w-5" />
               </div>
-              <h2 className="text-xl font-semibold text-slate-900">
+              <h2 className="text-xl font-semibold text-foreground">
                 Billing history
               </h2>
             </div>
             <Link
               href="/settings/transactions"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-purple hover:text-primary-purple hover:underline"
             >
               Full transaction history
               <ExternalLink className="h-3.5 w-3.5" />
@@ -1442,11 +1404,11 @@ export default function BillingsPage() {
               <Spinner className="size-6" />
             </div>
           ) : billingHistory.length === 0 ? (
-            <p className="text-sm text-slate-600 py-6 text-center">
+            <p className="text-sm text-muted-foreground py-6 text-center">
               No billing entries yet. Purchases and top-ups will appear here —{' '}
               <Link
                 href="/settings/transactions"
-                className="font-medium text-indigo-600 hover:underline"
+                className="font-medium text-primary-purple hover:underline"
               >
                 open transaction history
               </Link>
@@ -1459,16 +1421,16 @@ export default function BillingsPage() {
             >
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground">
                     Date
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground">
                     Description
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground text-right">
                     Amount
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 bg-card text-slate-600 text-right">
+                  <TableHead className="sticky top-0 z-10 bg-card text-muted-foreground text-right">
                     Invoice
                   </TableHead>
                 </TableRow>
@@ -1476,13 +1438,13 @@ export default function BillingsPage() {
               <TableBody>
                 {billingHistory.map((row, index) => (
                   <TableRow key={`${txnDescription(row)}-${index}`}>
-                    <TableCell className="text-slate-900 tabular-nums whitespace-nowrap">
+                    <TableCell className="text-foreground tabular-nums whitespace-nowrap">
                       {formatTxnDate(row.createdAt)}
                     </TableCell>
-                    <TableCell className="text-slate-700 max-w-[220px] truncate sm:max-w-[320px]">
+                    <TableCell className="text-foreground max-w-[220px] truncate sm:max-w-[320px]">
                       {txnDescription(row)}
                     </TableCell>
-                    <TableCell className="text-right text-slate-900 tabular-nums">
+                    <TableCell className="text-right text-foreground tabular-nums">
                       {txnAmountCell(row)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -1490,12 +1452,12 @@ export default function BillingsPage() {
                         <Link
                           href={row.invoiceUrl}
                           target="_blank"
-                          className="text-sm font-medium text-indigo-600 hover:underline"
+                          className="text-sm font-medium text-primary-purple hover:underline"
                         >
                           View
                         </Link>
                       ) : (
-                        <span className="text-sm text-slate-500">Not available</span>
+                        <span className="text-sm text-muted-foreground">Not available</span>
                       )}
                     </TableCell>
                   </TableRow>
@@ -1514,23 +1476,24 @@ export default function BillingsPage() {
         >
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl text-foreground">
-              Unlock more platforms and content
+              Choose your plan
             </DialogTitle>
             <DialogDescription className="text-muted-foreground text-left space-y-2">
               {billing?.activePlan === 'non-subscribed' ? (
                 <span>
                   You do not have an active subscription yet. Choose a plan to
-                  unlock platform connections and monthly credits.
+                  unlock manual creation and scheduling across all three
+                  platforms, plus monthly credits.
                 </span>
               ) : (
                 <span>
-                  Your current plan supports {platformCount} platform
-                  {platformCount === 1 ? '' : 's'} and {creditsPerMonthCopy}{' '}
-                  credits/month.
+                  Your current plan includes {creditsPerMonthCopy} credits/month.
+                  Manual creation and scheduling are available across Facebook,
+                  Instagram, and LinkedIn on every paid plan.
                 </span>
               )}
               <span>
-                Upgrade to connect more platforms and create more content.
+                AI plans differ by how many selected platforms their AI Plan can automate.
               </span>
             </DialogDescription>
           </DialogHeader>
@@ -1728,25 +1691,25 @@ export default function BillingsPage() {
           <DialogHeader>
             <DialogTitle>Confirm plan change</DialogTitle>
           </DialogHeader>
-          <div className="text-sm text-slate-600 space-y-3">
+          <div className="text-sm text-muted-foreground space-y-3">
             {planSwitchPreview && planSwitchTarget ? (
               <>
                 <p>
                   You&apos;re switching to{' '}
-                  <strong className="text-slate-900">
+                  <strong className="text-foreground">
                     {planSwitchPreview.targetPlanNiceName}
                   </strong>
                   . This is scheduled for your{' '}
-                  <strong className="text-slate-900">next billing date</strong>
+                  <strong className="text-foreground">next billing date</strong>
                   . Until then, your subscription and limits stay exactly as they
                   are today.
                 </p>
-                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm space-y-2">
+                <div className="rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm space-y-2">
                   <div className="flex justify-between gap-2 flex-wrap">
-                    <span className="text-slate-500 shrink-0">
+                    <span className="text-muted-foreground shrink-0">
                       Estimated charge now
                     </span>
-                    <span className="font-semibold tabular-nums text-slate-900 text-right">
+                    <span className="font-semibold tabular-nums text-foreground text-right">
                       {formatCurrencyMinorUnits(
                         planSwitchPreview.immediateCharge.summary
                           .totalAmount,
@@ -1755,10 +1718,10 @@ export default function BillingsPage() {
                     </span>
                   </div>
                   <div className="flex justify-between gap-2 flex-wrap">
-                    <span className="text-slate-500 shrink-0">
+                    <span className="text-muted-foreground shrink-0">
                       New plan renewal (before tax lines)
                     </span>
-                    <span className="font-semibold tabular-nums text-slate-900 text-right">
+                    <span className="font-semibold tabular-nums text-foreground text-right">
                       {formatCurrencyMinorUnits(
                         planSwitchPreview.newPlan.recurringPreTaxAmount,
                         planSwitchPreview.newPlan.currency
@@ -1766,17 +1729,17 @@ export default function BillingsPage() {
                     </span>
                   </div>
                   <div className="flex justify-between gap-2 flex-wrap">
-                    <span className="text-slate-500 shrink-0">
+                    <span className="text-muted-foreground shrink-0">
                       Next renewal date (preview)
                     </span>
-                    <span className="tabular-nums text-slate-800 text-right">
+                    <span className="tabular-nums text-foreground text-right">
                       {formatIsoDateTime(
                         planSwitchPreview.newPlan.nextBillingDate
                       )}
                     </span>
                   </div>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Figures come from your payment provider preview. Taxes and final
                   amounts may vary.
                 </p>
@@ -1986,7 +1949,7 @@ export default function BillingsPage() {
         >
           <DialogHeader>
             <DialogTitle>Top up your credits</DialogTitle>
-            <DialogDescription className="text-left text-slate-600 space-y-3">
+            <DialogDescription className="text-left text-muted-foreground space-y-3">
               <p>
                 Credits are used for product ads, instant posts, festive
                 campaigns, and regenerations. Valid for 30 days from purchase.
@@ -2009,18 +1972,18 @@ export default function BillingsPage() {
               .map((pack, packIndex) => (
                 <div
                   key={pack.id}
-                  className="rounded-2xl border border-slate-200 bg-white p-4 flex flex-col gap-3"
+                  className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-3"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">
+                    <p className="text-sm font-semibold text-foreground">
                       {pack.label ??
                         TOP_UP_PACK_LABELS[packIndex] ??
                         pack.name}
                     </p>
-                    <p className="text-lg font-bold text-slate-900 mt-1">
+                    <p className="text-lg font-bold text-foreground mt-1">
                       {formatUsd(pack.price)}
                     </p>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-muted-foreground">
                       {pack.credits} credits
                     </p>
                   </div>

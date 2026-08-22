@@ -33,6 +33,7 @@ import {
   Share2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTourState } from '@/src/stores/tourState';
 import { EmailVerificationPurchaseAlert } from '@/components/shared/EmailVerificationPurchaseAlert';
+import { ExamplePostsCard } from '@/components/home/ExamplePostsCard';
 import Cookies from 'js-cookie';
 import {
   useTimestampFormatter,
@@ -88,11 +90,11 @@ type FirestoreTimestamp = {
 type DashboardPost = {
   postId?: string;
   imageUrl: string | null;
-  scheduleAt?: FirestoreTimestamp;
+  schedule?: { at?: FirestoreTimestamp };
   platform: string;
-  postStatus?: string;
-  UserApprovalStatus?: string;
-  removedByUser?: boolean;
+  lifecycle?: string;
+  approval?: { status?: string; stage?: string; actor?: string };
+  publication?: { lastError?: string | null; errors?: string[] | null };
   GeneratedBy?: string;
 };
 
@@ -137,12 +139,12 @@ function computeTodayBounds(tz: string): {
 function getActivityDescription(
   post: ScheduledPostStatusInput & {
     GeneratedBy?: string;
-    scheduleAt?: FirestoreTimestamp;
+    schedule?: { at?: FirestoreTimestamp };
   },
   fmtTimestamp: (input: TimestampInput, options?: { style?: 'time' }) => string
 ): string {
   const feature = generatedByLabel(post.GeneratedBy) ?? 'Post';
-  const time = fmtTimestamp(post.scheduleAt, { style: 'time' });
+  const time = fmtTimestamp(post.schedule?.at, { style: 'time' });
   const status = getDisplayStatus(post);
 
   switch (status.variant) {
@@ -188,7 +190,7 @@ function isPostScheduledToday(
   todayStartMs: number,
   todayEndMs: number
 ): boolean {
-  const scheduledAt = parseTimestampInput(post.scheduleAt);
+  const scheduledAt = parseTimestampInput(post.schedule?.at);
   if (!scheduledAt) return false;
   const t = scheduledAt.getTime();
   return t >= todayStartMs && t < todayEndMs;
@@ -275,8 +277,8 @@ function formatGrowthValue(pct: number | null): ReactNode {
   return (
     <span
       className={cn(
-        pct > 0 && 'text-emerald-600 dark:text-emerald-400',
-        pct < 0 && 'text-rose-600 dark:text-rose-400',
+        pct > 0 && 'text-emerald-400',
+        pct < 0 && 'text-rose-400',
         Math.abs(pct) < 0.05 && 'text-muted-foreground'
       )}
     >
@@ -362,10 +364,12 @@ export default function Home() {
       getScheduledPostsInRange({
         fromMs: startMs,
         toMs: todayEndMs - 1,
+        excludeRemovedRejected: true,
       }),
       getScheduledPostsInRange({
         fromMs: startMs,
         toMs: startMs + UPCOMING_RANGE_MS,
+        excludeRemovedRejected: true,
       }),
       getSocialAccountsApi(),
       getInsightsFaceBook(),
@@ -386,9 +390,7 @@ export default function Home() {
     if (todayActivityOutcome.status === 'fulfilled') {
       const todayPosts = (todayActivityOutcome.value?.data?.posts ??
         []) as DashboardPost[];
-      setTodaysActivityPosts(
-        todayPosts.filter((p) => p.removedByUser !== true)
-      );
+      setTodaysActivityPosts(todayPosts);
     } else {
       console.error(
         '[home] today activity fetch failed',
@@ -399,9 +401,7 @@ export default function Home() {
 
     if (rangeOutcome.status === 'fulfilled') {
       const rangePosts = (rangeOutcome.value?.data?.posts ?? []) as DashboardPost[];
-      setUpcomingRangePosts(
-        rangePosts.filter((p) => p.removedByUser !== true)
-      );
+      setUpcomingRangePosts(rangePosts);
     } else {
       console.error('[home] getScheduledPostsInRange failed', rangeOutcome.reason);
       setUpcomingRangePosts([]);
@@ -456,8 +456,7 @@ export default function Home() {
   const { pendingReviewCount, pendingReviewIsSingular } = useMemo(() => {
     const n = upcomingRangePosts.filter(
       (p) =>
-        getDisplayStatus(p).variant === 'pendingByYou' ||
-        p.UserApprovalStatus === 'pending'
+        getDisplayStatus(p).variant === 'pendingByYou'
     ).length;
     return {
       pendingReviewCount: String(n),
@@ -476,15 +475,15 @@ export default function Home() {
     const { todayStartMs: startMs, todayEndMs } = computeTodayBounds(userTz);
     const byKey = new Map<string, DashboardPost>();
     for (const post of todaysActivityPosts) {
-      if (post.removedByUser === true) continue;
-      const key = post.postId ?? `${post.platform}-${post.scheduleAt?._seconds}`;
+      if (post.lifecycle === 'removed') continue;
+      const key = post.postId ?? `${post.platform}-${post.schedule?.at?._seconds}`;
       byKey.set(key, post);
     }
     for (const post of upcomingRangePosts) {
-      if (post.removedByUser === true) continue;
+      if (post.lifecycle === 'removed') continue;
       if (isPostScheduledToday(post, startMs, todayEndMs)) continue;
       if (!isUpcomingPost(post)) continue;
-      const key = post.postId ?? `${post.platform}-${post.scheduleAt?._seconds}`;
+      const key = post.postId ?? `${post.platform}-${post.schedule?.at?._seconds}`;
       byKey.set(key, post);
     }
 
@@ -492,13 +491,13 @@ export default function Home() {
       .map((post) => {
         const isToday = isPostScheduledToday(post, startMs, todayEndMs);
         return {
-          key: post.postId ?? `${post.platform}-${post.scheduleAt?._seconds}`,
+          key: post.postId ?? `${post.platform}-${post.schedule?.at?._seconds}`,
           post,
           description: getActivityDescription(post, fmtTimestamp),
           scheduleState: getActivityScheduleState(post),
           isToday,
           scheduleLabel: formatActivityScheduleLabel(
-            post.scheduleAt,
+            post.schedule?.at,
             isToday,
             fmtTimestamp
           ),
@@ -506,8 +505,8 @@ export default function Home() {
       })
       .sort((a, b) => {
         if (a.isToday !== b.isToday) return a.isToday ? -1 : 1;
-        const sa = a.post.scheduleAt?._seconds ?? 0;
-        const sb = b.post.scheduleAt?._seconds ?? 0;
+        const sa = a.post.schedule?.at?._seconds ?? 0;
+        const sb = b.post.schedule?.at?._seconds ?? 0;
         return sa - sb;
       })
       .slice(0, 5);
@@ -575,7 +574,7 @@ export default function Home() {
             variant="default"
             className="rounded-xl border-0 bg-transparent px-4 py-4 sm:px-5 sm:py-5"
           >
-            <AlertTriangle className="size-5 text-amber-600 dark:text-amber-500" />
+            <AlertTriangle className="size-5 text-amber-500" />
             <AlertTitle className="text-foreground">
               Social accounts need attention
             </AlertTitle>
@@ -602,7 +601,7 @@ export default function Home() {
               <Button
                 asChild
                 size="sm"
-                className="mt-1 rounded-lg bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500"
+                className="mt-1 rounded-lg bg-amber-600 text-white hover:bg-amber-500"
               >
                 <Link href={SOCIAL_INTEGRATION_PATH}>
                   {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
@@ -618,7 +617,7 @@ export default function Home() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
             <span className="text-muted-foreground">{timeGreeting()}, {displayName}</span>
-            <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight text-balance">
+            <h1 className={cn(workspacePageTitleClass, 'text-balance')}>
               What do you want to create today?
             </h1>
           </div>
@@ -704,6 +703,10 @@ export default function Home() {
             ))}
           </div>
         </div>
+      </section>
+
+      <section aria-label="Example posts">
+        <ExamplePostsCard />
       </section>
 
       {/* Activity */}
@@ -794,9 +797,9 @@ export default function Home() {
                   className={cn(
                     'text-xs font-medium rounded-full px-2 py-0.5',
                     brandVoiceHealth.tone === 'positive' &&
-                    'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+                    'bg-emerald-500/15 text-emerald-400',
                     brandVoiceHealth.tone === 'warning' &&
-                    'bg-amber-500/15 text-amber-800 dark:text-amber-400',
+                    'bg-amber-500/15 text-amber-400',
                     brandVoiceHealth.tone === 'muted' &&
                     'bg-muted text-muted-foreground'
                   )}
@@ -827,7 +830,7 @@ export default function Home() {
               <ul className="text-sm space-y-1.5 pt-1">
                 <li className="flex items-center gap-2">
                   {userDetail?.brandProfileComplete ? (
-                    <span className="text-emerald-600 dark:text-emerald-400">
+                    <span className="text-emerald-400">
                       ✓
                     </span>
                   ) : (
@@ -847,7 +850,7 @@ export default function Home() {
                   </span>
                   {!userDetail?.brandProfileComplete ? (
                     <Link
-                      href="/template-dna"
+                      href="/brand-dna"
                       className="text-primary text-xs font-medium hover:underline ml-auto"
                     >
                       Set up
@@ -856,7 +859,7 @@ export default function Home() {
                 </li>
                 <li className="flex items-center gap-2">
                   {userDetail?.reviewPreferencesComplete ? (
-                    <span className="text-emerald-600 dark:text-emerald-400">
+                    <span className="text-emerald-400">
                       ✓
                     </span>
                   ) : (

@@ -1,58 +1,68 @@
 'use client';
 
-import { cn } from '@/lib/utils';
 import {
   ArrowRight,
   Bot,
-  CheckCircle2,
+  CalendarClock,
+  Clock,
   Eye,
+  ImagePlus,
+  ListChecks,
   Send,
   Sparkles,
 } from 'lucide-react';
 
-const PIPELINE_STEPS = [
+const SETUP_STEPS = [
   {
-    icon: Bot,
-    label: 'AI Generated',
-    description: 'Daily content created from your brand DNA',
+    icon: Sparkles,
+    title: 'Tell us who you are',
+    description:
+      'Pull your Business DNA from your website or a catalog PDF, or fill it in by hand. Pick a look and brand colors to match.',
   },
   {
-    icon: Eye,
-    label: 'Human Review',
-    description: 'Every post checked for quality & alignment',
+    icon: ListChecks,
+    title: 'Answer what your industry asks',
+    description:
+      'A questionnaire built for your business, not a generic form — with one-tap suggested answers.',
   },
   {
-    icon: CheckCircle2,
-    label: 'Brand Approved',
-    description: 'Content matches your tone and standards',
+    icon: ImagePlus,
+    title: 'Show us what you sell',
+    description:
+      'Upload product photos, then preview 3 sample posts per platform before you commit.',
   },
   {
-    icon: Send,
-    label: 'Published',
-    description: 'Posted automatically at optimal times',
+    icon: CalendarClock,
+    title: 'Connect & configure',
+    description:
+      'Link Instagram, Facebook and LinkedIn, then set captions, review mode, and posting-time strategy.',
   },
 ] as const;
 
-const HOW_IT_WORKS_STEPS = [
-  {
-    icon: Sparkles,
-    title: 'Fill in your brand details',
-    description: 'Onboard your business, upload assets, and build your Business Data.',
-  },
+const PIPELINE_STEPS = [
   {
     icon: Bot,
-    title: 'SocioGenie Creates Content',
-    description: 'Daily posts generated for Instagram, Facebook, and LinkedIn.',
+    title: 'Generated from your brand',
+    description:
+      'Built from your Business DNA, questionnaire answers and visual style — never a template.',
   },
   {
     icon: Eye,
-    title: 'Human Review',
-    description: 'Our team checks every post before it goes live.',
+    title: 'Reviewed',
+    description:
+      'By you in Manual Review, or by our in-house team in Auto Approve.',
+  },
+  {
+    icon: Clock,
+    title: 'Scheduled at your best time',
+    description:
+      'Your platform’s proven top hour once you have enough data, your preferred time until then.',
   },
   {
     icon: Send,
-    title: 'Auto Publish',
-    description: 'Approved content is scheduled and published automatically.',
+    title: 'Published & tracked',
+    description:
+      'Live on Instagram, Facebook or LinkedIn, feeding straight into your Analytics.',
   },
 ] as const;
 
@@ -87,10 +97,14 @@ function StepCard({
   );
 }
 
-export function HowItWorksFlow() {
+function StepRow({
+  steps,
+}: {
+  steps: readonly { icon: typeof Bot; title: string; description: string }[];
+}) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-3">
-      {HOW_IT_WORKS_STEPS.map((step, index) => (
+      {steps.map((step, index) => (
         <div key={step.title} className="relative flex min-h-0">
           <StepCard
             icon={step.icon}
@@ -98,7 +112,7 @@ export function HowItWorksFlow() {
             description={step.description}
             step={index + 1}
           />
-          {index < HOW_IT_WORKS_STEPS.length - 1 ? (
+          {index < steps.length - 1 ? (
             <ArrowRight
               className="absolute -right-3 top-1/2 z-10 hidden h-5 w-5 -translate-y-1/2 text-muted-foreground/50 lg:block"
               aria-hidden
@@ -110,31 +124,25 @@ export function HowItWorksFlow() {
   );
 }
 
-export function AiHumanWorkflow() {
+/**
+ * Two real sequences, not one generic one: the one-time brand setup, then
+ * the pipeline every single post goes through after that.
+ */
+export function HowItWorksFlow() {
   return (
-    <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-2">
-      {PIPELINE_STEPS.map((step, index) => (
-        <div key={step.label} className="flex flex-col items-center sm:flex-row sm:gap-2">
-          <div className="flex w-full min-w-0 flex-col items-center rounded-2xl border border-border/50 bg-card px-4 py-5 text-center sm:w-[min(100%,200px)]">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-purple/10 text-primary-purple ring-1 ring-primary-purple/25">
-              <step.icon className="h-5 w-5" />
-            </span>
-            <p className="mt-3 text-sm font-bold text-foreground">{step.label}</p>
-            <p className="mt-1 font-(--font-dm-sans) text-xs leading-relaxed text-muted-foreground">
-              {step.description}
-            </p>
-          </div>
-          {index < PIPELINE_STEPS.length - 1 ? (
-            <ArrowRight
-              className={cn(
-                'my-1 h-5 w-5 shrink-0 text-muted-foreground/40',
-                'rotate-90 sm:rotate-0'
-              )}
-              aria-hidden
-            />
-          ) : null}
-        </div>
-      ))}
+    <div className="flex flex-col gap-10">
+      <div>
+        <p className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          Set up once
+        </p>
+        <StepRow steps={SETUP_STEPS} />
+      </div>
+      <div>
+        <p className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          Then, every post
+        </p>
+        <StepRow steps={PIPELINE_STEPS} />
+      </div>
     </div>
   );
 }

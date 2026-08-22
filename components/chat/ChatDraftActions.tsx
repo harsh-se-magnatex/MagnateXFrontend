@@ -36,23 +36,23 @@ function summariseDraft(result: AssistantToolResult): DraftSummary | null {
     case 'draft_quick':
       return {
         prefillKind: 'draft_quick',
-        label: 'Open in Content Studio',
+        label: 'Open in Create Post',
         ctaDeepLink: link || WORKSPACE_NAV_HREFS.quickCreate,
         promptText: prompt,
       };
     case 'draft_advert':
       return {
         prefillKind: 'draft_advert',
-        label: 'Open in Product Ads',
+        label: 'Open in Product Posts',
         ctaDeepLink: link || WORKSPACE_NAV_HREFS.productAdvert,
         promptText: prompt,
       };
     case 'festival_info':
-      // No prefill — Event Studio doesn't accept user prompts.
+      // No prefill — Occasion Posts doesn't accept user prompts.
       // We just deep-link to the page so the user can pick an event there.
       return {
         prefillKind: null,
-        label: 'Open Event Studio',
+        label: 'Open Occasion Posts',
         ctaDeepLink: link || WORKSPACE_NAV_HREFS.festivePost,
       };
     default:

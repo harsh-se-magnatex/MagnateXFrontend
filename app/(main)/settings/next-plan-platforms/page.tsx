@@ -23,13 +23,13 @@ import {
   type NextPlanPlatformsPayload,
 } from '@/src/service/api/userService';
 import {
-  PLAN_MAX_SOCIAL,
   PLATFORM_ORDER,
   type SocialPlatform,
 } from '@/lib/platform-selection';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import { useUserPlanCredits } from '../../_components/UserPlanCreditsProvider';
 import { isPlanInactive } from '@/lib/plan-access';
+import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 
 type SelectedMap = Record<SocialPlatform, boolean>;
@@ -203,14 +203,14 @@ export default function NextPlanPlatformsPage() {
           <div className="p-2 rounded-lg bg-primary/10 text-primary">
             <Share2 className="h-5 w-5" />
           </div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">
+          <h1 className={workspacePageTitleClass}>
             Next plan platforms
           </h1>
         </div>
         <p className="mt-2 text-sm text-muted-foreground max-w-xl">
           Choose the social platforms you want when your plan renews. If you
           skip this step, we will continue with your current selection
-          {maxAllowed < (PLAN_MAX_SOCIAL[data.activePlan] ?? maxAllowed)
+          {maxAllowed < 3
             ? ' (trimmed to fit your next plan)'
             : ''}
           .
@@ -247,7 +247,7 @@ export default function NextPlanPlatformsPage() {
               {fmtTimestamp(data.nextBillingDate)}
             </span>
             {data.withinSelectionWindow ? (
-              <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:text-amber-200 ring-1 ring-amber-500/30">
+              <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-200 ring-1 ring-amber-500/30">
                 Within 15 days
               </span>
             ) : null}
@@ -259,11 +259,11 @@ export default function NextPlanPlatformsPage() {
             className="rounded-2xl border border-emerald-500/35 bg-emerald-500/10 px-4 py-3 text-sm"
             role="status"
           >
-            <p className="font-semibold flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+            <p className="font-semibold flex items-center gap-2 text-emerald-300">
               <Check className="h-4 w-4" />
               Next-cycle platforms saved
             </p>
-            <p className="mt-1 text-emerald-800/90 dark:text-emerald-100/85">
+            <p className="mt-1 text-emerald-200/80">
               These will apply automatically when your plan renews. You can still
               update them below before then.
             </p>
@@ -273,10 +273,10 @@ export default function NextPlanPlatformsPage() {
             className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm"
             role="status"
           >
-            <p className="font-semibold text-amber-800 dark:text-amber-200">
+            <p className="font-semibold text-amber-200">
               Selection recommended
             </p>
-            <p className="mt-1 text-amber-900/90 dark:text-amber-100/85">
+            <p className="mt-1 text-amber-200/80">
               For a smoother renewal, select your next-cycle platforms early. If
               you do not, we will keep your current platforms.
             </p>

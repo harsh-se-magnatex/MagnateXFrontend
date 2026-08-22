@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { useChatStore } from '@/src/stores/chatStore';
 
 const SUGGESTED_PROMPTS = [
-  'What does Content Studio do?',
+  'What does Create Post do?',
   'Suggest a Diwali post for me',
   'Summarize my Instagram analytics',
   'Why did my last post fail?',

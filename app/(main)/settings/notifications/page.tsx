@@ -14,6 +14,7 @@ import {
   type LucideProps,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import {
   formatNotificationCount,
   useNotificationCounts,
@@ -48,7 +49,7 @@ function AlertItem({
       onClick={() => onSelect(href)}
       className={cn(
         'group flex w-full items-start gap-4 py-5 hover:bg-accent/40 px-4 -mx-4 rounded-2xl transition-colors text-left',
-        hasUnread && 'ring-1 ring-indigo-400/50'
+        hasUnread && 'ring-1 ring-primary-purple/40'
       )}
     >
       <div
@@ -61,24 +62,24 @@ function AlertItem({
       </div>
       <div className="flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-semibold text-slate-900">{label}</p>
+          <p className="font-semibold text-foreground">{label}</p>
           {badge ? (
             <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
               {badge}
             </span>
           ) : (
             !countsLoading && (
-              <span className="inline-flex items-center rounded-full bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-slate-100">
+              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-border">
                 0
               </span>
             )
           )}
         </div>
         {description && (
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         )}
       </div>
-      <div className="self-center text-slate-300 group-hover:text-slate-400">
+      <div className="self-center text-muted-foreground group-hover:text-foreground">
         <span className="inline-block h-5 w-5">↗</span>
       </div>
     </button>
@@ -119,21 +120,21 @@ export default function NotificationsSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+        <h1 className={workspacePageTitleClass}>
           Notifications
         </h1>
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mt-2 text-sm text-muted-foreground">
           Control how and when you receive alerts from SocioGenie.
         </p>
       </div>
 
       <div className="space-y-8">
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex flex-wrap items-center gap-3 mb-2 border-b border-slate-100 pb-4">
-            <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+          <div className="flex flex-wrap items-center gap-3 mb-2 border-b border-border pb-4">
+            <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
               <Bell className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">Alerts</h2>
+            <h2 className="text-xl font-semibold text-foreground">Alerts</h2>
             <button
               type="button"
               onClick={handleMarkAllRead}
@@ -141,8 +142,8 @@ export default function NotificationsSettingsPage() {
               className={cn(
                 'ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors',
                 total > 0 && !markingAll
-                  ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                  : 'cursor-not-allowed bg-slate-50 text-slate-400'
+                  ? 'bg-primary-purple/10 text-primary-purple hover:bg-primary-purple/15'
+                  : 'cursor-not-allowed bg-muted text-muted-foreground'
               )}
             >
               <CheckCheck className="h-3.5 w-3.5" />

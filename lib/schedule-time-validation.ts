@@ -1,4 +1,16 @@
 export const PAST_SCHEDULE_TIME_MESSAGE = 'Pick a time in the future.';
+export const PLAN_SCHEDULE_WINDOW_MESSAGE =
+  'Choose a date on or before your plan expiry date.';
+
+export function isScheduleDateAfterPlanExpiry(
+  date: string,
+  planExpiresYmd: string | null | undefined
+): boolean {
+  const selected = date?.trim();
+  const expiry = planExpiresYmd?.trim();
+  if (!selected || !expiry) return false;
+  return selected > expiry;
+}
 
 export function parseScheduleDateTime(
   date: string,

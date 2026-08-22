@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Cookie } from 'lucide-react';
 // 11april2026
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -17,12 +17,23 @@ export type { CookieConsent };
 
 type Step = 'main' | 'customize';
 
+/**
+ * Blocking consent gate. Necessary cookies are required to run the app, so
+ * this renders as a modal over an inert page rather than a dismissible
+ * bottom banner — there is no path past it except making a choice.
+ *
+ * Optional categories stay genuinely optional: "Essential only" is a
+ * first-class exit that grants access while declining analytics. The gate
+ * is on acknowledging the required cookies, never on accepting the
+ * optional ones.
+ */
 export function CookieBanner() {
   const [mounted, setMounted] = React.useState(false);
   const [visible, setVisible] = React.useState(false);
   const [step, setStep] = React.useState<Step>('main');
   const [analytics, setAnalytics] = React.useState(false);
   const [marketing, setMarketing] = React.useState(false);
+  const dialogRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     setMounted(true);
@@ -35,54 +46,137 @@ export function CookieBanner() {
     setMarketing(existing.marketing);
   }, []);
 
-  const close = React.useCallback((nextAnalytics: boolean, nextMarketing: boolean) => {
-    persistConsent(nextAnalytics, nextMarketing);
-    setVisible(false);
-    setStep('main');
-  }, []);
+  // Freeze the page behind the gate. The landing page scrolls on <html>,
+  // not <body>, so locking body alone leaves the document scrollable —
+  // both elements have to be pinned.
+  React.useEffect(() => {
+    if (!visible) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtml = html.style.overflow;
+    const prevBody = body.style.overflow;
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    return () => {
+      html.style.overflow = prevHtml;
+      body.style.overflow = prevBody;
+    };
+  }, [visible]);
+
+  // Keep focus inside the dialog — nothing behind it is actionable, so
+  // tabbing out would strand keyboard users on inert content.
+  React.useEffect(() => {
+    if (!visible) return;
+    dialogRef.current?.focus();
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Tab') return;
+      const root = dialogRef.current;
+      if (!root) return;
+      const focusable = root.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [visible, step]);
+
+  const close = React.useCallback(
+    (nextAnalytics: boolean, nextMarketing: boolean) => {
+      persistConsent(nextAnalytics, nextMarketing);
+      setVisible(false);
+      setStep('main');
+    },
+    []
+  );
 
   const handleAcceptAll = () => close(true, true);
-  const handleRejectAll = () => close(false, false);
-
+  /** Declines every optional category but still grants access. */
+  const handleEssentialOnly = () => close(false, false);
   const handleSaveCustom = () => close(analytics, marketing);
 
   if (!mounted || !visible) return null;
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-50 p-4 sm:p-6 pointer-events-none"
+      className="fixed inset-0 z-[100] flex items-end justify-center overflow-y-auto bg-background/80 p-4 backdrop-blur-sm sm:items-center sm:p-6"
       role="dialog"
-      aria-modal="false"
-      aria-label="Cookie consent"
+      aria-modal="true"
+      aria-labelledby="cookie-gate-title"
     >
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         className={cn(
-          'pointer-events-auto mx-auto w-full max-w-3xl rounded-2xl border border-border bg-card/95 text-card-foreground shadow-xl backdrop-blur-md',
-          'dark:border-border dark:bg-card/90'
+          'my-auto w-full max-w-lg rounded-2xl border border-border bg-card text-card-foreground shadow-2xl outline-none',
+          'dark:border-border dark:bg-card'
         )}
       >
         {step === 'main' ? (
           <div className="p-5 sm:p-6">
-            <p className="text-sm leading-relaxed text-foreground sm:text-[0.9375rem]">
-              We use cookies to deliver and improve our services, analyze site usage, and if you agree, to
-              customize or personalize your experience and market our services to you. You can read our{' '}
+            <div className="flex items-center gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+                <Cookie className="size-5" aria-hidden />
+              </span>
+              <h2
+                id="cookie-gate-title"
+                className="text-base font-semibold tracking-tight text-foreground sm:text-lg"
+              >
+                Before you continue
+              </h2>
+            </div>
+
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">
+              SocioGenie needs a small number of{' '}
+              <span className="font-medium text-foreground">essential cookies</span>{' '}
+              to sign you in and keep your session secure — the app can&apos;t run
+              without them. Analytics cookies are optional and entirely your
+              choice. Read our{' '}
               <Link
                 href="/legal/cookie"
                 className="font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
               >
                 Cookie Policy
-              </Link>{' '}
-              here.
+              </Link>
+              .
             </p>
-            <div className="mt-5 flex flex-col gap-2 sm:mt-6 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2">
-              <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => setStep('customize')}>
-                Customize Cookie Settings
-              </Button>
-              <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto" onClick={handleRejectAll}>
-                Reject all Cookies
-              </Button>
-              <Button type="button" variant="default" size="sm" className="w-full sm:w-auto" onClick={handleAcceptAll}>
+
+            <div className="mt-6 flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="default"
+                className="w-full"
+                onClick={handleAcceptAll}
+              >
                 Accept all cookies
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleEssentialOnly}
+              >
+                Accept essential only
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => setStep('customize')}
+              >
+                Customize settings
               </Button>
             </div>
           </div>
@@ -99,7 +193,9 @@ export function CookieBanner() {
               >
                 <ArrowLeft className="size-4" />
               </Button>
-              <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">Cookie settings</h2>
+              <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">
+                Cookie settings
+              </h2>
             </div>
             <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -116,7 +212,10 @@ export function CookieBanner() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-foreground">Necessary</p>
-                      <p className="mt-1 text-sm text-muted-foreground">Enables security and basic functionality.</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Enables security, sign-in and basic functionality. Required
+                        to use SocioGenie.
+                      </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       <Switch checked disabled aria-readonly className="pointer-events-none" />
@@ -144,7 +243,7 @@ export function CookieBanner() {
                 Back
               </Button>
               <Button type="button" variant="default" size="sm" className="w-full sm:w-auto" onClick={handleSaveCustom}>
-                Save preferences
+                Accept &amp; continue
               </Button>
             </div>
           </div>

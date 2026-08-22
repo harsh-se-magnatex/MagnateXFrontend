@@ -55,6 +55,7 @@ import { useTourState } from '@/src/stores/tourState';
 import { getPageTourRequest } from '@/components/tour/tour-steps';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserPlanCredits } from '@/app/(main)/_components/UserPlanCreditsProvider';
+import { UpgradeGate } from '@/components/shared/UpgradeGate';
 import {
   PRICING_PLANS_BY_ID,
   type PlanId,
@@ -203,25 +204,28 @@ export function AppSidebar({
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={isActive}>
-                      <Link
-                        id={tourNavId(item.href)}
-                        href={item.href}
-                        className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${isActive
+                      <UpgradeGate
+                        gated={item.href === WORKSPACE_NAV_HREFS.contentPlan && billing?.mode === 'manual'}
+                        tooltip="Upgrade your plan to unlock AI Plan."
+                        side="right"
+                        className="w-full"
+                      >
+                        <Link
+                          id={tourNavId(item.href)}
+                          href={item.href}
+                          className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${isActive
                             ? 'bg-primary text-primary-foreground shadow-sm'
                             : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                           }`}
-                      >
-                        <item.icon
-                          className={`h-4 w-4 shrink-0 ${isActive ? 'text-primary-foreground' : 'text-sidebar-foreground/80'}`}
-                        />
-                        <span
-                          className={
-                            isActive ? 'text-primary-foreground' : 'text-sidebar-foreground'
-                          }
                         >
-                          {item.name}
-                        </span>
-                      </Link>
+                          <item.icon
+                            className={`h-4 w-4 shrink-0 ${isActive ? 'text-primary-foreground' : 'text-sidebar-foreground/80'}`}
+                          />
+                          <span className={isActive ? 'text-primary-foreground' : 'text-sidebar-foreground'}>
+                            {item.name}
+                          </span>
+                        </Link>
+                      </UpgradeGate>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -365,7 +369,7 @@ export function AppSidebar({
                         }`}
                     >
                       <CalendarDays className="h-4 w-4 shrink-0" />
-                      <span>Content Calendar Review</span>
+                      <span>AI Plan Review</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

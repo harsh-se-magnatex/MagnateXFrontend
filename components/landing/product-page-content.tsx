@@ -17,53 +17,106 @@ import {
   BarChart3,
   ArrowRight,
   Rocket,
+  Sparkles,
   Zap,
-  Layers,
   ImageIcon,
   PartyPopper,
-  Bolt,
+  Video,
+  Target,
+  GalleryHorizontal,
+  CalendarClock,
+  LayoutGrid,
+  ListChecks,
+  FolderOpen,
+  Share2,
+  MessageCircle,
 } from 'lucide-react';
 import NavBar from '@/app/(main)/_components/NavBar';
+import { FeatureCard } from '@/components/landing/feature-card';
 import { HowItWorksFlow } from '@/components/landing/workflow-pipeline';
 import { LandingPricingCards } from '@/components/landing/landing-pricing-cards';
+import { PlanComparison } from '@/components/landing/plan-comparison';
+import { AnalyticsReportTeaser } from '@/components/landing/analytics-report-teaser';
 import { SocialPreviewEmbed } from '@/components/landing/social-preview/social-preview-embed';
 
 const PRODUCT_FEATURES = [
   {
-    title: 'Daily Auto Generated Content',
+    title: 'Create Post',
     icon: Zap,
     description:
-      'Strategy-informed posts created every day — structured around your brand profile. The content reflects your business, not a placeholder version of it.',
+      "Give it text, get every platform. Add a photo and SocioGenie edits it into your brand's look before writing native Instagram, Facebook and LinkedIn versions.",
   },
   {
-    title: 'One Input → Three Platform-Optimised Posts',
-    icon: Layers,
-    description:
-      'Give Sociogenie a topic and get three distinct versions: concise and visual for Instagram, professional and insight-driven for LinkedIn, community-focused for Facebook.',
-  },
-  {
-    title: 'Product Ad Creative Generator',
+    title: 'Product Posts',
     icon: ImageIcon,
     description:
-      'Upload a product image and receive platform-ready creatives with captions and hooks written for conversion — useful for launches and promotions.',
+      'Two modes: a photoshoot-ready product shot, or a social ad with copy built into the creative. You choose.',
   },
   {
-    title: 'Festival & Trend Campaigns',
+    title: 'Short Videos',
+    icon: Video,
+    description:
+      '8-second videos from a text prompt, with your logo set as the opening or closing frame.',
+  },
+  {
+    title: 'Occasion Posts',
     icon: PartyPopper,
     description:
-      'Culturally relevant content generated automatically for festivals, events, and trending moments — matched to your brand without requiring your attention.',
+      'A year-round calendar of festivals and holidays — pick the ones relevant to your brand and get a timely greeting generated and published automatically.',
   },
   {
-    title: 'Instant Post Generator',
-    icon: Bolt,
+    title: 'Campaigns',
+    icon: Target,
     description:
-      'Need something published today? Write a prompt and get a ready-to-publish post in seconds.',
+      'Pick a concept and get five days of connected content across your platforms, generated and scheduled end to end.',
   },
   {
-    title: 'Analytics Dashboard',
+    title: 'Carousel Posts',
+    icon: GalleryHorizontal,
+    description:
+      'Write the story yourself, or leave it blank and let the AI build the slide sequence from your brand profile.',
+  },
+  {
+    title: 'Schedule a Post',
+    icon: CalendarClock,
+    description:
+      'Choose the exact date and time for any piece of content you have created.',
+  },
+  {
+    title: 'AI Plan',
+    icon: LayoutGrid,
+    description:
+      "Your whole month at a glance — every day, every platform, what's planned or already posted. AI plan only.",
+  },
+  {
+    title: 'Scheduled Posts',
+    icon: ListChecks,
+    description:
+      'A running list of everything queued to publish, so you always know what is coming.',
+  },
+  {
+    title: 'Media Library',
+    icon: FolderOpen,
+    description:
+      'Every generated post, ad, video and carousel, kept in one place and ready to reuse.',
+  },
+  {
+    title: 'Connected Accounts',
+    icon: Share2,
+    description:
+      'Connect Instagram, Facebook and LinkedIn once — SocioGenie handles publishing and analytics from there.',
+  },
+  {
+    title: 'Analytics',
     icon: BarChart3,
     description:
-      "Track performance across platforms, understand what's working, and get recommendations based on your results.",
+      'Graded performance across seven areas, your best and worst posts, and two ready-to-run ideas for what is next.',
+  },
+  {
+    title: 'Chat Assistant',
+    icon: MessageCircle,
+    description:
+      'A guide built into the app that knows your brand and helps you decide what to run next.',
   },
 ] as const;
 
@@ -79,6 +132,11 @@ const LANDING_FAQ_ITEMS = [
       'It depends on your plan. On Studio plans, you review and approve every post before it goes live. On AI plans, our in-house review team checks each post for brand alignment, clarity, platform suitability, and quality before publishing — typically within 24 hours.',
   },
   {
+    question: "What's the difference between the Studio and AI plans?",
+    answer:
+      'Studio gives you every creative tool, run on your own schedule — you decide what to make and when to post it. AI adds the AI Plan: SocioGenie plans, generates and schedules a full month for you, against a fixed monthly quota of campaigns, AI posts, carousels, videos and event posts.',
+  },
+  {
     question: 'Is the content specific to my business, or is it generic?',
     answer:
       "It's built from your brand profile — your industry, tone of voice, and business context. What gets generated for your account is specific to your setup, not pulled from a shared template bank.",
@@ -92,6 +150,11 @@ const LANDING_FAQ_ITEMS = [
     question: 'How long does setup take?',
     answer:
       'Most users complete setup in under 10 minutes. Your first content batch is reviewed and ready within 24 hours.',
+  },
+  {
+    question: 'Can I see what my content will look like before I commit?',
+    answer:
+      'Yes — right after setup, generate 3 sample posts per platform (Instagram, Facebook, LinkedIn) so you can see your brand’s look before going further.',
   },
   {
     question: 'What happens to unused credits?',
@@ -111,18 +174,39 @@ const LANDING_FAQ_ITEMS = [
   },
 ] as const;
 
+/**
+ * Focus-in, matching the homepage callouts: content resolves out of the
+ * background rather than sliding in from an edge. Blur pulls sharp while
+ * the element settles inward from slightly oversized. No translation, so
+ * nothing tracks sideways or upward on arrival.
+ */
 const fadeIn = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, scale: 1.03, filter: 'blur(10px)' },
   visible: {
     opacity: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
+    scale: 1,
+    filter: 'blur(0px)',
+    transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+/** Same idea, tuned tighter for the card grid so 13 arrivals stay brisk. */
+const riseIn = {
+  hidden: { opacity: 0, scale: 1.04, filter: 'blur(8px)' },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    filter: 'blur(0px)',
+    transition: { duration: 0.62, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 
 const stagger = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.09, delayChildren: 0.05 },
+  },
 };
 
 function SectionEyebrow({ children }: { children: ReactNode }) {
@@ -141,14 +225,9 @@ function LandingCard({
   className?: string;
 }) {
   return (
-    <article
-      className={cn(
-        'flex h-full flex-col rounded-2xl border border-border/50 bg-card p-5 shadow-sm transition-shadow duration-300 hover:shadow-md hover:border-border sm:p-6',
-        className
-      )}
-    >
+    <FeatureCard className={cn('h-full p-5 sm:p-6', className)}>
       {children}
-    </article>
+    </FeatureCard>
   );
 }
 
@@ -159,27 +238,36 @@ export function ProductPageContent() {
       <NavBar />
 
       <main className="flex-1 relative z-10 flex flex-col">
-        <section className="px-6 pt-28 pb-12 sm:pt-32 sm:pb-16">
+        <section className="relative px-6 pt-32 pb-20 sm:pt-40 sm:pb-28">
+          <div className="aurora-field" aria-hidden />
           <motion.div
             initial="hidden"
             animate="visible"
             variants={stagger}
-            className="mx-auto max-w-3xl text-center"
+            className="relative z-10 mx-auto max-w-4xl text-center"
           >
+            <motion.p
+              variants={fadeIn}
+              className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary-purple/25 bg-primary-purple/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary-purple backdrop-blur-sm"
+            >
+              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+              The complete platform
+            </motion.p>
             <motion.h1
               variants={fadeIn}
-              className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl leading-[1.08]"
+              className="font-[family-name:var(--font-display)] text-[clamp(2.75rem,7vw,5rem)] font-normal tracking-[-0.02em] text-foreground leading-[1.04]"
             >
               Everything{' '}
-              <span className="bg-gradient-primary-text">Sociogenie</span> does
-              for your business
+              <span className="shimmer-text">Sociogenie</span>
+              <br className="hidden sm:block" /> does for your business
             </motion.h1>
             <motion.p
               variants={fadeIn}
-              className="mt-6 text-lg leading-relaxed text-muted-foreground font-(--font-dm-sans)"
+              className="mx-auto mt-7 max-w-2xl text-lg font-light leading-relaxed text-muted-foreground sm:text-xl"
             >
-              SocioGenie generates content, human review, and automated publishing
-              across Instagram, Facebook &amp; LinkedIn.
+              From a five-minute brand setup to a fully scheduled month —
+              see exactly how SocioGenie researches, creates, reviews and
+              publishes for Instagram, Facebook and LinkedIn.
             </motion.p>
             <motion.div
               variants={fadeIn}
@@ -187,17 +275,20 @@ export function ProductPageContent() {
             >
               <GuestAuthLink
                 href="/sign-up"
-                className="group inline-flex items-center rounded-xl bg-gradient-primary px-7 py-3.5 text-sm font-bold text-white transition-all hover:shadow-xl hover:shadow-primary-purple/25 active:scale-[0.98]"
+                className="group relative inline-flex items-center overflow-hidden rounded-full bg-gradient-primary px-8 py-4 text-base font-bold text-white shadow-lg shadow-primary-purple/35 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary-purple/55 active:translate-y-0 active:scale-95"
               >
-                Get Started Free
-                <Rocket className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <span className="relative z-10 flex items-center">
+                  Get Started Free
+                  <Rocket className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </span>
+                <span className="absolute inset-0 bg-white/0 transition-colors duration-300 group-hover:bg-white/10" aria-hidden />
               </GuestAuthLink>
               <Link
                 href="/"
-                className="group inline-flex items-center rounded-xl border border-border/80 bg-transparent px-7 py-3.5 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+                className="group inline-flex items-center rounded-full border border-border/80 bg-transparent px-7 py-3.5 text-sm font-semibold text-foreground transition-colors duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:border-primary-purple/40 hover:bg-accent active:scale-95"
               >
                 Back to experience
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </Link>
             </motion.div>
           </motion.div>
@@ -206,7 +297,7 @@ export function ProductPageContent() {
         <section
           id="how-it-works"
           aria-labelledby="how-it-works-heading"
-          className="scroll-mt-24 border-y border-border/40 bg-card/20 px-6 py-10 sm:py-14"
+          className="scroll-mt-24 bg-card/85 px-6 py-14 sm:py-20 lg:py-24"
         >
           <motion.div
             initial="hidden"
@@ -219,12 +310,13 @@ export function ProductPageContent() {
               <SectionEyebrow>How It Works</SectionEyebrow>
               <h2
                 id="how-it-works-heading"
-                className="text-2xl font-extrabold text-foreground sm:text-3xl"
+                className="font-[family-name:var(--font-display)] text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-[2.6rem] sm:leading-[1.1]"
               >
                 Set up once. Your content runs from there.
               </h2>
               <p className="mt-4 max-w-3xl font-(--font-dm-sans) text-base leading-relaxed text-muted-foreground">
-                Four steps from brand setup to fully autonomous publishing.
+                Four steps to set up your brand, then four steps every post
+                goes through after that.
               </p>
             </motion.div>
             <motion.div variants={fadeIn} className="mt-10">
@@ -236,7 +328,7 @@ export function ProductPageContent() {
         <section
           id="features"
           aria-labelledby="product-features-heading"
-          className="border-t border-border/40 bg-card/20 px-6 py-10 sm:py-14"
+          className="px-6 py-14 sm:py-20 lg:py-24"
         >
           <motion.div
             initial="hidden"
@@ -249,7 +341,7 @@ export function ProductPageContent() {
               <SectionEyebrow>Features</SectionEyebrow>
               <h2
                 id="product-features-heading"
-                className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl"
+                className="font-[family-name:var(--font-display)] text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-[2.6rem] sm:leading-[1.1]"
               >
                 Everything you need to grow on social media
               </h2>
@@ -259,9 +351,9 @@ export function ProductPageContent() {
               className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
             >
               {PRODUCT_FEATURES.map((feature) => (
-                <motion.li key={feature.title} variants={fadeIn}>
+                <motion.li key={feature.title} variants={riseIn}>
                   <LandingCard>
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-purple/10 text-primary-purple ring-1 ring-primary-purple/20">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary-purple to-primary-blue text-white shadow-lg shadow-primary-purple/25 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/card:scale-110 group-hover/card:-rotate-6">
                       <feature.icon className="h-5 w-5" />
                     </span>
                     <h3 className="mt-4 text-base font-extrabold leading-snug text-foreground">
@@ -274,13 +366,47 @@ export function ProductPageContent() {
                 </motion.li>
               ))}
             </ul>
+            <motion.div variants={fadeIn}>
+              <AnalyticsReportTeaser />
+            </motion.div>
+          </motion.div>
+        </section>
+
+        <section
+          id="plans"
+          aria-labelledby="plans-heading"
+          className="scroll-mt-24 bg-card/85 px-6 py-14 sm:py-20 lg:py-24"
+        >
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-48px' }}
+            variants={stagger}
+            className="mx-auto max-w-5xl"
+          >
+            <motion.div variants={fadeIn} className="text-center">
+              <SectionEyebrow>Studio vs. AI</SectionEyebrow>
+              <h2
+                id="plans-heading"
+                className="font-[family-name:var(--font-display)] text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-[2.6rem] sm:leading-[1.1]"
+              >
+                Run it yourself, or hand over the month
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-base leading-relaxed text-muted-foreground">
+                Every feature above is available on both. The difference is
+                who decides what gets made and when.
+              </p>
+            </motion.div>
+            <motion.div variants={fadeIn} className="mt-10">
+              <PlanComparison />
+            </motion.div>
           </motion.div>
         </section>
 
         <section
           id="social-preview"
           aria-labelledby="social-preview-heading"
-          className="scroll-mt-24 border-t border-border/40 bg-card/20 px-6 py-10 sm:py-14"
+          className="scroll-mt-24 px-6 py-14 sm:py-20 lg:py-24"
         >
           <motion.div
             initial="hidden"
@@ -293,7 +419,7 @@ export function ProductPageContent() {
               <SectionEyebrow>Preview</SectionEyebrow>
               <h2
                 id="social-preview-heading"
-                className="text-2xl font-extrabold tracking-tight text-foreground sm:text-3xl"
+                className="font-[family-name:var(--font-display)] text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-[2.6rem] sm:leading-[1.1]"
               >
                 How will your social media look?
               </h2>
@@ -311,7 +437,7 @@ export function ProductPageContent() {
 
         <section
           id="pricing"
-          className="scroll-mt-24 border-t border-border/40 px-6 py-10 sm:py-14"
+          className="scroll-mt-24 bg-card/85 px-6 py-14 sm:py-20 lg:py-24"
         >
           <motion.div
             initial="hidden"
@@ -322,7 +448,7 @@ export function ProductPageContent() {
           >
             <motion.div variants={fadeIn} className="text-center">
               <SectionEyebrow>Pricing</SectionEyebrow>
-              <h2 className="text-2xl font-extrabold text-foreground sm:text-3xl">
+              <h2 className="font-[family-name:var(--font-display)] text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-[2.6rem] sm:leading-[1.1]">
                 Simple, transparent pricing
               </h2>
               <p className="mt-4 font-(--font-dm-sans) text-muted-foreground">
@@ -337,7 +463,7 @@ export function ProductPageContent() {
 
         <section
           id="faq"
-          className="scroll-mt-24 border-t border-border/40 px-6 py-10 sm:py-14"
+          className="scroll-mt-24 px-6 py-14 sm:py-20 lg:py-24"
         >
           <motion.div
             initial="hidden"
@@ -348,7 +474,7 @@ export function ProductPageContent() {
           >
             <motion.div variants={fadeIn}>
               <SectionEyebrow>FAQ</SectionEyebrow>
-              <h2 className="text-2xl font-extrabold text-foreground sm:text-3xl mb-6">
+              <h2 className="font-[family-name:var(--font-display)] text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-[2.6rem] sm:leading-[1.1] mb-6">
                 Common questions
               </h2>
             </motion.div>
@@ -362,9 +488,9 @@ export function ProductPageContent() {
                   <AccordionItem
                     key={item.question}
                     value={`faq-${i}`}
-                    className="border-0 px-4 sm:px-5"
+                    className="border-0 px-4 transition-colors duration-200 hover:bg-primary-purple/[0.03] sm:px-5"
                   >
-                    <AccordionTrigger className="py-4 text-sm font-semibold text-foreground hover:no-underline sm:text-[0.9375rem] cursor-pointer">
+                    <AccordionTrigger className="py-4 text-sm font-semibold text-foreground transition-colors duration-200 hover:no-underline hover:text-primary-purple sm:text-[0.9375rem] cursor-pointer">
                       {item.question}
                     </AccordionTrigger>
                     <AccordionContent className="text-muted-foreground text-sm leading-relaxed pb-4 pt-0">
@@ -377,8 +503,8 @@ export function ProductPageContent() {
           </motion.div>
         </section>
 
-        <section className="relative overflow-hidden px-6 py-20 sm:py-24">
-          <div className="absolute inset-0 bg-linear-to-br from-primary-purple/10 via-transparent to-primary-blue/10 pointer-events-none" />
+        <section className="relative overflow-hidden bg-card/85 px-6 py-28 sm:py-36">
+          <div className="aurora-field" aria-hidden />
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -388,17 +514,22 @@ export function ProductPageContent() {
           >
             <motion.h2
               variants={fadeIn}
-              className="text-3xl font-extrabold text-foreground sm:text-4xl"
+              className="font-[family-name:var(--font-display)] text-[clamp(2.25rem,5.5vw,3.75rem)] font-normal tracking-[-0.02em] leading-[1.06] text-foreground"
             >
-              Ready to automate your social media?
+              Ready to automate
+              <br />
+              <span className="shimmer-text">your social media?</span>
             </motion.h2>
             <motion.div variants={fadeIn} className="mt-8">
               <GuestAuthLink
                 href="/sign-up"
-                className="group inline-flex items-center rounded-xl bg-gradient-primary px-10 py-4 text-base font-bold text-white transition-all hover:shadow-xl hover:shadow-primary-purple/25 active:scale-[0.98]"
+                className="group relative inline-flex items-center overflow-hidden rounded-full bg-gradient-primary px-12 py-5 text-lg font-bold text-white shadow-xl shadow-primary-purple/40 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-2xl hover:shadow-primary-purple/60 active:translate-y-0 active:scale-95"
               >
-                Get Started Free
-                <Rocket className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-0.5" />
+                <span className="relative z-10 flex items-center">
+                  Get Started Free
+                  <Rocket className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-0.5" />
+                </span>
+                <span className="absolute inset-0 bg-white/0 transition-colors duration-300 group-hover:bg-white/10" aria-hidden />
               </GuestAuthLink>
             </motion.div>
           </motion.div>

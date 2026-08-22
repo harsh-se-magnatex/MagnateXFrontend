@@ -1,13 +1,11 @@
 export type PricingLine = { text: string; sub?: boolean };
 
-export type PlanTier = 'prime' | 'elite' | 'legacy';
+export type PlanTier = 'studio' | 'prime' | 'elite' | 'legacy';
 export type PlanMode = 'AI' | 'Studio';
 export type PlanId =
-  | 'prime-Studio'
+  | 'studio'
   | 'prime-AI'
-  | 'elite-Studio'
   | 'elite-AI'
-  | 'legacy-Studio'
   | 'legacy-AI';
 
 export type PricingPlan = {
@@ -32,8 +30,8 @@ export type PricingPlan = {
 export const PLAN_MOST_POPULAR_BADGE = 'Most popular';
 
 /** Title-case plan name for buttons (e.g. PRIME → Prime, elite → Elite). */
-export function planButtonDisplayName(raw: string): string {
-  const t = raw.trim();
+export function planButtonDisplayName(raw?: string | null): string {
+  const t = typeof raw === 'string' ? raw.trim() : '';
   if (!t) return 'Plan';
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase().replace('ai', 'AI').replace('studio', 'Studio');
 }
@@ -49,45 +47,37 @@ export function planButtonDisplayName(raw: string): string {
 //   AI engine (manual trigger): 2   Festive: 2   Regen: 1
 
 const PRICE_BY_PLAN_ID: Record<PlanId, string> = {
-  'prime-Studio': '$24.99',
-  'prime-AI': '$38.99',
-  'elite-Studio': '$41.99',
-  'elite-AI': '$63.99',
-  'legacy-Studio': '$59.99',
-  'legacy-AI': '$88.99',
+  studio: '$14.99',
+  'prime-AI': '$49.99',
+  'elite-AI': '$69.99',
+  'legacy-AI': '$84.99',
 };
 
 const CREDITS_BY_PLAN_ID: Record<PlanId, number> = {
-  'prime-Studio': 60,
+  studio: 100,
   'prime-AI': 50,
-  'elite-Studio': 120,
-  'elite-AI': 80,
-  'legacy-Studio': 180,
-  'legacy-AI': 110,
+  'elite-AI': 100,
+  'legacy-AI': 150,
 };
 
-const PLATFORMS_BY_TIER: Record<PlanTier, string> = {
-  prime: '1 Platform',
-  elite: 'Up to 2 Platforms',
-  legacy: 'Up to 3 Platforms',
+const AI_PLAN_PLATFORMS_BY_TIER: Record<Exclude<PlanTier, 'studio'>, string> = {
+  prime: 'AI Plan automation for 1 selected platform',
+  elite: 'AI Plan automation for up to 2 selected platforms',
+  legacy: 'AI Plan automation for up to 3 selected platforms',
 };
 
 const DISPLAY_NAME_BY_PLAN_ID: Record<PlanId, string> = {
-  'prime-Studio': 'Prime Studio',
+  studio: 'Studio',
   'prime-AI': 'Prime AI',
-  'elite-Studio': 'Elite Studio',
   'elite-AI': 'Elite AI',
-  'legacy-Studio': 'Legacy Studio',
   'legacy-AI': 'Legacy AI',
 };
 
 const SUBTITLE_BY_PLAN_ID: Record<PlanId, string> = {
-  'prime-Studio': 'Best for businesses starting out, you create every post',
-  'prime-AI': 'Best for businesses starting out, AI handles daily posting for you',
-  'elite-Studio': 'Best for teams scaling content, you create every post',
-  'elite-AI': 'Best for teams scaling content, AI handles daily posting for you',
-  'legacy-Studio': 'Best for established brands, you create every post',
-  'legacy-AI': 'Best for established brands, AI handles daily posting for you',
+  studio: 'Manual content creation and scheduling across every supported platform',
+  'prime-AI': 'All-platform manual tools plus personalized AI Plan automation for one platform',
+  'elite-AI': 'All-platform manual tools plus personalized AI Plan automation for up to two platforms',
+  'legacy-AI': 'All-platform manual tools plus personalized AI Plan automation for up to three platforms',
 };
 
 /**
@@ -100,30 +90,26 @@ const SUBTITLE_BY_PLAN_ID: Record<PlanId, string> = {
  *   video generation = floor(credits / 15) // manual Veo only
  */
 function buildFeatureLines(id: PlanId): PricingLine[] {
-  const tier = id.split('-')[0] as PlanTier;
-  const mode = id.split('-')[1] as PlanMode;
+  const tier = (id === 'studio' ? 'studio' : id.split('-')[0]) as PlanTier;
+  const mode: PlanMode = id === 'studio' ? 'Studio' : 'AI';
   const credits = CREDITS_BY_PLAN_ID[id];
-  const productAdverts = Math.floor(credits / 4);
-  const quickPosts = Math.floor(credits / 2);
-  const festivePosts = Math.floor(credits / 2);
-  const campaignPosts = Math.floor(credits / 3);
-  const carouselPosts = Math.floor(credits / 15);
-  const videoPosts = Math.floor(credits / 15);
   const lines: PricingLine[] = [];
 
-  lines.push({ text: PLATFORMS_BY_TIER[tier] });
-  if (mode === 'AI') lines.push({ text: 'Your personalized AI which manages your entire social media presence' });
+  lines.push({ text: 'Manual creation and scheduling across Facebook, Instagram & LinkedIn' });
+  if (mode === 'Studio') lines.push({ text: 'Create and schedule your own content' });
+  if (mode === 'AI') {
+    lines.push({ text: AI_PLAN_PLATFORMS_BY_TIER[tier as Exclude<PlanTier, 'studio'>] });
+    lines.push({ text: 'Your personalized AI manages content for your selected AI Plan platforms' });
+  }
   if (mode === 'AI') lines.push({ text: 'Human-reviewed content' });
-  lines.push({
-    text: `${credits} credits/month \u2014 up to ${quickPosts} Content Studio posts OR ${festivePosts} Event Studio posts OR ${campaignPosts} Campaign posts OR ${productAdverts} Product Ads posts OR ${carouselPosts} Carousel posts OR ${videoPosts} Video Generation`,
-  });
+  lines.push({ text: `${credits} credits per month for manual creation tools` });
   lines.push({ text: 'AI-powered analytics & recommendations' });
   return lines;
 }
 
 function buildPlan(id: PlanId): PricingPlan {
-  const tier = id.split('-')[0] as PlanTier;
-  const mode = id.split('-')[1] as PlanMode;
+  const tier = (id === 'studio' ? 'studio' : id.split('-')[0]) as PlanTier;
+  const mode: PlanMode = id === 'studio' ? 'Studio' : 'AI';
   return {
     id,
     tier,
@@ -141,19 +127,15 @@ function buildPlan(id: PlanId): PricingPlan {
 
 /** All 6 plans (3 Studio \u00d7 3 AI) keyed by full plan id. */
 export const PRICING_PLANS_BY_ID: Record<PlanId, PricingPlan> = {
-  'prime-Studio': buildPlan('prime-Studio'),
+  studio: buildPlan('studio'),
   'prime-AI': buildPlan('prime-AI'),
-  'elite-Studio': buildPlan('elite-Studio'),
   'elite-AI': buildPlan('elite-AI'),
-  'legacy-Studio': buildPlan('legacy-Studio'),
   'legacy-AI': buildPlan('legacy-AI'),
 };  
 
 /** 3 Studio (manual) plans in tier order. */
 export const PRICING_PLANS_MANUAL: PricingPlan[] = [
-  PRICING_PLANS_BY_ID['prime-Studio'],
-  PRICING_PLANS_BY_ID['elite-Studio'],
-  PRICING_PLANS_BY_ID['legacy-Studio'],
+  PRICING_PLANS_BY_ID.studio,
 ];
 
 /** 3 AI (auto) plans in tier order. */

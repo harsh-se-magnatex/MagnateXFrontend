@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 
 const inputBase =
-  'w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all';
+  'w-full rounded-xl border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-primary-purple focus:outline-none focus:ring-2 focus:ring-primary-purple/20 transition-all';
 
 function firebaseErrorCode(err: unknown): string {
   if (err && typeof err === 'object' && 'code' in err) {
@@ -126,7 +126,7 @@ export default function CompleteEmailLinkPage() {
 
   if (view === 'need-signin') {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center text-slate-600">
+      <div className="mx-auto max-w-md px-4 py-16 text-center text-muted-foreground">
         <p className="text-sm">Redirecting to sign in…</p>
       </div>
     );
@@ -135,14 +135,14 @@ export default function CompleteEmailLinkPage() {
   if (view === 'no-link') {
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
-        <h1 className="text-xl font-semibold text-slate-900">Email link</h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <h1 className="text-xl font-semibold text-foreground">Email link</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           This page is opened from a verification link. Use the link in the
           email we sent, or go to account settings to send a new one.
         </p>
         <Button
           type="button"
-          className="mt-6 bg-indigo-600 hover:bg-indigo-700"
+          className="mt-6 bg-gradient-action hover:brightness-105"
           onClick={() => router.push('/settings/account')}
         >
           Back to account settings
@@ -154,13 +154,13 @@ export default function CompleteEmailLinkPage() {
   if (view === 'error' && errMsg) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
-        <h1 className="text-xl font-semibold text-slate-900">
+        <h1 className="text-xl font-semibold text-foreground">
           Couldn&apos;t add email
         </h1>
-        <p className="mt-2 text-sm text-slate-600">{errMsg}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{errMsg}</p>
         <Button
           type="button"
-          className="mt-6 bg-indigo-600 hover:bg-indigo-700"
+          className="mt-6 bg-gradient-action hover:brightness-105"
           onClick={() => router.push('/settings/account')}
         >
           Back to account settings
@@ -172,17 +172,17 @@ export default function CompleteEmailLinkPage() {
   if (view === 'needs-password') {
     return (
       <div className="mx-auto max-w-md px-4 py-12">
-        <h1 className="text-xl font-semibold text-slate-900">
+        <h1 className="text-xl font-semibold text-foreground">
           Set a password
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           Your email is verified and linked. Choose a password once — this is
           how you&apos;ll sign in with email later.
         </p>
         <form onSubmit={handleSetPassword} className="mt-6 space-y-4">
           <div className="space-y-2">
             <label
-              className="text-sm font-semibold text-slate-700"
+              className="text-sm font-semibold text-foreground"
               htmlFor="set-p1"
             >
               Password
@@ -199,7 +199,7 @@ export default function CompleteEmailLinkPage() {
           </div>
           <div className="space-y-2">
             <label
-              className="text-sm font-semibold text-slate-700"
+              className="text-sm font-semibold text-foreground"
               htmlFor="set-p2"
             >
               Confirm password
@@ -216,7 +216,7 @@ export default function CompleteEmailLinkPage() {
           <Button
             type="submit"
             disabled={finishBusy}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 sm:w-auto"
+            className="w-full bg-gradient-action hover:brightness-105 sm:w-auto"
           >
             {finishBusy ? 'Saving…' : 'Save password'}
           </Button>
@@ -230,10 +230,10 @@ export default function CompleteEmailLinkPage() {
       <div
         className={cn(
           'mx-auto max-w-md px-4 py-16',
-          'flex flex-col items-center justify-center gap-3 text-slate-600'
+          'flex flex-col items-center justify-center gap-3 text-muted-foreground'
         )}
       >
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary-purple" />
         <p className="text-sm">Linking your email…</p>
       </div>
     );

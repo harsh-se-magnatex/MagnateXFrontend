@@ -1,8 +1,8 @@
-import type { ContentPlanPlatform } from '@/src/service/api/content-plan.service';
+import type { AIPlanPlatform } from '@/src/service/api/ai-plan.service';
 
 export type ForceRunTarget = {
   date: string;
-  platform: ContentPlanPlatform;
+  platform: AIPlanPlatform;
   kind: string;
   eventId?: string;
 };
@@ -12,9 +12,10 @@ export type ForceRunCalendarDay = {
   date: string;
   byPlatform: Partial<
     Record<
-      ContentPlanPlatform,
+      AIPlanPlatform,
       {
         generated: Array<{ kind: string; status: string }>;
+        upcoming?: Array<{ kind: string; eventId?: string }>;
       }
     >
   >;
@@ -58,6 +59,18 @@ export function isForceRunTargetComplete(
   const slot = day.byPlatform[target.platform];
   if (!slot) return false;
 
+  // A failed worker resets its calendar cell to planned so Force Run can be
+  // attempted again. Seeing the target return to upcoming is terminal for the
+  // previous run and must clear the local Generating spinner.
+  const returnedToUpcoming = slot.upcoming?.some((item) => {
+    if (normalizedKind(item.kind) !== normalizedKind(target.kind)) return false;
+    if (target.kind === 'festival' && target.eventId) {
+      return item.eventId === target.eventId;
+    }
+    return true;
+  });
+  if (returnedToUpcoming) return true;
+
   const exact = slot.generated.find(
     (g) => normalizedKind(g.kind) === normalizedKind(target.kind)
   );
@@ -86,7 +99,7 @@ export function parseForceRunLockKey(key: string): ForceRunTarget | null {
   if (!date || !platform || !kind) return null;
   return {
     date,
-    platform: platform as ContentPlanPlatform,
+    platform: platform as AIPlanPlatform,
     kind,
     ...(eventId ? { eventId } : {}),
   };
@@ -108,7 +121,7 @@ export function parseAdminForceRunLockKey(
   return {
     userId,
     date,
-    platform: platform as ContentPlanPlatform,
+    platform: platform as AIPlanPlatform,
     kind,
     ...(eventId ? { eventId } : {}),
   };

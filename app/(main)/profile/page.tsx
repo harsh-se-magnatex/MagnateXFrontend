@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function ProfilePage() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/template-dna');
+    router.replace('/brand-dna');
   }, [router]);
   return (
     <div className="flex items-center justify-center py-12 text-sm text-zinc-500">

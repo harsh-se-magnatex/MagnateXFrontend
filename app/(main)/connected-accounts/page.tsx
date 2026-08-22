@@ -9,7 +9,7 @@ import {
   workspacePageTitle,
 } from '@/lib/workspace-nav';
 import { useRouter } from 'next/navigation';
-import { Check, AlertCircle, ExternalLink } from 'lucide-react';
+import { Check, AlertCircle, ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
@@ -20,6 +20,7 @@ import {
 } from '@/src/service/api/social.servce';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import {
   Card,
   CardAction,
@@ -51,7 +52,6 @@ import {
   countEnabledPlatforms,
   isMaxPlatformPlan,
   isPlatformSelectionComplete,
-  PLAN_MAX_SOCIAL,
 } from '@/lib/platform-selection';
 import { buildBusinessSocialProfileUrl } from '@/lib/business-social-profile-url';
 
@@ -467,8 +467,7 @@ export default function ConnectedPlatformsPage() {
   }, []);
 
   const activePlan = billing?.activePlan ?? 'non-subscribed';
-  const maxPlatforms =
-    activePlan !== 'non-subscribed' ? (PLAN_MAX_SOCIAL[activePlan] ?? 0) : 0;
+  const maxPlatforms: number = activePlan !== 'non-subscribed' ? 3 : 0;
 
   /** Platforms the user explicitly selected during onboarding */
   const selectedPlatforms = useMemo(() => {
@@ -566,7 +565,12 @@ export default function ConnectedPlatformsPage() {
     maxPlatforms > 0 &&
     connectedCount >= maxPlatforms;
 
+  const [disconnectingPlatform, setDisconnectingPlatform] =
+    useState<PlatformId | null>(null);
+
   const handleDisconnect = async (platform: PlatformId) => {
+    if (disconnectingPlatform) return;
+    setDisconnectingPlatform(platform);
     try {
       const response = await disconnectSocialAccountApi(platform);
       if (response.success) {
@@ -578,6 +582,8 @@ export default function ConnectedPlatformsPage() {
     } catch (error) {
       console.error(error);
       showErrorToast('Could not disconnect. Please try again later.');
+    } finally {
+      setDisconnectingPlatform(null);
     }
   };
 
@@ -599,10 +605,10 @@ export default function ConnectedPlatformsPage() {
       className="w-full animate-in fade-in duration-500 pb-20"
     >
       <header className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 leading-tight">
+        <h1 className={workspacePageTitleClass}>
           {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
         </h1>
-        <p className="mt-3 text-base text-slate-600 leading-relaxed max-w-2xl">
+        <p className="mt-3 text-base text-muted-foreground leading-relaxed max-w-2xl">
           Link your social accounts so Sociogenie can schedule and publish
           approved content automatically.
         </p>
@@ -636,7 +642,7 @@ export default function ConnectedPlatformsPage() {
             type="button"
             size="sm"
             className="shrink-0 self-start sm:self-auto"
-            onClick={() => router.push('/ai-engine')}
+            onClick={() => router.push('/autopilot')}
           >
             Select platforms
           </Button>
@@ -761,23 +767,23 @@ export default function ConnectedPlatformsPage() {
                             </svg>
                           </div>
                           <div className="min-w-0 flex-1 space-y-1 self-center">
-                            <CardTitle className="text-base font-semibold text-slate-900 sm:text-lg">
+                            <CardTitle className="text-base font-semibold text-foreground sm:text-lg">
                               {platform.name}
                             </CardTitle>
-                            <CardDescription className="text-pretty leading-relaxed text-slate-600">
+                            <CardDescription className="text-pretty leading-relaxed text-muted-foreground">
                               {connected
                                 ? 'Scheduling and publishing are enabled for this channel.'
                                 : 'Connect your account to allow automated posts from Sociogenie.'}
                             </CardDescription>
                             {connected && selectedPageName && (
-                              <p className="text-sm font-medium text-slate-800">
+                              <p className="text-sm font-medium text-foreground">
                                 Selected:&nbsp;
                                 {selectedProfileUrl ? (
                                   <a
                                     href={selectedProfileUrl}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="inline-flex items-center gap-1 text-slate-900 underline decoration-slate-300 underline-offset-2 hover:decoration-slate-900"
+                                    className="inline-flex items-center gap-1 text-foreground underline decoration-border underline-offset-2 hover:decoration-foreground"
                                   >
                                     <span>{selectedPageName}</span>
                                     <ExternalLink
@@ -786,7 +792,7 @@ export default function ConnectedPlatformsPage() {
                                     />
                                   </a>
                                 ) : (
-                                  <span className="text-slate-900">
+                                  <span className="text-foreground">
                                     {selectedPageName}
                                   </span>
                                 )}
@@ -833,9 +839,9 @@ export default function ConnectedPlatformsPage() {
                       <CardFooter className="flex-col gap-2 border-t border-border/50 bg-muted/20 px-5 py-4 sm:flex-row sm:justify-end">
                         {connected ? (
                           <div className='w-full flex items-center justify-between'>
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-2 text-xs font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-600/20">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-2 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-500/25">
                               <Check
-                                className="h-3.5 w-3.5 text-emerald-600"
+                                className="h-3.5 w-3.5 text-emerald-400"
                                 aria-hidden
                               />
                               Connected
@@ -844,9 +850,14 @@ export default function ConnectedPlatformsPage() {
                               type="button"
                               variant="outline"
                               size="sm"
+                              disabled={disconnectingPlatform === platform.id}
+                              aria-busy={disconnectingPlatform === platform.id}
                               className="w-full border-border text-foreground hover:bg-accent hover:text-foreground sm:w-auto sm:min-w-36"
-                              onClick={() => handleDisconnect(platform.id)}
+                              onClick={() => void handleDisconnect(platform.id)}
                             >
+                              {disconnectingPlatform === platform.id ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                              ) : null}
                               Remove connection
                             </Button>
                           </div>
