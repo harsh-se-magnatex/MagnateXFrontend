@@ -71,6 +71,7 @@ export function LandingPricingCards() {
               </div>
             ) : null}
             <h3 className="text-lg font-extrabold text-foreground">{p.name}</h3>
+           
             <div className="mt-5 mb-6">
               <div className="flex flex-wrap items-baseline gap-x-1">
                 <span className="text-4xl font-black tracking-tight text-foreground">
