@@ -139,6 +139,7 @@ type CellEntry = {
   href?: string | null;
   source: 'generated' | 'upcoming';
   eventId?: string;
+  alreadyGenerated?: boolean;
 };
 
 /** Kinds that Force Run can enqueue (including campaign). */
@@ -152,6 +153,20 @@ function canForceRunKind(kind: string): boolean {
     kind === 'festival' ||
     kind === 'festive'
   );
+}
+
+function hasGeneratedCounterpart(
+  generated: AIPlanGeneratedItem[],
+  upcomingKind: AIPlanUpcomingItem['kind']
+): boolean {
+  const matchingKinds =
+    upcomingKind === 'festival'
+      ? ['festive']
+      : upcomingKind === 'quick-create' || upcomingKind === 'video-generation'
+        ? [upcomingKind, 'ai-engine']
+        : [upcomingKind];
+
+  return generated.some((item) => matchingKinds.includes(item.kind));
 }
 
 function entriesForSlot(args: {
@@ -193,6 +208,7 @@ function entriesForSlot(args: {
         (isOccasion ? suppliedLabel : item.note?.trim()) || undefined,
       href: null,
       source: 'upcoming' as const,
+      alreadyGenerated: hasGeneratedCounterpart(args.generated, item.kind),
       ...(item.eventId ? { eventId: item.eventId } : {}),
     };
   });
@@ -320,6 +336,7 @@ function PlatformCell({
           !isPast &&
           !isRunning &&
           entry.source === 'upcoming' &&
+          !entry.alreadyGenerated &&
           canForceRunKind(entry.kind) &&
           !(suppressVideoForceRun && entry.kind === 'video-generation');
 
@@ -430,6 +447,7 @@ function AIPlanSheet({
                 entriesByPlatform[platform].some(
                   (entry) =>
                     entry.source === 'upcoming' &&
+                    !entry.alreadyGenerated &&
                     entry.kind === 'video-generation'
                 )
               );
@@ -438,6 +456,7 @@ function AIPlanSheet({
                   entriesByPlatform[platform].some(
                     (entry) =>
                       entry.source === 'upcoming' &&
+                      !entry.alreadyGenerated &&
                       entry.kind === 'video-generation'
                   )
                 ) ?? platforms[0];
