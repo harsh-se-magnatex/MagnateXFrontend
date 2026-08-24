@@ -14,12 +14,6 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-const firestoreDatabaseId =
-  process.env.NEXT_PUBLIC_FIRESTORE_DATABASE_ID ??
-  (process.env.NODE_ENV === 'development' ? 'version2' : '(default)');
-export const db =
-  firestoreDatabaseId === '(default)'
-    ? getFirestore(app)
-    : getFirestore(app, firestoreDatabaseId);
+export const db = getFirestore(app);
 auth.useDeviceLanguage()
 export default app;

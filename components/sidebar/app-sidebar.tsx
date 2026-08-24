@@ -117,7 +117,6 @@ const settingsNavItems = [
     icon: Share2,
   },
   { name: 'Payment History', href: '/settings/transactions', icon: Receipt },
-  { name: 'Automation', href: '/settings/automation', icon: Settings2 },
   {
     name: 'Support & Legal',
     href: '/settings/support-legal',

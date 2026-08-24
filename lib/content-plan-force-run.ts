@@ -15,7 +15,12 @@ export type ForceRunCalendarDay = {
       AIPlanPlatform,
       {
         generated: Array<{ kind: string; status: string }>;
-        upcoming?: Array<{ kind: string; eventId?: string }>;
+        upcoming?: Array<{
+          kind: string;
+          status?: string;
+          eventId?: string;
+          cell?: { kind?: string; status?: string };
+        }>;
       }
     >
   >;
@@ -58,6 +63,25 @@ export function isForceRunTargetComplete(
   if (!day) return false;
   const slot = day.byPlatform[target.platform];
   if (!slot) return false;
+
+  const targetUpcoming = slot.upcoming?.find((item) => {
+    const itemKind = item.cell?.kind ?? item.kind;
+    if (normalizedKind(itemKind) !== normalizedKind(target.kind)) return false;
+    if (target.kind === 'festival' && target.eventId) {
+      return item.eventId === target.eventId;
+    }
+    return true;
+  });
+  const targetCellStatus = String(
+    targetUpcoming?.cell?.status ?? targetUpcoming?.status ?? ''
+  ).toLowerCase();
+  if (
+    targetCellStatus === 'done' ||
+    targetCellStatus === 'scheduled' ||
+    targetCellStatus === 'failed'
+  ) {
+    return true;
+  }
 
   // A failed worker resets its calendar cell to planned so Force Run can be
   // attempted again. Seeing the target return to upcoming is terminal for the

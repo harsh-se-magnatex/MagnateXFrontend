@@ -3,7 +3,7 @@
 export const WORKSPACE_NAV_HREFS = {
   quickCreate: '/create-post',
   productAdvert: '/product-posts',
-  videoGeneration: '/short-videos',
+  videoGeneration: '/videos',
   festivePost: '/occasion-posts',
   createCampaign: '/campaigns',
   carouselCreate: '/carousel-posts',
@@ -21,7 +21,6 @@ export const WORKSPACE_LEGACY_PATH_REDIRECTS: Record<string, string> = {
   '/content-studio': WORKSPACE_NAV_HREFS.quickCreate,
   '/product-advert': WORKSPACE_NAV_HREFS.productAdvert,
   '/product-ads': WORKSPACE_NAV_HREFS.productAdvert,
-  '/video-generation': WORKSPACE_NAV_HREFS.videoGeneration,
   '/video-generator': WORKSPACE_NAV_HREFS.videoGeneration,
   '/festive-post': WORKSPACE_NAV_HREFS.festivePost,
   '/event-studio': WORKSPACE_NAV_HREFS.festivePost,
@@ -72,7 +71,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.productAdvert),
   },
   {
-    name: 'Short Videos',
+    name: 'Videos',
     href: WORKSPACE_NAV_HREFS.videoGeneration,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.videoGeneration),

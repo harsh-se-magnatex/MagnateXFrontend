@@ -53,10 +53,10 @@ const PRODUCT_FEATURES = [
       'Two modes: a photoshoot-ready product shot, or a social ad with copy built into the creative. You choose.',
   },
   {
-    title: 'Short Videos',
+    title: 'Videos',
     icon: Video,
     description:
-      '8-second videos from a text prompt, with your logo set as the opening or closing frame.',
+      '20-second videos from a text prompt, with your logo set as the opening or closing frame.',
   },
   {
     title: 'Occasion Posts',

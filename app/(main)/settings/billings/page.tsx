@@ -92,7 +92,7 @@ import {
 } from '@/lib/email-verification-for-purchase';
 import { isPlanInactive } from '@/lib/plan-access';
 
-type PlanModeDisplay = 'AI' | 'Studio';
+type PlanModeDisplay = 'AutoPilot' | 'Studio';
 type PlanMode = 'auto' | 'manual';
 const TOP_UP_PACK_LABELS = ['Starter', 'Basic', 'Growth', 'Business'] as const;
 
@@ -112,16 +112,16 @@ const PLAN_MONTHLY_CREDITS_FALLBACK: Record<string, number> = {
 
 /** Tab labels match the public pricing page (Studio vs AI). */
 const PLAN_MODE_TAB: Record<PlanModeDisplay, { label: string; sublabel: string }> = {
-  AI: { label: 'AI', sublabel: 'Personalized AI' },
+  AutoPilot: { label: 'AutoPilot', sublabel: 'Personalized AI' },
   Studio: { label: 'Studio', sublabel: 'You create every post' },
 };
 
 function planModeToDisplay(mode: PlanMode): PlanModeDisplay {
-  return mode === 'auto' ? 'AI' : 'Studio';
+  return mode === 'auto' ? 'AutoPilot' : 'Studio';
 }
 
 function displayModeToPlan(mode: PlanModeDisplay): PlanMode {
-  return mode === 'AI' ? 'auto' : 'manual';
+  return mode === 'AutoPilot' ? 'auto' : 'manual';
 }
 
 const PLAN_KEY_ALIASES: Record<string, PlanId> = {
@@ -150,13 +150,12 @@ function formatPlanDisplayName(value: string | null | undefined): string {
 const STATIC_PLAN_FALLBACK: Record<string, PlanSummary> = (
   Object.keys(PRICING_PLANS_BY_ID) as PlanId[]
 ).reduce<Record<string, PlanSummary>>((acc, planId) => {
-    const landing = PRICING_PLANS_BY_ID[planId];
-    acc[planId] = {
-      id: planId,
-      name: planId,
-      description: landing.subtitle,
-      price: Number.parseFloat(landing.price.replace(/^\$/, '')),
-    };
+  const landing = PRICING_PLANS_BY_ID[planId];
+  acc[planId] = {
+    id: planId,
+    name: planId,
+    price: Number.parseFloat(landing.price.replace(/^\$/, '')),
+  };
   return acc;
 }, {});
 
@@ -845,7 +844,7 @@ export default function BillingsPage() {
                       <dd className="mt-1 font-semibold text-foreground">
                         {formatTxnDate(
                           subscriptionSummary.createdAt ??
-                            billing?.planStartedAt
+                          billing?.planStartedAt
                         )}
                       </dd>
                     </div>
@@ -858,7 +857,7 @@ export default function BillingsPage() {
                       <dd className="mt-1 font-semibold text-foreground">
                         {formatTxnDate(
                           subscriptionSummary.nextBillingDate ??
-                            billing?.planExpiresAt
+                          billing?.planExpiresAt
                         )}
                       </dd>
                     </div>
@@ -1367,7 +1366,7 @@ export default function BillingsPage() {
             </h2>
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-           Credit used per post by <strong>Manual Trigger</strong>
+            Credit used per post by <strong>Manual Trigger</strong>
           </p>
           <ul className="text-sm text-foreground space-y-2 list-none pl-0">
             <li>· Product Posts: 4 credits</li>
@@ -1504,7 +1503,7 @@ export default function BillingsPage() {
             aria-label="Plan mode"
             className="flex rounded-xl w-full justify-center p-1 border border-border self-center"
           >
-            {(['AI', 'Studio'] as const).map((mode) => {
+            {(['AutoPilot', 'Studio'] as const).map((mode) => {
               const selected = planModeToDisplay(upgradeMode) === mode;
               const { label, sublabel } = PLAN_MODE_TAB[mode];
               return (
@@ -1530,127 +1529,128 @@ export default function BillingsPage() {
             })}
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3 md:items-stretch pt-2">
+          <div className={`pt-2 ${upgradeMode === "auto" ? "grid gap-4 md:grid-cols-3 md:items-stretch " : "flex w-full justify-center items-center"}`}>
             {planComparisonRows.map(
               ({ tierKey, checkoutPlanId, landingPlanId, landingPlan, plan }) => {
-              const meta = PLAN_COMPARISON_BULLETS[landingPlanId];
-              const activeKey = normalizePlanKey(billing?.activePlan ?? '');
-              const isActive = activeKey === landingPlanId;
-              const displayPrice = Number.parseFloat(
-                landingPlan.price.replace(/^\$/, '')
-              );
-              return (
-                <div
-                  key={tierKey}
-                  className={cn(
-                    'relative flex h-full min-h-0 flex-col rounded-2xl border border-border p-5 bg-card transition-[box-shadow,background-color,border-color]',
-                    isActive &&
-                    'border-2 border-emerald-500/50 bg-gradient-to-b from-emerald-500/10 to-card shadow-md shadow-emerald-900/10 ring-2 ring-emerald-500/30',
-                    !isActive &&
-                    landingPlan.highlighted &&
-                    'border-2 border-primary/50 bg-gradient-to-b from-primary/10 to-card shadow-md shadow-primary/10 ring-2 ring-primary/25'
-                  )}
-                >
-                  {isActive ? (
-                    <span className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-bold bg-emerald-600 text-white pl-2 pr-2.5 py-0.5 rounded-full shadow-sm ring-2 ring-white">
-                      <Check className="h-3 w-3 stroke-[3]" aria-hidden />
-                    </span>
-                  ) : landingPlan.badge ? (
-                    <span className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 inline-flex items-center text-[10px] uppercase tracking-wide font-bold bg-gradient-primary text-white px-3 py-0.5 rounded-full shadow-sm ring-2 ring-white">
-                      {landingPlan.badge}
-                    </span>
-                  ) : null}
-                  <h3 className="font-semibold text-foreground text-center mt-1">
-                    {landingPlan.name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground text-center mt-1 leading-snug">
-                   {landingPlan.mode === 'AI' ? 'Auto Plan' : 'Manual Plan'}
-                  </p>
-                  <div className="mt-1 mb-4 text-center">
-                    <p className="text-sm font-semibold text-foreground">
-                      {formatUsd(displayPrice)}/mo
-                    </p>
-                  </div>
-                  {isActive ? (
-                    <p className="text-sm text-foreground text-center space-y-3">
-                      Active
-                    </p>
-                  ) : null}
-                  <ul className="text-xs text-muted-foreground space-y-2 flex flex-col justify-end flex-1">
-                    {(meta?.bullets ?? landingPlan.lines.map((line) => line.text)).map((b, i) => (
-                      <li key={i} className="flex gap-2">
-                        <span className="text-primary shrink-0">·</span>
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-auto w-full pt-4">
-                    {isActive && (
-                      <div
-                        className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-900"
-                        role="status"
-                        aria-label="This is your current plan"
-                      >
-                        <Check
-                          className="h-4 w-4 shrink-0 text-emerald-600"
-                          aria-hidden
-                        />
-                        Your plan
-                      </div>
+                const meta = PLAN_COMPARISON_BULLETS[landingPlanId];
+                const activeKey = normalizePlanKey(billing?.activePlan ?? '');
+                const isActive = activeKey === landingPlanId;
+                const displayPrice = Number.parseFloat(
+                  landingPlan.price.replace(/^\$/, '')
+                );
+                return (
+                  <div
+                    key={tierKey}
+                    className={cn(
+                      'relative flex h-full min-h-0 flex-col rounded-2xl border border-border p-5 bg-card transition-[box-shadow,background-color,border-color]',
+                      upgradeMode === "manual" && "max-w-[35%]",
+                      isActive &&
+                      'border-2 border-emerald-500/50 bg-gradient-to-b from-emerald-500/10 to-card shadow-md shadow-emerald-900/10 ring-2 ring-emerald-500/30',
+                      !isActive &&
+                      landingPlan.highlighted &&
+                      'border-2 border-primary/50 bg-gradient-to-b from-primary/10 to-card shadow-md shadow-primary/10 ring-2 ring-primary/25'
                     )}
-                    {!isActive && (
-                      <div className="space-y-2">
-                        <Button
-                          variant="outline"
-                          className="h-auto w-full flex-col gap-0.5 rounded-xl py-3"
-                          disabled={
-                            emailVerificationRequired ||
-                            planPurchaseLoading ||
-                            planChoiceBusyId === plan.id
-                          }
-                          onClick={() =>
-                            void initiatePlanChoice(
-                              plan.id,
-                              landingPlan.name
-                            )
-                          }
+                  >
+                    {isActive ? (
+                      <span className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wide font-bold bg-emerald-600 text-white pl-2 pr-2.5 py-0.5 rounded-full shadow-sm ring-2 ring-white">
+                        <Check className="h-3 w-3 stroke-[3]" aria-hidden />
+                      </span>
+                    ) : landingPlan.badge ? (
+                      <span className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 inline-flex items-center text-[10px] uppercase tracking-wide font-bold bg-gradient-primary text-white px-3 py-0.5 rounded-full shadow-sm ring-2 ring-white">
+                        {landingPlan.badge}
+                      </span>
+                    ) : null}
+                    <h3 className="font-semibold text-foreground text-center mt-1">
+                      {landingPlan.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground text-center mt-1 leading-snug">
+                      {landingPlan.mode === 'AutoPilot' ? 'Auto Plan' : 'Manual Plan'}
+                    </p>
+                    <div className="mt-1 mb-4 text-center">
+                      <p className="text-sm font-semibold text-foreground">
+                        {formatUsd(displayPrice)}/mo
+                      </p>
+                    </div>
+                    {isActive ? (
+                      <p className="text-sm text-foreground text-center space-y-3">
+                        Active
+                      </p>
+                    ) : null}
+                    <ul className="text-xs text-muted-foreground space-y-2 flex flex-col justify-end flex-1">
+                      {(meta?.bullets ?? landingPlan.lines.map((line) => line.text)).map((b, i) => (
+                        <li key={i} className="flex gap-2">
+                          <span className="text-primary shrink-0">·</span>
+                          <span>{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-auto w-full pt-4">
+                      {isActive && (
+                        <div
+                          className="flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-900"
+                          role="status"
+                          aria-label="This is your current plan"
                         >
-                          {planChoiceBusyId === plan.id ? (
-                            <>
-                              <Loader2
-                                className="h-4 w-4 shrink-0 animate-spin"
-                                aria-hidden
-                              />
-                              Preparing preview…
-                            </>
-                          ) : planPurchaseLoading &&
-                            clickedPurchasePlan.current === plan.id ? (
-                            <>
-                              <Loader2
-                                className="h-4 w-4 shrink-0 animate-spin"
-                                aria-hidden
-                              />
-                              Opening checkout…
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-sm font-semibold leading-tight text-foreground">
-                                Start {planButtonDisplayName(landingPlan.name)}
-                              </span>
-                            </>
-                          )}
-                        </Button>
-                        {emailVerificationRequired ? (
-                          <p className="text-[11px] leading-snug text-amber-800 text-center">
-                            {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
+                          <Check
+                            className="h-4 w-4 shrink-0 text-emerald-600"
+                            aria-hidden
+                          />
+                          Your plan
+                        </div>
+                      )}
+                      {!isActive && (
+                        <div className="space-y-2">
+                          <Button
+                            variant="outline"
+                            className="h-auto w-full flex-col gap-0.5 rounded-xl py-3"
+                            disabled={
+                              emailVerificationRequired ||
+                              planPurchaseLoading ||
+                              planChoiceBusyId === plan.id
+                            }
+                            onClick={() =>
+                              void initiatePlanChoice(
+                                plan.id,
+                                landingPlan.name
+                              )
+                            }
+                          >
+                            {planChoiceBusyId === plan.id ? (
+                              <>
+                                <Loader2
+                                  className="h-4 w-4 shrink-0 animate-spin"
+                                  aria-hidden
+                                />
+                                Preparing preview…
+                              </>
+                            ) : planPurchaseLoading &&
+                              clickedPurchasePlan.current === plan.id ? (
+                              <>
+                                <Loader2
+                                  className="h-4 w-4 shrink-0 animate-spin"
+                                  aria-hidden
+                                />
+                                Opening checkout…
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-sm font-semibold leading-tight text-foreground">
+                                  Start {planButtonDisplayName(landingPlan.name)}
+                                </span>
+                              </>
+                            )}
+                          </Button>
+                          {emailVerificationRequired ? (
+                            <p className="text-[11px] leading-snug text-amber-800 text-center">
+                              {EMAIL_VERIFICATION_PURCHASE_MESSAGE}
+                            </p>
+                          ) : null}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
 
           {emailVerificationRequired ? (

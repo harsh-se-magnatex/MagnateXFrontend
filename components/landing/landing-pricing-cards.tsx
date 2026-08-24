@@ -11,7 +11,7 @@ import { Dot } from 'lucide-react';
 import { useState } from 'react';
 
 export function LandingPricingCards() {
-  const [planMode, setPlanMode] = useState<PlanMode>('AI');
+  const [planMode, setPlanMode] = useState<PlanMode>('AutoPilot');
   const visiblePlans = pricingPlansForMode(planMode);
 
   return (
@@ -21,9 +21,9 @@ export function LandingPricingCards() {
         aria-label="Plan mode"
         className="mx-auto mb-8 flex w-full max-w-md items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 backdrop-blur-sm"
       >
-        {(['AI', 'Studio'] as const).map((mode) => {
+        {(['AutoPilot', 'Studio'] as const).map((mode) => {
           const selected = planMode === mode;
-          const label = mode === 'Studio' ? 'Studio' : 'AI';
+          const label = mode === 'Studio' ? 'Studio' : 'AutoPilot';
           const sublabel =
             mode === 'Studio' ? 'You create every post' : 'Personalized AI';
           return (
@@ -71,9 +71,6 @@ export function LandingPricingCards() {
               </div>
             ) : null}
             <h3 className="text-lg font-extrabold text-foreground">{p.name}</h3>
-            <p className="mt-1 font-(--font-dm-sans) text-sm text-muted-foreground">
-              {p.subtitle}
-            </p>
             <div className="mt-5 mb-6">
               <div className="flex flex-wrap items-baseline gap-x-1">
                 <span className="text-4xl font-black tracking-tight text-foreground">

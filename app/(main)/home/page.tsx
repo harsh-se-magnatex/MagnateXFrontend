@@ -42,7 +42,6 @@ import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTourState } from '@/src/stores/tourState';
 import { EmailVerificationPurchaseAlert } from '@/components/shared/EmailVerificationPurchaseAlert';
 import { ExamplePostsCard } from '@/components/home/ExamplePostsCard';
-import Cookies from 'js-cookie';
 import {
   useTimestampFormatter,
   useUserTimezone,
@@ -302,7 +301,6 @@ export default function Home() {
   const [connectedPlatformCount, setConnectedPlatformCount] = useState(0);
   const [growthOverviewPct, setGrowthOverviewPct] = useState<number | null>(null);
   const [command, setCommand] = useState('');
-  const [isNeedApproval, setIsNeedApproval] = useState(false);
   const router = useRouter();
   const isNewUser = localStorage.getItem('isNewUser');
 
@@ -318,32 +316,12 @@ export default function Home() {
   }, [isNewUser, router]);
 
   useEffect(() => {
-    setIsNeedApproval(Cookies.get('needed_approval') === 'true');
-  }, []);
-
-  useEffect(() => {
     if (loading || authLoading || billingLoading || !user) return;
     const { doneTours, requestTour } = useTourState.getState();
     if (!doneTours['brand-memory'] || doneTours.platform) return;
     // First visit after onboarding / Business Data — full cross-page walkthrough.
     requestTour({ tour: 'platform', startIndex: 0 });
   }, [loading, authLoading, billingLoading, user]);
-
-  useEffect(() => {
-    const handleApprovalChange = (e: CustomEvent) => {
-      setIsNeedApproval(e.detail);
-    };
-
-    window.addEventListener(
-      'approvalChanged',
-      handleApprovalChange as EventListener
-    );
-    return () =>
-      window.removeEventListener(
-        'approvalChanged',
-        handleApprovalChange as EventListener
-      );
-  }, []);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -450,19 +428,10 @@ export default function Home() {
   }, [userTz]);
 
   useEffect(() => {
-    loadDashboard();
+    // Initial dashboard hydration intentionally owns this page's loading state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadDashboard();
   }, [loadDashboard]);
-
-  const { pendingReviewCount, pendingReviewIsSingular } = useMemo(() => {
-    const n = upcomingRangePosts.filter(
-      (p) =>
-        getDisplayStatus(p).variant === 'pendingByYou'
-    ).length;
-    return {
-      pendingReviewCount: String(n),
-      pendingReviewIsSingular: n === 1,
-    };
-  }, [upcomingRangePosts]);
 
   const creditRemaining = billing?.credits ?? userDetail?.credits ?? 0;
   const creditLabel = `${creditRemaining}`;
@@ -701,12 +670,9 @@ export default function Home() {
                 {s.label}
               </Link>
             ))}
+            <ExamplePostsCard />
           </div>
         </div>
-      </section>
-
-      <section aria-label="Example posts">
-        <ExamplePostsCard />
       </section>
 
       {/* Activity */}
@@ -879,7 +845,7 @@ export default function Home() {
                   </span>
                   {!userDetail?.reviewPreferencesComplete ? (
                     <Link
-                      href="/settings/automation"
+                      href="/settings/autopilot-preference"
                       className="text-primary text-xs font-medium hover:underline ml-auto"
                     >
                       Complete

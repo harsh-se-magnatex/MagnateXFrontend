@@ -842,7 +842,7 @@ export default function ApprovalPage() {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full text-muted-foreground">
         Approval is not enabled. Please enable it in the
-        <Link href="/settings/automation" className="text-blue-500">
+        <Link href="/settings/autopilot-preference" className="text-blue-500">
           Automation Preferences
         </Link>
       </div>

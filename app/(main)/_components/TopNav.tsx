@@ -35,6 +35,7 @@ import {
 const topNav = [
   { name: 'Home', href: '/home', icon: Home },
   { name: 'Contact Us', href: '/settings/support-legal', icon: MessageSquare },
+  {name:"AutoPilot Preferences", href: '/settings/autopilot-preference', icon: Rocket},
   { name: 'Brand DNA', href: '/brand-dna', icon: Fingerprint },
 ] as const;
 

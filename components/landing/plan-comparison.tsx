@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 
 const STUDIO_LINES = [
-  'Create Post, Product Posts, Short Videos, Occasion Posts, Campaigns, Carousel Posts — all available, run whenever you choose',
+  'Create Post, Product Posts, Videos, Occasion Posts, Campaigns, Carousel Posts — all available, run whenever you choose',
   'You decide what to make and when',
   'Pick your own date and time for every post',
   'Full Media Library, Connected Accounts & Analytics',
@@ -15,7 +15,7 @@ const AI_QUOTA: { qty: string; label: string }[] = [
   { qty: '2', label: 'Carousels (5 slides each)' },
   { qty: '2', label: 'Repeat your best post' },
   { qty: '1', label: 'Try something new' },
-  { qty: '2', label: 'Short videos (8s)' },
+  { qty: '2', label: 'Videos (20s)' },
   { qty: '—', label: "Occasion posts for that week's festivals and awareness days" },
 ];
 

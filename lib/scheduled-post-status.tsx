@@ -214,7 +214,7 @@ export function generatedByLabel(value: string | undefined): string | null {
     case 'product-advert':
       return 'Product Posts';
     case 'video-generation':
-      return 'Short Videos';
+      return 'Videos';
     case 'scheduler':
       return 'Schedule a Post';
     case 'instant-generation':

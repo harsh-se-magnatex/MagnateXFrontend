@@ -84,7 +84,7 @@ export default function PricingPage() {
   /** "Studio" = manual mode (you curate every post). "AI" = auto mode
    *  (daily orchestrator generates posts automatically). Pricing + credit
    *  counts differ between the two within the same tier. */
-  const [planMode, setPlanMode] = useState<PlanMode>('AI');
+  const [planMode, setPlanMode] = useState<PlanMode>('AutoPilot');
   const visiblePlans = pricingPlansForMode(planMode);
   const signedIn = useServerSession() === true;
 
@@ -305,7 +305,7 @@ export default function PricingPage() {
               aria-label="Plan mode"
               className="mx-auto mb-8 flex w-full max-w-fit items-center justify-center gap-1 rounded-full border border-border/60 bg-muted/40 p-1 backdrop-blur-sm"
             >
-              {(['AI','Studio'] as const).map((mode) => {
+              {(['AutoPilot','Studio'] as const).map((mode) => {
                 const selected = planMode === mode;
                 const label = mode === 'Studio' ? 'Studio' : 'AI';
                 const sublabel =
@@ -372,9 +372,6 @@ export default function PricingPage() {
                   <h2 className="text-lg font-extrabold tracking-tight text-foreground">
                     {p.name}
                   </h2>
-                  <div className="mt-1 font-(--font-dm-sans) text-sm leading-snug text-muted-foreground">
-                    {p.subtitle}
-                  </div>
                   <div className="mb-6 mt-5">
                     {!p.comingSoon && (p.originalPrice || p.discountLabel) ? (
                       <div className="mb-2 flex items-center gap-2 font-(--font-dm-sans)">

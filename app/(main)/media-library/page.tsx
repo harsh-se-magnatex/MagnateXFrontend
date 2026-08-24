@@ -94,8 +94,8 @@ const SOURCE_OPTIONS: {
   },
   {
     value: 'videoGeneration',
-    label: 'Short Videos',
-    description: 'Videos from Short Videos',
+    label: 'Videos',
+    description: 'Videos from Videos',
   },
   {
     value: 'eventPosts',
@@ -135,7 +135,7 @@ function generatedByForCollection(collection: MediaSource): string | null {
     case 'productadvert':
       return generatedByLabel('product-advert');
     case 'videoGeneration':
-      return 'Short Videos';
+      return 'Videos';
     case 'carouselGeneratedPosts':
       return generatedByLabel('carousel-engine');
     case 'eventPosts':
@@ -806,7 +806,7 @@ export default function MediaLibraryPage() {
       return 'Carousels from Carousel Posts appear here after generation.';
     }
     if (source === 'videoGeneration') {
-      return 'Videos from Short Videos appear here after generation.';
+      return 'Videos from Videos appear here after generation.';
     }
     if (source === 'eventPosts') {
       return 'Occasion posts with images are listed here.';

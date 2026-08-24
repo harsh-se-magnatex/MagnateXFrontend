@@ -483,7 +483,7 @@ export default function AutomationPreferencePage() {
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="mb-8">
         <h1 className={workspacePageTitleClass}>
-          Automation Preferences
+          AutoPilot Preferences
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Configure how SocioGenie generated content behaves, default languages,

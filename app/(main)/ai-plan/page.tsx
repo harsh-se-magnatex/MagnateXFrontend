@@ -51,7 +51,7 @@ function kindLabel(kind: AIPlanGeneratedKind | string): string {
     case 'campaign':
       return workspacePageTitle(WORKSPACE_NAV_HREFS.createCampaign);
     case 'ai-engine':
-      return workspacePageTitle(WORKSPACE_NAV_HREFS.quickCreate);
+      return 'AutoPilot';
     case 'bulk-create':
       return workspacePageTitle(WORKSPACE_NAV_HREFS.quickCreate);
     case 'quick-create':
@@ -173,6 +173,9 @@ function entriesForSlot(args: {
   generated: AIPlanGeneratedItem[];
   upcoming: AIPlanUpcomingItem[];
 }): CellEntry[] {
+  const hasFestivalPost = [...args.generated, ...args.upcoming].some(
+    (item) => item.kind === 'festival' || item.kind === 'festive'
+  );
   const generated: CellEntry[] = args.generated.map((item) => {
     const isTerminal = isTerminalGeneratedStatus(item.status);
     return {
@@ -195,23 +198,25 @@ function entriesForSlot(args: {
 
   // Keep sibling upcoming cards visible (e.g. festival still pending after a
   // planned Force Run on the same date).
-  const upcoming: CellEntry[] = args.upcoming.map((item) => {
-    const suppliedLabel = item.label.trim();
-    const isOccasion = item.kind === 'festival';
-    return {
-      kind: item.kind,
-      label:
-        item.kind === 'campaign' && suppliedLabel
-          ? suppliedLabel
-          : kindLabel(item.kind),
-      note:
-        (isOccasion ? suppliedLabel : item.note?.trim()) || undefined,
-      href: null,
-      source: 'upcoming' as const,
-      alreadyGenerated: hasGeneratedCounterpart(args.generated, item.kind),
-      ...(item.eventId ? { eventId: item.eventId } : {}),
-    };
-  });
+  const upcoming: CellEntry[] = args.upcoming
+    .filter((item) => !hasFestivalPost || item.kind !== 'empty')
+    .map((item) => {
+      const suppliedLabel = item.label.trim();
+      const isOccasion = item.kind === 'festival';
+      return {
+        kind: item.kind,
+        label:
+          item.kind === 'campaign' && suppliedLabel
+            ? suppliedLabel
+            : kindLabel(item.kind),
+        note: (isOccasion ? suppliedLabel : item.note?.trim()) || undefined,
+        href: null,
+        source: 'upcoming' as const,
+        status: item.status,
+        alreadyGenerated: hasGeneratedCounterpart(args.generated, item.kind),
+        ...(item.eventId ? { eventId: item.eventId } : {}),
+      };
+    });
 
   if (generated.length === 0) return upcoming;
   if (upcoming.length === 0) return generated;
@@ -290,9 +295,10 @@ function PlatformCell({
         });
         const isRunning =
           runningForceRunKeys.has(runKey) ||
-          (sharedVideoRunning && entry.kind === 'video-generation');
+          (sharedVideoRunning && entry.kind === 'video-generation') ||
+          entry.status === 'enqueued';
         const displayStatus =
-          isRunning || entry.status === 'Generating'
+          isRunning || entry.status === 'enqueued'
             ? 'Generating'
             : entry.status ??
               (entry.source === 'upcoming' && entry.kind !== 'empty'
@@ -677,6 +683,19 @@ export default function AIPlanPage() {
     });
   }, [days, platforms]);
 
+  const hasEnqueuedCells = useMemo(
+    () =>
+      days.some((day) =>
+        Object.values(day.byPlatform).some((slot) =>
+          Boolean(
+            slot?.upcoming.some((item) => item.status === 'enqueued') ||
+            slot?.generated.some((item) => item.status === 'queued')
+          )
+        )
+      ),
+    [days]
+  );
+
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = opts?.silent === true;
     if (!silent) {
@@ -875,12 +894,12 @@ export default function AIPlanPage() {
   );
 
   useEffect(() => {
-    if (runningForceRunKeys.size === 0) return;
+    if (runningForceRunKeys.size === 0 && !hasEnqueuedCells) return;
     const id = window.setInterval(() => {
       void load({ silent: true });
     }, 4000);
     return () => window.clearInterval(id);
-  }, [runningForceRunKeys.size, load]);
+  }, [hasEnqueuedCells, runningForceRunKeys.size, load]);
 
   useEffect(() => {
     if (authLoading || creditsLoading) return;
@@ -892,7 +911,6 @@ export default function AIPlanPage() {
     if (initialLoadUidRef.current === user.uid) return;
     initialLoadUidRef.current = user.uid;
     // Initial API hydration intentionally owns this page's loading state.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [authLoading, creditsLoading, user, planInactive, hasAccess, load]);
 
@@ -1018,8 +1036,8 @@ export default function AIPlanPage() {
             Generate your AI Plan calendar
           </h2>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            We’ll allocate Create Post, Short Videos, Carousel Posts,
-            Occasion Posts, and Campaigns across your current plan.
+            We’ll allocate Create Post, Videos, Carousel Posts, Occasion Posts,
+            and Campaigns across your current plan.
           </p>
           <button
             type="button"
@@ -1066,7 +1084,7 @@ export default function AIPlanPage() {
           {isAuto ? (
             <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
               Tip: hover over a cell for details. Force Run appears on planned
-              Campaigns, Create Post, Short Videos, Carousel Posts, or Occasion Posts
+              Campaigns, Create Post, Videos, Carousel Posts, or Occasion Posts
               Studio cells — it hides after Force Run, when content is already
               generating/generated, or when the post was removed or rejected by
               the user.

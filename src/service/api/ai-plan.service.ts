@@ -2,6 +2,35 @@ import axiosClient from '@/lib/axios';
 
 export type AIPlanPlatform = 'facebook' | 'instagram' | 'linkedin';
 export type AIPlanGeneratedKind = 'campaign' | 'ai-engine' | 'quick-create' | 'product-advert' | 'video-generation' | 'carousel' | 'festive' | 'other';
+export type AIPlanCell = {
+  id: string;
+  date: string;
+  platform: AIPlanPlatform;
+  kind: string;
+  status: string;
+  userId?: string;
+  cycleId?: string;
+  runKey?: string;
+  reason?: string;
+  briefKey?: string;
+  videoVariant?: string;
+  sharedVideoKey?: string;
+  targetPlatforms?: AIPlanPlatform[];
+  updatedAt?: unknown;
+  festivals?: Array<{ id: string; name: string; status?: string }>;
+  campaign?: {
+    dayNumber?: number;
+    title?: string;
+    reference?: string;
+    caption?: string | null;
+    theme?: string;
+    description?: string | null;
+    goal?: string | null;
+    windowStart?: string;
+    windowEnd?: string;
+    batchId?: string;
+  };
+};
 export type AIPlanGeneratedItem = {
   kind: AIPlanGeneratedKind;
   status: 'draft' | 'scheduled' | 'queued' | 'removed' | 'rejected' | 'rejected-by-user' | 'rejected-by-admin';
@@ -9,12 +38,29 @@ export type AIPlanGeneratedItem = {
   captionPreview?: string;
   scheduledPostId?: string;
   draftId?: string;
+  contentId?: string;
+  source?: string;
+  cell?: AIPlanCell;
+  raw?: RawAIPlanContent;
 };
 export type AIPlanUpcomingItem = {
   kind: 'festival' | 'ai-engine' | 'quick-create' | 'campaign' | 'video-generation' | 'carousel' | 'empty';
   label: string;
   note?: string;
+  status?: string;
   eventId?: string;
+  cellId?: string;
+  date?: string;
+  platform?: AIPlanPlatform;
+  rawKind?: string;
+  runKey?: string;
+  cycleId?: string;
+  userId?: string;
+  updatedAt?: unknown;
+  campaign?: AIPlanCell['campaign'];
+  festivals?: AIPlanCell['festivals'];
+  targetPlatforms?: AIPlanCell['targetPlatforms'];
+  cell?: AIPlanCell;
 };
 export type AIPlanDay = {
   date: string;
@@ -32,17 +78,20 @@ type RawAIPlan = {
   plan: { id: string; displayName: string; platformLimit: number };
   connectionState: Record<AIPlanPlatform, { connected: boolean; status?: string }>;
   cycle: { id: string } | null;
-  cells: Array<{
-    id: string;
-    date: string;
-    platform: AIPlanPlatform;
-    kind: string;
-    status: string;
-    reason?: string;
-    festivals?: Array<{ id: string; name: string }>;
-    campaign?: { dayNumber?: number; title?: string; theme?: string; windowStart?: string; windowEnd?: string };
-  }>;
-  content: Array<{ id: string; platform: AIPlanPlatform; lifecycle: string; caption?: string; message?: string; eventName?: string; source?: string; targetDate?: string; aiPlan?: { cellId?: string } }>;
+  cells: AIPlanCell[];
+  content: RawAIPlanContent[];
+};
+
+type RawAIPlanContent = {
+  id: string;
+  platform: AIPlanPlatform;
+  lifecycle: string;
+  caption?: string;
+  message?: string;
+  eventName?: string;
+  source?: string;
+  targetDate?: string;
+  aiPlan?: { cellId?: string };
 };
 
 export type AIPlanResponse = {
@@ -108,11 +157,46 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
           title: item.eventName,
           captionPreview: item.caption ?? item.message,
           scheduledPostId: item.id,
+          contentId: item.id,
+          source: item.source,
+          cell,
+          raw: item,
         }));
+      for (const festival of cell.festivals ?? []) {
+        const festivalStatus = String(festival.status ?? '').toLowerCase();
+        if (festivalStatus === 'done') {
+          generated.push({
+            kind: 'festive',
+            status: 'scheduled',
+            title: festival.name,
+            cell,
+          });
+        }
+      }
+      if (
+        cell.status === 'done' &&
+        !generated.some(
+          (item) => item.kind !== 'festive' && item.kind === upcomingKind(cell.kind)
+        )
+      ) {
+        generated.push({
+          kind: upcomingKind(cell.kind) as AIPlanGeneratedKind,
+          status: 'scheduled',
+          title:
+            cell.kind === 'campaign'
+              ? cell.campaign?.title
+              : kindLabelFromCellKind(cell.kind),
+          captionPreview: cell.reason,
+          cell,
+        });
+      }
+      const generatedForPlannedCell = generated.filter(
+        (item) => item.kind !== 'festive'
+      );
       byPlatform[platform] = {
         generated,
         upcoming: [
-          ...(generated.length || (cell.status !== 'planned' && cell.status !== 'enqueued')
+          ...(generatedForPlannedCell.length || (cell.status !== 'planned' && cell.status !== 'enqueued' && cell.status !== 'failed')
             ? []
             : [{
                 kind: upcomingKind(cell.kind),
@@ -121,12 +205,41 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
                     ? cell.campaign?.title || `Campaigns · Day ${cell.campaign?.dayNumber ?? ''}`.trim()
                     : cell.kind,
                 note: cell.reason,
+                status: cell.status,
+                cellId: cell.id,
+                date: cell.date,
+                platform: cell.platform,
+                rawKind: cell.kind,
+                runKey: cell.runKey,
+                cycleId: cell.cycleId,
+                userId: cell.userId,
+                updatedAt: cell.updatedAt,
+                campaign: cell.campaign,
+                festivals: cell.festivals,
+                targetPlatforms: cell.targetPlatforms,
+                cell,
               }]),
-          ...(cell.status === 'planned' || cell.status === 'enqueued'
-            ? (cell.festivals ?? []).map((festival) => ({
+          ...(cell.status === 'planned' || cell.status === 'enqueued' || cell.status === 'failed'
+            ? (cell.festivals ?? [])
+                .filter((festival) => {
+                  const status = String(festival.status ?? cell.status).toLowerCase();
+                  return status !== 'done';
+                })
+                .map((festival) => ({
                 kind: 'festival' as const,
                 label: festival.name,
                 eventId: festival.id,
+                status: festival.status ?? cell.status,
+                cellId: cell.id,
+                date: cell.date,
+                platform: cell.platform,
+                rawKind: cell.kind,
+                runKey: cell.runKey,
+                cycleId: cell.cycleId,
+                userId: cell.userId,
+                updatedAt: cell.updatedAt,
+                festivals: cell.festivals,
+                cell,
               }))
             : []),
         ],
@@ -148,6 +261,15 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
     connectionState: raw.connectionState,
     nextCycle: raw.aiPlan.nextCycle,
   };
+}
+
+function kindLabelFromCellKind(kind: string): string {
+  if (kind === 'video') return 'Video generated';
+  if (kind === 'quick-create') return 'Content Studio generated';
+  if (kind === 'ai-engine') return 'AutoPilot generated';
+  if (kind === 'carousel') return 'Carousel generated';
+  if (kind === 'campaign') return 'Campaign generated';
+  return 'Generated';
 }
 
 export async function getAIPlanApi(): Promise<AIPlanResponse> {
