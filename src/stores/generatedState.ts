@@ -49,6 +49,7 @@ type InstantGeneratedState = {
   setSelectedRenderedImage: (
     selectedRenderedImage: StudioRenderedImage | null
   ) => void;
+  updateRenderedImageCaption: (platform: string, caption: string) => void;
 
   history: CreatedContent[];
   pushHistory: (item: CreatedContent) => void;
@@ -106,6 +107,21 @@ export const useInstantGeneratedState = create<InstantGeneratedState>()(
     selectedRenderedImage: null,
     setSelectedRenderedImage: (selectedRenderedImage) =>
       set({ selectedRenderedImage }),
+    updateRenderedImageCaption: (platform, caption) =>
+      set((state) => {
+        if (!state.createdContent) return state;
+        const renderedImages = state.createdContent.renderedImages.map((image) =>
+          image.platform === platform ? { ...image, caption } : image
+        );
+        const selectedRenderedImage =
+          state.selectedRenderedImage?.platform === platform
+            ? { ...state.selectedRenderedImage, caption }
+            : state.selectedRenderedImage;
+        return {
+          createdContent: { ...state.createdContent, renderedImages },
+          selectedRenderedImage,
+        };
+      }),
 
     history: [],
     pushHistory: (item) =>

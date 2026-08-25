@@ -795,7 +795,10 @@ export default function PostSchedulePage() {
                   imageFilePath: post.imageFilePath,
                   imageUrl: post.imageUrl,
                 }),
-          message: post.message || message,
+          // In the single-prefill flow the textarea is the source of truth.
+          // The gallery caption is only the initial value and must not override
+          // an edit made in the scheduler.
+          message: isMultiPrefilledSchedule ? post.message : message,
           time: scheduledAtIso,
           platform: post.platform,
           ...(post.source ? { source: post.source } : {}),
@@ -1128,9 +1131,23 @@ export default function PostSchedulePage() {
                         {formatPlatformLabel(post.platform)}
                       </span>
                     </p>
-                    <p className="mt-2 text-xs text-muted-foreground whitespace-pre-line leading-relaxed line-clamp-6">
-                      {post.message || 'No caption provided'}
-                    </p>
+                    <textarea
+                      aria-label={`${formatPlatformLabel(post.platform)} caption`}
+                      value={post.message}
+                      onChange={(event) => {
+                        const nextMessage = event.target.value;
+                        setPrefilledPosts((current) =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === idx
+                              ? { ...item, message: nextMessage }
+                              : item
+                          )
+                        );
+                      }}
+                      placeholder="Add a caption..."
+                      rows={5}
+                      className={cn(inputBase, 'mt-2 min-h-[110px] resize-y text-xs leading-relaxed')}
+                    />
                   </div>
                 ))}
               </div>

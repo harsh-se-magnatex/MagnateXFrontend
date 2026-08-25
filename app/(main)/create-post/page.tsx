@@ -327,6 +327,9 @@ export default function AIContentPage() {
   const setSelectedRenderedImage = useInstantGeneratedState(
     (state) => state.setSelectedRenderedImage
   );
+  const updateRenderedImageCaption = useInstantGeneratedState(
+    (state) => state.updateRenderedImageCaption
+  );
 
   const clearOutput = useInstantGeneratedState((state) => state.clearOutput);
   // On mount: clear in-memory output older than 2 hours within the same tab session.
@@ -1480,9 +1483,15 @@ export default function AIContentPage() {
                           }
                         />
                       </div>
-                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-                        {asset.caption}
-                      </p>
+                       <textarea
+                         aria-label={`${asset.platform} generated caption`}
+                         value={asset.caption}
+                         onChange={(event) =>
+                           updateRenderedImageCaption(asset.platform, event.target.value)
+                         }
+                         rows={6}
+                         className={cn(inputBase, 'resize-y text-sm leading-relaxed')}
+                       />
                     </div>
                   ) : (
                     <p className="text-sm text-amber-300 bg-amber-500/10 rounded-lg px-3 py-2">
@@ -1559,11 +1568,15 @@ export default function AIContentPage() {
                           />
                         </div>
                       ) : null}
-                      <ExpandableCaption
-                        text={asset.caption}
-                        clampLines={3}
-                        className="mt-2 text-xs text-foreground"
-                      />
+                       <textarea
+                         aria-label={`${asset.platform} generated caption`}
+                         value={asset.caption}
+                         onChange={(event) =>
+                           updateRenderedImageCaption(asset.platform, event.target.value)
+                         }
+                         rows={5}
+                         className={cn(inputBase, 'mt-2 resize-y text-xs leading-relaxed')}
+                       />
                     </div>
                   ))}
                 </div>
