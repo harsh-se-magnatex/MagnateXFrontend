@@ -81,6 +81,8 @@ function statusLabel(status: AIPlanGeneratedItem['status']): string {
       return 'Draft';
     case 'queued':
       return 'Generating';
+    case 'failed':
+      return 'Failed';
     case 'scheduled':
       return 'Scheduled';
     case 'removed':
@@ -142,6 +144,22 @@ type CellEntry = {
   alreadyGenerated?: boolean;
 };
 
+type GlobalForceRunTarget = {
+  date: string;
+  platform: AIPlanPlatform;
+  kind: AIPlanUpcomingItem['kind'];
+  eventId?: string;
+};
+
+type GlobalForceRunProgress = {
+  phase: 'queueing' | 'generating';
+  completed: number;
+  total: number;
+  queued: number;
+  failed: number;
+  targets: GlobalForceRunTarget[];
+};
+
 /** Kinds that Force Run can enqueue (including campaign). */
 function canForceRunKind(kind: string): boolean {
   return (
@@ -169,6 +187,48 @@ function hasGeneratedCounterpart(
   return generated.some((item) => matchingKinds.includes(item.kind));
 }
 
+function globalForceRunTargets(args: {
+  days: AIPlanDay[];
+  platforms: AIPlanPlatform[];
+  todayIso: string;
+}): GlobalForceRunTarget[] {
+  const targets: GlobalForceRunTarget[] = [];
+  const seen = new Set<string>();
+  for (const day of args.days) {
+    if (day.date < args.todayIso) continue;
+    for (const platform of args.platforms) {
+      const slot = day.byPlatform[platform];
+      if (!slot) continue;
+      for (const item of slot.upcoming) {
+        const status = String(item.status ?? '').toLowerCase();
+        if (
+          !canForceRunKind(item.kind) ||
+          item.kind === 'empty' ||
+          hasGeneratedCounterpart(slot.generated, item.kind) ||
+          status === 'enqueued' ||
+          status === 'done'
+        ) {
+          continue;
+        }
+        // One video job is shared across all selected platforms.
+        const key =
+          item.kind === 'video-generation'
+            ? `${day.date}:video-generation`
+            : `${day.date}:${platform}:${item.kind}:${item.eventId ?? ''}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        targets.push({
+          date: day.date,
+          platform,
+          kind: item.kind,
+          ...(item.eventId ? { eventId: item.eventId } : {}),
+        });
+      }
+    }
+  }
+  return targets;
+}
+
 function entriesForSlot(args: {
   generated: AIPlanGeneratedItem[];
   upcoming: AIPlanUpcomingItem[];
@@ -178,11 +238,12 @@ function entriesForSlot(args: {
   );
   const generated: CellEntry[] = args.generated.map((item) => {
     const isTerminal = isTerminalGeneratedStatus(item.status);
+    const hideDetail = isTerminal || item.status === 'failed';
     return {
       kind: item.kind,
       label: kindLabel(item.kind),
       status: statusLabel(item.status),
-      note: isTerminal
+      note: hideDetail
         ? undefined
         : item.title?.trim() || item.captionPreview?.trim() || undefined,
       href: isTerminal
@@ -203,13 +264,16 @@ function entriesForSlot(args: {
     .map((item) => {
       const suppliedLabel = item.label.trim();
       const isOccasion = item.kind === 'festival';
+      const isFailed = String(item.status ?? '').toLowerCase() === 'failed';
       return {
         kind: item.kind,
         label:
           item.kind === 'campaign' && suppliedLabel
             ? suppliedLabel
             : kindLabel(item.kind),
-        note: (isOccasion ? suppliedLabel : item.note?.trim()) || undefined,
+        note:
+          (isOccasion ? suppliedLabel : isFailed ? undefined : item.note?.trim()) ||
+          undefined,
         href: null,
         source: 'upcoming' as const,
         status: item.status,
@@ -296,9 +360,10 @@ function PlatformCell({
         const isRunning =
           runningForceRunKeys.has(runKey) ||
           (sharedVideoRunning && entry.kind === 'video-generation') ||
-          entry.status === 'enqueued';
+          entry.status === 'enqueued' ||
+          entry.status === 'queued';
         const displayStatus =
-          isRunning || entry.status === 'enqueued'
+          isRunning || entry.status === 'enqueued' || entry.status === 'queued'
             ? 'Generating'
             : entry.status ??
               (entry.source === 'upcoming' && entry.kind !== 'empty'
@@ -473,9 +538,15 @@ function AIPlanSheet({
                     kind: 'video-generation',
                   })
                 : '';
-              const sharedVideoRunning = runningForceRunKeys.has(
-                sharedVideoRunKey
-              );
+              const sharedVideoRunning =
+                runningForceRunKeys.has(sharedVideoRunKey) ||
+                platforms.some((platform) =>
+                  entriesByPlatform[platform].some(
+                    (entry) =>
+                      entry.kind === 'video-generation' &&
+                      (entry.status === 'enqueued' || entry.status === 'queued')
+                  )
+                );
 
               return (
                 <tr
@@ -650,6 +721,8 @@ export default function AIPlanPage() {
   const [platformLimit, setPlatformLimit] = useState(0);
   const [platformChoice, setPlatformChoice] = useState<AIPlanPlatform[]>([]);
   const [savingPlatforms, setSavingPlatforms] = useState(false);
+  const [globalForceRunProgress, setGlobalForceRunProgress] =
+    useState<GlobalForceRunProgress | null>(null);
   const initialLoadUidRef = useRef<string | null>(null);
 
   const isAuto = billing?.mode === 'auto';
@@ -893,6 +966,85 @@ export default function AIPlanPage() {
     [load, todayIso]
   );
 
+  const handleGlobalForceRun = useCallback(async () => {
+    const targets = globalForceRunTargets({ days, platforms, todayIso });
+    if (targets.length === 0) {
+      toast.error('There is no remaining AI Plan content available to Force Run');
+      return;
+    }
+
+    let queued = 0;
+    let failed = 0;
+    setGlobalForceRunProgress({
+      phase: 'queueing',
+      completed: 0,
+      total: targets.length,
+      queued,
+      failed,
+      targets: [],
+    });
+    const queuedTargets: GlobalForceRunTarget[] = [];
+    try {
+      for (let index = 0; index < targets.length; index += 1) {
+        const target = targets[index];
+        try {
+          await forceRunAIPlanApi(target);
+          queued += 1;
+          queuedTargets.push(target);
+        } catch {
+          // A card can become unavailable while the batch is being queued;
+          // continue with the rest of the plan and report the aggregate.
+          failed += 1;
+        }
+        setGlobalForceRunProgress({
+          phase: 'queueing',
+          completed: index + 1,
+          total: targets.length,
+          queued,
+          failed,
+          targets: [],
+        });
+      }
+      await load({ silent: true });
+      if (queuedTargets.length === 0) {
+        setGlobalForceRunProgress(null);
+      } else {
+        setGlobalForceRunProgress({
+          phase: 'generating',
+          // Failed requests are terminal; the remaining percentage tracks
+          // the jobs that were successfully queued.
+          completed: failed,
+          total: targets.length,
+          queued,
+          failed,
+          targets: queuedTargets,
+        });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Force Run failed';
+      toast.error(message);
+      setGlobalForceRunProgress(null);
+    }
+  }, [days, load, platforms, todayIso]);
+
+  useEffect(() => {
+    if (globalForceRunProgress?.phase !== 'generating') return;
+    const generatedCount = globalForceRunProgress.targets.filter((target) =>
+      isForceRunTargetComplete(days, target)
+    ).length;
+    const completed = globalForceRunProgress.failed + generatedCount;
+    if (completed < globalForceRunProgress.total) {
+      if (completed !== globalForceRunProgress.completed) {
+        setGlobalForceRunProgress({ ...globalForceRunProgress, completed });
+      }
+      return;
+    }
+    if (globalForceRunProgress.failed === 0) {
+      toast.success('All remaining AI Plan content has finished generating');
+    }
+    setGlobalForceRunProgress(null);
+  }, [days, globalForceRunProgress]);
+
   useEffect(() => {
     if (runningForceRunKeys.size === 0 && !hasEnqueuedCells) return;
     const id = window.setInterval(() => {
@@ -944,6 +1096,35 @@ export default function AIPlanPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-4 py-8 sm:px-6">
+      {globalForceRunProgress ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-background/85 px-6 backdrop-blur-sm"
+          role="alertdialog"
+          aria-modal="true"
+          aria-label="Generating all AI Plan content"
+        >
+          <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 text-center shadow-2xl">
+            <Loader2 className="mx-auto h-9 w-9 animate-spin text-primary" aria-hidden />
+            <h2 className="mt-4 text-lg font-bold text-foreground">Loading</h2>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-white transition-all duration-300"
+                style={{
+                  width: `${Math.round((globalForceRunProgress.completed / globalForceRunProgress.total) * 100)}%`,
+                }}
+              />
+            </div>
+            <p className="mt-3 text-sm font-semibold tabular-nums text-foreground">
+              {Math.round(
+                (globalForceRunProgress.completed /
+                  globalForceRunProgress.total) *
+                  100
+              )}
+              % · {globalForceRunProgress.completed} of {globalForceRunProgress.total}
+            </p>
+          </div>
+        </div>
+      ) : null}
       <header className="space-y-2">
         <div className="flex items-center gap-2 text-primary">
           <CalendarRange className="h-5 w-5" />
@@ -1066,6 +1247,17 @@ export default function AIPlanPage() {
       (!isAuto || calendarSeeded) ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 px-0.5">
+            {isAuto ? (
+              <button
+                type="button"
+                onClick={() => void handleGlobalForceRun()}
+                disabled={globalForceRunProgress !== null}
+                className="mr-auto inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Play className="h-3.5 w-3.5" aria-hidden />
+                Force Run all remaining
+              </button>
+            ) : null}
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Legend
             </span>

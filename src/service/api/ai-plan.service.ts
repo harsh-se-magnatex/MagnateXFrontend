@@ -33,7 +33,7 @@ export type AIPlanCell = {
 };
 export type AIPlanGeneratedItem = {
   kind: AIPlanGeneratedKind;
-  status: 'draft' | 'scheduled' | 'queued' | 'removed' | 'rejected' | 'rejected-by-user' | 'rejected-by-admin';
+  status: 'draft' | 'scheduled' | 'queued' | 'failed' | 'removed' | 'rejected' | 'rejected-by-user' | 'rejected-by-admin';
   title?: string;
   captionPreview?: string;
   scheduledPostId?: string;
@@ -110,7 +110,7 @@ export type AIPlanResponse = {
 };
 
 function generatedStatus(value: string): AIPlanGeneratedItem['status'] {
-  if (value === 'scheduled' || value === 'draft' || value === 'removed' || value === 'rejected') return value;
+  if (value === 'scheduled' || value === 'draft' || value === 'failed' || value === 'removed' || value === 'rejected') return value;
   return 'queued';
 }
 
@@ -219,17 +219,15 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
                 targetPlatforms: cell.targetPlatforms,
                 cell,
               }]),
-          ...(cell.status === 'planned' || cell.status === 'enqueued' || cell.status === 'failed'
-            ? (cell.festivals ?? [])
-                .filter((festival) => {
-                  const status = String(festival.status ?? cell.status).toLowerCase();
-                  return status !== 'done';
-                })
-                .map((festival) => ({
+          ...(cell.festivals ?? [])
+            .filter(
+              (festival) => String(festival.status ?? '').toLowerCase() !== 'done'
+            )
+            .map((festival) => ({
                 kind: 'festival' as const,
                 label: festival.name,
                 eventId: festival.id,
-                status: festival.status ?? cell.status,
+                status: festival.status ?? 'planned',
                 cellId: cell.id,
                 date: cell.date,
                 platform: cell.platform,
@@ -240,8 +238,7 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
                 updatedAt: cell.updatedAt,
                 festivals: cell.festivals,
                 cell,
-              }))
-            : []),
+              })),
         ],
       };
     }

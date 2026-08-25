@@ -22,6 +22,7 @@ import {
   type TimestampInput,
 } from '@/lib/user-timezone';
 import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
+import { CarouselSwipePreview } from '@/components/shared/CarouselSwipePreview';
 import {
   hasSchedulableMediaPreview,
   resolveSchedulableMediaPreview,
@@ -49,6 +50,13 @@ export type PendingScheduledPost = {
   imageUrl: string | null;
   videoUrl?: string | null;
   videoPosterUrl?: string | null;
+  slideCount?: number | null;
+  carouselSlides?: Array<{
+    index?: number;
+    imageUrl?: string | null;
+    imageFilePath?: string | null;
+    headline?: string | null;
+  }> | null;
   scheduleAt: FirestoreTimestamp;
   platform: string;
   GeneratedBy?: string;
@@ -406,6 +414,34 @@ export default function MonitoringPage() {
                       {(() => {
                         const mediaPreview =
                           resolveSchedulableMediaPreview(post);
+                        const carouselSlides = Array.isArray(post.carouselSlides)
+                          ? post.carouselSlides
+                              .map((slide, index) => ({
+                                index: slide.index ?? index + 1,
+                                imageUrl: String(slide.imageUrl ?? '').trim(),
+                                headline: slide.headline ?? null,
+                              }))
+                              .filter((slide) => slide.imageUrl)
+                          : [];
+                        const isCarousel =
+                          post.mediaType === 'carousel' ||
+                          carouselSlides.length >= 2;
+                        if (isCarousel && carouselSlides.length > 0) {
+                          return (
+                            <div
+                              className="sm:w-32 shrink-0"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <CarouselSwipePreview
+                                slides={carouselSlides}
+                                imageClassName="h-24 rounded-lg object-cover"
+                              />
+                              <p className="mt-1 text-[10px] font-medium text-muted-foreground">
+                                {post.slideCount ?? carouselSlides.length} slides
+                              </p>
+                            </div>
+                          );
+                        }
                         if (!hasSchedulableMediaPreview(mediaPreview)) {
                           return null;
                         }
@@ -544,6 +580,17 @@ function DetailModal({
   const scheduleAt = formatTimestamp(post.scheduleAt as FirestoreTimestamp);
   const createdAt = formatTimestamp(post.createdAt as FirestoreTimestamp);
   const mediaPreview = resolveSchedulableMediaPreview(post);
+  const carouselSlides = Array.isArray(post.carouselSlides)
+    ? post.carouselSlides
+        .map((slide, index) => ({
+          index: slide.index ?? index + 1,
+          imageUrl: String(slide.imageUrl ?? '').trim(),
+          headline: slide.headline ?? null,
+        }))
+        .filter((slide) => slide.imageUrl)
+    : [];
+  const isCarousel =
+    post.mediaType === 'carousel' || carouselSlides.length >= 2;
   const hasMedia = hasSchedulableMediaPreview(mediaPreview);
   const openUrl = mediaPreview.isVideo
     ? mediaPreview.videoUrl
@@ -590,7 +637,18 @@ function DetailModal({
           </button>
         </div>
         <div className="p-4 space-y-4">
-          {hasMedia && openUrl ? (
+          {isCarousel && carouselSlides.length > 0 ? (
+            <div>
+              <p className="mb-1 text-xs font-medium text-muted-foreground">
+                Carousel · {post.slideCount ?? carouselSlides.length} slides
+              </p>
+              <CarouselSwipePreview
+                slides={carouselSlides}
+                showCaptions
+                onImageClick={(url, alt) => imagePreview.open(url, alt)}
+              />
+            </div>
+          ) : hasMedia && openUrl ? (
             <div className="">
               <p className="text-xs font-medium text-muted-foreground mb-1">
                 {mediaPreview.isVideo ? 'Video' : 'Image'}
