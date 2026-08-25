@@ -15,7 +15,7 @@ const LOAD_BATCH_SIZE = 4;
 const LOAD_BATCH_SIZE_SLOW = 2;
 /** Hero scroll fade only after this many contiguous frames are ready. */
 const HERO_READY_FRAMES = 24;
-const FRAME_BASE_PATH_DESKTOP = '/frames-webp/frame_';
+const FRAME_BASE_PATH_DESKTOP = '/frames-webp-1440/frame_';
 const FRAME_BASE_PATH_MOBILE = '/frames-webp-mobile/frame_';
 
 function isMobileViewport(): boolean {
