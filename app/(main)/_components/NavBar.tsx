@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { handleSameHashLinkClick } from '@/lib/scroll-to-hash';
 import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import { useServerSession } from '@/hooks/useServerSession';
+import { lockBodyScroll } from '@/lib/body-scroll-lock';
 
 const NAV_ITEMS = [
   { label: 'Try it', href: '/try-it' },
@@ -35,11 +36,7 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
 
   useEffect(() => {
     if (!mobileNavOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return lockBodyScroll();
   }, [mobileNavOpen]);
 
   const closeMobileNav = () => setMobileNavOpen(false);

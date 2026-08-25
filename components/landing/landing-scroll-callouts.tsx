@@ -302,7 +302,7 @@ export function LandingScrollCallouts() {
               transition={{ duration: 0.5, ease: EASE }}
               className="pointer-events-auto flex w-full max-w-2xl flex-col items-center"
             >
-              {activeIndex > 0 && (
+              {activeIndex > 0 && !ctaActive && (
                 <motion.div layout transition={{ duration: 0.5, ease: EASE }} className="flex w-full flex-col gap-2.5">
                   <AnimatePresence>
                     {CALLOUTS.slice(0, Math.min(activeIndex, CALLOUTS.length)).map((callout) => (
@@ -350,6 +350,15 @@ export function LandingScrollCallouts() {
                     transition={{ duration: 0.5, ease: EASE }}
                     className="w-full"
                   >
+                    <motion.div
+                      layout
+                      variants={rowVariants}
+                      initial="hidden"
+                      animate="visible"
+                      className="landing-final-history-row mb-2.5"
+                    >
+                      <CompactRow callout={CALLOUTS[CALLOUTS.length - 1]} />
+                    </motion.div>
                     <StepConnector />
                     <motion.div
                       variants={cardVariants}

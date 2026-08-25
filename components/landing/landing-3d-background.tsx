@@ -5,11 +5,14 @@ import { getFrameScrubT } from '@/lib/landing-scroll';
 
 const TOTAL_FRAMES = 634;
 const LERP_SPEED = 0.22;
+/** Keep the initial visit responsive; extend this window as the user scrolls. */
+const INITIAL_PREFETCH_FRAMES = 18;
+const PREFETCH_AHEAD_FRAMES = 8;
 /** How many frames to fetch in parallel while filling the contiguous window. */
-const LOAD_BATCH_SIZE = 12;
+const LOAD_BATCH_SIZE = 4;
 /** Fewer parallel fetches on a `3g`-tier connection so the frame sequence
  *  doesn't starve fonts/JS/other requests of bandwidth. */
-const LOAD_BATCH_SIZE_SLOW = 4;
+const LOAD_BATCH_SIZE_SLOW = 2;
 /** Hero scroll fade only after this many contiguous frames are ready. */
 const HERO_READY_FRAMES = 24;
 const FRAME_BASE_PATH_DESKTOP = '/frames-webp/frame_';
@@ -75,7 +78,10 @@ export function Landing3DBackground({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', {
+      alpha: false,
+      desynchronized: true,
+    });
     if (!ctx) return;
 
     const basePath = isMobileViewport()
@@ -90,6 +96,7 @@ export function Landing3DBackground({
     let lastDrawnIndex = -1;
     let nextToLoad = 0;
     let inFlight = 0;
+    let loadLimit = INITIAL_PREFETCH_FRAMES;
     let cancelled = false;
     let rafId = 0;
 
@@ -104,8 +111,11 @@ export function Landing3DBackground({
 
     function scheduleLoads() {
       if (cancelled || singleFrameOnly) return;
-      while (inFlight < loadBatchSize && nextToLoad < TOTAL_FRAMES) {
+      while (inFlight < loadBatchSize && nextToLoad < loadLimit) {
         const frameIndex = nextToLoad++;
+        // A sudden scroll can request a frame out of order. Do not download
+        // that frame a second time when the sequential prefetch catches up.
+        if (images[frameIndex]) continue;
         inFlight++;
         const img = new Image();
         images[frameIndex] = img;
@@ -119,6 +129,32 @@ export function Landing3DBackground({
         img.onerror = settle;
         img.src = framePath(frameIndex, basePath);
       }
+    }
+
+    function requestFrame(frameIndex: number) {
+      if (
+        cancelled ||
+        singleFrameOnly ||
+        frameIndex < 0 ||
+        frameIndex >= TOTAL_FRAMES ||
+        images[frameIndex]
+      ) {
+        return;
+      }
+
+      const img = new Image();
+      images[frameIndex] = img;
+      img.onload = () => {
+        loaded[frameIndex] = 1;
+        advanceContiguous();
+        scheduleLoads();
+      };
+      img.onerror = () => {
+        // Allow a later scroll to retry a failed direct request.
+        images[frameIndex] = undefined;
+        scheduleLoads();
+      };
+      img.src = framePath(frameIndex, basePath);
     }
 
     if (!singleFrameOnly) {
@@ -140,7 +176,9 @@ export function Landing3DBackground({
     }
 
     function resize() {
-      const dprCap = isMobileViewport() ? 1.5 : 2;
+      // A 2x full-screen canvas quadruples the pixels every frame. 1.5x is
+      // visually indistinguishable here and substantially cheaper to redraw.
+      const dprCap = 1.5;
       const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -166,20 +204,41 @@ export function Landing3DBackground({
     }
 
     function animate() {
+      let jumpedToTarget = false;
       if (!reducedMotion && contiguousLoaded >= 0) {
         targetFrame = getFrameScrubT() * (TOTAL_FRAMES - 1);
+        const distance = Math.abs(targetFrame - currentFrame);
+
+        // Large wheel/touch jumps should follow the scroll immediately. The
+        // requested frame is fetched out of order while normal prefetching
+        // continues in the background.
+        if (distance > 36) {
+          currentFrame = targetFrame;
+          jumpedToTarget = true;
+          requestFrame(Math.round(targetFrame));
+        }
+        const requestedLimit = Math.min(
+          TOTAL_FRAMES,
+          Math.max(
+            INITIAL_PREFETCH_FRAMES,
+            Math.ceil(targetFrame) + PREFETCH_AHEAD_FRAMES
+          )
+        );
+        if (requestedLimit > loadLimit) {
+          loadLimit = requestedLimit;
+          scheduleLoads();
+        }
       }
 
-      currentFrame += (targetFrame - currentFrame) * LERP_SPEED;
+      if (!jumpedToTarget) {
+        currentFrame += (targetFrame - currentFrame) * LERP_SPEED;
+      }
       let idx = Math.round(currentFrame);
       if (idx < 0) idx = 0;
       if (idx >= TOTAL_FRAMES) idx = TOTAL_FRAMES - 1;
-      // Never scrub past the contiguous loaded window — holds last good frame.
-      if (contiguousLoaded >= 0) {
-        idx = Math.min(idx, contiguousLoaded);
-      }
-
-      const img = images[idx];
+      // Prefer the exact target when a direct jump request has completed;
+      // otherwise hold the newest contiguous frame that is ready.
+      const img = images[idx] ?? images[Math.min(idx, contiguousLoaded)];
       if (img?.naturalWidth && idx !== lastDrawnIndex) {
         drawFrame(img);
         lastDrawnIndex = idx;
@@ -202,15 +261,6 @@ export function Landing3DBackground({
         hero.style.transform = `translateY(${y}px) scale(${scale})`;
         hero.style.pointerEvents = o < 0.08 ? 'none' : 'auto';
       }
-
-      document.documentElement.style.setProperty(
-        '--landing-3d-frame-opacity',
-        '1'
-      );
-      document.documentElement.style.setProperty(
-        '--landing-3d-section-bg-opacity',
-        '0'
-      );
 
       rafId = requestAnimationFrame(animate);
     }

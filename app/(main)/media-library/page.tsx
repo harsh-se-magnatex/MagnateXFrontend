@@ -31,6 +31,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { lockBodyScroll } from '@/lib/body-scroll-lock';
 import { generatedByLabel } from '@/lib/scheduled-post-status';
 import {
   getGeneratedMediaLibraryApi,
@@ -254,11 +255,7 @@ function MediaDetailModal({
   const showResearch = hasViewableResearch(researchDetails);
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    return lockBodyScroll();
   }, []);
 
   return createPortal(
@@ -525,15 +522,14 @@ function CampaignDraftScheduleModal({
   const [scheduling, setScheduling] = useState(false);
 
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releaseBodyScroll = lockBodyScroll();
     const onKey = (e: globalThis.KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prev;
+      releaseBodyScroll();
     };
   }, [onClose]);
 

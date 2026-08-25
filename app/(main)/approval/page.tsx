@@ -21,6 +21,7 @@ import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { isPlanInactive } from '@/lib/plan-access';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
+import { lockBodyScroll } from '@/lib/body-scroll-lock';
 import {
   generatedByLabel,
   getDisplayStatus,
@@ -420,8 +421,7 @@ function DetailModal({
   }, []);
 
   useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releaseBodyScroll = lockBodyScroll();
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -430,7 +430,7 @@ function DetailModal({
     };
     window.addEventListener('keydown', onKeyDown, true);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      releaseBodyScroll();
       window.removeEventListener('keydown', onKeyDown, true);
     };
   }, [onClose]);

@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/accordion';
 import { ArrowRight, Dot } from 'lucide-react';
 import { useServerSession } from '@/hooks/useServerSession';
+import { lockBodyScroll } from '@/lib/body-scroll-lock';
 import {
   CREDIT_TOPUP_PACKS,
   pricingPlansForMode,
@@ -90,11 +91,7 @@ export default function PricingPage() {
 
   useEffect(() => {
     if (!mobileNavOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    return lockBodyScroll();
   }, [mobileNavOpen]);
 
   const closeMobileNav = () => setMobileNavOpen(false);

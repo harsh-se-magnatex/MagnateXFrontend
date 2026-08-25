@@ -12,6 +12,7 @@ import {
 } from '@/lib/generation-research';
 import { Button } from '@/components/ui/button';
 import { ResearchMarkdownContent } from '@/components/research-markdown-content';
+import { lockBodyScroll } from '@/lib/body-scroll-lock';
 
 type GenerationResearchDialogProps = {
   open: boolean;
@@ -45,15 +46,14 @@ export function GenerationResearchDialog({
 }: GenerationResearchDialogProps) {
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releaseBodyScroll = lockBodyScroll();
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
+      releaseBodyScroll();
     };
   }, [open, onClose]);
 

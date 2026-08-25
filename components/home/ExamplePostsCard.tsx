@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/popover';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
+import { lockBodyScroll } from '@/lib/body-scroll-lock';
 import {
   generateExamplePostsApi,
   getExamplePostsApi,
@@ -31,11 +32,7 @@ function ExamplePostDetailModal({
   onClose: () => void;
 }) {
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    return lockBodyScroll();
   }, []);
 
   return createPortal(

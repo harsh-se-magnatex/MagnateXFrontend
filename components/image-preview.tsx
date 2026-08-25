@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Expand, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { lockBodyScroll } from '@/lib/body-scroll-lock';
 
 /** Marker on `document.body` while a fullscreen preview is open. */
 export const IMAGE_PREVIEW_OPEN_BODY_ATTR = 'data-image-preview-open';
@@ -44,13 +45,12 @@ export function useImagePreview() {
       setPreviewUrl(null);
     };
 
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releaseBodyScroll = lockBodyScroll();
     window.addEventListener('keydown', onKeyDown, true);
 
     return () => {
       window.removeEventListener('keydown', onKeyDown, true);
-      document.body.style.overflow = prevOverflow;
+      releaseBodyScroll();
       document.body.removeAttribute(IMAGE_PREVIEW_OPEN_BODY_ATTR);
     };
   }, [previewUrl]);

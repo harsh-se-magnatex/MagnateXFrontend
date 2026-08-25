@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { lockBodyScroll } from '@/lib/body-scroll-lock';
 import {
   adminForceRunLockKey,
   isForceRunTargetComplete,
@@ -1215,8 +1216,7 @@ function PreviewModal({
   }, []);
 
   useEffect(() => {
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const releaseBodyScroll = lockBodyScroll();
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -1225,7 +1225,7 @@ function PreviewModal({
     };
     window.addEventListener('keydown', onKeyDown, true);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      releaseBodyScroll();
       window.removeEventListener('keydown', onKeyDown, true);
     };
   }, [onClose]);
