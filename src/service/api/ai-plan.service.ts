@@ -14,6 +14,7 @@ export type AIPlanCell = {
   reason?: string;
   briefKey?: string;
   videoVariant?: string;
+  videoUseAvatar?: boolean;
   sharedVideoKey?: string;
   targetPlatforms?: AIPlanPlatform[];
   updatedAt?: unknown;

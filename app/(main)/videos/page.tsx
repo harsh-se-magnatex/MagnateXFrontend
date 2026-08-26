@@ -2,17 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ImagePlus, Images, Trash2, UserRound } from 'lucide-react';
+import { ImagePlus, Images, Trash2 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import {
   fetchVideoGeneratorProfile,
   resolveFrameFile,
   startVideoGeneration,
 } from '@/src/service/api/video-generation.service';
-import {
-  setVideoAvatarPreference,
-  uploadVideoAvatar,
-} from '@/src/service/api/userService';
 import { waitForVideoGenerationDoc } from '@/src/lib/wait-for-parent-job';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
@@ -242,10 +238,6 @@ export default function VideoGenerationPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoFramePosition, setLogoFramePosition] =
     useState<LogoFramePosition>('first');
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [useVideoAvatar, setUseVideoAvatar] = useState(false);
-  const [avatarSaving, setAvatarSaving] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [referencePrompt, setReferencePrompt] = useState('');
   const [pipelinePhase, setPipelinePhase] = useState<PipelinePhase>('idle');
   const [result, setResult] = useState<VideoGenerationResult | null>(null);
@@ -279,8 +271,6 @@ export default function VideoGenerationPage() {
       try {
         const profile = await fetchVideoGeneratorProfile();
         if (cancelled) return;
-        setAvatarUrl(profile.avatarUrl);
-        setUseVideoAvatar(profile.useVideoAvatar);
         setLogoUrl(profile.logoUrl);
       } catch {
         if (!cancelled) {
@@ -296,50 +286,6 @@ export default function VideoGenerationPage() {
       cancelled = true;
     };
   }, []);
-
-  const handleAvatarUpload = useCallback(async (file: File) => {
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      showErrorToast('Please upload a JPEG, PNG, or WebP avatar photo.');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      showErrorToast('Avatar photo must be smaller than 10 MB.');
-      return;
-    }
-    setAvatarSaving(true);
-    try {
-      const response = await uploadVideoAvatar(file);
-      const data = response.data;
-      setAvatarUrl(data?.avatarUrl ?? null);
-      setUseVideoAvatar(data?.enabled === true);
-      toast.success('Avatar photo saved');
-    } catch {
-      showErrorToast(
-        'Could not save your avatar photo. Please try again later.'
-      );
-    } finally {
-      setAvatarSaving(false);
-    }
-  }, []);
-
-  const handleAvatarToggle = useCallback(async () => {
-    if (!avatarUrl || avatarSaving) return;
-    const next = !useVideoAvatar;
-    setAvatarSaving(true);
-    try {
-      const response = await setVideoAvatarPreference(next);
-      setUseVideoAvatar(response.data?.enabled === true);
-      toast.success(
-        next ? 'Avatar enabled for videos' : 'Avatar disabled for videos'
-      );
-    } catch {
-      showErrorToast(
-        'Could not update the avatar preference. Please try again later.'
-      );
-    } finally {
-      setAvatarSaving(false);
-    }
-  }, [avatarSaving, avatarUrl, useVideoAvatar]);
 
   const resetRun = useCallback(() => {
     setPipelinePhase('idle');
@@ -537,79 +483,6 @@ export default function VideoGenerationPage() {
             <p className="mt-1 text-xs text-muted-foreground">
               Generate once, then schedule the identical video to all three platforms.
             </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
-                  {avatarUrl ? (
-                    <img
-                      src={avatarUrl}
-                      alt="Saved video avatar"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <UserRound className="h-7 w-7 text-slate-400" aria-hidden />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-800">
-                    Use my AI avatar
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Upload your photo once. When enabled, the selected model
-                    uses your identity as the only person and gives it an active
-                    speaking performance.
-                  </p>
-                  <button
-                    type="button"
-                    disabled={isBusy || avatarSaving}
-                    onClick={() => avatarInputRef.current?.click()}
-                    className="mt-2 text-xs font-semibold text-violet-700 hover:underline disabled:opacity-50"
-                  >
-                    {avatarUrl ? 'Replace photo' : 'Upload photo'}
-                  </button>
-                </div>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={useVideoAvatar}
-                disabled={!avatarUrl || isBusy || avatarSaving}
-                onClick={() => void handleAvatarToggle()}
-                className={cn(
-                  'relative h-7 w-12 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50',
-                  useVideoAvatar ? 'bg-violet-600' : 'bg-slate-300'
-                )}
-              >
-                <span
-                  className={cn(
-                    'absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform',
-                    useVideoAvatar ? 'translate-x-5' : 'translate-x-0'
-                  )}
-                />
-                <span className="sr-only">Use avatar in generated videos</span>
-              </button>
-            </div>
-            <input
-              ref={avatarInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="hidden"
-              disabled={isBusy || avatarSaving}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void handleAvatarUpload(file);
-                event.target.value = '';
-              }}
-            />
-            {useVideoAvatar ? (
-              <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                A real-person avatar photo may require portrait authorization
-                from the video service.
-              </p>
-            ) : null}
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-4">

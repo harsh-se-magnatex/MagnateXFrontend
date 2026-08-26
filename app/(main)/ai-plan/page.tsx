@@ -16,6 +16,7 @@ import {
   forceRunAIPlanApi,
   generateAIPlanApi,
   getAIPlanApi,
+  type AIPlanCell,
   selectAIPlanPlatformsApi,
   type AIPlanDay,
   type AIPlanGeneratedItem,
@@ -142,7 +143,16 @@ type CellEntry = {
   source: 'generated' | 'upcoming';
   eventId?: string;
   alreadyGenerated?: boolean;
+  hideStatus?: boolean;
 };
+
+function videoScheduleDetails(cell?: AIPlanCell | null): string | undefined {
+  if (!cell || cell.kind !== 'video') return undefined;
+  const logoPosition =
+    cell.videoVariant === 'logo-first-memory-last' ? 'First' : 'Last';
+  const avatarUsage = cell.videoUseAvatar === true ? 'Used' : 'Not used';
+  return `Avatar: ${avatarUsage} · Logo: ${logoPosition}`;
+}
 
 type GlobalForceRunTarget = {
   date: string;
@@ -243,9 +253,12 @@ function entriesForSlot(args: {
       kind: item.kind,
       label: kindLabel(item.kind),
       status: statusLabel(item.status),
-      note: hideDetail
-        ? undefined
-        : item.title?.trim() || item.captionPreview?.trim() || undefined,
+      hideStatus: item.kind === 'video-generation' && item.status === 'failed',
+      note:
+        videoScheduleDetails(item.cell) ||
+        (hideDetail
+          ? undefined
+          : item.title?.trim() || item.captionPreview?.trim() || undefined),
       href: isTerminal
         ? null
         : item.scheduledPostId
@@ -272,11 +285,19 @@ function entriesForSlot(args: {
             ? suppliedLabel
             : kindLabel(item.kind),
         note:
-          (isOccasion ? suppliedLabel : isFailed ? undefined : item.note?.trim()) ||
-          undefined,
+          (item.kind === 'video-generation'
+            ? videoScheduleDetails(item.cell)
+            : isOccasion
+              ? suppliedLabel
+              : isFailed
+                ? undefined
+                : item.note?.trim()) || undefined,
         href: null,
         source: 'upcoming' as const,
         status: item.status,
+        hideStatus:
+          item.kind === 'video-generation' &&
+          String(item.status ?? '').toLowerCase() === 'failed',
         alreadyGenerated: hasGeneratedCounterpart(args.generated, item.kind),
         ...(item.eventId ? { eventId: item.eventId } : {}),
       };
@@ -362,8 +383,9 @@ function PlatformCell({
           (sharedVideoRunning && entry.kind === 'video-generation') ||
           entry.status === 'enqueued' ||
           entry.status === 'queued';
-        const displayStatus =
-          isRunning || entry.status === 'enqueued' || entry.status === 'queued'
+        const displayStatus = entry.hideStatus
+          ? undefined
+          : isRunning || entry.status === 'enqueued' || entry.status === 'queued'
             ? 'Generating'
             : entry.status ??
               (entry.source === 'upcoming' && entry.kind !== 'empty'

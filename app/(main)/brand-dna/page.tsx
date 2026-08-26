@@ -7,8 +7,10 @@ import {
   suggestOnboardingBrandCopy,
   updateProfile,
   uploadLogo,
+  setVideoAvatarPreference,
+  uploadVideoAvatar,
 } from '@/src/service/api/userService';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -24,6 +26,7 @@ import {
   Globe,
   FileText,
   Upload,
+  UserRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FieldSeparator } from '@/components/ui/field';
@@ -176,6 +179,10 @@ export default function BusinessProfilePage() {
   const [committedSloganSaved, setCommittedSloganSaved] = useState(false);
   const [phoneCountryCode, setPhoneCountryCode] = useState('');
   const [phoneNationalNumber, setPhoneNationalNumber] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [useVideoAvatar, setUseVideoAvatar] = useState(false);
+  const [avatarSaving, setAvatarSaving] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const activePlan = billing?.activePlan;
 
@@ -359,6 +366,8 @@ export default function BusinessProfilePage() {
             recommendedSlogans,
             useLogoVariantsForImages: p.useLogoVariantsForImages === true,
           }));
+          setAvatarUrl(String(p.videoAvatarUrl ?? '').trim() || null);
+          setUseVideoAvatar(p.useVideoAvatar === true);
           applyStoredPhone(p.businesscontact);
 
           // Skipped onboarding / raced past suggest → backfill recommendations.
@@ -389,6 +398,43 @@ export default function BusinessProfilePage() {
     };
     if (user) fetchProfile();
   }, [user]);
+
+  const handleAvatarUpload = useCallback(async (file: File) => {
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      showErrorToast('Please upload a JPEG, PNG, or WebP avatar photo.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showErrorToast('Avatar photo must be smaller than 10 MB.');
+      return;
+    }
+    setAvatarSaving(true);
+    try {
+      const response = await uploadVideoAvatar(file);
+      setAvatarUrl(response.data?.avatarUrl ?? null);
+      setUseVideoAvatar(response.data?.enabled === true);
+      toast.success('AI avatar created');
+    } catch {
+      showErrorToast('Could not create your AI avatar. Please try again later.');
+    } finally {
+      setAvatarSaving(false);
+    }
+  }, []);
+
+  const handleAvatarToggle = useCallback(async () => {
+    if (!avatarUrl || avatarSaving) return;
+    const next = !useVideoAvatar;
+    setAvatarSaving(true);
+    try {
+      const response = await setVideoAvatarPreference(next);
+      setUseVideoAvatar(response.data?.enabled === true);
+      toast.success(next ? 'Avatar enabled for videos' : 'Avatar disabled for videos');
+    } catch {
+      showErrorToast('Could not update the avatar preference. Please try again later.');
+    } finally {
+      setAvatarSaving(false);
+    }
+  }, [avatarSaving, avatarUrl, useVideoAvatar]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1180,6 +1226,82 @@ export default function BusinessProfilePage() {
                             />
                           </div>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-border">
+                    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-violet-200 bg-white">
+                            {avatarUrl ? (
+                              <img
+                                src={avatarUrl}
+                                alt="Saved AI avatar"
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <UserRound className="h-7 w-7 text-slate-400" aria-hidden />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-foreground">
+                              Use my AI avatar in videos
+                            </p>
+                            <p className="text-xs leading-relaxed text-muted-foreground">
+                              Upload a photo and we’ll create an animated AI avatar for your videos.
+                            </p>
+                            <button
+                              type="button"
+                              disabled={avatarSaving}
+                              onClick={() => avatarInputRef.current?.click()}
+                              className="mt-2 text-xs font-semibold text-violet-700 hover:underline disabled:opacity-50"
+                            >
+                              {avatarSaving
+                                ? 'Creating AI avatar…'
+                                : avatarUrl
+                                  ? 'Replace avatar'
+                                  : 'Create AI avatar'}
+                            </button>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={useVideoAvatar}
+                          disabled={!avatarUrl || avatarSaving}
+                          onClick={() => void handleAvatarToggle()}
+                          className={cn(
+                            'relative h-7 w-12 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50',
+                            useVideoAvatar ? 'bg-violet-600' : 'bg-slate-300'
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              'absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform',
+                              useVideoAvatar ? 'translate-x-5' : 'translate-x-0'
+                            )}
+                          />
+                          <span className="sr-only">Use avatar in generated videos</span>
+                        </button>
+                      </div>
+                      <input
+                        ref={avatarInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        disabled={avatarSaving}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) void handleAvatarUpload(file);
+                          event.target.value = '';
+                        }}
+                      />
+                      {useVideoAvatar ? (
+                        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                          A real-person avatar photo may require portrait authorization from the video service.
+                        </p>
+                      ) : null}
                     </div>
                   </div>
 

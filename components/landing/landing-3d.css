@@ -184,6 +184,7 @@
   overflow: hidden;
   pointer-events: none;
   opacity: var(--landing-3d-frame-opacity, 1);
+  background: #050508 url('/frames-webp-1440/frame_000001.webp') center / cover no-repeat;
 }
 
 .landing-3d-root .landing-3d-canvas {
@@ -192,6 +193,13 @@
   width: 100%;
   height: 100%;
   display: block;
+  transition: opacity 180ms ease-out;
+}
+
+@media (max-width: 820px), (pointer: coarse) {
+  .landing-3d-root .landing-3d-bg-wrap {
+    background-image: url('/frames-webp-mobile/frame_000001.webp');
+  }
 }
 
 .landing-3d-vignette {

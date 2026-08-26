@@ -334,6 +334,7 @@ export function LeadMagnetSection() {
   const resultRef = React.useRef<HTMLDivElement | null>(null);
   const [step, setStep] = React.useState<Step>('website');
   const [email, setEmail] = React.useState('');
+  const [emailAcknowledged, setEmailAcknowledged] = React.useState(false);
   const [website, setWebsite] = React.useState('');
   const [platform, setPlatform] = React.useState<LeadMagnetPlatform | null>(
     null
@@ -413,6 +414,10 @@ export function LeadMagnetSection() {
     setError(null);
     if (!email.trim()) {
       setError('Enter your email to continue.');
+      return;
+    }
+    if (!emailAcknowledged) {
+      setError('Please acknowledge how your email will be used to continue.');
       return;
     }
     if (!website.trim()) {
@@ -508,6 +513,7 @@ export function LeadMagnetSection() {
   const reset = () => {
     setStep('website');
     setEmail('');
+    setEmailAcknowledged(false);
     setWebsite('');
     setPlatform(null);
     setPickingPlatform(null);
@@ -596,11 +602,27 @@ export function LeadMagnetSection() {
               <p className="landing-body -mt-1 text-xs leading-relaxed text-white/45">
                 {consentText}
               </p>
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm text-white/65 transition-colors hover:border-white/20 hover:bg-white/[0.05]">
+                <input
+                  type="checkbox"
+                  checked={emailAcknowledged}
+                  onChange={(e) => {
+                    setEmailAcknowledged(e.target.checked);
+                    if (e.target.checked) setError(null);
+                  }}
+                  disabled={busy}
+                  className="mt-0.5 h-4 w-4 shrink-0 accent-violet-400"
+                />
+                <span>
+                  I acknowledge that my email address will be used to contact
+                  me about this request and relevant updates.
+                </span>
+              </label>
               <div className="flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
                   className="landing-btn-primary w-full sm:w-auto"
-                  disabled={busy || !email.trim()}
+                  disabled={busy || !email.trim() || !emailAcknowledged}
                 >
                   {busy ? (
                     <>

@@ -5,52 +5,42 @@ import { getFrameScrubT } from '@/lib/landing-scroll';
 
 const TOTAL_FRAMES = 634;
 const LERP_SPEED = 0.22;
-/** Keep the initial visit responsive; extend this window as the user scrolls. */
-const INITIAL_PREFETCH_FRAMES = 18;
-const PREFETCH_AHEAD_FRAMES = 8;
-/** How many frames to fetch in parallel while filling the contiguous window. */
-const LOAD_BATCH_SIZE = 4;
-/** Fewer parallel fetches on a `3g`-tier connection so the frame sequence
- *  doesn't starve fonts/JS/other requests of bandwidth. */
-const LOAD_BATCH_SIZE_SLOW = 2;
-/** Hero scroll fade only after this many contiguous frames are ready. */
-const HERO_READY_FRAMES = 24;
 const FRAME_BASE_PATH_DESKTOP = '/frames-webp-1440/frame_';
 const FRAME_BASE_PATH_MOBILE = '/frames-webp-mobile/frame_';
 
-function isMobileViewport(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.matchMedia('(max-width: 820px), (pointer: coarse)').matches;
+type NetworkInformation = {
+  saveData?: boolean;
+  effectiveType?: string;
+  downlink?: number;
+  rtt?: number;
+};
+
+function getNetworkInformation(): NetworkInformation | undefined {
+  return (navigator as Navigator & { connection?: NetworkInformation }).connection;
 }
 
-type ConnectionTier = 'offline-or-tiny' | 'slow' | 'normal';
+/** Expensive frame streaming is decorative. On a constrained connection we
+ * keep the first frame, preserving the complete page while avoiding a download
+ * that can otherwise exceed 50 MB. */
+function shouldUseStaticFrame(reducedMotion: boolean): boolean {
+  if (reducedMotion) return true;
+  const connection = getNetworkInformation();
+  if (!connection) return false;
 
-/**
- * Network Information API isn't available everywhere (no Safari/Firefox
- * support) — treat "unknown" the same as "normal" rather than penalizing
- * browsers that simply don't expose it.
- */
-function getConnectionTier(): ConnectionTier {
-  if (typeof navigator === 'undefined') return 'normal';
-  const conn = (
-    navigator as Navigator & {
-      connection?: {
-        saveData?: boolean;
-        effectiveType?: string;
-      };
-    }
-  ).connection;
-  if (!conn) return 'normal';
-  if (conn.saveData) return 'offline-or-tiny';
-  if (conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g') {
-    return 'offline-or-tiny';
-  }
-  if (conn.effectiveType === '3g') return 'slow';
-  return 'normal';
+  return Boolean(
+    connection.saveData ||
+      ['slow-2g', '2g', '3g'].includes(connection.effectiveType ?? '') ||
+      (typeof connection.downlink === 'number' && connection.downlink < 2.5) ||
+      (typeof connection.rtt === 'number' && connection.rtt > 450)
+  );
 }
 
 function framePath(index: number, basePath: string): string {
   return `${basePath}${String(index + 1).padStart(6, '0')}.webp`;
+}
+
+function quantizeFrame(index: number, stride: number): number {
+  return Math.max(0, Math.min(TOTAL_FRAMES - 1, Math.round(index / stride) * stride));
 }
 
 type Landing3DBackgroundProps = {
@@ -63,220 +53,209 @@ export function Landing3DBackground({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const reducedMotion = window.matchMedia(
-      '(prefers-reduced-motion: reduce)'
-    ).matches;
-    const connectionTier = getConnectionTier();
-    // On Save-Data / 2G, hold a single static frame instead of streaming the
-    // full sequence — the scroll-linked hero text motion still runs (that's
-    // just a CSS transform, not a network cost), only the background stops
-    // fetching more frames.
-    const singleFrameOnly = reducedMotion || connectionTier === 'offline-or-tiny';
-    const loadBatchSize =
-      connectionTier === 'slow' ? LOAD_BATCH_SIZE_SLOW : LOAD_BATCH_SIZE;
-
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d', {
-      alpha: false,
-      desynchronized: true,
-    });
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
     if (!ctx) return;
+    canvas.style.opacity = '0';
 
-    const basePath = isMobileViewport()
-      ? FRAME_BASE_PATH_MOBILE
-      : FRAME_BASE_PATH_DESKTOP;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const mobile = window.matchMedia('(max-width: 820px), (pointer: coarse)').matches;
+    const staticFrame = shouldUseStaticFrame(reducedMotion);
+    const basePath = mobile ? FRAME_BASE_PATH_MOBILE : FRAME_BASE_PATH_DESKTOP;
+    // The source contains far more frames than a scroll interaction can display.
+    // Sampling it reduces worst-case transfer by 67–75% with no layout change.
+    const frameStride = mobile ? 4 : 3;
+    const maxConcurrentLoads = mobile ? 2 : 3;
 
     const images: (HTMLImageElement | undefined)[] = new Array(TOTAL_FRAMES);
-    const loaded = new Uint8Array(TOTAL_FRAMES);
-    let contiguousLoaded = -1;
+    const loadState = new Uint8Array(TOTAL_FRAMES); // 0 idle, 1 loading, 2 ready, 3 failed
+    let queue: number[] = [];
+    let inFlight = 0;
     let currentFrame = 0;
     let targetFrame = 0;
     let lastDrawnIndex = -1;
-    let nextToLoad = 0;
-    let inFlight = 0;
-    let loadLimit = INITIAL_PREFETCH_FRAMES;
+    let lastHeroProgress = -1;
     let cancelled = false;
     let rafId = 0;
-
-    function advanceContiguous() {
-      while (
-        contiguousLoaded + 1 < TOTAL_FRAMES &&
-        loaded[contiguousLoaded + 1]
-      ) {
-        contiguousLoaded++;
-      }
-    }
-
-    function scheduleLoads() {
-      if (cancelled || singleFrameOnly) return;
-      while (inFlight < loadBatchSize && nextToLoad < loadLimit) {
-        const frameIndex = nextToLoad++;
-        // A sudden scroll can request a frame out of order. Do not download
-        // that frame a second time when the sequential prefetch catches up.
-        if (images[frameIndex]) continue;
-        inFlight++;
-        const img = new Image();
-        images[frameIndex] = img;
-        const settle = () => {
-          loaded[frameIndex] = 1;
-          inFlight--;
-          advanceContiguous();
-          scheduleLoads();
-        };
-        img.onload = settle;
-        img.onerror = settle;
-        img.src = framePath(frameIndex, basePath);
-      }
-    }
-
-    function requestFrame(frameIndex: number) {
-      if (
-        cancelled ||
-        singleFrameOnly ||
-        frameIndex < 0 ||
-        frameIndex >= TOTAL_FRAMES ||
-        images[frameIndex]
-      ) {
-        return;
-      }
-
-      const img = new Image();
-      images[frameIndex] = img;
-      img.onload = () => {
-        loaded[frameIndex] = 1;
-        advanceContiguous();
-        scheduleLoads();
-      };
-      img.onerror = () => {
-        // Allow a later scroll to retry a failed direct request.
-        images[frameIndex] = undefined;
-        scheduleLoads();
-      };
-      img.src = framePath(frameIndex, basePath);
-    }
-
-    if (!singleFrameOnly) {
-      scheduleLoads();
-    } else {
-      const img = new Image();
-      img.onload = () => {
-        loaded[0] = 1;
-        contiguousLoaded = 0;
-        images[0] = img;
-        drawFrame(img);
-      };
-      img.onerror = () => {
-        loaded[0] = 1;
-        contiguousLoaded = 0;
-      };
-      img.src = framePath(0, basePath);
-      images[0] = img;
-    }
-
-    function resize() {
-      // A 2x full-screen canvas quadruples the pixels every frame. 1.5x is
-      // visually indistinguishable here and substantially cheaper to redraw.
-      const dprCap = 1.5;
-      const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      canvas!.width = Math.round(w * dpr);
-      canvas!.height = Math.round(h * dpr);
-      canvas!.style.width = `${w}px`;
-      canvas!.style.height = `${h}px`;
-      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx!.imageSmoothingEnabled = true;
-      ctx!.imageSmoothingQuality = 'high';
-    }
+    let resizeRaf = 0;
+    let firstFrameReady = false;
 
     function drawFrame(img: HTMLImageElement) {
-      if (!img?.naturalWidth) return;
-      const cw = window.innerWidth;
-      const ch = window.innerHeight;
-      if (cw < 10 || ch < 10) return;
-      ctx!.clearRect(0, 0, cw, ch);
-      const scale = Math.max(cw / img.naturalWidth, ch / img.naturalHeight);
-      const w = img.naturalWidth * scale;
-      const h = img.naturalHeight * scale;
-      ctx!.drawImage(img, (cw - w) / 2, (ch - h) / 2, w, h);
+      if (!img.naturalWidth) return;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      if (width < 10 || height < 10) return;
+
+      const scale = Math.max(width / img.naturalWidth, height / img.naturalHeight);
+      const drawnWidth = img.naturalWidth * scale;
+      const drawnHeight = img.naturalHeight * scale;
+      ctx!.clearRect(0, 0, width, height);
+      ctx!.drawImage(
+        img,
+        (width - drawnWidth) / 2,
+        (height - drawnHeight) / 2,
+        drawnWidth,
+        drawnHeight
+      );
+    }
+
+    function nearestReadyFrame(index: number): number | null {
+      const quantized = quantizeFrame(index, frameStride);
+      if (loadState[quantized] === 2) return quantized;
+      for (let distance = frameStride; distance <= frameStride * 4; distance += frameStride) {
+        const before = quantized - distance;
+        const after = quantized + distance;
+        if (before >= 0 && loadState[before] === 2) return before;
+        if (after < TOTAL_FRAMES && loadState[after] === 2) return after;
+      }
+      return loadState[0] === 2 ? 0 : null;
+    }
+
+    function pumpQueue() {
+      if (cancelled || staticFrame) return;
+      while (inFlight < maxConcurrentLoads && queue.length > 0) {
+        const index = queue.shift()!;
+        if (loadState[index] !== 0) continue;
+
+        loadState[index] = 1;
+        inFlight++;
+        const img = new Image();
+        images[index] = img;
+        img.decoding = 'async';
+        img.fetchPriority = 'low';
+        img.onload = () => {
+          loadState[index] = 2;
+          inFlight--;
+          startAnimation();
+          pumpQueue();
+        };
+        img.onerror = () => {
+          loadState[index] = 3;
+          images[index] = undefined;
+          inFlight--;
+          pumpQueue();
+        };
+        img.src = framePath(index, basePath);
+      }
+    }
+
+    function requestFramesAround(index: number) {
+      if (staticFrame) return;
+      const center = quantizeFrame(index, frameStride);
+      // Replace stale queued work after a fast scroll. Requests already in flight
+      // finish, but no longer trigger a sequential fetch of every skipped frame.
+      queue = [center, center + frameStride, center - frameStride]
+        .filter((value) => value >= 0 && value < TOTAL_FRAMES)
+        .filter((value) => loadState[value] === 0);
+      pumpQueue();
+    }
+
+    function updateHero(progress: number) {
+      if (progress === lastHeroProgress) return;
+      lastHeroProgress = progress;
+      const hero = document.getElementById(heroContentId);
+      if (!hero) return;
+      const opacity = Math.max(0, 1 - progress * 3.2);
+      hero.style.opacity = String(opacity);
+      hero.style.transform = `translateY(${-progress * 48}px) scale(${1 - progress * 0.08})`;
+      hero.style.pointerEvents = opacity < 0.08 ? 'none' : 'auto';
     }
 
     function animate() {
-      let jumpedToTarget = false;
-      if (!reducedMotion && contiguousLoaded >= 0) {
-        targetFrame = getFrameScrubT() * (TOTAL_FRAMES - 1);
-        const distance = Math.abs(targetFrame - currentFrame);
+      rafId = 0;
+      if (cancelled || document.hidden) return;
 
-        // Large wheel/touch jumps should follow the scroll immediately. The
-        // requested frame is fetched out of order while normal prefetching
-        // continues in the background.
-        if (distance > 36) {
-          currentFrame = targetFrame;
-          jumpedToTarget = true;
-          requestFrame(Math.round(targetFrame));
-        }
-        const requestedLimit = Math.min(
-          TOTAL_FRAMES,
-          Math.max(
-            INITIAL_PREFETCH_FRAMES,
-            Math.ceil(targetFrame) + PREFETCH_AHEAD_FRAMES
-          )
-        );
-        if (requestedLimit > loadLimit) {
-          loadLimit = requestedLimit;
-          scheduleLoads();
-        }
+      const distance = targetFrame - currentFrame;
+      currentFrame =
+        Math.abs(distance) < 0.35 ? targetFrame : currentFrame + distance * LERP_SPEED;
+
+      const readyIndex = nearestReadyFrame(Math.round(currentFrame));
+      if (readyIndex !== null && readyIndex !== lastDrawnIndex) {
+        const image = images[readyIndex];
+        if (image) drawFrame(image);
+        lastDrawnIndex = readyIndex;
       }
 
-      if (!jumpedToTarget) {
-        currentFrame += (targetFrame - currentFrame) * LERP_SPEED;
+      updateHero(firstFrameReady && !reducedMotion ? getFrameScrubT() : 0);
+      if (Math.abs(targetFrame - currentFrame) >= 0.35) {
+        rafId = requestAnimationFrame(animate);
       }
-      let idx = Math.round(currentFrame);
-      if (idx < 0) idx = 0;
-      if (idx >= TOTAL_FRAMES) idx = TOTAL_FRAMES - 1;
-      // Prefer the exact target when a direct jump request has completed;
-      // otherwise hold the newest contiguous frame that is ready.
-      const img = images[idx] ?? images[Math.min(idx, contiguousLoaded)];
-      if (img?.naturalWidth && idx !== lastDrawnIndex) {
-        drawFrame(img);
-        lastDrawnIndex = idx;
-      } else if (
-        !img?.naturalWidth &&
-        lastDrawnIndex >= 0 &&
-        images[lastDrawnIndex]?.naturalWidth
-      ) {
-        // keep previous draw
-      }
-
-      const hero = document.getElementById(heroContentId);
-      if (hero) {
-        const heroReady = contiguousLoaded >= HERO_READY_FRAMES - 1;
-        const pHero = heroReady ? getFrameScrubT() : 0;
-        const o = Math.max(0, 1 - pHero * 3.2);
-        const scale = 1 - pHero * 0.08;
-        const y = -pHero * 48;
-        hero.style.opacity = String(o);
-        hero.style.transform = `translateY(${y}px) scale(${scale})`;
-        hero.style.pointerEvents = o < 0.08 ? 'none' : 'auto';
-      }
-
-      rafId = requestAnimationFrame(animate);
     }
 
-    window.addEventListener('resize', resize);
+    function startAnimation() {
+      if (!rafId && !document.hidden) rafId = requestAnimationFrame(animate);
+    }
+
+    function updateFromScroll() {
+      const progress = reducedMotion ? 0 : getFrameScrubT();
+      targetFrame = progress * (TOTAL_FRAMES - 1);
+      requestFramesAround(targetFrame);
+      startAnimation();
+    }
+
+    function resize() {
+      const dprCap = staticFrame || mobile ? 1 : 1.35;
+      const dpr = Math.min(window.devicePixelRatio || 1, dprCap);
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      canvas!.width = Math.round(width * dpr);
+      canvas!.height = Math.round(height * dpr);
+      canvas!.style.width = `${width}px`;
+      canvas!.style.height = `${height}px`;
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx!.imageSmoothingEnabled = true;
+      ctx!.imageSmoothingQuality = 'high';
+      const readyIndex = nearestReadyFrame(Math.round(currentFrame));
+      if (readyIndex !== null && images[readyIndex]) drawFrame(images[readyIndex]!);
+    }
+
+    function onResize() {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(resize);
+    }
+
+    function onVisibilityChange() {
+      if (!document.hidden) updateFromScroll();
+    }
+
+    // Load only the lightweight first frame during startup. The CSS fallback
+    // paints the same asset before hydration, so slow networks never see an
+    // empty canvas while this request resolves from the browser cache.
+    const firstImage = new Image();
+    images[0] = firstImage;
+    loadState[0] = 1;
+    firstImage.decoding = 'async';
+    firstImage.fetchPriority = 'high';
+    firstImage.onload = () => {
+      if (cancelled) return;
+      loadState[0] = 2;
+      firstFrameReady = true;
+      drawFrame(firstImage);
+      canvas.style.opacity = '1';
+      lastDrawnIndex = 0;
+      updateFromScroll();
+    };
+    firstImage.onerror = () => {
+      loadState[0] = 3;
+      firstFrameReady = true;
+      updateFromScroll();
+    };
+    firstImage.src = framePath(0, basePath);
+
     resize();
-    rafId = requestAnimationFrame(animate);
+    window.addEventListener('scroll', updateFromScroll, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       cancelled = true;
-      window.removeEventListener('resize', resize);
       cancelAnimationFrame(rafId);
-      document.documentElement.style.removeProperty('--landing-3d-frame-opacity');
-      document.documentElement.style.removeProperty(
-        '--landing-3d-section-bg-opacity'
-      );
+      cancelAnimationFrame(resizeRaf);
+      window.removeEventListener('scroll', updateFromScroll);
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [heroContentId]);
 
