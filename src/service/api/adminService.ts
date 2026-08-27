@@ -118,7 +118,7 @@ export const getAdminPlans = async () => {
 export const activateAdminUserSubscription = async (payload: {
   userId: string;
   planId: string;
-  durationMonths?: number;
+  durationDays?: number;
   creditMode?: 'set' | 'add';
   note?: string;
 }) => {

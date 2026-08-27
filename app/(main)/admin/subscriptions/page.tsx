@@ -68,6 +68,9 @@ const CHANGE_BADGE: Record<AdminSubscriptionChangeType, string> = {
   change: 'bg-violet-500/20 text-violet-200',
 };
 
+const MIN_PLAN_DURATION_DAYS = 1;
+const MAX_PLAN_DURATION_DAYS = 30;
+
 export default function AdminSubscriptionsPage() {
   const { user } = useUser();
   const router = useRouter();
@@ -80,7 +83,7 @@ export default function AdminSubscriptionsPage() {
   const [userSearch, setUserSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [planId, setPlanId] = useState('');
-  const [durationMonths, setDurationMonths] = useState(1);
+  const [durationDays, setDurationDays] = useState(MAX_PLAN_DURATION_DAYS);
   const [note, setNote] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -158,6 +161,14 @@ export default function AdminSubscriptionsPage() {
       showErrorToast('Select a target plan');
       return;
     }
+    if (
+      !Number.isInteger(durationDays) ||
+      durationDays < MIN_PLAN_DURATION_DAYS ||
+      durationDays > MAX_PLAN_DURATION_DAYS
+    ) {
+      showErrorToast('Plan duration must be between 1 and 30 days');
+      return;
+    }
 
     setConfirmOpen(true);
   };
@@ -170,7 +181,7 @@ export default function AdminSubscriptionsPage() {
       const response = await activateAdminUserSubscription({
         userId: selectedUserId,
         planId,
-        durationMonths,
+        durationDays,
         creditMode: 'set',
         note: note.trim() || undefined,
       });
@@ -190,7 +201,7 @@ export default function AdminSubscriptionsPage() {
         )
       );
       setConfirmOpen(false);
-    } catch (error: unknown) {
+    } catch {
       showErrorToast('Failed to activate subscription. Please try again later.');
     } finally {
       setSubmitting(false);
@@ -352,14 +363,23 @@ export default function AdminSubscriptionsPage() {
 
             <div className="grid gap-4 sm:grid-cols-1">
               <label className="block text-sm">
-                <span className="mb-1.5 block text-gray-300">Duration (months)</span>
+                <span className="mb-1.5 block text-gray-300">Duration (days)</span>
                 <input
                   type="number"
-                  min={1}
-                  max={24}
-                  value={durationMonths}
+                  min={MIN_PLAN_DURATION_DAYS}
+                  max={MAX_PLAN_DURATION_DAYS}
+                  step={1}
+                  value={durationDays}
                   onChange={(e) =>
-                    setDurationMonths(Math.max(1, Number(e.target.value) || 1))
+                    setDurationDays(
+                      Math.min(
+                        MAX_PLAN_DURATION_DAYS,
+                        Math.max(
+                          MIN_PLAN_DURATION_DAYS,
+                          Math.floor(Number(e.target.value) || MIN_PLAN_DURATION_DAYS)
+                        )
+                      )
+                    )
                   }
                   className="h-11 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
                 />
@@ -430,7 +450,7 @@ export default function AdminSubscriptionsPage() {
                   </dd>
                   <dt>Duration</dt>
                   <dd className="font-medium text-foreground">
-                    {durationMonths} month{durationMonths === 1 ? '' : 's'}
+                    {durationDays} day{durationDays === 1 ? '' : 's'}
                   </dd>
                 </dl>
               </div>

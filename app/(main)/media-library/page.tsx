@@ -29,11 +29,13 @@ import {
   Loader2,
   Search,
   Sparkles,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { lockBodyScroll } from '@/lib/body-scroll-lock';
 import { generatedByLabel } from '@/lib/scheduled-post-status';
 import {
+  deleteGeneratedMediaLibraryItemApi,
   getGeneratedMediaLibraryApi,
   type GeneratedMediaLibraryItem,
   type GeneratedMediaSource,
@@ -656,6 +658,9 @@ export default function MediaLibraryPage() {
   const [error, setError] = useState('');
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const [deletingItemIds, setDeletingItemIds] = useState<Set<string>>(
+    new Set()
+  );
   const [selectedItem, setSelectedItem] =
     useState<GeneratedMediaLibraryItem | null>(null);
   /** Campaign draft currently being scheduled via the inline modal. Lives
@@ -790,6 +795,37 @@ export default function MediaLibraryPage() {
     setSelectedItem(null);
     void load();
   }, [load]);
+
+  const handleDelete = useCallback(
+    async (item: GeneratedMediaLibraryItem) => {
+      if (item.canDelete !== true || deletingItemIds.has(item.id)) return;
+      if (!window.confirm('Delete this post permanently? This cannot be undone.')) {
+        return;
+      }
+      setDeletingItemIds((current) => new Set(current).add(item.id));
+      try {
+        await deleteGeneratedMediaLibraryItemApi(item.id);
+        setItems((current) => current.filter((candidate) => candidate.id !== item.id));
+        setSelectedItem((current) =>
+          current?.id === item.id ? null : current
+        );
+        toast.success('Post deleted.');
+      } catch (error) {
+        showErrorToast(
+          error instanceof Error
+            ? error.message
+            : 'Could not delete this post. Please try again.'
+        );
+      } finally {
+        setDeletingItemIds((current) => {
+          const next = new Set(current);
+          next.delete(item.id);
+          return next;
+        });
+      }
+    },
+    [deletingItemIds]
+  );
 
   const emptyCopy = useMemo(() => {
     if (source === 'all') {
@@ -945,6 +981,7 @@ export default function MediaLibraryPage() {
               planActionsAllowed &&
               (galleryItemCanSchedule(item) ||
                 isSchedulableCampaignDraft(item));
+            const isDeleting = deletingItemIds.has(item.id);
             const whenLabel = formatWhen(item.scheduleAt ?? item.createdAt);
             const slideCount =
               item.mediaType === 'carousel' ||
@@ -1020,6 +1057,26 @@ export default function MediaLibraryPage() {
                         <span className="truncate">{generatedBy}</span>
                       </span>
                     </div>
+                  ) : null}
+                  {item.canDelete === true ? (
+                    <button
+                      type="button"
+                      disabled={isDeleting}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleDelete(item);
+                      }}
+                      className="absolute left-2 top-2 inline-flex h-8 items-center gap-1.5 rounded-md border border-destructive/40 bg-card/95 px-2 text-[11px] font-semibold text-destructive shadow-sm backdrop-blur transition hover:bg-destructive hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      aria-label="Delete post permanently"
+                      title="Delete post permanently"
+                    >
+                      {isDeleting ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
+                      Delete
+                    </button>
                   ) : null}
                 </div>
 

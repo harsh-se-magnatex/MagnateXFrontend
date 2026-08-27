@@ -243,9 +243,6 @@ function entriesForSlot(args: {
   generated: AIPlanGeneratedItem[];
   upcoming: AIPlanUpcomingItem[];
 }): CellEntry[] {
-  const hasFestivalPost = [...args.generated, ...args.upcoming].some(
-    (item) => item.kind === 'festival' || item.kind === 'festive'
-  );
   const generated: CellEntry[] = args.generated.map((item) => {
     const isTerminal = isTerminalGeneratedStatus(item.status);
     const hideDetail = isTerminal || item.status === 'failed';
@@ -270,10 +267,10 @@ function entriesForSlot(args: {
     };
   });
 
-  // Keep sibling upcoming cards visible (e.g. festival still pending after a
-  // planned Force Run on the same date).
+  // Empty placeholders render through PlatformCell's zero-entry state. Keep
+  // any real sibling cards, such as a pending festival, visible.
   const upcoming: CellEntry[] = args.upcoming
-    .filter((item) => !hasFestivalPost || item.kind !== 'empty')
+    .filter((item) => item.kind !== 'empty')
     .map((item) => {
       const suppliedLabel = item.label.trim();
       const isOccasion = item.kind === 'festival';

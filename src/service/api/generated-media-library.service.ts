@@ -1,5 +1,5 @@
 import { FirestoreTimestamp } from '@/app/(main)/_components/types';
-import { apiGet } from '@/lib/api-client';
+import { apiDelete, apiGet } from '@/lib/api-client';
 import type { ApiEnvelope } from '@/lib/api-types';
 import type { GenerationResearch } from '@/lib/generation-research';
 
@@ -69,6 +69,8 @@ export type GeneratedMediaLibraryItem = {
   userId?: string;
   earlierScheduled?: boolean;
   canSchedule?: boolean;
+  /** Backend-authoritative: false once any schedule/publication linkage exists. */
+  canDelete?: boolean;
   /** Campaign-draft only: doc id under `users/{uid}/campaignDrafts/{id}`. The
    *  gallery uses this to call `/campaign/drafts/:id/schedule` directly. */
   campaignDraftId?: string;
@@ -88,5 +90,14 @@ export async function getGeneratedMediaLibraryApi(params?: {
       ...(params?.cursor ? { cursor: params.cursor } : {}),
     },
   });
+  return res.data;
+}
+
+export async function deleteGeneratedMediaLibraryItemApi(
+  contentId: string
+): Promise<{ contentId: string }> {
+  const res = await apiDelete<ApiEnvelope<{ contentId: string }>>(
+    `/api/v1/user/generated-media-library/${encodeURIComponent(contentId)}`
+  );
   return res.data;
 }
