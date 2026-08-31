@@ -12,10 +12,7 @@ import { waitForParentJobDocs } from '@/src/lib/wait-for-parent-job';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import Link from 'next/link';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { cn } from '@/lib/utils';
 import { showErrorToast } from '@/lib/show-error-toast';
@@ -113,7 +110,9 @@ function mapProductAdvertDocsToResults(
             : undefined,
         copy,
         logoPosition:
-          typeof output.logoPosition === 'string' ? output.logoPosition : undefined,
+          typeof output.logoPosition === 'string'
+            ? output.logoPosition
+            : undefined,
         selectedLogoVariantIndex:
           typeof output.selectedLogoVariantIndex === 'number'
             ? output.selectedLogoVariantIndex
@@ -326,7 +325,10 @@ export default function ProductAdvertPage() {
         uid: user.uid,
         collectionName: 'content',
         parentJobId: response.parentJobId,
-        expectedCount: Math.max(1, response.platforms?.length ?? genPlatforms.length),
+        expectedCount: Math.max(
+          1,
+          response.platforms?.length ?? genPlatforms.length
+        ),
       });
       if (wait.outcome === 'generated') {
         const platformResults = mapProductAdvertDocsToResults(wait.matchedDocs);
@@ -336,11 +338,15 @@ export default function ProductAdvertPage() {
         });
         toast.success('Generated');
       } else {
-        showErrorToast('Product advert generation failed. Please try again later.');
+        showErrorToast(
+          'Product advert generation failed. Please try again later.'
+        );
       }
       setIsGenerating(false);
     } catch (e: unknown) {
-      showErrorToast('Product advert generation failed. Please try again later.');
+      showErrorToast(
+        'Product advert generation failed. Please try again later.'
+      );
       console.log(e);
       setIsGenerating(false);
     }
@@ -352,9 +358,9 @@ export default function ProductAdvertPage() {
     const cta = (resultItem.copy?.cta || '').trim();
     const hashtags = Array.isArray(resultItem.copy?.hashtags)
       ? resultItem.copy.hashtags
-        .map((tag: string) => String(tag || '').trim())
-        .filter(Boolean)
-        .join(' ')
+          .map((tag: string) => String(tag || '').trim())
+          .filter(Boolean)
+          .join(' ')
       : '';
 
     const assembled = [headline, primary, cta, hashtags]
@@ -381,7 +387,9 @@ export default function ProductAdvertPage() {
         imageUrl: String(item.imageUrl ?? '').trim(),
         imageFilePath: String(item.imageFilePath ?? '').trim(),
         message: resolveSchedulerCaption(item),
-        platform: String(item.platform ?? '').toLowerCase() as PostSchedulerPrefillPost['platform'],
+        platform: String(
+          item.platform ?? ''
+        ).toLowerCase() as PostSchedulerPrefillPost['platform'],
         source: 'productadvert' as const,
       }))
       .filter(
@@ -438,11 +446,11 @@ export default function ProductAdvertPage() {
         </div>
 
         <div className="space-y-3 mb-6">
-          <span className="block text-foreground font-medium">Output mode</span>
+          <span className="block text-default font-medium">Output mode</span>
           <div className="flex flex-col sm:flex-row gap-3">
             <label
               id="tour-pa-mode-advert"
-              className="flex items-center gap-2 cursor-pointer text-foreground"
+              className="flex items-center gap-2 cursor-pointer text-default"
             >
               <input
                 type="radio"
@@ -453,13 +461,11 @@ export default function ProductAdvertPage() {
                 }
                 className="accent-primary-purple"
               />
-              <span>
-                Advert image
-              </span>
+              <span>Advert image</span>
             </label>
             <label
               id="tour-pa-mode-social"
-              className="flex items-center gap-2 cursor-pointer text-foreground"
+              className="flex items-center gap-2 cursor-pointer text-default"
             >
               <input
                 type="radio"
@@ -476,7 +482,7 @@ export default function ProductAdvertPage() {
         </div>
 
         <div className="space-y-2 mb-6">
-          <label className="block text-foreground font-medium">
+          <label className="block text-default font-medium">
             Campaign / product context (optional)
           </label>
           <textarea
@@ -484,12 +490,12 @@ export default function ProductAdvertPage() {
             onChange={(e) => setCampaignContext(e.target.value)}
             placeholder="What we're promoting, offer, audience, or key message…"
             rows={3}
-            className="w-full bg-muted border border-border text-foreground p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-purple/20 resize-y"
+            className="w-full bg-element border border-default text-default p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-strong resize-y"
           />
         </div>
 
         <div id="tour-pa-upload" className="space-y-3 mb-6">
-          <label className="block text-foreground font-medium">
+          <label className="block text-default font-medium">
             Upload product PNG (transparent background)
           </label>
           <input
@@ -498,16 +504,16 @@ export default function ProductAdvertPage() {
             onChange={(e) =>
               isTourDemo ? undefined : setFile(e.target.files?.[0] || null)
             }
-            className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-primary-purple file:text-white hover:file:opacity-90 transition text-muted-foreground"
+            className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-primary-purple file:text-white hover:file:opacity-90 transition text-secondary"
           />
         </div>
 
         {file && (
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-primary-purple mb-2">
+            <h2 className="text-section text-default mb-2">
               Preview of Uploaded Product
             </h2>
-            <div className="p-3 border border-border rounded-xl bg-card">
+            <div className="p-3 border border-default rounded-xl bg-default">
               <img
                 src={URL.createObjectURL(file)}
                 alt="Uploaded product preview"
@@ -519,13 +525,13 @@ export default function ProductAdvertPage() {
 
         {generationMode === 'advert_asset' && (
           <div className="space-y-2 mb-8">
-            <label className="text-foreground font-medium">
+            <label className="text-default font-medium">
               Background (optional)
             </label>
             <select
               value={background}
               onChange={(e) => setBackground(e.target.value)}
-              className="w-full bg-muted border border-border text-foreground p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-purple/20"
+              className="w-full bg-element border border-default text-default p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-strong"
             >
               {BACKGROUND_OPTIONS.map((bg, i) => (
                 <option key={i} value={bg}>
@@ -540,7 +546,7 @@ export default function ProductAdvertPage() {
                 placeholder="Enter custom background"
                 value={customBackground}
                 onChange={(e) => setCustomBackground(e.target.value)}
-                className="w-full bg-muted border border-border text-foreground p-3 rounded-lg focus:ring-2 focus:ring-primary-purple/20"
+                className="w-full bg-element border border-default text-default p-3 rounded-lg focus:ring-2 focus:ring-strong"
               />
             )}
           </div>
@@ -549,16 +555,16 @@ export default function ProductAdvertPage() {
           {showSelectAccountsFirst ? (
             <div
               role="status"
-              className="rounded-xl border border-amber-500/30 bg-amber-500/15 px-4 py-3 text-sm text-amber-200"
+              className="rounded-xl border border-warning bg-warning px-4 py-3 text-sm text-warning"
             >
               <p className="font-medium">Select your accounts first</p>
-              <p className="mt-1 text-amber-300/90">
+              <p className="mt-1 text-warning">
                 Choose which platforms you use in onboarding or social settings,
                 then come back here to generate posts.
               </p>
               <Link
                 href={WORKSPACE_NAV_HREFS.linkedProfiles}
-                className="mt-2 inline-block text-sm font-semibold text-amber-200 underline underline-offset-2 hover:text-amber-300"
+                className="mt-2 inline-block text-sm font-semibold text-warning underline underline-offset-2 hover:text-warning"
               >
                 {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
               </Link>
@@ -570,14 +576,14 @@ export default function ProductAdvertPage() {
                   <label
                     key={p}
                     htmlFor={`generate-platform-${p}`}
-                    className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                    className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
                   >
                     <input
                       id={`generate-platform-${p}`}
                       type="checkbox"
                       checked={genPlatforms.includes(p)}
                       onChange={() => handleToggleGenPlatform(p)}
-                      className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
+                      className="size-4 rounded border-default text-preview focus:ring-strong"
                     />
                     <span>{platformLabel(p)}</span>
                   </label>
@@ -585,14 +591,14 @@ export default function ProductAdvertPage() {
                 {allowedPlatforms.length > 1 && (
                   <label
                     htmlFor="generate-platform-all"
-                    className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                    className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
                   >
                     <input
                       id="generate-platform-all"
                       type="checkbox"
                       checked={allPlatformsSelected}
                       onChange={handleSelectAllGenPlatforms}
-                      className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
+                      className="size-4 rounded border-default text-preview focus:ring-strong"
                     />
                     <span>
                       {allPlatformsSelectionLabel(allowedPlatforms.length)}
@@ -601,9 +607,11 @@ export default function ProductAdvertPage() {
                 )}
               </div>
               {!platformSelection.ok ? (
-                <p className="mt-2 text-xs text-amber-300">{platformSelection.error}</p>
+                <p className="mt-2 text-xs text-warning">
+                  {platformSelection.error}
+                </p>
               ) : (
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-2 text-xs text-secondary">
                   {allPlatformsSelected
                     ? `Generates one post per connected platform (${allowedPlatforms.length}).`
                     : genPlatforms.length > 1
@@ -618,7 +626,7 @@ export default function ProductAdvertPage() {
           onClick={handleGenerate}
           disabled={!canGenerate}
           aria-busy={isGenerating}
-          className="w-full py-3 rounded-full font-semibold bg-gradient-action text-white shadow-md shadow-primary-purple/25 hover:brightness-105 transition-transform disabled:opacity-60"
+          className="w-full py-3 rounded-full font-semibold btn-brand-fill transition-transform disabled:text-quaternary"
         >
           {isGenerating
             ? 'Creating…'
@@ -628,13 +636,13 @@ export default function ProductAdvertPage() {
         </button>
 
         {!isGenerating && insufficientCredits && (
-          <p className="mt-2 text-center text-xs text-muted-foreground">
+          <p className="mt-2 text-center text-xs text-secondary">
             Needs {generationCreditCost}{' '}
             {generationCreditCost === 1 ? 'credit' : 'credits'} — you have{' '}
             {userCredits ?? 0}.{' '}
             <Link
               href="/settings/billings"
-              className="font-semibold text-primary-purple underline underline-offset-2"
+              className="font-semibold text-preview underline underline-offset-2"
             >
               Top up
             </Link>
@@ -645,7 +653,7 @@ export default function ProductAdvertPage() {
 
         {finalResult?.platformResults?.length ? (
           <div className="mt-8">
-            <h2 className="font-semibold text-primary-purple text-lg mb-2">
+            <h2 className="text-section text-default mb-2">
               {lastGenerationMode === 'social_full'
                 ? 'Generated post'
                 : 'Generated advert'}
@@ -654,18 +662,20 @@ export default function ProductAdvertPage() {
               {finalResult.platformResults.map((item, idx) => (
                 <div
                   key={`${item.platform}-${idx}`}
-                  className="p-4 rounded-xl border border-border bg-card"
+                  className="p-4 rounded-xl border border-default bg-default"
                 >
-                  <p className="text-sm font-semibold text-foreground mb-2 capitalize">
+                  <p className="text-sm font-semibold text-default mb-2 capitalize">
                     Platform: {item.platform}
                   </p>
                   {item.contentFormatLabel && (
-                    <p className="text-sm text-muted-foreground mb-2">
+                    <p className="text-sm text-secondary mb-2">
                       Format used:{' '}
-                      <span className="font-medium">{item.contentFormatLabel}</span>
+                      <span className="font-medium">
+                        {item.contentFormatLabel}
+                      </span>
                     </p>
                   )}
-                  <div className="p-3 bg-card rounded-xl border border-border">
+                  <div className="p-3 bg-default rounded-xl border border-default">
                     <button
                       type="button"
                       onClick={() =>
@@ -674,15 +684,15 @@ export default function ProductAdvertPage() {
                           `Generated advert for ${item.platform}`
                         )
                       }
-                      className="group relative block w-full cursor-pointer overflow-hidden rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple"
+                      className="group relative block w-full cursor-pointer overflow-hidden rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
                       aria-label="Open image preview"
                     >
                       <img
                         src={item.imageUrl}
                         alt={`Generated advert for ${item.platform}`}
-                        className="w-full rounded-lg shadow-[0_0_20px_rgba(79,70,229,0.2)] transition-transform duration-200 group-hover:scale-[1.01]"
+                        className="w-full rounded-lg transition-transform duration-200"
                       />
-                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
+                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-expo group-hover:bg-black/30">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                           <Expand className="h-3.5 w-3.5" />
                           Preview
@@ -691,7 +701,7 @@ export default function ProductAdvertPage() {
                     </button>
                   </div>
                   {Number(item.logoVariantCount ?? 0) > 1 && (
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-secondary mt-2">
                       Logo chosen for contrast on this scene: variant{' '}
                       {Number(item.selectedLogoVariantIndex ?? 0) + 1} of{' '}
                       {item.logoVariantCount}
@@ -705,19 +715,19 @@ export default function ProductAdvertPage() {
                   )}
 
                   {buildAdvertCaption(item) && (
-                    <div className="mt-4 p-4 bg-muted/50 rounded-xl border border-border">
+                    <div className="mt-4 p-4 bg-element rounded-xl border border-default">
                       <div className="flex items-center justify-between gap-3 mb-2">
-                        <h3 className="text-sm font-semibold text-foreground">
+                        <h3 className="text-subsection text-default">
                           Generated Caption
                         </h3>
                         <button
                           onClick={() => handleCopyCaption(item)}
-                          className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary-purple text-white hover:opacity-90 transition"
+                          className="px-3 py-1.5 text-xs font-semibold rounded-full bg-primary-purple text-white hover:opacity-90 transition"
                         >
                           {captionCopied ? 'Copied' : 'Copy'}
                         </button>
                       </div>
-                      <p className="whitespace-pre-line text-sm text-foreground leading-relaxed">
+                      <p className="whitespace-pre-line text-sm text-default leading-relaxed">
                         {buildAdvertCaption(item) ||
                           'Caption generation not available for this image.'}
                       </p>
@@ -732,7 +742,7 @@ export default function ProductAdvertPage() {
                           `Generated advert for ${item.platform}`
                         )
                       }
-                      className="w-full sm:w-auto cursor-pointer rounded-full px-6 bg-card border border-primary-purple/30 text-primary-purple hover:bg-primary-purple/10 hover:opacity-100"
+                      className="w-full sm:w-auto cursor-pointer rounded-full px-6 bg-default border border-primary-purple/30 text-preview hover:bg-element hover:opacity-100"
                     />
                     <DownloadPngButton
                       url={item.imageUrl}
@@ -754,7 +764,7 @@ export default function ProductAdvertPage() {
                     <div className="mt-4">
                       <button
                         onClick={() => handleSendToScheduler(item)}
-                        className="w-full py-3 rounded-full bg-emerald-600/90 text-white font-semibold hover:bg-emerald-600 transition"
+                        className="w-full py-3 rounded-full bg-success text-white font-semibold hover:bg-success transition"
                       >
                         Continue to Schedule a Post
                       </button>
@@ -767,7 +777,7 @@ export default function ProductAdvertPage() {
               <div className="mt-4">
                 <button
                   onClick={() => handleSendToScheduler()}
-                  className="w-full py-3 rounded-full bg-emerald-600 text-white font-semibold hover:opacity-90 transition"
+                  className="w-full py-3 rounded-full bg-[var(--green-9)] text-white font-semibold hover:opacity-90 transition"
                 >
                   Continue to Schedule a Post
                 </button>

@@ -23,7 +23,10 @@ import {
   loginUser,
 } from './api/userService';
 import { ApiEnvelope } from '@/lib/api-types';
-import { getFirebaseAuthErrorMessage, extractFirebaseAuthCode } from '@/lib/firebase-auth-errors';
+import {
+  getFirebaseAuthErrorMessage,
+  extractFirebaseAuthCode,
+} from '@/lib/firebase-auth-errors';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { trackLogin, trackSignUp } from '@/lib/analytics';
@@ -57,10 +60,10 @@ export const signInWithGoogle = async (
   try {
     const googleProvider = options?.loginHint
       ? (() => {
-        const p = new GoogleAuthProvider();
-        p.setCustomParameters({ login_hint: options.loginHint });
-        return p;
-      })()
+          const p = new GoogleAuthProvider();
+          p.setCustomParameters({ login_hint: options.loginHint });
+          return p;
+        })()
       : provider;
     const result = await signInWithPopup(auth, googleProvider);
     const user = result.user;
@@ -100,9 +103,9 @@ export const signInWithGoogle = async (
 };
 
 function noAccountError(): Error & { code: string } {
-  const err = new Error(
-    'No account found. Please sign up first.'
-  ) as Error & { code: string };
+  const err = new Error('No account found. Please sign up first.') as Error & {
+    code: string;
+  };
   err.code = 'auth/user-not-found';
   return err;
 }
@@ -241,10 +244,7 @@ export const signInEmailPassword = async (email: string, password: string) => {
       if (again.registered === false) {
         throw noAccountError();
       }
-      if (
-        again.providers.length > 0 &&
-        !again.providers.includes('password')
-      ) {
+      if (again.providers.length > 0 && !again.providers.includes('password')) {
         await handleProviderMerge(email, password, again.providers);
         result = await signInWithEmailAndPassword(auth, email, password);
       } else {

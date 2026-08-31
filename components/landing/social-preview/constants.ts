@@ -15,16 +15,16 @@ export const PLATFORM_OPTIONS: {
   {
     id: 'facebook',
     label: 'Facebook',
-    description: 'Page photos grid and feed posts',
+    description: 'Page photos & feed',
   },
   {
     id: 'instagram',
     label: 'Instagram',
-    description: 'Browse the profile grid and open posts',
+    description: 'Profile grid & feed',
   },
   {
     id: 'linkedin',
     label: 'LinkedIn',
-    description: 'Company posts grid and feed',
+    description: 'Company page & feed',
   },
 ];

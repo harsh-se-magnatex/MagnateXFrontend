@@ -1,64 +1,60 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Brand: indigo #5865f2 → violet #7c3aed (landing wireframe palette) */
+  /* Brand: indigo #5865f2 → violet #7c3aed. Kept deliberately — the Expo
+     language is structure, type, spacing and motion, and the brand hue is
+     orthogonal to all of it. Surface colour now comes from the semantic
+     token layer below; these stay for gradients, charts and accents. */
   --primary-blue: #5865f2;
   --primary-purple: #7c3aed;
   --primary-purple-dark: #6d28d9;
   --gradient-primary: linear-gradient(to right, #7c3aed, #4f46e5);
   /* Authorized workspace primary CTAs */
-  --gradient-action: linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #5865f2 100%);
+  --gradient-action: linear-gradient(
+    135deg,
+    #5b21b6 0%,
+    #7c3aed 52%,
+    #5865f2 100%
+  );
   --star-glow: #a7a1ff;
 
-  --background: #090b10;
-  --foreground: #f1f5f9;
-  --card: #121820;
-  --card-foreground: #f1f5f9;
-  --popover: #121820;
-  --popover-foreground: #f1f5f9;
   --primary: var(--primary-blue);
   --primary-foreground: #ffffff;
   --secondary: var(--primary-purple);
   --secondary-foreground: #ffffff;
-  --muted: #1a2230;
-  --muted-foreground: #94a3b8;
-  --accent: #1c2433;
-  --accent-foreground: #f1f5f9;
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: #ffffff;
-  --border: #2a3548;
-  --input: #1a2230;
   --ring: var(--primary-blue);
   --chart-1: var(--primary-blue);
   --chart-2: var(--primary-purple);
   --chart-3: #6366f1;
   --chart-4: #4f46e5;
   --chart-5: #6d28d9;
-  --sidebar: #0e0c14;
-  --sidebar-foreground: #f1f5f9;
   --sidebar-primary: var(--primary-blue);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1a2230;
-  --sidebar-accent-foreground: #f1f5f9;
-  --sidebar-border: #2a3548;
   --sidebar-ring: var(--primary-blue);
   /* One typeface app-wide (see app/layout.tsx) — weight carries hierarchy
      instead of mixing families. Retired families alias to Inter so every
      existing font-(--font-x) className keeps resolving post-consolidation. */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'Noto Sans', sans-serif;
   --font-sora: var(--font-inter);
   --font-dm-sans: var(--font-inter);
   --font-bricolage: var(--font-inter);
   --font-geist-sans: var(--font-inter);
-  --font-geist-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  --font-geist-mono:
+    var(--font-jetbrains), 'JetBrains Mono', ui-monospace, SFMono-Regular,
+    Consolas, 'Liberation Mono', monospace;
+  /* The editorial serif is retired: the Expo language has no serif. Display
+     character now comes from weight and negative tracking on Inter, so the
+     ~40 existing font-[family-name:var(--font-display)] call sites keep
+     resolving and simply pick up the new voice. */
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   /* --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif; */
-  --radius: 0.625rem;
   --shadow-x: 0;
   --shadow-y: 1px;
   --shadow-blur: 3px;
@@ -67,11 +63,15 @@
   --shadow-color: oklch(0 0 0);
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+  --shadow-sm:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
@@ -83,44 +83,31 @@
   --primary-purple-dark: #6d28d9;
   --gradient-primary: linear-gradient(to right, #7c3aed, #4f46e5);
   /* Authorized workspace primary CTAs */
-  --gradient-action: linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #5865f2 100%);
+  --gradient-action: linear-gradient(
+    135deg,
+    #5b21b6 0%,
+    #7c3aed 52%,
+    #5865f2 100%
+  );
   --star-glow: #a7a1ff;
 
-  --background: #090b10;
-  --foreground: #f1f5f9;
-  --card: #121820;
-  --card-foreground: #f1f5f9;
-  --popover: #121820;
-  --popover-foreground: #f1f5f9;
   --primary: var(--primary-blue);
   --primary-foreground: #ffffff;
   --secondary: var(--primary-purple);
   --secondary-foreground: #ffffff;
-  --muted: #1a2230;
-  --muted-foreground: #94a3b8;
-  --accent: #1c2433;
-  --accent-foreground: #f1f5f9;
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: #ffffff;
-  --border: #2a3548;
-  --input: #1a2230;
   --ring: var(--primary-blue);
   --chart-1: var(--primary-blue);
   --chart-2: var(--primary-purple);
   --chart-3: #6366f1;
   --chart-4: #4f46e5;
   --chart-5: #6d28d9;
-  --sidebar: #0e0c14;
-  --sidebar-foreground: #f1f5f9;
   --sidebar-primary: var(--primary-blue);
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1a2230;
-  --sidebar-accent-foreground: #f1f5f9;
-  --sidebar-border: #2a3548;
   --sidebar-ring: var(--primary-blue);
   /* One typeface app-wide (see app/layout.tsx). Weight carries hierarchy,
      the way SF Pro does on Apple platforms, instead of mixing families. */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'Noto Sans', sans-serif;
   /* Retired families aliased to Inter so every existing font-(--font-x)
@@ -129,8 +116,14 @@
   --font-dm-sans: var(--font-inter);
   --font-bricolage: var(--font-inter);
   --font-geist-sans: var(--font-inter);
-  --font-geist-mono: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
-  --radius: 0.625rem;
+  --font-geist-mono:
+    var(--font-jetbrains), 'JetBrains Mono', ui-monospace, SFMono-Regular,
+    Consolas, 'Liberation Mono', monospace;
+  /* The editorial serif is retired: the Expo language has no serif. Display
+     character now comes from weight and negative tracking on Inter, so the
+     ~40 existing font-[family-name:var(--font-display)] call sites keep
+     resolving and simply pick up the new voice. */
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --shadow-x: 0;
   --shadow-y: 1px;
   --shadow-blur: 3px;
@@ -139,12 +132,300 @@
   --shadow-color: oklch(0 0 0);
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+  --shadow-sm:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+}
+
+/* ============================================================================
+   EXPO SEMANTIC TOKEN LAYER
+   ----------------------------------------------------------------------------
+   Three tiers, and components may only ever touch the third:
+
+     Radix 12-step scale  ->  semantic token  ->  component
+     --slate-3                --bg-element        <Button variant="secondary">
+     --red-11                 --text-danger       <FormError>
+
+   The step semantics are fixed and worth memorising once:
+     1 app bg | 2 subtle bg | 3 element bg | 4 element hover | 5 selected
+     6 subtle border | 7 element border | 8 strong border + focus ring
+     9 solid fill | 10 solid hover | 11 low-contrast text | 12 high-contrast text
+
+   Steps 11 and 12 are the ONLY text steps. Steps 9 and 10 are the ONLY solid
+   fill steps. Step 9 used as text fails contrast - that is the classic mistake.
+
+   ---------------------------------------------------------------------------
+   WHY THE DARK SCALE LIVES IN `:root`
+
+   This product ships dark and has no theme toggle: there is no ThemeProvider
+   in app/layout.tsx, so the `.dark` class is never applied and `:root` is the
+   only block that ever runs. Putting the light scale in `:root` would silently
+   flip the entire app to light. So `:root` IS the dark theme, `.dark` repeats
+   it for anyone who later wires up next-themes, and the light scale waits
+   under `.light` / `[data-theme='light']` — complete and contrast-checked, so
+   adding a toggle is a one-line change rather than a re-audit.
+
+   The dark scale is Radix slate re-cast onto SocioGenie's cool blue base
+   (#0a0c11) rather than Radix's neutral grey, so the Expo structure arrives
+   without the product losing its own temperature. The violet/indigo brand is
+   untouched and stays orthogonal — Expo is structure, type, spacing and
+   motion, not a hue.
+   ========================================================================= */
+
+:root {
+  /* --- Tier 1: neutral scale (dark — the product default) --------------- */
+  --slate-1: #0a0c11;
+  --slate-2: #10141b;
+  --slate-3: #161b24;
+  --slate-4: #1b2029;
+  --slate-5: #212731;
+  --slate-6: #2a313d;
+  --slate-7: #353d4b;
+  --slate-8: #47505f;
+  --slate-9: #667085;
+  --slate-10: #7b8496;
+  --slate-11: #a3adbf;
+  --slate-12: #eef1f6;
+
+  /* --- Tier 1: status scales (dark) ------------------------------------- */
+  --green-3: #0f2c1e;
+  --green-6: #1f5d3f;
+  --green-7: #28684a;
+  --green-9: #30a46c;
+  --green-10: #33b074;
+  --green-11: #4ade8f;
+
+  --amber-3: #2c2008;
+  --amber-6: #5c4318;
+  --amber-7: #714f19;
+  --amber-9: #ffc53d;
+  --amber-10: #ffd60a;
+  --amber-11: #fbbf3c;
+
+  --red-3: #33131a;
+  --red-6: #6f2a31;
+  --red-7: #8c333a;
+  --red-9: #e5484d;
+  --red-10: #ec5d5e;
+  --red-11: #ff9592;
+
+  --blue-3: #0d2340;
+  --blue-6: #17457a;
+  --blue-7: #205d9e;
+  --blue-9: #0090ff;
+  --blue-10: #3b9eff;
+  --blue-11: #7ec0ff;
+
+  /* Purple is the brand family — it doubles as Expo's preview/beta hue. */
+  --purple-3: #211a3d;
+  --purple-6: #3d3070;
+  --purple-7: #4d3d8c;
+  --purple-9: #7c3aed;
+  --purple-10: #8b5cf6;
+  --purple-11: #c4b1fd;
+
+  /* --- Tier 2: background ----------------------------------------------- */
+  --bg-screen: var(--slate-1);
+  --bg-default: var(--slate-2);
+  --bg-subtle: var(--slate-2);
+  --bg-element: var(--slate-3);
+  --bg-hover: var(--slate-4);
+  --bg-selected: var(--slate-5);
+  --bg-overlay: var(--slate-2);
+  --bg-success: var(--green-3);
+  --bg-warning: var(--amber-3);
+  --bg-danger: var(--red-3);
+  --bg-info: var(--blue-3);
+  --bg-preview: var(--purple-3);
+
+  /* --- Tier 2: text ------------------------------------------------------ */
+  --text-default: var(--slate-12);
+  --text-secondary: var(--slate-11);
+  --text-tertiary: var(--slate-10);
+  --text-quaternary: var(--slate-9);
+  --text-link: var(--blue-11);
+  --text-success: var(--green-11);
+  --text-warning: var(--amber-11);
+  --text-danger: var(--red-11);
+  --text-info: var(--blue-11);
+  --text-preview: var(--purple-11);
+
+  /* --- Tier 2: icon (one step lighter than the text beside it) ---------- */
+  --icon-default: var(--slate-11);
+  --icon-secondary: var(--slate-10);
+  --icon-tertiary: var(--slate-9);
+  --icon-quaternary: var(--slate-8);
+  --icon-success: var(--green-10);
+  --icon-warning: var(--amber-11);
+  --icon-danger: var(--red-10);
+  --icon-info: var(--blue-10);
+  --icon-preview: var(--purple-10);
+
+  /* --- Tier 2: border ---------------------------------------------------- */
+  --border-default: var(--slate-6);
+  --border-soft: var(--slate-5);
+  --border-strong: var(--slate-8);
+  --border-success: var(--green-7);
+  --border-warning: var(--amber-7);
+  --border-danger: var(--red-7);
+  --border-info: var(--blue-7);
+  --border-preview: var(--purple-7);
+
+  /* --- Buttons -----------------------------------------------------------
+     Note what primary is: pure white on dark, pure black on light — NOT a
+     brand hue. The CTA is the highest-contrast thing on the page, and colour
+     is spent on meaning instead. And disabled is a different colour, never a
+     faded one, so a disabled control stays legible. */
+  --btn-primary-bg: #ffffff;
+  --btn-primary-fg: var(--slate-1);
+  --btn-primary-hover: #ccd2dc;
+  --btn-primary-disabled-bg: var(--slate-7);
+  --btn-primary-disabled-fg: var(--slate-10);
+  --btn-danger-bg: var(--red-10);
+  --btn-danger-hover: var(--red-11);
+
+  /* --- Shadows: two-layer, and rare. Cards take a border instead.
+         Dark shadows carry roughly 4x the alpha of light ones. ----------- */
+  --expo-shadow-xs: 0 1px 3px #0000004d, 0 1px 2px #0000004d;
+  --expo-shadow-sm: 0 3px 6px #00000066, 0 2px 4px #00000040;
+  --expo-shadow-md: 0 10px 20px #00000040, 0 3px 6px #00000040;
+  --expo-shadow-lg: 0 15px 25px #00000080, 0 5px 10px #00000040;
+  --expo-shadow-xl: 0 20px 40px #00000080;
+
+  /* --- Motion: one curve, three durations. That is the whole system. ---- */
+  --ease-expo: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Explicit dark selector, for the day a ThemeProvider is added. It inherits
+   everything from :root, so it only has to exist — not restate the scale. */
+.dark {
+  color-scheme: dark;
+}
+
+/* ============================================================================
+   Light theme. Not currently reachable (no toggle ships today), but complete
+   and contrast-checked so that wiring one up is a one-line change.
+
+   Only tier 1 is restated — tier 2 is expressed in terms of `var(--slate-N)`,
+   so redefining the scale re-colours every semantic token automatically. The
+   handful of values that genuinely differ in structure rather than in step
+   (white card on a slate-1 page, black primary button) are restated below.
+   ========================================================================= */
+.light,
+[data-theme='light'] {
+  color-scheme: light;
+
+  --slate-1: #fcfcfd;
+  --slate-2: #f8f9fb;
+  --slate-3: #f0f1f4;
+  --slate-4: #e8e9ee;
+  --slate-5: #e0e2e8;
+  --slate-6: #d8dae2;
+  --slate-7: #cbced8;
+  --slate-8: #b5b9c6;
+  --slate-9: #868b99;
+  --slate-10: #7b8190;
+  --slate-11: #5c6270;
+  --slate-12: #191c22;
+
+  --green-3: #e6f6eb;
+  --green-6: #b4dfc4;
+  --green-7: #8eceaa;
+  --green-9: #30a46c;
+  --green-10: #2b9a66;
+  --green-11: #218358;
+
+  --amber-3: #fff7c2;
+  --amber-6: #f3d673;
+  --amber-7: #e9c162;
+  --amber-9: #ffc53d;
+  --amber-10: #ffba18;
+  --amber-11: #ab6400;
+
+  --red-3: #feebec;
+  --red-6: #f9c6c6;
+  --red-7: #f4a9aa;
+  --red-9: #e5484d;
+  --red-10: #dc3e42;
+  --red-11: #ce2c31;
+
+  --blue-3: #e6f4fe;
+  --blue-6: #b7d9f8;
+  --blue-7: #8ec8f6;
+  --blue-9: #0090ff;
+  --blue-10: #0588f0;
+  --blue-11: #0d74ce;
+
+  --purple-3: #f3eefe;
+  --purple-6: #d9caf7;
+  --purple-7: #c3adf0;
+  --purple-9: #7c3aed;
+  --purple-10: #6d28d9;
+  --purple-11: #6d28d9;
+
+  --bg-default: #ffffff;
+  --bg-overlay: #ffffff;
+
+  --btn-primary-bg: #000000;
+  --btn-primary-fg: #ffffff;
+  --btn-primary-hover: var(--slate-11);
+  --btn-primary-disabled-bg: var(--slate-8);
+  --btn-primary-disabled-fg: #ffffff;
+
+  --expo-shadow-xs: 0 1px 3px #00000006, 0 1px 2px #0000000d;
+  --expo-shadow-sm: 0 3px 6px #00000014, 0 2px 4px #00000012;
+  --expo-shadow-md: 0 10px 20px #0000001a, 0 3px 6px #0000000d;
+  --expo-shadow-lg: 0 15px 25px #0000001f, 0 5px 10px #0000000d;
+  --expo-shadow-xl: 0 20px 40px #00000026;
+}
+
+/* ============================================================================
+   Re-point the shadcn tokens at the semantic tier.
+
+   This is the single highest-leverage edit in the redesign: every `bg-card`,
+   `border-border` and `text-muted-foreground` already written across the app
+   resolves through these names, so the Expo palette reaches every page
+   without touching one of them. The `.app-shell` compatibility block further
+   down also reads these variables, so the legacy light-utility overrides
+   follow along automatically.
+   ========================================================================= */
+
+:root,
+.dark,
+.light,
+[data-theme='light'] {
+  --background: var(--bg-screen);
+  --foreground: var(--text-default);
+  --card: var(--bg-default);
+  --card-foreground: var(--text-default);
+  --popover: var(--bg-overlay);
+  --popover-foreground: var(--text-default);
+  --muted: var(--bg-element);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--bg-hover);
+  --accent-foreground: var(--text-default);
+  --border: var(--border-default);
+  --input: var(--bg-element);
+  --destructive: var(--red-10);
+  --destructive-foreground: #ffffff;
+  --sidebar: var(--bg-screen);
+  --sidebar-foreground: var(--text-default);
+  --sidebar-accent: var(--bg-element);
+  --sidebar-accent-foreground: var(--text-default);
+  --sidebar-border: var(--border-default);
+
+  /* Expo radius: 12 small, 16 standard card, 24 panel, 40 feature, 9999 pill.
+     `--radius` is the small step; the card/panel/feature steps are declared
+     in the @theme block below. */
+  --radius: 0.75rem;
 }
 
 @theme inline {
@@ -159,8 +440,15 @@
   --color-primary-blue: var(--primary-blue);
   --color-primary-purple: var(--primary-purple);
   --color-primary-purple-dark: var(--primary-purple-dark);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
+  /* Renamed from `--color-secondary`.
+     Tailwind v4 generates `text-secondary` from any `--color-<name>`, and
+     that generated utility beat the `@utility text-secondary` below — so
+     every muted body label in the app was silently rendering in brand
+     violet, a step-9 solid used as text at roughly 4:1. `secondary` in this
+     system means *the quieter of two text tiers*, not *the second brand
+     hue*, so the brand keeps the value under an unambiguous name. */
+  --color-brand: var(--secondary);
+  --color-brand-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
@@ -184,7 +472,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     'Noto Sans', sans-serif;
 
@@ -201,11 +490,726 @@
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Expo radius scale, in absolute pixels rather than multiples of --radius,
+     because these are named shapes rather than a ramp: 16px is *the* card,
+     24px is a panel, 40px is a feature/media surface. `rounded-2xl` is used
+     widely across the app already, so pinning it to 16px lands the standard
+     Expo card everywhere for free. */
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+  --radius-4xl: 40px;
+  --radius-card: 16px;
+  --radius-panel: 24px;
+  --radius-feature: 40px;
+
+  /* Expo two-layer shadows. Reserved for things that genuinely float -
+     dropdowns, popovers, date pickers, modals. Cards do not float. */
+  --shadow-expo-xs: var(--expo-shadow-xs);
+  --shadow-expo-sm: var(--expo-shadow-sm);
+  --shadow-expo-md: var(--expo-shadow-md);
+  --shadow-expo-lg: var(--expo-shadow-lg);
+  --shadow-expo-xl: var(--expo-shadow-xl);
+
+  /* Mono is not just for code - it is a deliberate texture for eyebrows,
+     stat numbers and badges. */
+  --font-mono:
+    var(--font-jetbrains), 'JetBrains Mono', ui-monospace, SFMono-Regular,
+    Consolas, 'Liberation Mono', monospace;
+
+  --ease-expo: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* ============================================================================
+   EXPO SEMANTIC UTILITIES
+
+   Declared with @utility, NOT @theme. Tailwind v4 has a single colour
+   namespace, so one `--color-danger` would force bg-danger, text-danger and
+   border-danger to share a value - but Expo needs red-3 / red-11 / red-7
+   respectively. @utility keeps the names clean and the values correct.
+
+   Components reference ONLY these. Never a hex, never a raw `--slate-N`.
+   All of them compose with variants: `hover:bg-hover`, `dark:text-secondary`.
+   ========================================================================= */
+
+/* --- background --- */
+@utility bg-screen {
+  background-color: var(--bg-screen);
+}
+@utility bg-default {
+  background-color: var(--bg-default);
+}
+@utility bg-subtle {
+  background-color: var(--bg-subtle);
+}
+@utility bg-element {
+  background-color: var(--bg-element);
+}
+@utility bg-hover {
+  background-color: var(--bg-hover);
+}
+@utility bg-selected {
+  background-color: var(--bg-selected);
+}
+@utility bg-overlay {
+  background-color: var(--bg-overlay);
+}
+@utility bg-success {
+  background-color: var(--bg-success);
+}
+@utility bg-warning {
+  background-color: var(--bg-warning);
+}
+@utility bg-danger {
+  background-color: var(--bg-danger);
+}
+@utility bg-info {
+  background-color: var(--bg-info);
+}
+@utility bg-preview {
+  background-color: var(--bg-preview);
+}
+
+/* --- text. Steps 11 and 12 only - never step 9 as body text. --- */
+@utility text-default {
+  color: var(--text-default);
+}
+@utility text-secondary {
+  color: var(--text-secondary);
+}
+@utility text-tertiary {
+  color: var(--text-tertiary);
+}
+@utility text-quaternary {
+  color: var(--text-quaternary);
+}
+@utility text-link {
+  color: var(--text-link);
+}
+@utility text-success {
+  color: var(--text-success);
+}
+@utility text-warning {
+  color: var(--text-warning);
+}
+@utility text-danger {
+  color: var(--text-danger);
+}
+@utility text-info {
+  color: var(--text-info);
+}
+@utility text-preview {
+  color: var(--text-preview);
+}
+
+/* --- icon: tracked separately from text, and one step lighter, so an icon
+       never shouts louder than the label it sits beside. --- */
+@utility icon-default {
+  color: var(--icon-default);
+}
+@utility icon-secondary {
+  color: var(--icon-secondary);
+}
+@utility icon-tertiary {
+  color: var(--icon-tertiary);
+}
+@utility icon-quaternary {
+  color: var(--icon-quaternary);
+}
+@utility icon-success {
+  color: var(--icon-success);
+}
+@utility icon-warning {
+  color: var(--icon-warning);
+}
+@utility icon-danger {
+  color: var(--icon-danger);
+}
+@utility icon-info {
+  color: var(--icon-info);
+}
+@utility icon-preview {
+  color: var(--icon-preview);
+}
+
+/* --- border. `border-soft` rather than `border-secondary`, so shadcn's
+       --color-secondary keeps generating its own utility untouched. --- */
+@utility border-default {
+  border-color: var(--border-default);
+}
+@utility border-soft {
+  border-color: var(--border-soft);
+}
+@utility border-strong {
+  border-color: var(--border-strong);
+}
+@utility border-success {
+  border-color: var(--border-success);
+}
+@utility border-warning {
+  border-color: var(--border-warning);
+}
+@utility border-danger {
+  border-color: var(--border-danger);
+}
+@utility border-info {
+  border-color: var(--border-info);
+}
+@utility border-preview {
+  border-color: var(--border-preview);
+}
+
+/* --- buttons --- */
+@utility bg-btn-primary {
+  background-color: var(--btn-primary-bg);
+}
+@utility text-btn-primary-fg {
+  color: var(--btn-primary-fg);
+}
+@utility bg-btn-primary-hover {
+  background-color: var(--btn-primary-hover);
+}
+@utility bg-btn-primary-disabled {
+  background-color: var(--btn-primary-disabled-bg);
+}
+@utility text-btn-primary-disabled-fg {
+  color: var(--btn-primary-disabled-fg);
+}
+@utility bg-danger-solid {
+  background-color: var(--btn-danger-bg);
+}
+@utility bg-danger-solid-hover {
+  background-color: var(--btn-danger-hover);
+}
+
+/* --- focus ring: step 8, always visible, :focus-visible only --- */
+@utility ring-strong {
+  --tw-ring-color: var(--border-strong);
+}
+
+@layer utilities {
+  /* ==========================================================================
+     TYPE
+
+     Two scales, and they must not be mixed on one surface.
+
+     Marketing (landing, pricing, product) is big, tight and confident.
+     App (dashboard, settings, tables) is denser, heavier and smaller.
+
+     The negative letter-spacing is the signature. 64px at -3px is what makes
+     a headline read as tight and engineered rather than generic. Large
+     display type never ships at default tracking; body type never gets
+     negative tracking at all.
+     ====================================================================== */
+
+  .text-display-1 {
+    font-size: 64px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -3px;
+  }
+  .text-display-2 {
+    font-size: 48px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -2px;
+  }
+  .text-display-3 {
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+  .text-display-4 {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.5px;
+  }
+
+  /* App-surface scale. Weight climbs to 700-800 here; on marketing it stops
+     at 600. There is no 900 anywhere in the system. */
+  .text-page-title {
+    font-size: 31px;
+    font-weight: 800;
+    line-height: 1.29;
+    letter-spacing: -0.352px;
+  }
+  .text-section {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: -0.25px;
+  }
+  .text-subsection {
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: normal;
+  }
+
+  /* The signature section opener: mono, 12px, uppercase, negative tracking,
+     quaternary. Sits directly above a display heading with a 16px gap. */
+  .text-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+    color: var(--text-quaternary);
+  }
+
+  /* Big numbers go mono with negative tracking - the detail that makes a
+     stat band feel engineered rather than decorative. */
+  .text-metric {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    letter-spacing: -2px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-default);
+  }
+
+  /* ==========================================================================
+     MOTION - one easing curve, three durations, and that is the whole system.
+     Never animate `all`; always name the properties.
+     ====================================================================== */
+
+  .transition-expo {
+    transition-property:
+      color, background-color, border-color, opacity, fill, stroke, box-shadow;
+    transition-duration: 150ms;
+    transition-timing-function: var(--ease-expo);
+  }
+  .transition-expo-slow {
+    transition-property: color, background-color, border-color, opacity;
+    transition-duration: 200ms;
+    transition-timing-function: var(--ease-expo);
+  }
+  .transition-expo-transform {
+    transition-property: transform, translate, scale, rotate;
+    transition-duration: 300ms;
+    transition-timing-function: var(--ease-expo);
+  }
+
+  /* ==========================================================================
+     LAYOUT RHYTHM
+     Container 1328px for app and marketing; 768px for prose.
+     ====================================================================== */
+
+  .expo-container {
+    width: 100%;
+    max-width: 1328px;
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+  .expo-prose {
+    width: 100%;
+    max-width: 768px;
+    margin-inline: auto;
+  }
+  .expo-section {
+    padding-bottom: 128px;
+  }
+  .expo-section-compact {
+    padding-bottom: 80px;
+  }
+  .expo-hero {
+    padding-bottom: 200px;
+  }
+
+  /* ==========================================================================
+     SURFACES
+     Expo builds depth with borders and background steps, not elevation.
+     ====================================================================== */
+
+  .expo-card {
+    background-color: var(--bg-default);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+    box-shadow: none;
+  }
+  /* A card that is genuinely clickable brightens its border and lifts its
+     background one step. It does not rise, and it does not gain a shadow. */
+  .expo-card-interactive {
+    transition-property: background-color, border-color;
+    transition-duration: 150ms;
+    transition-timing-function: var(--ease-expo);
+  }
+  .expo-card-interactive:hover {
+    background-color: var(--bg-subtle);
+    border-color: var(--slate-7);
+  }
+  .expo-panel {
+    background-color: var(--bg-default);
+    border: 1px solid var(--border-default);
+    border-radius: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .text-display-1 {
+    font-size: 40px;
+    letter-spacing: -1.5px;
+  }
+  .text-display-2 {
+    font-size: 32px;
+    letter-spacing: -1px;
+  }
+  .text-display-3 {
+    font-size: 24px;
+    letter-spacing: -0.5px;
+  }
+  .text-page-title {
+    font-size: 26px;
+    letter-spacing: -0.3px;
+  }
+  .expo-container {
+    padding-inline: 16px;
+  }
+  .expo-section {
+    padding-bottom: 80px;
+  }
+  .expo-hero {
+    padding-bottom: 112px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transition-expo-transform {
+    transition-property: opacity;
+  }
+}
+
+/* ============================================================================
+   BRAND SPECTRUM
+   ----------------------------------------------------------------------------
+   The structural layer above is deliberately sober: one neutral scale, colour
+   reserved for meaning, primary buttons at maximum contrast rather than
+   maximum hue. That is right for a dashboard, where colour has a job and
+   every extra hue is noise a user has to decode.
+
+   It is wrong for the front door. This is a social-media marketing product;
+   the landing page has to look like something that makes colourful things.
+
+   So the neutral tier stays exactly as it is — every dashboard surface, every
+   table, every form still reads through it — and this adds a spectrum on top
+   for marketing surfaces and brand moments: a blue-through-pink sweep, a set
+   of per-feature accent hues, and two ambient washes.
+
+   Rules that keep this from becoming the mess it replaced:
+     - The spectrum is for *brand expression*, never for status. Success is
+       still green, danger is still red, and neither is ever a gradient.
+     - Ambient washes sit under 12% alpha. They tint the page; they do not glow.
+     - Accents appear on chips, icons, borders and display type. Body copy is
+       still step 11/12 neutral, because a paragraph in gradient is unreadable.
+     - Nothing here animates on hover beyond a 150ms colour change.
+   ========================================================================= */
+
+:root {
+  /* --- The sweep, blue -> indigo -> violet -> orchid -> pink -> coral ----
+     These are SOLID values: they get white text or a white icon on top, so
+     each one is tuned to clear 3:1 against white. Cyan, coral and amber
+     started two steps brighter and failed that badly — a white glyph on
+     #35c5e8 lands at 2.0:1, which looks fine to someone who already knows
+     what the icon is and is invisible to everyone else. Use the `-text`
+     variants below when the hue itself has to be the foreground. */
+  --brand-sky: #4f8cff;
+  --brand-indigo: #5865f2;
+  --brand-violet: #7c3aed;
+  --brand-orchid: #b25ce0;
+  --brand-pink: #e8618c;
+  --brand-coral: #e8622c;
+  --brand-cyan: #1793b2;
+  --brand-amber: #cf7f0a;
+
+  /* Tinted for text on a dark ground: every one of these clears 8:1 on
+     --bg-screen, because an accent that fails contrast is decoration
+     pretending to be information. Fills and foregrounds need different value
+     ranges — one token cannot do both jobs, which is why there are two. */
+  --brand-sky-text: #8fb6ff;
+  --brand-indigo-text: #9aa4ff;
+  --brand-violet-text: #c4b1fd;
+  --brand-orchid-text: #dda8f0;
+  --brand-pink-text: #ffa3c0;
+  --brand-coral-text: #ffbf9b;
+  --brand-cyan-text: #7ddcf3;
+  --brand-amber-text: #ffd28a;
+
+  /* --- Gradients --------------------------------------------------------
+     One angle (115deg) across the whole system, so two gradients sitting
+     near each other read as one light source rather than two decisions. */
+  --gradient-brand: linear-gradient(
+    115deg,
+    var(--brand-sky) 0%,
+    var(--brand-indigo) 26%,
+    var(--brand-violet) 52%,
+    var(--brand-orchid) 74%,
+    var(--brand-pink) 100%
+  );
+  /* For gradient *text*. Built from the -text tints so a headline stays
+     readable at any size, not just at 64px. */
+  --gradient-brand-text: linear-gradient(
+    115deg,
+    var(--brand-sky-text) 0%,
+    var(--brand-indigo-text) 26%,
+    var(--brand-violet-text) 52%,
+    var(--brand-orchid-text) 74%,
+    var(--brand-pink-text) 100%
+  );
+  --gradient-brand-text-warm: linear-gradient(
+    115deg,
+    var(--brand-violet-text) 0%,
+    var(--brand-orchid-text) 40%,
+    var(--brand-pink-text) 72%,
+    var(--brand-coral-text) 100%
+  );
+  --gradient-brand-warm: linear-gradient(
+    115deg,
+    var(--brand-violet) 0%,
+    var(--brand-orchid) 40%,
+    var(--brand-pink) 72%,
+    var(--brand-coral) 100%
+  );
+  --gradient-brand-cool: linear-gradient(
+    115deg,
+    var(--brand-cyan) 0%,
+    var(--brand-sky) 45%,
+    var(--brand-indigo) 100%
+  );
+
+  /* --- Ambient washes ---------------------------------------------------
+     Large, soft and low. These are the "lit from somewhere" cue that makes a
+     dark page feel like a product rather than a terminal. Alpha stays under
+     12%: past that they stop being atmosphere and start being a gradient
+     someone has to read text on top of. */
+  --wash-hero:
+    radial-gradient(
+      ellipse 80% 55% at 50% -10%,
+      color-mix(in srgb, var(--brand-violet) 11%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      ellipse 60% 45% at 12% 8%,
+      color-mix(in srgb, var(--brand-indigo) 8%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 55% 45% at 88% 20%,
+      color-mix(in srgb, var(--brand-pink) 7%, transparent),
+      transparent 58%
+    );
+  --wash-section: radial-gradient(
+    ellipse 70% 60% at 50% 0%,
+    color-mix(in srgb, var(--brand-violet) 7%, transparent),
+    transparent 60%
+  );
+}
+
+@layer utilities {
+  /* --- Gradient type ----------------------------------------------------
+     For a phrase inside a headline, never a whole paragraph. `inline-block`
+     because a clipped background on an inline box breaks across line wraps
+     in every engine, and `pb` because descenders clip against the box edge
+     once the fill is the background. */
+  .text-gradient-brand,
+  .text-gradient-brand-warm,
+  .text-gradient-brand-cool {
+    display: inline-block;
+    padding-bottom: 0.08em;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .text-gradient-brand {
+    background-image: var(--gradient-brand-text);
+  }
+  .text-gradient-brand-warm {
+    background-image: var(--gradient-brand-text-warm);
+  }
+  .text-gradient-brand-cool {
+    background-image: var(--gradient-brand-cool);
+  }
+
+  /* --- Ambient washes --------------------------------------------------- */
+  .brand-wash-hero {
+    position: relative;
+    isolation: isolate;
+  }
+  .brand-wash-hero::before,
+  .brand-wash-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+  .brand-wash-hero::before {
+    background: var(--wash-hero);
+  }
+  .brand-wash-section {
+    position: relative;
+    isolation: isolate;
+  }
+  .brand-wash-section::before {
+    background: var(--wash-section);
+  }
+
+  /* --- Brand surfaces ----------------------------------------------------
+     A card that carries an accent. The border is the accent at low alpha and
+     the fill is a barely-there tint of it, so a grid of these reads as a
+     spectrum instead of a wall of identical grey rectangles — which was the
+     actual complaint. */
+  .brand-card {
+    position: relative;
+    background:
+      linear-gradient(
+        158deg,
+        color-mix(
+            in srgb,
+            var(--card-accent, var(--brand-violet)) 9%,
+            transparent
+          )
+          0%,
+        transparent 55%
+      ),
+      var(--bg-default);
+    border: 1px solid
+      color-mix(
+        in srgb,
+        var(--card-accent, var(--brand-violet)) 22%,
+        var(--border-default)
+      );
+    border-radius: 24px;
+    transition:
+      background-color 150ms var(--ease-expo),
+      border-color 150ms var(--ease-expo);
+  }
+  .brand-card:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--card-accent, var(--brand-violet)) 45%,
+      transparent
+    );
+  }
+
+  /* The icon chip. This is where the gradient earns its keep — a small,
+     saturated shape that gives each card an identity at a glance. */
+  .brand-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    color: #ffffff;
+    background: linear-gradient(
+      135deg,
+      var(--card-accent, var(--brand-violet)) 0%,
+      color-mix(
+          in srgb,
+          var(--card-accent, var(--brand-violet)) 55%,
+          var(--brand-pink)
+        )
+        100%
+    );
+  }
+
+  /* A pill that announces something — the hero eyebrow, a "new" marker.
+     Accent border and tint, accent text, mono label. */
+  .brand-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 32px;
+    padding-inline: 0.875rem;
+    border-radius: 9999px;
+    background: color-mix(in srgb, var(--brand-violet) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--brand-violet) 30%, transparent);
+    color: var(--brand-violet-text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -0.5px;
+    text-transform: uppercase;
+  }
+
+  /* --- Gradient CTA -----------------------------------------------------
+     The marketing primary. Colour is the point here: this is the front door
+     of a product that makes colourful things, and a black-and-white button
+     on it reads as a developer tool. Dashboard primaries stay neutral. */
+  .btn-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 48px;
+    padding-inline: 1.75rem;
+    border-radius: 9999px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #ffffff;
+    background: var(--gradient-brand);
+    border: 1px solid transparent;
+    transition: filter 150ms var(--ease-expo);
+  }
+  .btn-brand:hover {
+    filter: brightness(1.1) saturate(1.05);
+  }
+  .btn-brand:disabled {
+    background: var(--btn-primary-disabled-bg);
+    color: var(--btn-primary-disabled-fg);
+    filter: none;
+    cursor: not-allowed;
+  }
+
+  /* The gradient fill for the Button primitive's primary variant. Kept as a
+     class rather than Tailwind utilities because a background-image and a
+     disabled background-color fight each other in the utility layer, and the
+     disabled state has to win. */
+  .btn-brand-fill {
+    color: #ffffff;
+    background-image: var(--gradient-brand);
+    border-color: transparent;
+    transition: filter 150ms var(--ease-expo);
+  }
+  .btn-brand-fill:hover:not(:disabled) {
+    filter: brightness(1.1) saturate(1.05);
+  }
+  /* Disabled is a different colour, never a faded one - so the gradient is
+     removed outright rather than dimmed. */
+  .btn-brand-fill:disabled {
+    background-image: none;
+    background-color: var(--btn-primary-disabled-bg);
+    color: var(--btn-primary-disabled-fg);
+    filter: none;
+  }
+
+  /* The current page, in every navigation surface: sidebar rail, top nav,
+     marketing nav. A brand tint plus brand text rather than a neutral grey
+     fill — in a product about colour, "you are here" is worth saying in the
+     brand's own voice, and it reads faster than a grey rectangle. */
+  .nav-active {
+    background-color: color-mix(in srgb, var(--brand-violet) 16%, transparent);
+    color: var(--brand-violet-text);
+  }
+  .nav-active:hover {
+    background-color: color-mix(in srgb, var(--brand-violet) 22%, transparent);
+    color: var(--brand-violet-text);
+  }
+
+  /* A 1px gradient rule — used to close a section without the flatness of a
+     plain border. Masked so it stays exactly one pixel tall. */
+  .brand-rule {
+    height: 1px;
+    border: 0;
+    background: var(--gradient-brand);
+    opacity: 0.35;
+  }
+}
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -235,60 +1239,61 @@
 
   /* Soft brand-color glow behind the gradient "Genie" wordmark next to the logo */
   .brand-wordmark-glow {
-    filter: drop-shadow(0 0 10px color-mix(in srgb, var(--primary-purple) 45%, transparent))
-      drop-shadow(0 0 22px color-mix(in srgb, var(--primary-blue) 30%, transparent));
+    filter: drop-shadow(
+        0 0 10px color-mix(in srgb, var(--primary-purple) 45%, transparent)
+      )
+      drop-shadow(
+        0 0 22px color-mix(in srgb, var(--primary-blue) 30%, transparent)
+      );
     transition: filter 0.3s ease;
   }
   .group:hover .brand-wordmark-glow {
-    filter: drop-shadow(0 0 14px color-mix(in srgb, var(--primary-purple) 60%, transparent))
-      drop-shadow(0 0 30px color-mix(in srgb, var(--primary-blue) 45%, transparent));
+    filter: drop-shadow(
+        0 0 14px color-mix(in srgb, var(--primary-purple) 60%, transparent)
+      )
+      drop-shadow(
+        0 0 30px color-mix(in srgb, var(--primary-blue) 45%, transparent)
+      );
   }
 
   /* App shell backgrounds */
   .app-gradient-base--subtle {
-    background:
-      radial-gradient(ellipse 100% 70% at 50% -25%, rgba(88, 101, 242, 0.06), transparent 55%),
-      linear-gradient(180deg, #090b10 0%, #0c1018 48%, #090b10 100%);
+    /* The page ground is a flat step-1 fill. Expo pages do not glow. */
+    background: var(--bg-screen);
   }
 
   .app-gradient-base--vivid {
+    /* Marketing keeps one very soft brand wash near the top edge, at an
+       alpha low enough to read as paper tone rather than as a gradient. */
     background:
-      radial-gradient(ellipse 75% 55% at 50% -8%, rgba(88, 101, 242, 0.12), transparent 58%),
-      radial-gradient(ellipse 55% 45% at 100% 85%, rgba(124, 58, 237, 0.08), transparent 52%),
-      linear-gradient(165deg, #0a0c14 0%, #0f1420 45%, #0a0e16 100%);
+      radial-gradient(
+        ellipse 90% 50% at 50% -10%,
+        color-mix(in srgb, var(--primary-purple) 7%, transparent),
+        transparent 60%
+      ),
+      var(--bg-screen);
   }
 
   .app-gradient-base--app {
-    background:
-      radial-gradient(ellipse 85% 65% at 50% -10%, rgba(88, 101, 242, 0.16), transparent 58%),
-      radial-gradient(ellipse 60% 50% at 100% 88%, rgba(45, 42, 94, 0.22), transparent 52%),
-      radial-gradient(ellipse 50% 45% at 0% 55%, rgba(124, 58, 237, 0.1), transparent 55%),
-      linear-gradient(165deg, #050508 0%, #0e0c18 42%, #12101f 100%);
+    /* The authenticated shell is flat. Contrast between the rail, the header
+       and the content comes from step 1 vs step 2 and a 1px border, which is
+       legible at every zoom level and costs nothing to paint. */
+    background: var(--bg-screen);
   }
 
   /* Glass card effect */
   .glass-card {
     position: relative;
-    /* Faint violet cast falling from the top-left, so the panel reads as
-       lit from somewhere rather than as a flat fill. */
-    background:
-      linear-gradient(
-        158deg,
-        color-mix(in srgb, var(--primary-purple) 8%, transparent) 0%,
-        transparent 46%
-      ),
-      rgba(18, 24, 32, 0.88);
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px) saturate(1.5);
-    border: 1px solid rgba(42, 53, 72, 0.45);
-    /* Thin top specular line + soft ambient falloff — the "light catching
-       the rim of glass" cue that reads as glass rather than a flat panel. */
-    box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
-      0 24px 60px -32px rgba(0, 0, 0, 0.65);
+    /* Formerly a blurred, glowing glass panel. Now the standard Expo card:
+       one background step above the page, a 1px border, 16px radius, and no
+       shadow at all. Every call site keeps the class name. */
+    background: var(--bg-default);
+    border: 1px solid var(--border-default);
+    border-radius: 16px;
+    box-shadow: none;
     transition:
-      border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-      box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+      border-color 150ms var(--ease-expo),
+      background-color 150ms var(--ease-expo);
   }
 
   /* Deliberately border + glow only, no lift. This class wraps both small
@@ -296,60 +1301,44 @@
      off the page on hover reads as a glitch. Lifting is `.app-tile`'s job,
      applied only where the whole card is genuinely clickable. */
   .glass-card:hover {
-    border-color: color-mix(in srgb, var(--primary-purple) 32%, transparent);
-    box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.12) inset,
-      0 24px 60px -32px rgba(0, 0, 0, 0.7),
-      0 0 40px -14px color-mix(in srgb, var(--primary-purple) 45%, transparent);
+    /* Depth on hover is one background step and a brighter border. Not a
+       glow, and deliberately not a lift: this class wraps both small tiles
+       and full-width page sections, and a section-sized panel rising off the
+       page reads as a glitch. */
+    background: var(--bg-subtle);
+    border-color: var(--slate-7);
   }
 
   .workflow-step-card {
     cursor: pointer;
-    background:
-      radial-gradient(circle at top right, rgba(76, 68, 145, 0.32) 0%, rgba(10, 10, 15, 0.98) 68%),
-      #0a0a0f;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 32px -12px rgba(124, 58, 237, 0.2);
+    background: var(--bg-default);
+    border: 1px solid var(--border-default);
+    box-shadow: none;
     transition:
-      border-color 0.2s ease,
-      box-shadow 0.2s ease,
-      background 0.2s ease;
+      border-color 150ms var(--ease-expo),
+      background-color 150ms var(--ease-expo);
   }
 
   .workflow-step-card:hover {
-    border-color: rgba(255, 255, 255, 0.14);
-    box-shadow: 0 0 40px -10px rgba(124, 58, 237, 0.32);
-    background:
-      radial-gradient(circle at top right, rgba(88, 78, 165, 0.4) 0%, rgba(12, 12, 18, 0.98) 68%),
-      #0c0c12;
+    background: var(--bg-subtle);
+    border-color: var(--slate-7);
   }
   /* Kept in sync with the base rule above — this override would otherwise
      revert the lit-panel treatment everywhere, since the app runs dark. */
   .dark .glass-card {
-    background:
-      linear-gradient(
-        158deg,
-        color-mix(in srgb, var(--primary-purple) 8%, transparent) 0%,
-        transparent 46%
-      ),
-      rgba(18, 24, 32, 0.88);
-    border-color: rgba(42, 53, 72, 0.45);
-    box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
-      0 24px 60px -32px rgba(0, 0, 0, 0.65);
+    background: var(--bg-default);
+    border-color: var(--border-default);
+    box-shadow: none;
   }
 
   .dark .glass-card:hover {
-    border-color: color-mix(in srgb, var(--primary-purple) 32%, transparent);
-    box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.12) inset,
-      0 24px 60px -32px rgba(0, 0, 0, 0.7),
-      0 0 40px -14px color-mix(in srgb, var(--primary-purple) 45%, transparent);
+    background: var(--bg-subtle);
+    border-color: var(--slate-7);
   }
 
   /* Subtle grid pattern background */
   .pattern-grid {
-    background-image: 
+    background-image:
       linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
       linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 32px 32px;
@@ -362,7 +1351,11 @@
       linear-gradient(90deg, rgba(0, 0, 0, 0.42) 1px, transparent 1px),
       linear-gradient(rgba(0, 0, 0, 0.2) 1px, transparent 1px),
       linear-gradient(90deg, rgba(0, 0, 0, 0.2) 1px, transparent 1px);
-    background-size: 48px 48px, 48px 48px, 12px 12px, 12px 12px;
+    background-size:
+      48px 48px,
+      48px 48px,
+      12px 12px,
+      12px 12px;
   }
 
   /* Glass morphism for panels */
@@ -375,13 +1368,17 @@
 
   /* Smooth page transition */
   .page-enter {
-    animation: pageIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: pageIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
 }
 
 @keyframes shimmer {
-  0% { transform: translateX(-100%) skewX(-12deg); }
-  100% { transform: translateX(200%) skewX(-12deg); }
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-12deg);
+  }
 }
 
 @keyframes pageIn {
@@ -396,504 +1393,23 @@
 }
 
 /*
- * Legacy light-theme Tailwind classes used across workspace pages.
- * Maps hardcoded slate/indigo utilities to dark-theme CSS variables so
- * pages remain readable after the global rebrand without editing every file.
+ * The legacy light-theme compatibility layer used to live here.
+ *
+ * It mapped ~120 hardcoded Tailwind utilities (`text-slate-900`, `bg-white`,
+ * `bg-indigo-50`, `text-emerald-700`, …) onto dark-theme variables so that
+ * pages written for a light UI stayed readable after the rebrand — a real fix
+ * at the time, and about 430 lines of it.
+ *
+ * Every one of those class names is now gone from app/, components/,
+ * features/ and src/: the pages reference semantic tokens directly, which is
+ * the one rule this system is built on. The block was therefore dead CSS
+ * shipped on every page load, and describing colours a second time in a place
+ * no component can see is exactly how the token tier stops being the source
+ * of truth. Deleted.
+ *
+ * If a page ever reintroduces a raw palette class, the correct fix is to give
+ * that page a semantic token — not to restore this block.
  */
-.app-shell .text-slate-900,
-.app-shell .text-slate-800,
-.app-shell .text-slate-700,
-.app-shell .text-black {
-  color: var(--foreground);
-}
-
-.app-shell .text-slate-600,
-.app-shell .text-slate-500,
-.app-shell .text-slate-400 {
-  color: var(--muted-foreground);
-}
-
-.app-shell .bg-white,
-.app-shell .bg-white\/90,
-.app-shell .bg-white\/80,
-.app-shell .bg-white\/70 {
-  background-color: color-mix(in srgb, var(--card) 92%, transparent);
-}
-
-.app-shell .bg-slate-50,
-.app-shell .bg-slate-50\/40,
-.app-shell .bg-slate-50\/50,
-.app-shell .bg-slate-50\/60,
-.app-shell .bg-slate-50\/70 {
-  background-color: var(--muted);
-}
-
-.app-shell .bg-slate-100 {
-  background-color: var(--accent);
-}
-
-.app-shell .border-slate-100,
-.app-shell .border-slate-200,
-.app-shell .border-slate-300 {
-  border-color: var(--border);
-}
-
-.app-shell .bg-indigo-50,
-.app-shell .bg-indigo-50\/20,
-.app-shell .bg-indigo-50\/30,
-.app-shell .bg-indigo-50\/50,
-.app-shell .bg-indigo-50\/60,
-.app-shell .bg-indigo-50\/70,
-.app-shell .bg-indigo-50\/90 {
-  background-color: color-mix(in srgb, var(--primary-blue) 14%, transparent);
-}
-
-.app-shell .bg-indigo-100 {
-  background-color: color-mix(in srgb, var(--primary-blue) 22%, transparent);
-}
-
-.app-shell .border-indigo-100,
-.app-shell .border-indigo-100\/50,
-.app-shell .border-indigo-100\/60,
-.app-shell .border-indigo-200 {
-  border-color: color-mix(in srgb, var(--primary-blue) 32%, transparent);
-}
-
-.app-shell .text-indigo-600,
-.app-shell .text-indigo-700,
-.app-shell .text-indigo-700\/80,
-.app-shell .text-indigo-800 {
-  color: #a5b4fc;
-}
-
-.app-shell .hover\:text-indigo-700:hover {
-  color: #c7d2fe;
-}
-
-.app-shell .hover\:bg-indigo-50:hover {
-  background-color: color-mix(in srgb, var(--primary-blue) 18%, transparent);
-}
-
-.app-shell .hover\:border-slate-300:hover {
-  border-color: color-mix(in srgb, var(--border) 85%, white);
-}
-
-.app-shell .hover\:bg-slate-100\/50:hover {
-  background-color: color-mix(in srgb, var(--accent) 80%, transparent);
-}
-
-.app-shell .hover\:border-indigo-200:hover,
-.app-shell .hover\:border-indigo-300:hover {
-  border-color: color-mix(in srgb, var(--primary-blue) 45%, transparent);
-}
-
-.app-shell .placeholder-slate-400::placeholder,
-.app-shell .placeholder\:text-slate-400::placeholder {
-  color: var(--muted-foreground);
-}
-
-.app-shell .disabled\:bg-slate-200:disabled {
-  background-color: var(--muted);
-}
-
-.app-shell .disabled\:text-slate-500:disabled {
-  color: var(--muted-foreground);
-}
-
-.app-shell .ring-slate-100 {
-  --tw-ring-color: var(--border);
-}
-
-.app-shell .from-white {
-  --tw-gradient-from: var(--card);
-}
-
-.app-shell .to-slate-50 {
-  --tw-gradient-to: var(--muted);
-}
-
-/* Status / accent tints (amber, emerald, sky, blue, pink) */
-.app-shell .bg-amber-50,
-.app-shell .bg-amber-50\/70,
-.app-shell .bg-amber-50\/90,
-.app-shell .hover\:bg-amber-100:hover {
-  background-color: color-mix(in srgb, #f59e0b 14%, transparent);
-}
-
-.app-shell .border-amber-200 {
-  border-color: color-mix(in srgb, #f59e0b 35%, transparent);
-}
-
-.app-shell .text-amber-600,
-.app-shell .text-amber-700 {
-  color: #fbbf24;
-}
-
-.app-shell .bg-emerald-50,
-.app-shell .bg-emerald-50\/60,
-.app-shell .bg-emerald-50\/90,
-.app-shell .hover\:bg-emerald-100:hover {
-  background-color: color-mix(in srgb, #10b981 14%, transparent);
-}
-
-.app-shell .border-emerald-100,
-.app-shell .border-emerald-200 {
-  border-color: color-mix(in srgb, #10b981 35%, transparent);
-}
-
-.app-shell .text-emerald-600,
-.app-shell .text-emerald-700,
-.app-shell .text-emerald-800 {
-  color: #34d399;
-}
-
-.app-shell .hover\:text-emerald-800:hover {
-  color: #6ee7b7;
-}
-
-.app-shell .bg-emerald-100 {
-  background-color: color-mix(in srgb, #10b981 22%, transparent);
-}
-
-.app-shell .bg-sky-50 {
-  background-color: color-mix(in srgb, #0ea5e9 14%, transparent);
-}
-
-.app-shell .text-sky-600 {
-  color: #38bdf8;
-}
-
-.app-shell .bg-blue-50,
-.app-shell .bg-blue-50\/90,
-.app-shell .bg-blue-50\/60 {
-  background-color: color-mix(in srgb, #3b82f6 14%, transparent);
-}
-
-.app-shell .border-blue-200,
-.app-shell .hover\:border-blue-300:hover {
-  border-color: color-mix(in srgb, #3b82f6 35%, transparent);
-}
-
-.app-shell .text-blue-900,
-.app-shell .text-blue-700,
-.app-shell .text-blue-800 {
-  color: #60a5fa;
-}
-
-.app-shell .hover\:text-blue-900:hover {
-  color: #93c5fd;
-}
-
-.app-shell .bg-pink-50\/60 {
-  background-color: color-mix(in srgb, #ec4899 14%, transparent);
-}
-
-.app-shell .border-pink-200,
-.app-shell .hover\:border-pink-300:hover {
-  border-color: color-mix(in srgb, #ec4899 35%, transparent);
-}
-
-.app-shell .text-pink-700,
-.app-shell .text-pink-800 {
-  color: #f472b6;
-}
-
-.app-shell .hover\:text-pink-900:hover {
-  color: #f9a8d4;
-}
-
-.app-shell .bg-indigo-600,
-.app-shell .hover\:bg-indigo-700:hover {
-  background: var(--gradient-action);
-  color: #ffffff;
-}
-
-/* Primary action buttons only — explicit gradient / legacy indigo classes.
- *
- * Scoped to `button.` / `a.` on purpose: `bg-gradient-action` is also used
- * on plain `<div>`s as a decorative fill (e.g. the campaigns date chip),
- * and those must not become interactive-looking.
- *
- * Everything below is additive, so the ~15 pages that use this class get
- * press feedback, a lift and a light sweep without a single page edit. */
-.app-shell button.bg-gradient-action,
-.app-shell a.bg-gradient-action,
-.app-shell button.bg-gradient-primary,
-.app-shell a.bg-gradient-primary {
-  overflow: hidden;
-  isolation: isolate;
-  background: var(--gradient-action);
-  color: #ffffff;
-  border-color: color-mix(in srgb, var(--primary-purple) 35%, transparent);
-  transition:
-    transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 0.32s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/*
- * The sheen is absolutely positioned, so the button needs to be a
- * positioning context — but this must never overwrite a button that has
- * already positioned itself.
- *
- * These rules are unlayered and therefore beat Tailwind's layered
- * utilities, so a blanket `position: relative` silently outranked
- * `fixed`/`absolute` on any button matching this selector. The shadcn
- * Button's *default* variant carries `bg-gradient-primary`, so the
- * selector reaches far more than the hand-written gradient buttons: it
- * took the chat launcher (`fixed bottom-5 right-5`) out of the viewport
- * and would have done the same to the dialog and sheet close buttons
- * (`absolute top-2 right-2`).
- *
- * Guarding on the utility class names keeps `relative` for the static
- * buttons that need it and leaves positioned ones alone.
- */
-.app-shell button.bg-gradient-action:not(.fixed):not(.absolute):not(.sticky),
-.app-shell a.bg-gradient-action:not(.fixed):not(.absolute):not(.sticky),
-.app-shell button.bg-gradient-primary:not(.fixed):not(.absolute):not(.sticky),
-.app-shell a.bg-gradient-primary:not(.fixed):not(.absolute):not(.sticky) {
-  position: relative;
-}
-
-/* The sweep. Parked off the left edge and only animated on hover, so it
-   costs nothing at rest. `pointer-events: none` keeps it from swallowing
-   the click, and z-index -1 keeps it under the label. */
-.app-shell button.bg-gradient-action::after,
-.app-shell a.bg-gradient-action::after,
-.app-shell button.bg-gradient-primary::after,
-.app-shell a.bg-gradient-primary::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -60%;
-  z-index: -1;
-  width: 45%;
-  background: linear-gradient(
-    100deg,
-    transparent,
-    rgba(255, 255, 255, 0.35),
-    transparent
-  );
-  transform: skewX(-20deg);
-  pointer-events: none;
-}
-
-.app-shell button.bg-gradient-action:hover:not(:disabled),
-.app-shell a.bg-gradient-action:hover,
-.app-shell button.bg-gradient-primary:hover:not(:disabled),
-.app-shell a.bg-gradient-primary:hover,
-.app-shell .hover\:bg-indigo-700:hover:not(:disabled) {
-  filter: brightness(1.06);
-  transform: translateY(-2px);
-  box-shadow:
-    0 10px 30px -10px color-mix(in srgb, var(--primary-purple) 75%, transparent),
-    0 0 40px -16px color-mix(in srgb, var(--primary-blue) 60%, transparent);
-}
-
-.app-shell button.bg-gradient-action:hover:not(:disabled)::after,
-.app-shell a.bg-gradient-action:hover::after,
-.app-shell button.bg-gradient-primary:hover:not(:disabled)::after,
-.app-shell a.bg-gradient-primary:hover::after {
-  animation: appBtnSweep 0.85s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* Shorter duration than the hover transition — a press should register
-   instantly, while the release can ease back out. */
-.app-shell button.bg-gradient-action:active:not(:disabled),
-.app-shell a.bg-gradient-action:active,
-.app-shell button.bg-gradient-primary:active:not(:disabled),
-.app-shell a.bg-gradient-primary:active {
-  transform: translateY(0) scale(0.97);
-  transition-duration: 0.1s;
-}
-
-.app-shell button.bg-gradient-action:focus-visible,
-.app-shell a.bg-gradient-action:focus-visible,
-.app-shell button.bg-gradient-primary:focus-visible,
-.app-shell a.bg-gradient-primary:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px var(--background),
-    0 0 0 4px color-mix(in srgb, var(--primary-purple) 70%, transparent);
-}
-
-.app-shell button.bg-gradient-action:disabled,
-.app-shell button.bg-gradient-primary:disabled {
-  transform: none;
-  box-shadow: none;
-}
-
-.app-shell button.bg-gradient-action:disabled::after,
-.app-shell button.bg-gradient-primary:disabled::after {
-  display: none;
-}
-
-@keyframes appBtnSweep {
-  from { left: -60%; }
-  to { left: 130%; }
-}
-
-/* Sidebar: always solid, never show page background through */
-[data-slot="sidebar-inner"],
-[data-slot="sidebar-container"],
-[data-slot="sidebar"] {
-  background-color: var(--sidebar) !important;
-}
-
-.app-shell .shadow-indigo-600\/20 {
-  --tw-shadow-color: color-mix(in srgb, var(--primary-blue) 20%, transparent);
-}
-
-.app-shell .disabled\:bg-slate-300:disabled {
-  background-color: var(--muted);
-}
-
-.app-shell input,
-.app-shell textarea,
-.app-shell select {
-  color: var(--foreground);
-}
-
-.app-shell input::placeholder,
-.app-shell textarea::placeholder {
-  color: var(--muted-foreground);
-}
-
-/* Zinc palette (analytics, growth studio) */
-.app-shell .text-zinc-900,
-.app-shell .text-zinc-800,
-.app-shell .text-zinc-700 {
-  color: var(--foreground);
-}
-
-.app-shell .text-zinc-600,
-.app-shell .text-zinc-500,
-.app-shell .text-zinc-400 {
-  color: var(--muted-foreground);
-}
-
-.app-shell .border-zinc-200,
-.app-shell .border-zinc-100,
-.app-shell .border-zinc-100\/80,
-.app-shell .border-zinc-100\/90 {
-  border-color: var(--border);
-}
-
-.app-shell .ring-zinc-200,
-.app-shell .ring-zinc-100 {
-  --tw-ring-color: var(--border);
-}
-
-.app-shell .bg-zinc-200,
-.app-shell .bg-zinc-200\/80 {
-  background-color: var(--accent);
-}
-
-.app-shell .divide-zinc-200,
-.app-shell .divide-slate-100,
-.app-shell .divide-slate-100\/80,
-.app-shell .divide-slate-200,
-.app-shell .divide-amber-100,
-.app-shell .divide-amber-100\/80 {
-  border-color: color-mix(in srgb, var(--border) 70%, transparent);
-}
-
-.app-shell .hover\:bg-slate-50\/50:hover,
-.app-shell .hover\:bg-slate-50\/80:hover,
-.app-shell .hover\:bg-slate-50:hover,
-.app-shell .hover\:bg-white:hover,
-.app-shell .hover\:bg-white\/80:hover {
-  background-color: color-mix(in srgb, var(--accent) 55%, transparent);
-}
-
-.app-shell .hover\:bg-slate-100:hover {
-  background-color: var(--accent);
-}
-
-.app-shell .hover\:text-slate-800:hover {
-  color: var(--foreground);
-}
-
-.app-shell .ring-black\/5 {
-  --tw-ring-color: color-mix(in srgb, var(--border) 80%, transparent);
-}
-
-.app-shell .to-white {
-  --tw-gradient-to: var(--card);
-}
-
-.app-shell .from-blue-50\/90,
-.app-shell .from-pink-50\/90,
-.app-shell .from-indigo-50\/60,
-.app-shell .from-indigo-50\/90,
-.app-shell .from-emerald-50\/90 {
-  --tw-gradient-from: color-mix(in srgb, var(--primary-blue) 12%, var(--card));
-}
-
-.app-shell .ring-blue-100\/80,
-.app-shell .ring-pink-100\/80,
-.app-shell .ring-violet-200,
-.app-shell .ring-amber-100 {
-  --tw-ring-color: color-mix(in srgb, var(--border) 75%, transparent);
-}
-
-.app-shell .border-violet-200 {
-  border-color: color-mix(in srgb, var(--primary-purple) 35%, transparent);
-}
-
-.app-shell .border-dashed.border-zinc-200,
-.app-shell .border-dashed.border-zinc-300,
-.app-shell .border-dashed.border-slate-300 {
-  border-color: color-mix(in srgb, var(--border) 85%, transparent);
-}
-
-.app-shell .bg-red-50\/50 {
-  background-color: color-mix(in srgb, #ef4444 10%, var(--card));
-}
-
-.app-shell .border-red-100 {
-  border-color: color-mix(in srgb, #ef4444 30%, transparent);
-}
-
-.app-shell .text-red-700 {
-  color: #f87171;
-}
-
-.app-shell .bg-red-100 {
-  background-color: color-mix(in srgb, #ef4444 18%, transparent);
-}
-
-.app-shell .text-red-600 {
-  color: #f87171;
-}
-
-.app-shell .text-amber-950,
-.app-shell .text-amber-900,
-.app-shell .text-amber-900\/90,
-.app-shell .text-amber-800 {
-  color: #fcd34d;
-}
-
-.app-shell .border-amber-200,
-.app-shell .border-amber-300 {
-  border-color: color-mix(in srgb, #f59e0b 35%, transparent);
-}
-
-.app-shell .text-violet-900,
-.app-shell .text-violet-400 {
-  color: #c4b5fd;
-}
-
-.app-shell .bg-violet-50\/40,
-.app-shell .via-white {
-  --tw-gradient-via: var(--card);
-}
-
-.app-shell tr.hover\:bg-slate-50\/50:hover,
-.app-shell .hover\:bg-indigo-50\/30:hover {
-  background-color: color-mix(in srgb, var(--accent) 50%, transparent);
-}
 
 /* Custom scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
@@ -943,12 +1459,14 @@
   z-index: var(--z-index) !important;
 }
 
-[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-expanded='true']::after {
+[data-sonner-toaster].sonner-error-center
+  [data-sonner-toast][data-expanded='true']::after {
   display: none !important;
 }
 
 /* Front card defines height; only it is interactive. */
-[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-front='true'] {
+[data-sonner-toaster].sonner-error-center
+  [data-sonner-toast][data-front='true'] {
   position: relative !important;
   top: auto !important;
   bottom: auto !important;
@@ -963,7 +1481,8 @@
  * Older errors sit behind the front card (slightly lower + smaller) instead of
  * stacking upward as a scrollable column.
  */
-[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-front='false'] {
+[data-sonner-toaster].sonner-error-center
+  [data-sonner-toast][data-front='false'] {
   position: absolute !important;
   top: 0 !important;
   bottom: auto !important;
@@ -978,11 +1497,14 @@
   overflow: hidden !important;
 }
 
-[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-front='false'] > * {
+[data-sonner-toaster].sonner-error-center
+  [data-sonner-toast][data-front='false']
+  > * {
   opacity: 0 !important;
 }
 
-[data-sonner-toaster].sonner-error-center [data-sonner-toast][data-visible='false'] {
+[data-sonner-toaster].sonner-error-center
+  [data-sonner-toast][data-visible='false'] {
   display: none !important;
 }
 
@@ -1052,7 +1574,9 @@
   border-radius: 8px;
   border: none;
   text-shadow: none;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 .driver-popover.sociogenie-tour .driver-popover-close-btn:hover {
   background: var(--accent);
@@ -1073,7 +1597,10 @@
   border: none;
   text-shadow: none;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.18s ease, background 0.18s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
 
 .driver-popover.sociogenie-tour .driver-popover-prev-btn {
@@ -1101,16 +1628,20 @@
 
 /* Arrow inherits the popover background colour. driver.js sets border colours
  * on the four arrow variants — override them all to match our card. */
-.driver-popover.sociogenie-tour .driver-popover-arrow-side-top.driver-popover-arrow {
+.driver-popover.sociogenie-tour
+  .driver-popover-arrow-side-top.driver-popover-arrow {
   border-top-color: var(--card);
 }
-.driver-popover.sociogenie-tour .driver-popover-arrow-side-bottom.driver-popover-arrow {
+.driver-popover.sociogenie-tour
+  .driver-popover-arrow-side-bottom.driver-popover-arrow {
   border-bottom-color: var(--card);
 }
-.driver-popover.sociogenie-tour .driver-popover-arrow-side-left.driver-popover-arrow {
+.driver-popover.sociogenie-tour
+  .driver-popover-arrow-side-left.driver-popover-arrow {
   border-left-color: var(--card);
 }
-.driver-popover.sociogenie-tour .driver-popover-arrow-side-right.driver-popover-arrow {
+.driver-popover.sociogenie-tour
+  .driver-popover-arrow-side-right.driver-popover-arrow {
   border-right-color: var(--card);
 }
 
@@ -1129,38 +1660,39 @@
 }
 
 /* Date inputs: native picker icon follows color-scheme */
-input[type="date"] {
+input[type='date'] {
   cursor: pointer;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
+input[type='date']::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
 /* Dark app shell — light icon on dark field */
-.app-shell input[type="date"]:not(.date-input-light) {
+.app-shell input[type='date']:not(.date-input-light) {
   color-scheme: dark;
   background-color: var(--input);
   color: var(--foreground);
 }
 
-.app-shell input[type="date"]:not(.date-input-light)::-webkit-calendar-picker-indicator {
+.app-shell
+  input[type='date']:not(.date-input-light)::-webkit-calendar-picker-indicator {
   filter: invert(1);
   opacity: 0.85;
 }
 
 /* White-card / light-surface date fields */
-input[type="date"].date-input-light {
+input[type='date'].date-input-light {
   color-scheme: light;
   background-color: #ffffff;
   color: #0f172a;
 }
 
-input[type="date"].date-input-light::-webkit-calendar-picker-indicator {
+input[type='date'].date-input-light::-webkit-calendar-picker-indicator {
   opacity: 0.65;
 }
 
-.app-shell input[type="date"].date-input-light:invalid::-webkit-datetime-edit {
+.app-shell input[type='date'].date-input-light:invalid::-webkit-datetime-edit {
   color: #94a3b8;
 }
 /* ══ Premium surface treatments (landing / marketing) ═══════════ */
@@ -1178,488 +1710,132 @@ input[type="date"].date-input-light::-webkit-calendar-picker-indicator {
  * "Engage" = :hover on hover-capable devices, :active everywhere, so a
  * tap triggers the same thing a hover does.
  */
+/* Landing feature card. Same doctrine as `.app-tile`: the gradient edge,
+   the wash and the sheen sub-elements are now inert, so the markup that
+   renders them stays valid while the card reads as a flat Expo surface. */
 .feature-card {
   position: relative;
-  isolation: isolate;
-  border-radius: 1rem;
-  background: color-mix(in srgb, var(--card) 92%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
-  overflow: hidden;
+  background-color: var(--bg-default);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
   transition:
-    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    background-color 150ms var(--ease-expo),
+    border-color 150ms var(--ease-expo);
 }
 
-/* Gradient edge, masked to the 1px border. */
-.feature-card__edge {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  border-radius: inherit;
-  padding: 1px;
-  opacity: 0;
-  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--primary-purple) 90%, transparent) 0%,
-    color-mix(in srgb, var(--primary-blue) 70%, transparent) 45%,
-    transparent 75%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+.feature-card:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--slate-7);
 }
 
-/* Interior wash — anchored to the top-left, no cursor needed. */
-.feature-card__wash {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  background: radial-gradient(
-    120% 90% at 0% 0%,
-    color-mix(in srgb, var(--primary-purple) 16%, transparent),
-    transparent 60%
-  );
-}
-
-/* One-shot diagonal sheen. */
+.feature-card__edge,
+.feature-card__wash,
 .feature-card__sheen {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -55%;
-  width: 40%;
-  z-index: 2;
-  pointer-events: none;
-  transform: skewX(-18deg);
-  background: linear-gradient(
-    100deg,
-    transparent,
-    color-mix(in srgb, var(--foreground) 12%, transparent),
-    transparent
-  );
+  display: none;
 }
 
-/* Shared engaged state. Declared once, triggered by both inputs below. */
 .feature-card:active {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--primary-purple) 42%, transparent);
-  background: color-mix(in srgb, var(--card) 100%, transparent);
-}
-.feature-card:active .feature-card__edge,
-.feature-card:active .feature-card__wash {
-  opacity: 1;
-}
-.feature-card:active .feature-card__sheen {
-  animation: sg-card-sheen 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  background-color: var(--bg-selected);
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .feature-card:hover {
-    transform: translateY(-3px);
-    border-color: color-mix(in srgb, var(--primary-purple) 42%, transparent);
-    background: color-mix(in srgb, var(--card) 100%, transparent);
-  }
-  .feature-card:hover .feature-card__edge,
-  .feature-card:hover .feature-card__wash {
-    opacity: 1;
-  }
-  .feature-card:hover .feature-card__sheen {
-    animation: sg-card-sheen 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-}
-
-/* Touch devices get a firmer press cue instead of a lift that would be
-   hidden under the finger. */
-@media (hover: none) {
-  .feature-card:active {
-    transform: scale(0.985);
-  }
-}
-
-@keyframes sg-card-sheen {
-  from { left: -55%; }
-  to { left: 130%; }
-}
-
-/*
- * Rotating conic border for the one element that should feel alive —
- * the featured pricing plan. @property lets the angle animate smoothly;
- * browsers without it fall back to a static gradient edge.
- */
-@property --sg-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
+/* Decorative motion, retired.
+ *
+ * A spinning conic border, a drifting aurora field and a sweeping text
+ * shimmer are three different ways of drawing the eye to something that is
+ * not changing. The system's answer is contrast and type, so these degrade
+ * to a static bordered surface and plain text. Selectors kept: the markup
+ * that references them is untouched. */
 .animated-border {
   position: relative;
-  isolation: isolate;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
 }
 
-.animated-border::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  z-index: -1;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--sg-angle),
-    transparent 0%,
-    var(--primary-purple) 12%,
-    var(--primary-blue) 25%,
-    transparent 42%,
-    transparent 100%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  animation: sg-border-spin 6s linear infinite;
-}
-
-@keyframes sg-border-spin {
-  to {
-    --sg-angle: 360deg;
-  }
-}
-
-/* Slow-drifting aurora wash — gives flat sections ambient movement. */
 .aurora-field {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
+  position: relative;
+  background-color: var(--bg-screen);
 }
 
 .aurora-field::before,
 .aurora-field::after {
-  content: '';
-  position: absolute;
-  width: 60vw;
-  height: 60vw;
-  max-width: 780px;
-  max-height: 780px;
-  border-radius: 50%;
-  filter: blur(90px);
-  opacity: 0.5;
+  display: none;
 }
 
-.aurora-field::before {
-  top: -22%;
-  left: -12%;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--primary-purple) 34%, transparent),
-    transparent 68%
-  );
-  animation: sg-aurora-a 22s ease-in-out infinite alternate;
-}
-
-.aurora-field::after {
-  bottom: -28%;
-  right: -14%;
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--primary-blue) 30%, transparent),
-    transparent 68%
-  );
-  animation: sg-aurora-b 27s ease-in-out infinite alternate;
-}
-
-@keyframes sg-aurora-a {
-  from { transform: translate3d(0, 0, 0) scale(1); }
-  to   { transform: translate3d(8%, 12%, 0) scale(1.16); }
-}
-
-@keyframes sg-aurora-b {
-  from { transform: translate3d(0, 0, 0) scale(1.1); }
-  to   { transform: translate3d(-10%, -8%, 0) scale(1); }
-}
-
-/* Gradient headline text with a light sweep travelling across it. */
-/*
- * Every stop stays in the light range — the brand hexes (#7c3aed /
- * #5865f2) are mid-dark and drop to near-invisible against the near-black
- * hero, so the sweep is built from light violet tints instead. Movement
- * comes from the highlight travelling, never from text going dim.
- */
 .shimmer-text {
-  background: linear-gradient(
-    100deg,
-    #c7b8fd 0%,
-    #ddd0ff 18%,
-    #ffffff 38%,
-    #e4dcff 56%,
-    #b6c0fb 76%,
-    #c7b8fd 100%
-  );
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-  animation: sg-shimmer 7s linear infinite;
+  color: var(--text-default);
 }
 
-@keyframes sg-shimmer {
-  to { background-position: -220% 0; }
-}
-
-/* ════════════════════════════════════════════════════════════════════
-   Workspace motion primitives
-   Shared styles for the authenticated app. Everything here is additive —
-   no layout, spacing or position changes — so pages inherit motion
-   without being edited individually.
-   ════════════════════════════════════════════════════════════════════ */
-
-/*
- * Clickable tile. The lifting counterpart to `.glass-card`, applied only
- * where the whole card is a link/button, so that section-sized panels
- * never float off the page on hover.
- */
 .app-tile {
   position: relative;
-  isolation: isolate;
-  overflow: hidden;
+  background-color: var(--bg-default);
+  border: 1px solid var(--border-default);
   transition:
-    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    background-color 150ms var(--ease-expo),
+    border-color 150ms var(--ease-expo);
 }
 
-/* Gradient edge, masked to the 1px border — same technique as
-   `.feature-card` on the landing side. */
-.app-tile::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  padding: 1px;
-  border-radius: inherit;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--primary-purple) 90%, transparent) 0%,
-    color-mix(in srgb, var(--primary-blue) 70%, transparent) 45%,
-    transparent 75%
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-}
-
-.app-tile::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: -55%;
-  z-index: 2;
-  width: 40%;
-  pointer-events: none;
-  transform: skewX(-18deg);
-  background: linear-gradient(
-    100deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-}
-
-/* `:active` as well as `:hover` so a tap on a touch device produces the
-   same result a hover does. */
+/* `:active` as well as `:hover` so a tap on a touch device lands the same
+   result a hover does. */
 .app-tile:hover,
 .app-tile:active {
-  transform: translateY(-3px);
-  border-color: color-mix(in srgb, var(--primary-purple) 45%, transparent);
-  box-shadow: 0 18px 44px -20px color-mix(in srgb, var(--primary-purple) 70%, transparent);
+  background-color: var(--bg-subtle);
+  border-color: var(--slate-7);
 }
 
-.app-tile:hover::before,
-.app-tile:active::before {
-  opacity: 1;
-}
-
-.app-tile:hover::after,
-.app-tile:active::after {
-  animation: appTileSheen 0.9s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-@keyframes appTileSheen {
-  from { left: -55%; }
-  to { left: 130%; }
-}
-
-/*
- * Upload dropzone.
- *
- * Uses a real `border: dashed` rather than the usual "marching ants"
- * background-gradient trick: gradients are drawn on straight edges and
- * cannot follow a border-radius, so marching ants on a rounded box leaves
- * the corners visibly unpainted. A real dashed border rounds correctly;
- * the motion comes from the drag pulse and the hover spotlight instead.
- */
 .app-dropzone {
   position: relative;
-  isolation: isolate;
-  border: 2px dashed var(--border);
-  border-radius: 1rem;
-  background-color: color-mix(in srgb, var(--muted) 40%, transparent);
+  background-color: var(--bg-element);
+  border: 1px dashed var(--slate-7);
+  border-radius: 16px;
   transition:
-    border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    background-color 150ms var(--ease-expo),
+    border-color 150ms var(--ease-expo);
 }
 
-/* Soft violet spotlight that fades in from the centre on hover. */
 .app-dropzone::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  background: radial-gradient(
-    120% 90% at 50% 50%,
-    color-mix(in srgb, var(--primary-purple) 16%, transparent),
-    transparent 70%
-  );
+  display: none;
 }
 
 .app-dropzone:hover {
-  border-color: color-mix(in srgb, var(--primary-purple) 45%, transparent);
-  background-color: color-mix(in srgb, var(--muted) 55%, transparent);
+  background-color: var(--bg-hover);
+  border-color: var(--border-strong);
 }
 
-.app-dropzone:hover::before {
-  opacity: 1;
-}
-
-/* Drag-active. The pulse is what tells you the drop will land. */
 .app-dropzone--active {
-  border-color: color-mix(in srgb, var(--primary-purple) 75%, transparent);
-  background-color: color-mix(in srgb, var(--primary-purple) 8%, transparent);
-  animation: appDropPulse 1.4s ease-in-out infinite;
-}
-
-.app-dropzone--active::before {
-  opacity: 1;
-}
-
-@keyframes appDropPulse {
-  0%, 100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary-purple) 40%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 8px color-mix(in srgb, var(--primary-purple) 0%, transparent);
-  }
-}
-
-/* The upload icon leans in while a file is over the zone. */
-.app-dropzone--active .app-dropzone__icon {
-  transform: scale(1.12) translateY(-2px);
+  background-color: var(--bg-hover);
+  border-color: var(--purple-9);
+  border-style: solid;
 }
 
 .app-dropzone__icon {
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  color: var(--icon-tertiary);
+  transition: color 150ms var(--ease-expo);
 }
 
-/*
- * Media frame — the container photos and video previews sit in.
- *
- * The placeholder tint is static rather than a running shimmer on
- * purpose: a media-library grid can hold dozens of these, and dozens of
- * infinite background animations is real, permanent CPU cost for
- * something that is covered by the image a few hundred milliseconds
- * later. Shimmer belongs on `Skeleton`, which exists to be visible.
- */
+.app-dropzone--active .app-dropzone__icon {
+  color: var(--purple-9);
+}
+
+/* Media frame: a bordered, 16px-radius crop. No gradient overlay and no
+   entrance zoom — the image is the content, and framing it is the whole job. */
 .app-media-frame {
   position: relative;
   overflow: hidden;
-  border-radius: 0.85rem;
-  background-color: color-mix(in srgb, var(--muted) 60%, transparent);
-  transition:
-    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  background-color: var(--bg-element);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
 }
 
-/* Gradient ring, masked to the border so it never crops the picture. */
 .app-media-frame::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  padding: 1px;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(
-    140deg,
-    color-mix(in srgb, var(--primary-purple) 55%, transparent),
-    color-mix(in srgb, var(--primary-blue) 35%, transparent) 50%,
-    rgba(255, 255, 255, 0.08)
-  );
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  display: none;
 }
 
-/* Deliberately no `width: 100%` here. Sizing stays with the call site —
-   the media-library grid wants `w-full object-cover`, while the Create
-   Post reference preview is a natural-width, centred `object-contain`
-   image that a forced full width would stretch across the whole row. */
 .app-media-frame > img,
 .app-media-frame > video {
   display: block;
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-  animation: appMediaIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .app-media-frame:hover > img,
-  .app-media-frame:hover > video {
-    transform: scale(1.05);
-  }
-
-  .app-media-frame:hover {
-    box-shadow: 0 18px 40px -20px color-mix(in srgb, var(--primary-purple) 60%, transparent);
-  }
-}
-
-@keyframes appMediaIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /*
@@ -1688,20 +1864,36 @@ input[type="date"].date-input-light::-webkit-calendar-picker-indicator {
  *    the delay and retains nothing afterwards.
  */
 .app-main > * > * {
-  animation: appSectionIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation: appSectionIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
 
-.app-main > * > *:nth-child(1) { animation-delay: 0.02s; }
-.app-main > * > *:nth-child(2) { animation-delay: 0.06s; }
-.app-main > * > *:nth-child(3) { animation-delay: 0.1s; }
-.app-main > * > *:nth-child(4) { animation-delay: 0.14s; }
-.app-main > * > *:nth-child(5) { animation-delay: 0.18s; }
-.app-main > * > *:nth-child(6) { animation-delay: 0.22s; }
-.app-main > * > *:nth-child(7) { animation-delay: 0.26s; }
+.app-main > * > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.app-main > * > *:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.app-main > * > *:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.app-main > * > *:nth-child(4) {
+  animation-delay: 0.14s;
+}
+.app-main > * > *:nth-child(5) {
+  animation-delay: 0.18s;
+}
+.app-main > * > *:nth-child(6) {
+  animation-delay: 0.22s;
+}
+.app-main > * > *:nth-child(7) {
+  animation-delay: 0.26s;
+}
 
 /* Capped. Without this a 40-row list would leave the last row invisible
    for well over a second. */
-.app-main > * > *:nth-child(n + 8) { animation-delay: 0.3s; }
+.app-main > * > *:nth-child(n + 8) {
+  animation-delay: 0.3s;
+}
 
 @keyframes appSectionIn {
   from {
@@ -1718,9 +1910,9 @@ input[type="date"].date-input-light::-webkit-calendar-picker-indicator {
    class string, which is repeated ~15 times in app-sidebar.tsx. */
 [data-slot='sidebar-menu-button'] {
   transition:
-    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    background-color 0.28s cubic-bezier(0.22, 1, 0.36, 1),
-    color 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-slot='sidebar-menu-button']:hover {
@@ -1747,11 +1939,13 @@ input[type="date"].date-input-light::-webkit-calendar-picker-indicator {
   background: var(--gradient-action);
   transform: translateY(-50%) scaleY(0);
   transform-origin: center;
-  animation: appNavIndicator 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: appNavIndicator 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes appNavIndicator {
-  to { transform: translateY(-50%) scaleY(1); }
+  to {
+    transform: translateY(-50%) scaleY(1);
+  }
 }
 
 /* Skeleton: a travelling highlight instead of a whole-block opacity

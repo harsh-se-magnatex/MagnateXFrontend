@@ -18,7 +18,6 @@ const NAV_ITEMS = [
   { label: 'FAQ', href: '/product#faq' },
 ] as const;
 
-
 function navItemHref(href: string, isAuthRender: boolean): string {
   if (!isAuthRender) return href;
   if (href.startsWith('#')) return `/${href}`;
@@ -56,8 +55,8 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
         tabIndex={mobileNavOpen ? 0 : -1}
       />
 
-      <header className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/70 backdrop-blur-2xl supports-backdrop-filter:bg-background/50">
-        <nav className="relative mx-auto flex w-full items-center justify-between gap-4 px-6 py-4">
+      <header className="fixed top-0 z-50 w-full border-b border-default bg-[color-mix(in_srgb,var(--bg-screen)_85%,transparent)] backdrop-blur-2xl">
+        <nav className="relative mx-auto flex h-16 w-full max-w-[1328px] items-center justify-between gap-4 px-6">
           <Link
             href="/"
             className="flex min-w-0 items-center gap-2 sm:gap-3 group"
@@ -66,9 +65,9 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
             <img
               src="/logo.png"
               alt="SocioGenie"
-              className="h-10 w-10 shrink-0 rounded-xl shadow-md group-hover:shadow-lg group-hover:scale-105 transition-all duration-300 sm:h-12 sm:w-12"
+              className="h-10 w-10 shrink-0 rounded-xl transition-expo sm:h-12 sm:w-12"
             />
-            <span className="truncate font-[family-name:var(--font-bricolage)] text-2xl font-extrabold tracking-[-0.035em] text-foreground sm:text-[1.75rem]">
+            <span className="truncate text-2xl font-semibold tracking-[-0.04em] text-default sm:text-[1.75rem]">
               Socio
               <span className="brand-wordmark-glow bg-gradient-primary-text">
                 Genie
@@ -79,44 +78,41 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
             {NAV_ITEMS.map((item) => {
               const href = navItemHref(item.href, isAuthRender);
               return (
-              <a
-                key={item.href}
-                href={href}
-                onClick={(event) => handleSameHashLinkClick(event, href)}
-                className="relative text-sm font-medium text-muted-foreground transition-colors hover:text-foreground after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-linear-to-r after:from-primary-blue after:to-primary-purple after:transition-all after:duration-300 hover:after:w-full"
-              >
-                {item.label}
-              </a>
-            );
+                <a
+                  key={item.href}
+                  href={href}
+                  onClick={(event) => handleSameHashLinkClick(event, href)}
+                  className="flex h-9 items-center rounded-full px-3 text-sm font-medium text-secondary transition-expo hover:bg-element hover:text-default"
+                >
+                  {item.label}
+                </a>
+              );
             })}
           </div>
           <div className="hidden md:flex items-center gap-3">
-           
-              <>
-                <GuestAuthLink
-                  href={signedIn ? '/home' : '/sign-in'}
-                  className="rounded-xl px-5 py-2.5 text-sm font-semibold text-foreground/70 transition-all hover:text-foreground hover:bg-accent/80 duration-200"
-                  onClick={closeMobileNav}
-                >
-                  Login
-                </GuestAuthLink>
-                <GuestAuthLink
-                  href={signedIn ? '/home' : '/sign-up'}
-                  className="group relative inline-flex items-center justify-center rounded-xl bg-gradient-primary px-6 py-2.5 text-sm font-bold text-white overflow-hidden transition-all hover:shadow-xl hover:shadow-primary-blue/25 active:scale-95 duration-300"
-                  onClick={closeMobileNav}
-                >
-                  <span className="relative z-10 flex items-center">
-                    Get Started Free
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 duration-200" />
-                  </span>
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
-                </GuestAuthLink>
-              </>
-            
+            <>
+              <GuestAuthLink
+                href={signedIn ? '/home' : '/sign-in'}
+                className="flex h-9 items-center rounded-full px-4 text-sm font-medium text-secondary transition-expo hover:bg-element hover:text-default"
+                onClick={closeMobileNav}
+              >
+                Login
+              </GuestAuthLink>
+              <GuestAuthLink
+                href={signedIn ? '/home' : '/sign-up'}
+                className="btn-brand-fill group inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-medium"
+                onClick={closeMobileNav}
+              >
+                <span className="relative z-10 flex items-center">
+                  Get Started Free
+                  <ArrowRight className="ml-2 h-4 w-4 transition-expo-transform group-hover:translate-x-0.5" />
+                </span>
+              </GuestAuthLink>
+            </>
           </div>
           <button
             type="button"
-            className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-background/80 text-foreground shadow-sm transition-colors hover:bg-accent md:hidden"
+            className="relative inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-default bg-transparent text-default transition-expo hover:bg-element md:hidden"
             aria-expanded={mobileNavOpen}
             aria-controls="mobile-nav-menu"
             aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
@@ -125,22 +121,22 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
             <span
               aria-hidden
               className={cn(
-                'absolute left-1/2 top-[13px] block h-0.5 w-[22px] -translate-x-1/2 rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                mobileNavOpen && 'top-1/2 -translate-y-1/2 rotate-45'
+                'absolute left-1/2 top-[13px] block h-0.5 w-[22px] -translate-x-1/2 rounded-full bg-current transition-expo ease-[cubic-bezier(0.4,0,0.2,1)]',
+                mobileNavOpen && 'top-1/2/2 rotate-45'
               )}
             />
             <span
               aria-hidden
               className={cn(
-                'absolute left-1/2 top-1/2 block h-0.5 w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                'absolute left-1/2 top-1/2 block h-0.5 w-[22px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-current transition-expo ease-[cubic-bezier(0.4,0,0.2,1)]',
                 mobileNavOpen && 'scale-x-0 opacity-0'
               )}
             />
             <span
               aria-hidden
               className={cn(
-                'absolute bottom-[13px] left-1/2 block h-0.5 w-[22px] -translate-x-1/2 rounded-full bg-current transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-                mobileNavOpen && 'bottom-1/2 translate-y-1/2 -rotate-45'
+                'absolute bottom-[13px] left-1/2 block h-0.5 w-[22px] -translate-x-1/2 rounded-full bg-current transition-expo ease-[cubic-bezier(0.4,0,0.2,1)]',
+                mobileNavOpen && 'bottom-1/2/2 -rotate-45'
               )}
             />
           </button>
@@ -149,7 +145,7 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
         <div
           id="mobile-nav-menu"
           className={cn(
-            'overflow-hidden border-t border-border/40 bg-background/98 backdrop-blur-2xl shadow-[0_18px_40px_-12px_rgba(0,0,0,0.18)] transition-[max-height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden',
+            'overflow-hidden border-t border-default bg-background/98 backdrop-blur-2xl shadow-[0_18px_40px_-12px_rgba(0,0,0,0.18)] transition-[max-height,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] md:hidden',
             mobileNavOpen
               ? 'max-h-[min(85vh,560px)] opacity-100'
               : 'pointer-events-none max-h-0 border-t-transparent opacity-0'
@@ -157,60 +153,54 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
           aria-hidden={!mobileNavOpen}
         >
           <div className="flex max-h-[min(85vh,560px)] flex-col gap-1 overflow-y-auto px-4 py-4 pb-6">
-            <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Navigate
-            </p>
+            <p className="px-4 pb-2 text-eyebrow">Navigate</p>
             {NAV_ITEMS.map((item) => {
               const href = navItemHref(item.href, isAuthRender);
               return (
-              <a
-                key={item.href}
-                href={href}
-                className="rounded-xl px-4 py-3 text-base font-medium text-muted-foreground transition-colors hover:bg-accent/80 hover:text-foreground"
-                onClick={(event) => {
-                  handleSameHashLinkClick(event, href);
-                  closeMobileNav();
-                }}
-              >
-                {item.label}
-              </a>
-            );
+                <a
+                  key={item.href}
+                  href={href}
+                  className="rounded-full px-4 py-3 text-base font-medium text-secondary transition-expo hover:bg-element hover:text-default"
+                  onClick={(event) => {
+                    handleSameHashLinkClick(event, href);
+                    closeMobileNav();
+                  }}
+                >
+                  {item.label}
+                </a>
+              );
             })}
-            <div className="mt-4 flex flex-col gap-2 border-t border-border/50 pt-4">
-              <p className="px-4 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Account
-              </p>
+            <div className="mt-4 flex flex-col gap-2 border-t border-default pt-4">
+              <p className="px-4 pb-2 text-eyebrow">Account</p>
               {signedIn ? (
                 <Link
                   href="/home"
-                  className="group relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-primary px-4 py-3.5 text-base font-bold text-white transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
+                  className="group relative flex items-center justify-center overflow-hidden rounded-full btn-brand-fill px-4 py-3.5 text-base font-bold transition-expo"
                   onClick={closeMobileNav}
                 >
                   <span className="relative z-10 flex items-center">
                     Go to Dashboard
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </span>
-                  <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
                 </Link>
               ) : (
                 <>
                   <GuestAuthLink
                     href="/sign-in"
-                    className="rounded-xl border border-border/60 bg-card/50 px-4 py-3 text-center text-base font-semibold text-foreground transition-colors hover:bg-accent/80"
+                    className="rounded-full border border-default bg-transparent px-4 py-3 text-center text-base font-medium text-default transition-expo hover:bg-element"
                     onClick={closeMobileNav}
                   >
                     Login
                   </GuestAuthLink>
                   <GuestAuthLink
                     href="/sign-up"
-                    className="group relative flex items-center justify-center overflow-hidden rounded-xl bg-gradient-primary px-4 py-3.5 text-base font-bold text-white transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
+                    className="btn-brand-fill group flex items-center justify-center rounded-full px-4 py-3.5 text-base font-medium"
                     onClick={closeMobileNav}
                   >
                     <span className="relative z-10 flex items-center">
                       Sign up free
                       <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </span>
-                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
                   </GuestAuthLink>
                 </>
               )}

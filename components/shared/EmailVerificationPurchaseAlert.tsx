@@ -23,18 +23,18 @@ export function EmailVerificationPurchaseAlert({ user, className }: Props) {
   return (
     <Alert
       variant="default"
-      className={className ?? 'rounded-2xl border-amber-500/30 bg-amber-500/5'}
+      className={className ?? 'rounded-2xl border-warning bg-warning'}
     >
-      <Mail className="size-5 text-amber-600 dark:text-amber-500" />
-      <AlertTitle className="text-foreground">
+      <Mail className="size-5 text-warning dark:text-warning" />
+      <AlertTitle className="text-default">
         {hasEmail ? 'Verify your email' : 'Add a verified email'}
       </AlertTitle>
-      <AlertDescription className="mt-2 space-y-3 text-foreground/90">
+      <AlertDescription className="mt-2 space-y-3 text-secondary">
         <p>{EMAIL_VERIFICATION_PURCHASE_MESSAGE}</p>
         <Button
           asChild
           size="sm"
-          className="rounded-lg bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500"
+          className="rounded-full bg-[var(--amber-9)] text-white hover:bg-warning dark:bg-[var(--amber-9)] dark:hover:bg-warning"
         >
           <Link href="/settings/account">Go to account settings</Link>
         </Button>

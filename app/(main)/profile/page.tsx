@@ -9,7 +9,7 @@ export default function ProfilePage() {
     router.replace('/brand-dna');
   }, [router]);
   return (
-    <div className="flex items-center justify-center py-12 text-sm text-zinc-500">
+    <div className="flex items-center justify-center py-12 text-sm text-secondary">
       Redirecting to Business Profile...
     </div>
   );

@@ -20,16 +20,19 @@ import {
 export function SocialPreviewDisclaimer() {
   return (
     <p className="mx-auto max-w-2xl text-center text-xs leading-relaxed text-muted-foreground font-(--font-dm-sans)">
-      Illustrative previews only. Platform interfaces shown are mockups for demonstration
-      and are not official Meta or LinkedIn products. SocioGenie is not affiliated with,
-      endorsed by, or sponsored by Meta Platforms, Inc. or LinkedIn Corporation.
+      Illustrative previews only. Platform interfaces shown are mockups for
+      demonstration and are not official Meta or LinkedIn products. SocioGenie
+      is not affiliated with, endorsed by, or sponsored by Meta Platforms, Inc.
+      or LinkedIn Corporation.
     </p>
   );
 }
 
 /** Interactive IG / FB / LI showcase — embeddable without page chrome. */
 export function SocialPreviewEmbed() {
-  const [brandId, setBrandId] = useState<ShowcaseBrandId>(DEFAULT_SHOWCASE_BRAND_ID);
+  const [brandId, setBrandId] = useState<ShowcaseBrandId>(
+    DEFAULT_SHOWCASE_BRAND_ID
+  );
   const [platform, setPlatform] = useState<PreviewPlatform>('facebook');
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 

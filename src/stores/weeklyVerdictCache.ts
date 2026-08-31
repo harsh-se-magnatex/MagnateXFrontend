@@ -35,26 +35,28 @@ type WeeklyVerdictCache = {
 /** Match the 24h analytics snapshot refresh cadence. */
 export const WEEKLY_VERDICT_TTL_MS = 24 * 60 * 60 * 1000;
 
-export const useWeeklyVerdictCache = create<WeeklyVerdictCache>()((set, get) => ({
-  entries: {},
-  getFresh: (platform) => {
-    const entry = get().entries[platform];
-    if (!entry) return null;
-    if (Date.now() - entry.fetchedAt > WEEKLY_VERDICT_TTL_MS) return null;
-    return entry;
-  },
-  set: (platform, payload, source) =>
-    set((state) => ({
-      entries: {
-        ...state.entries,
-        [platform]: { payload, source, fetchedAt: Date.now() },
-      },
-    })),
-  invalidate: (platform) =>
-    set((state) => {
-      if (!platform) return { entries: {} };
-      const next = { ...state.entries };
-      delete next[platform];
-      return { entries: next };
-    }),
-}));
+export const useWeeklyVerdictCache = create<WeeklyVerdictCache>()(
+  (set, get) => ({
+    entries: {},
+    getFresh: (platform) => {
+      const entry = get().entries[platform];
+      if (!entry) return null;
+      if (Date.now() - entry.fetchedAt > WEEKLY_VERDICT_TTL_MS) return null;
+      return entry;
+    },
+    set: (platform, payload, source) =>
+      set((state) => ({
+        entries: {
+          ...state.entries,
+          [platform]: { payload, source, fetchedAt: Date.now() },
+        },
+      })),
+    invalidate: (platform) =>
+      set((state) => {
+        if (!platform) return { entries: {} };
+        const next = { ...state.entries };
+        delete next[platform];
+        return { entries: next };
+      }),
+  })
+);

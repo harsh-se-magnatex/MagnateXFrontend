@@ -98,7 +98,7 @@ function kindLabel(kind: string): string {
     case 'empty':
       return '—';
     default:
-      return kind || 'Planned';
+      return kind === 'other' ? 'Manual post' : kind || 'Planned';
   }
 }
 
@@ -125,25 +125,25 @@ function statusLabel(status: AdminContentPlanGeneratedItem['status']): string {
 function cellToneClass(kind: string): string {
   switch (kind) {
     case 'campaign':
-      return 'bg-emerald-500/20 text-emerald-300';
+      return 'bg-success text-success';
     case 'festival':
     case 'festive':
-      return 'bg-amber-500/25 text-amber-300';
+      return 'bg-warning text-warning';
     case 'quick-create':
-      return 'bg-sky-500/20 text-sky-400';
+      return 'bg-info text-info';
     case 'product-advert':
-      return 'bg-fuchsia-500/20 text-fuchsia-300';
+      return 'bg-preview text-preview';
     case 'video-generation':
-      return 'bg-cyan-500/20 text-cyan-400';
+      return 'bg-info text-info';
     case 'carousel':
-      return 'bg-teal-500/20 text-teal-400';
+      return 'bg-success text-success';
     case 'bulk-create':
     case 'ai-engine':
-      return 'bg-primary-purple/20 text-primary-purple';
+      return 'bg-primary-purple/20 text-preview';
     case 'empty':
-      return 'bg-muted/50 text-muted-foreground';
+      return 'bg-element text-secondary';
     default:
-      return 'bg-orange-500/15 text-orange-700 dark:text-orange-300';
+      return 'bg-warning text-warning dark:text-warning';
   }
 }
 
@@ -253,7 +253,9 @@ export default function AdminContentCalendarReviewPage() {
       const res = await getAdminContentCalendarReviewUsers();
       setUsers(res.data.users ?? []);
     } catch {
-      showErrorToast('Failed to load content calendar users. Please try again later.');
+      showErrorToast(
+        'Failed to load content calendar users. Please try again later.'
+      );
       setUsers([]);
     } finally {
       setListLoading(false);
@@ -277,7 +279,9 @@ export default function AdminContentCalendarReviewPage() {
       const res = await getAdminContentCalendarReviewDetail(userId);
       setDetail(res.data);
     } catch {
-      showErrorToast('Failed to load content calendar. Please try again later.');
+      showErrorToast(
+        'Failed to load content calendar. Please try again later.'
+      );
       setDetail(null);
     } finally {
       setDetailLoading(false);
@@ -424,7 +428,11 @@ export default function AdminContentCalendarReviewPage() {
     eventId?: string
   ) => {
     if (!detail) return;
-    if (String(detail.mode ?? '').trim().toLowerCase() !== 'auto') {
+    if (
+      String(detail.mode ?? '')
+        .trim()
+        .toLowerCase() !== 'auto'
+    ) {
       showErrorToast('Force Run is available on Auto (AI) plans only');
       return;
     }
@@ -521,7 +529,11 @@ export default function AdminContentCalendarReviewPage() {
 
   const handleRegenerate = async () => {
     if (!preview || !detail) return;
-    if (String(detail.mode ?? '').trim().toLowerCase() !== 'auto') {
+    if (
+      String(detail.mode ?? '')
+        .trim()
+        .toLowerCase() !== 'auto'
+    ) {
       showErrorToast('Regenerate is available on Auto (AI) plans only');
       return;
     }
@@ -569,7 +581,9 @@ export default function AdminContentCalendarReviewPage() {
           ? (err as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : undefined;
-      showErrorToast(message || 'Failed to regenerate. Please try again later.');
+      showErrorToast(
+        message || 'Failed to regenerate. Please try again later.'
+      );
     } finally {
       setPendingRegenKeys((prev) => {
         const next = new Set(prev);
@@ -580,16 +594,17 @@ export default function AdminContentCalendarReviewPage() {
   };
 
   if (!user?.admin) return null;
-  const contentDateIsPast = now.getTime() > new Date(preview?.date ?? '').getTime();
-  
+  const contentDateIsPast =
+    now.getTime() > new Date(preview?.date ?? '').getTime();
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16 page-enter">
       <header className="space-y-1">
-        <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-foreground">
-          <CalendarDays className="h-6 w-6 text-primary" aria-hidden />
+        <h1 className="flex items-center gap-3 text-page-title text-default">
+          <CalendarDays className="h-6 w-6 text-link" aria-hidden />
           Content Calendar Review
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-secondary">
           Browse every auto-mode user&apos;s content plan, including generated
           images and full post status.
         </p>
@@ -598,7 +613,7 @@ export default function AdminContentCalendarReviewPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
         <aside className="space-y-3">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 icon-tertiary" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -606,14 +621,14 @@ export default function AdminContentCalendarReviewPage() {
               className="pl-9"
             />
           </div>
-          <div className="max-h-[70vh] overflow-y-auto rounded-xl border border-border bg-card/40">
+          <div className="max-h-[70vh] overflow-y-auto rounded-xl border border-default bg-default">
             {listLoading ? (
-              <div className="flex items-center justify-center gap-2 px-4 py-10 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 px-4 py-10 text-sm text-secondary">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Loading users…
               </div>
             ) : filteredUsers.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
+              <p className="px-4 py-8 text-center text-sm text-secondary">
                 No matching users.
               </p>
             ) : (
@@ -626,17 +641,17 @@ export default function AdminContentCalendarReviewPage() {
                         type="button"
                         onClick={() => void loadDetail(u.userId)}
                         className={cn(
-                          'w-full px-3 py-3 text-left transition-colors',
-                          active ? 'bg-primary/10' : 'hover:bg-muted/50'
+                          'w-full px-3 py-3 text-left transition-expo',
+                          active ? 'bg-primary/10' : 'hover:bg-element'
                         )}
                       >
-                        <p className="truncate text-sm font-semibold text-foreground">
+                        <p className="truncate text-sm font-semibold text-default">
                           {u.name}
                         </p>
-                        <p className="truncate text-xs text-muted-foreground">
+                        <p className="truncate text-xs text-secondary">
                           {u.email}
                         </p>
-                        <p className="mt-1 truncate text-[11px] text-muted-foreground">
+                        <p className="mt-1 truncate text-[11px] text-secondary">
                           {u.activePlan}
                           {u.mode ? ` · ${u.mode}` : ''}
                           {u.autoModeCalendarGenerated ? ' · calendar' : ''}
@@ -648,56 +663,54 @@ export default function AdminContentCalendarReviewPage() {
               </ul>
             )}
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] text-secondary">
             {filteredUsers.length} of {users.length} users
           </p>
         </aside>
 
         <section className="min-w-0 space-y-4">
           {!selectedUserId ? (
-            <div className="flex min-h-[40vh] items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-6 text-center text-sm text-muted-foreground">
+            <div className="flex min-h-[40vh] items-center justify-center rounded-xl border border-dashed border-default bg-element px-6 text-center text-sm text-secondary">
               Select a user to view their content calendar.
             </div>
           ) : detailLoading ? (
-            <div className="flex min-h-[40vh] items-center justify-center gap-2 rounded-xl border border-border bg-card/40 text-sm text-muted-foreground">
+            <div className="flex min-h-[40vh] items-center justify-center gap-2 rounded-xl border border-default bg-default text-sm text-secondary">
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading calendar…
             </div>
           ) : !detail ? (
-            <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+            <div className="rounded-xl border border-warning bg-warning px-4 py-3 text-sm text-warning">
               Could not load this user&apos;s content calendar.
             </div>
           ) : (
             <>
-              <div className="rounded-xl border border-border bg-card/50 p-4">
+              <div className="rounded-xl border border-default bg-default p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-semibold text-foreground">
+                    <h2 className="text-subsection text-default">
                       {detail.name}
                     </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {detail.email}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="text-sm text-secondary">{detail.email}</p>
+                    <p className="mt-1 text-xs text-secondary">
                       {detail.activePlan}
                       {detail.mode ? ` · ${detail.mode}` : ''} ·{' '}
                       <span className="font-mono">{detail.userId}</span>
                     </p>
                   </div>
-                  <div className="text-right text-xs text-muted-foreground">
+                  <div className="text-right text-xs text-secondary">
                     <p>
                       Plan window:{' '}
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-default">
                         {detail.from}
                       </span>{' '}
                       →{' '}
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-default">
                         {detail.to}
                       </span>
                     </p>
                     <p className="mt-1">
                       Today ({detail.preferences.timeZone || 'UTC'}):{' '}
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-default">
                         {detail.today}
                       </span>
                     </p>
@@ -710,7 +723,7 @@ export default function AdminContentCalendarReviewPage() {
               </div>
 
               {detail.platforms.length === 0 ? (
-                <p className="rounded-lg border border-border bg-muted px-3 py-3 text-sm text-muted-foreground">
+                <p className="rounded-lg border border-default bg-element px-3 py-3 text-sm text-secondary">
                   This user has no selected platforms.
                 </p>
               ) : (
@@ -718,7 +731,7 @@ export default function AdminContentCalendarReviewPage() {
                   {String(detail.mode ?? '')
                     .trim()
                     .toLowerCase() === 'auto' ? (
-                    <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                    <p className="rounded-md border border-default bg-element px-3 py-2 text-sm text-secondary">
                       Force Run appears on planned Campaign, Content Studio, AI
                       Engine, Video, Carousel, or Event Studio cells for today
                       and future dates — it hides after Force Run, when content
@@ -726,15 +739,15 @@ export default function AdminContentCalendarReviewPage() {
                       removed or rejected by the user.
                     </p>
                   ) : (
-                    <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+                    <p className="rounded-md border border-default bg-element px-3 py-2 text-sm text-secondary">
                       Force Run is available on Auto (AI) plans only.
                     </p>
                   )}
-                  <div className="overflow-x-auto rounded-xl border border-border">
+                  <div className="overflow-x-auto rounded-xl border border-default">
                     <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
                       <thead>
-                        <tr className="border-b border-border bg-muted/40">
-                          <th className="sticky left-0 z-10 bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        <tr className="border-b border-default bg-element">
+                          <th className="sticky left-0 z-10 bg-element px-3 py-2 text-xs font-semibold uppercase tracking-wide text-secondary">
                             Date
                           </th>
                           {detail.platforms.map((platform) => {
@@ -742,7 +755,7 @@ export default function AdminContentCalendarReviewPage() {
                             return (
                               <th
                                 key={platform}
-                                className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-secondary"
                               >
                                 <span className="inline-flex items-center gap-1.5">
                                   <Icon className="h-3.5 w-3.5" />
@@ -803,7 +816,9 @@ export default function AdminContentCalendarReviewPage() {
         <PreviewModal
           target={preview}
           regenerateEnabled={
-            String(detail?.mode ?? '').trim().toLowerCase() === 'auto' && !contentDateIsPast
+            String(detail?.mode ?? '')
+              .trim()
+              .toLowerCase() === 'auto' && !contentDateIsPast
           }
           isRegenerating={
             pendingRegenKeys.has(
@@ -831,9 +846,7 @@ function PreferencesStrip({
   const rows = platforms.map((platform) => {
     const optimal = optimalTimeForPlatform(preferences, platform);
     const preferred =
-      preferences.preferredTime && !optimal
-        ? preferences.preferredTime
-        : null;
+      preferences.preferredTime && !optimal ? preferences.preferredTime : null;
     return { platform, optimal, preferred };
   });
 
@@ -845,13 +858,13 @@ function PreferencesStrip({
   }
 
   return (
-    <div className="mt-3 grid gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-xs sm:grid-cols-2 lg:grid-cols-3">
+    <div className="mt-3 grid gap-2 rounded-lg border border-default bg-element px-3 py-2 text-xs sm:grid-cols-2 lg:grid-cols-3">
       {rows.map(({ platform, optimal, preferred }) => (
         <div key={platform}>
-          <span className="font-semibold text-foreground">
+          <span className="font-semibold text-default">
             {PLATFORM_LABEL[platform]}
           </span>
-          <span className="text-muted-foreground">
+          <span className="text-secondary">
             {': '}
             {optimal
               ? `Optimal ${optimal}`
@@ -862,9 +875,9 @@ function PreferencesStrip({
         </div>
       ))}
       {preferences.analyticsOptimalPosting != null ? (
-        <div className="text-muted-foreground sm:col-span-2 lg:col-span-3">
+        <div className="text-secondary sm:col-span-2 lg:col-span-3">
           Use analytics optimal posting time:{' '}
-          <span className="font-medium text-foreground">
+          <span className="font-medium text-default">
             {preferences.analyticsOptimalPosting ? 'Yes' : 'No'}
           </span>
         </div>
@@ -907,28 +920,26 @@ function DayRow({
   return (
     <tr
       className={cn(
-        'border-b border-border/70 align-top last:border-b-0',
+        'border-b border-default align-top last:border-b-0',
         isToday && 'bg-primary/5'
       )}
     >
-      <td className="sticky left-0 z-10 bg-background/95 px-3 py-3 text-xs font-medium text-foreground backdrop-blur">
+      <td className="sticky left-0 z-10 bg-background/95 px-3 py-3 text-xs font-medium text-default backdrop-blur">
         <div className="flex items-center gap-1.5">
           {formatDay(day.date)}
           {isToday ? (
-            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+            <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-link">
               Today
             </span>
           ) : null}
         </div>
-        <div className="font-mono text-[10px] text-muted-foreground">
-          {day.date}
-        </div>
+        <div className="font-mono text-[10px] text-secondary">{day.date}</div>
         {day.festivals.length > 0 ? (
           <div className="mt-1 space-y-0.5">
             {day.festivals.map((f) => (
               <span
                 key={f.id}
-                className="block text-[10px] text-amber-600 dark:text-amber-400"
+                className="block text-[10px] text-warning dark:text-warning"
               >
                 {f.name}
               </span>
@@ -954,50 +965,49 @@ function DayRow({
                   onOpen={() => onOpenPreview(platform, item)}
                 />
               ))}
-              {
-                upcoming.map((item, idx) => {
-                  const runKey = forceRunVisualKey({
-                    userId,
-                    platform,
-                    date: day.date,
-                    kind: item.kind,
-                    eventId: item.eventId,
-                  });
-                  const runPending = runningForceRunKeys.has(runKey);
-                  const showForceRun =
-                    forceRunEnabled &&
-                    !isPast &&
-                    !runPending &&
-                    canForceRunKind(item.kind);
-                  return (
-                    <div
-                      key={`${item.kind}-${item.eventId ?? ''}-${idx}`}
-                      className="flex flex-col gap-1.5"
-                    >
-                      <UpcomingCard item={item} pending={runPending} />
-                      {showForceRun ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-7 gap-1.5 text-[11px]"
-                          onClick={() =>
-                            onForceRun(platform, item.kind, item.eventId)
-                          }
-                        >
-                          {runPending ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            <Play className="h-3 w-3" />
-                          )}
-                          {runPending ? 'Running…' : 'Force Run'}
-                        </Button>
-                      ) : null}
-                    </div>
-                  );
-                })}
+              {upcoming.map((item, idx) => {
+                const runKey = forceRunVisualKey({
+                  userId,
+                  platform,
+                  date: day.date,
+                  kind: item.kind,
+                  eventId: item.eventId,
+                });
+                const runPending = runningForceRunKeys.has(runKey);
+                const showForceRun =
+                  forceRunEnabled &&
+                  !isPast &&
+                  !runPending &&
+                  canForceRunKind(item.kind);
+                return (
+                  <div
+                    key={`${item.kind}-${item.eventId ?? ''}-${idx}`}
+                    className="flex flex-col gap-1.5"
+                  >
+                    <UpcomingCard item={item} pending={runPending} />
+                    {showForceRun ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1.5 text-[11px]"
+                        onClick={() =>
+                          onForceRun(platform, item.kind, item.eventId)
+                        }
+                      >
+                        {runPending ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Play className="h-3 w-3" />
+                        )}
+                        {runPending ? 'Running…' : 'Force Run'}
+                      </Button>
+                    ) : null}
+                  </div>
+                );
+              })}
               {generated.length === 0 && upcoming.length === 0 ? (
-                <span className="text-[11px] text-muted-foreground">—</span>
+                <span className="text-[11px] text-secondary">—</span>
               ) : null}
             </div>
           </td>
@@ -1047,9 +1057,7 @@ function GeneratedCard({
     item.status === 'rejected-by-user' ||
     item.status === 'rejected-by-admin';
   const title =
-    item.title?.trim() ||
-    item.captionPreview?.trim() ||
-    kindLabel(item.kind);
+    item.title?.trim() || item.captionPreview?.trim() || kindLabel(item.kind);
   const carouselSlides = Array.isArray(item.carouselSlides)
     ? item.carouselSlides.filter((s) => String(s.imageUrl ?? '').trim())
     : [];
@@ -1063,10 +1071,7 @@ function GeneratedCard({
       item.kind === 'video-generation' ||
       Boolean(item.videoUrl));
   const thumbUrl =
-    item.imageUrl ||
-    item.videoPosterUrl ||
-    carouselSlides[0]?.imageUrl ||
-    null;
+    item.imageUrl || item.videoPosterUrl || carouselSlides[0]?.imageUrl || null;
   const slideCount =
     item.slideCount ??
     (carouselSlides.length > 0 ? carouselSlides.length : null);
@@ -1076,28 +1081,24 @@ function GeneratedCard({
       type="button"
       onClick={onOpen}
       className={cn(
-        'relative w-full rounded-lg border border-border/60 bg-card/60 p-2 text-left transition hover:ring-1 hover:ring-primary/40',
+        'relative w-full rounded-full border border-default bg-default p-2 text-left transition hover:ring-1 hover:ring-strong',
         cellToneClass(item.kind),
-        isRegenerating && 'ring-1 ring-amber-400/50'
+        isRegenerating && 'ring-1 ring-[var(--border-warning)]'
       )}
     >
       {isRegenerating ? (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 rounded-lg bg-background/75 backdrop-blur-[1px]">
-          <Loader2 className="h-4 w-4 animate-spin text-amber-600 dark:text-amber-300" />
-          <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-200">
+          <Loader2 className="h-4 w-4 animate-spin text-warning dark:text-warning" />
+          <span className="text-[10px] font-semibold text-warning dark:text-warning">
             Regenerating…
           </span>
         </div>
       ) : null}
       <div className="flex gap-2">
         {thumbUrl ? (
-          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-border/50 bg-background">
+          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-default bg-background">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={thumbUrl}
-              alt=""
-              className="h-full w-full object-cover"
-            />
+            <img src={thumbUrl} alt="" className="h-full w-full object-cover" />
             {isVideo ? (
               <span className="absolute inset-0 flex items-center justify-center bg-black/35">
                 <Play className="h-4 w-4 text-white" fill="currentColor" />
@@ -1118,14 +1119,14 @@ function GeneratedCard({
         ) : (
           <div
             aria-hidden
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-border/40 bg-muted/40"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-default bg-element"
           >
             {isVideo ? (
-              <Film className="h-4 w-4 text-muted-foreground" />
+              <Film className="h-4 w-4 text-secondary" />
             ) : isCarousel ? (
-              <Layers className="h-4 w-4 text-muted-foreground" />
+              <Layers className="h-4 w-4 text-secondary" />
             ) : (
-              <ImageIcon className="h-4 w-4 text-muted-foreground" />
+              <ImageIcon className="h-4 w-4 text-secondary" />
             )}
           </div>
         )}
@@ -1134,10 +1135,13 @@ function GeneratedCard({
             {kindLabel(item.kind)}
             <span className="ml-1.5 font-normal opacity-80">
               · {isRegenerating ? 'Regenerating' : statusLabel(item.status)}
+              {item.origin === 'manual' ? ' · Manual' : ''}
             </span>
           </p>
           {!isTerminal ? (
-            <p className="mt-0.5 line-clamp-2 text-[11px] opacity-90">{title}</p>
+            <p className="mt-0.5 line-clamp-2 text-[11px] opacity-90">
+              {title}
+            </p>
           ) : null}
           {isCarousel && slideCount && slideCount > 1 ? (
             <p className="mt-0.5 text-[10px] opacity-70">{slideCount} slides</p>
@@ -1173,8 +1177,7 @@ function PreviewModal({
   const Icon = PLATFORM_ICON[platform];
   const imagePreview = useImagePreview();
   const optimal = optimalTimeForPlatform(preferences, platform);
-  const showPreferred =
-    Boolean(preferences.preferredTime) && !optimal;
+  const showPreferred = Boolean(preferences.preferredTime) && !optimal;
   const isQueued = item.status === 'queued';
   const isTerminal =
     item.status === 'removed' ||
@@ -1208,7 +1211,8 @@ function PreviewModal({
     videoUrl: item.videoUrl,
     videoPosterUrl: item.videoPosterUrl,
   });
-  const isVideo = !isCarousel && mediaPreview.isVideo && Boolean(mediaPreview.videoUrl);
+  const isVideo =
+    !isCarousel && mediaPreview.isVideo && Boolean(mediaPreview.videoUrl);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -1248,7 +1252,7 @@ function PreviewModal({
         onClick={onClose}
       />
       <div
-        className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F162E] text-white shadow-2xl"
+        className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0F162E] text-white"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-6 py-4">
@@ -1266,7 +1270,7 @@ function PreviewModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1.5 text-white/60 transition hover:bg-white/10 hover:text-white"
+            className="rounded-full p-1.5 text-white/60 transition hover:bg-default hover:text-white"
             aria-label="Close"
           >
             <X className="h-4 w-4" />
@@ -1290,12 +1294,13 @@ function PreviewModal({
             >
               {isRegenerating ? (
                 <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/55 backdrop-blur-[2px]">
-                  <Loader2 className="h-8 w-8 animate-spin text-amber-300" />
-                  <p className="text-sm font-semibold text-amber-100">
+                  <Loader2 className="h-8 w-8 animate-spin text-warning" />
+                  <p className="text-sm font-semibold text-warning">
                     Regenerating content…
                   </p>
                   <p className="text-xs text-white/60">
-                    This may take a minute. You can close this and keep browsing.
+                    This may take a minute. You can close this and keep
+                    browsing.
                   </p>
                 </div>
               ) : null}
@@ -1316,7 +1321,9 @@ function PreviewModal({
                 </div>
               ) : isVideo && mediaPreview.videoUrl ? (
                 <div className="p-3">
-                  <p className="mb-2 text-xs font-medium text-white/60">Video</p>
+                  <p className="mb-2 text-xs font-medium text-white/60">
+                    Video
+                  </p>
                   <PostMediaPreview
                     preview={mediaPreview}
                     controls
@@ -1328,7 +1335,7 @@ function PreviewModal({
                     getFilename={() =>
                       `admin-calendar-${item.scheduledPostId ?? 'post'}.mp4`
                     }
-                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-white/10 disabled:opacity-60"
+                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-white/20 bg-default px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-default disabled:text-quaternary"
                   />
                 </div>
               ) : item.imageUrl ? (
@@ -1343,9 +1350,7 @@ function PreviewModal({
                     <ImagePreviewButton
                       variant="overlay-icon"
                       stopPropagation
-                      onClick={() =>
-                        imagePreview.open(item.imageUrl as string)
-                      }
+                      onClick={() => imagePreview.open(item.imageUrl as string)}
                     />
                   </div>
                 </div>
@@ -1359,7 +1364,7 @@ function PreviewModal({
             <div className="space-y-4 text-sm">
               <div>
                 {isRegenerating ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-100">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-warning bg-warning px-2.5 py-1 text-xs font-semibold text-warning">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     Regenerating
                   </span>
@@ -1371,6 +1376,9 @@ function PreviewModal({
                 )}
               </div>
               <KV label="Type" value={kindLabel(item.kind)} />
+              {item.origin === 'manual' ? (
+                <KV label="Created by" value="Manual" />
+              ) : null}
               <KV
                 label="Scheduled post id"
                 value={item.scheduledPostId ?? null}
@@ -1381,10 +1389,7 @@ function PreviewModal({
                 value={item.UserApprovalStatus ?? null}
               />
               {showPreferred ? (
-                <KV
-                  label="Preferred time"
-                  value={preferences.preferredTime}
-                />
+                <KV label="Preferred time" value={preferences.preferredTime} />
               ) : null}
               {platform === 'facebook' && optimal ? (
                 <KV label="Optimal Facebook time" value={optimal} />
@@ -1395,10 +1400,7 @@ function PreviewModal({
               {platform === 'linkedin' && optimal ? (
                 <KV label="Optimal LinkedIn time" value={optimal} />
               ) : null}
-                <Timestamp
-                  label="Scheduled at"
-                  ms={item.scheduleAtMs ?? null}
-                />
+              <Timestamp label="Scheduled at" ms={item.scheduleAtMs ?? null} />
               <KV
                 label="Content description"
                 value={item.contentDescription ?? item.title ?? null}
@@ -1414,7 +1416,7 @@ function PreviewModal({
                   <div className="text-xs uppercase tracking-wider text-white/50">
                     Error
                   </div>
-                  <div className="mt-1 whitespace-pre-wrap rounded-md border border-red-500/30 bg-red-500/10 p-2 text-[12px] text-red-200/90">
+                  <div className="mt-1 whitespace-pre-wrap rounded-md border border-danger bg-danger p-2 text-[12px] text-danger">
                     {item.error}
                   </div>
                 </div>
@@ -1429,12 +1431,12 @@ function PreviewModal({
 
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-white/10 bg-black/20 px-6 py-4">
           {isQueued ? (
-            <span className="inline-flex items-center gap-2 text-sm text-cyan-200/80">
+            <span className="inline-flex items-center gap-2 text-sm text-info">
               <Loader2 className="h-4 w-4 animate-spin" />
               Generation in progress…
             </span>
           ) : isRegenerating ? (
-            <span className="inline-flex items-center gap-2 text-sm text-amber-200/90">
+            <span className="inline-flex items-center gap-2 text-sm text-warning">
               <Loader2 className="h-4 w-4 animate-spin" />
               Regenerating…
             </span>
@@ -1442,7 +1444,7 @@ function PreviewModal({
             <button
               type="button"
               onClick={onRegenerate}
-              className="inline-flex items-center gap-2 rounded-lg border border-amber-500/40 bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/30 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-full border border-warning bg-warning px-4 py-2 text-sm font-semibold text-warning transition hover:bg-warning disabled:text-quaternary"
             >
               <RefreshCw className="h-4 w-4" />
               Regenerate
@@ -1470,28 +1472,28 @@ function StatusBadge({
 }) {
   if (status === 'removed') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-xs font-semibold text-rose-100">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-danger bg-danger px-2.5 py-1 text-xs font-semibold text-danger">
         Removed by user
       </span>
     );
   }
   if (status === 'rejected-by-admin') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-xs font-semibold text-rose-100">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-danger bg-danger px-2.5 py-1 text-xs font-semibold text-danger">
         Rejected by admin
       </span>
     );
   }
   if (status === 'rejected' || status === 'rejected-by-user') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-xs font-semibold text-rose-100">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-danger bg-danger px-2.5 py-1 text-xs font-semibold text-danger">
         Rejected by user
       </span>
     );
   }
   if (status === 'queued') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/40 bg-cyan-500/15 px-2.5 py-1 text-xs font-semibold text-cyan-100">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-info bg-info px-2.5 py-1 text-xs font-semibold text-info">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
         Generating
       </span>
@@ -1499,13 +1501,13 @@ function StatusBadge({
   }
   if (status === 'draft') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-100">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-warning bg-warning px-2.5 py-1 text-xs font-semibold text-warning">
         Draft
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-100">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-success bg-success px-2.5 py-1 text-xs font-semibold text-success">
       <CheckCircle2 className="h-3.5 w-3.5" />
       {postStatus ? `Generated · ${postStatus}` : 'Generated'}
     </span>

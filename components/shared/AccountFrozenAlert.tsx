@@ -26,28 +26,28 @@ export function AccountFrozenAlert({
       variant="default"
       role="alert"
       className={cn(
-        'rounded-2xl border-2 border-amber-500/60 bg-amber-50 text-amber-950 shadow-sm',
-        'dark:border-amber-500/50 dark:bg-amber-950/40 dark:text-amber-50',
+        'rounded-2xl border-2 border-warning bg-warning text-warning',
+        'dark:border-warning dark:bg-warning dark:text-warning',
         className
       )}
     >
       <TriangleAlert
-        className="size-5 text-amber-600 dark:text-amber-400"
+        className="size-5 text-warning dark:text-warning"
         aria-hidden
       />
-      <AlertTitle className="text-base font-semibold text-amber-950 dark:text-amber-50">
+      <AlertTitle className="text-base font-semibold text-warning dark:text-warning">
         Your account is frozen
       </AlertTitle>
-      <AlertDescription className="mt-1.5 space-y-3 text-sm text-amber-900/95 dark:text-amber-100/90">
+      <AlertDescription className="mt-1.5 space-y-3 text-sm text-warning dark:text-warning">
         <p>
-          Most of the app is locked until your account is unfrozen. You can still
-          manage billing, linked profiles, and contact support.
+          Most of the app is locked until your account is unfrozen. You can
+          still manage billing, linked profiles, and contact support.
         </p>
         {showBillingLink ? (
           <Button
             asChild
             size="sm"
-            className="rounded-lg bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500"
+            className="rounded-full bg-[var(--amber-9)] text-white hover:bg-warning dark:bg-[var(--amber-9)] dark:hover:bg-warning"
           >
             <Link href="/settings/billings">Go to billing</Link>
           </Button>

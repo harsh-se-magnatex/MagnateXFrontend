@@ -12,7 +12,7 @@ export default function AuthLayout({
     <>
       <AppGradientBackground variant="subtle" />
       <NavBar isAuthRender />
-      <div className="relative min-h-svh pb-8 text-foreground sm:pt-22">
+      <div className="relative min-h-svh pb-8 text-default sm:pt-22">
         <RedirectIfAuthenticated>{children}</RedirectIfAuthenticated>
       </div>
     </>

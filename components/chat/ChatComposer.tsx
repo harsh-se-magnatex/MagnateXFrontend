@@ -36,7 +36,7 @@ export function ChatComposer() {
   };
 
   return (
-    <div className="border-t border-border bg-background px-3 pb-3 pt-2">
+    <div className="border-t border-default bg-background px-3 pb-3 pt-2">
       {showSuggestions && (
         <div className="mb-2 flex flex-wrap gap-1.5">
           {SUGGESTED_PROMPTS.map((prompt) => (
@@ -47,7 +47,7 @@ export function ChatComposer() {
                 setDraft(prompt);
                 textareaRef.current?.focus();
               }}
-              className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted"
+              className="rounded-full border border-default bg-element px-2.5 py-1 text-[11px] text-secondary transition-expo hover:bg-element"
             >
               {prompt}
             </button>
@@ -99,8 +99,9 @@ export function ChatComposer() {
           </Button>
         )}
       </div>
-      <p className="mt-1.5 text-[10px] text-muted-foreground">
-        Drafts only. The bot never enqueues jobs — open the linked page to run them.
+      <p className="mt-1.5 text-[10px] text-secondary">
+        Drafts only. The bot never enqueues jobs — open the linked page to run
+        them.
       </p>
     </div>
   );

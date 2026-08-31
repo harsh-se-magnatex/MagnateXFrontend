@@ -13,10 +13,8 @@ type BrandSwitcherProps = {
 
 export function BrandSwitcher({ active, onChange }: BrandSwitcherProps) {
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-center text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        Choose a brand
-      </p>
+    <div className="flex flex-col gap-3">
+      <p className="text-eyebrow text-center">Choose an example brand</p>
       <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
         {SHOWCASE_BRAND_OPTIONS.map((brand) => {
           const isActive = active === brand.id;
@@ -24,23 +22,24 @@ export function BrandSwitcher({ active, onChange }: BrandSwitcherProps) {
             <button
               key={brand.id}
               type="button"
+              aria-pressed={isActive}
               onClick={() => onChange(brand.id)}
               className={cn(
-                'min-w-[160px] rounded-2xl border px-4 py-3 text-left transition-all duration-200 sm:min-w-[180px]',
+                'min-w-[150px] rounded-2xl border px-4 py-3 text-left transition-expo sm:min-w-[170px]',
                 isActive
-                  ? 'border-primary-purple/50 bg-card/90 shadow-lg shadow-primary-purple/15 ring-1 ring-primary-purple/25'
-                  : 'border-border/50 bg-card/40 hover:border-border hover:bg-card/70'
+                  ? 'nav-active border-[color-mix(in_srgb,var(--brand-violet)_45%,var(--border-default))]'
+                  : 'border-default bg-element hover:border-strong hover:bg-subtle'
               )}
             >
               <p
                 className={cn(
-                  'text-sm font-bold',
-                  isActive ? 'text-foreground' : 'text-foreground/80'
+                  'text-sm font-semibold',
+                  isActive ? 'text-default' : 'text-secondary'
                 )}
               >
                 {brand.label}
               </p>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              <p className="mt-0.5 truncate text-xs text-tertiary">
                 {brand.description}
               </p>
             </button>

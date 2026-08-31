@@ -101,8 +101,7 @@ export const useProductAdvertState = create<ProductAdvertState>()((set) => ({
   setCampaignContext: (campaignContext) => set({ campaignContext }),
 
   useIndustryResearch: true,
-  setUseIndustryResearch: (useIndustryResearch) =>
-    set({ useIndustryResearch }),
+  setUseIndustryResearch: (useIndustryResearch) => set({ useIndustryResearch }),
 
   prompt: '',
   setPrompt: (prompt) => set({ prompt }),

@@ -213,7 +213,8 @@ export const EVENTS = [
       "Father's Day honors fathers and father figures for their guidance and support.",
     reason:
       'It is celebrated to express gratitude, love, and family appreciation.',
-  }, {
+  },
+  {
     id: '26',
     name: 'International Yoga Day',
     date: '2027-06-21',
@@ -331,4 +332,3 @@ export function isFestiveDateOnOrAfterToday(
  * Event is visible when it falls on/after today and on/before plan expiry.
  * If `planExpiresAtYmd` is missing, only the today lower-bound is applied.
  */
-

@@ -15,7 +15,12 @@ export type PricingPlan = {
   id: PlanId;
   tier: PlanTier;
   mode: PlanMode;
-  price: string;
+  /**
+   * The USD list price as a number — the currency of record. Render it through
+   * `localizePrice()` in `lib/geo-currency.ts` rather than formatting inline, so
+   * localised surfaces and the USD fallback stay in one code path.
+   */
+  priceUsd: number;
   originalPrice?: string;
   discountLabel?: string;
   period: string;
@@ -45,11 +50,11 @@ export function planButtonDisplayName(raw?: string | null): string {
 //   Product Advert: 4   Campaign: 3   Quick: 2   Bulk: 2
 //   AI engine (manual trigger): 2   Festive: 2   Regen: 1
 
-const PRICE_BY_PLAN_ID: Record<PlanId, string> = {
-  studio: '$14.99',
-  'prime-AI': '$49.99',
-  'elite-AI': '$69.99',
-  'legacy-AI': '$84.99',
+const PRICE_BY_PLAN_ID: Record<PlanId, number> = {
+  studio: 14.99,
+  'prime-AI': 49.99,
+  'elite-AI': 69.99,
+  'legacy-AI': 84.99,
 };
 
 const CREDITS_BY_PLAN_ID: Record<PlanId, number> = {
@@ -111,7 +116,7 @@ function buildPlan(id: PlanId): PricingPlan {
     tier,
     mode,
     name: DISPLAY_NAME_BY_PLAN_ID[id],
-    price: PRICE_BY_PLAN_ID[id],
+    priceUsd: PRICE_BY_PLAN_ID[id],
     period: '/month',
     highlighted: tier === 'elite',
     badge: tier === 'elite' ? PLAN_MOST_POPULAR_BADGE : undefined,
@@ -177,7 +182,8 @@ export const PLAN_COMPARISON_BULLETS: Record<
 
 export type CreditPackDisplay = {
   name: string;
-  price: string;
+  /** USD list price as a number — see `PricingPlan.priceUsd`. */
+  priceUsd: number;
   credits: string;
   comingSoon?: boolean;
 };
@@ -190,8 +196,8 @@ export type CreditPackDisplay = {
  * Validity: 30 days from purchase (enforced in payment fulfillment).
  */
 export const CREDIT_TOPUP_PACKS: readonly CreditPackDisplay[] = [
-  { name: 'Starter', price: '$6.99', credits: '40 credits', comingSoon: false },
-  { name: 'Basic', price: '$14.99', credits: '100 credits', comingSoon: false },
-  { name: 'Growth', price: '$28.99', credits: '200 credits', comingSoon: false },
-  { name: 'Business', price: '$41.99', credits: '300 credits', comingSoon: false },
+  { name: 'Starter', priceUsd: 6.99, credits: '40 credits', comingSoon: false },
+  { name: 'Basic', priceUsd: 14.99, credits: '100 credits', comingSoon: false },
+  { name: 'Growth', priceUsd: 28.99, credits: '200 credits', comingSoon: false },
+  { name: 'Business', priceUsd: 41.99, credits: '300 credits', comingSoon: false },
 ] as const;

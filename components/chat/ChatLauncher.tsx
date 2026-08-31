@@ -16,7 +16,7 @@ export function ChatLauncher() {
       onClick={() => setOpen(!open)}
       aria-label={open ? 'Close assistant' : 'Open assistant'}
       className={cn(
-        'fixed bottom-5 right-5 z-40 h-12 w-12 rounded-full p-0 shadow-lg',
+        'fixed bottom-5 right-5 z-40 h-12 w-12 rounded-full p-0',
         '[&>svg]:size-5'
       )}
       data-state={open ? 'open' : 'closed'}

@@ -110,8 +110,9 @@ export const useInstantGeneratedState = create<InstantGeneratedState>()(
     updateRenderedImageCaption: (platform, caption) =>
       set((state) => {
         if (!state.createdContent) return state;
-        const renderedImages = state.createdContent.renderedImages.map((image) =>
-          image.platform === platform ? { ...image, caption } : image
+        const renderedImages = state.createdContent.renderedImages.map(
+          (image) =>
+            image.platform === platform ? { ...image, caption } : image
         );
         const selectedRenderedImage =
           state.selectedRenderedImage?.platform === platform
@@ -183,11 +184,11 @@ export const useInstantGeneratedState = create<InstantGeneratedState>()(
       }),
 
     // Wipes all session state tied to the current generate -> schedule
-     // cycle: the generated content + prompt, the platforms picked for
-     // generation, and the schedule inputs (date, time, per-platform
-     // schedule slots, selected schedule platform). Without this, the
-     // previous run's prompt, generation platforms, and date/time would
-     // carry over into the next attempt until a hard refresh.
+    // cycle: the generated content + prompt, the platforms picked for
+    // generation, and the schedule inputs (date, time, per-platform
+    // schedule slots, selected schedule platform). Without this, the
+    // previous run's prompt, generation platforms, and date/time would
+    // carry over into the next attempt until a hard refresh.
     clearOutput: () =>
       set({
         createdContent: null,
@@ -218,13 +219,15 @@ export const useInstantGeneratedState = create<InstantGeneratedState>()(
         }
         const nextSelected =
           state.selectedRenderedImage?.platform === platform
-            ? remaining[0] ?? null
+            ? (remaining[0] ?? null)
             : state.selectedRenderedImage;
         return {
           createdContent: { ...content, renderedImages: remaining },
           selectedRenderedImage: nextSelected,
           schedulePlatform:
-            remaining.length === 1 ? remaining[0].platform : state.schedulePlatform,
+            remaining.length === 1
+              ? remaining[0].platform
+              : state.schedulePlatform,
         };
       }),
   })

@@ -47,7 +47,7 @@ export function ExpiredPlanGuard({ children }: { children: ReactNode }) {
   if (shouldBlock) {
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center px-4 text-center">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-secondary">
           Your plan has ended. Taking you to billing…
         </p>
       </div>

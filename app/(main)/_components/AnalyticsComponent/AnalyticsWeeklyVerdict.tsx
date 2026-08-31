@@ -36,44 +36,47 @@ const GRADE_STYLES: Record<
   { badge: string; text: string }
 > = {
   A: {
-    badge: 'bg-emerald-500/20 text-emerald-300 ring-emerald-500/30',
-    text: 'text-emerald-300',
+    badge: 'bg-success text-success ring-[var(--border-success)]',
+    text: 'text-success',
   },
   B: {
     badge: 'bg-lime-100 text-lime-800 ring-lime-200',
     text: 'text-lime-700',
   },
   C: {
-    badge: 'bg-amber-500/20 text-amber-300 ring-amber-500/30',
-    text: 'text-amber-300',
+    badge: 'bg-warning text-warning ring-[var(--border-warning)]',
+    text: 'text-warning',
   },
   D: {
-    badge: 'bg-orange-100 text-orange-800 ring-orange-200',
-    text: 'text-orange-700',
+    badge: 'bg-warning text-warning ring-[var(--border-warning)]',
+    text: 'text-warning',
   },
-  F: { badge: 'bg-red-100 text-red-800 ring-red-200', text: 'text-red-700' },
+  F: {
+    badge: 'bg-danger text-danger ring-[var(--border-danger)]',
+    text: 'text-danger',
+  },
 };
 
 const PLATFORM_ACCENT: Record<Platform, string> = {
-  facebook: 'from-primary/10 to-card ring-primary/20',
-  instagram: 'from-secondary/10 to-card ring-secondary/20',
-  linkedin: 'from-sky-500/10 to-card ring-sky-500/20',
+  facebook: 'from-primary/10 to-card ring-strong',
+  instagram: 'from-brand/10 to-card ring-brand/20',
+  linkedin: 'from-[var(--blue-9)] to-card ring-[var(--border-info)]',
 };
 
 function VerdictSkeleton() {
   return (
     <div className="space-y-3 p-5">
-      <div className="h-3 w-1/3 animate-pulse rounded bg-accent" />
+      <div className="h-3 w-1/3 animate-pulse rounded bg-hover" />
       <div className="space-y-2">
-        <div className="h-3 w-full animate-pulse rounded bg-accent" />
-        <div className="h-3 w-11/12 animate-pulse rounded bg-accent" />
-        <div className="h-3 w-9/12 animate-pulse rounded bg-accent" />
+        <div className="h-3 w-full animate-pulse rounded bg-hover" />
+        <div className="h-3 w-11/12 animate-pulse rounded bg-hover" />
+        <div className="h-3 w-9/12 animate-pulse rounded bg-hover" />
       </div>
       <div className="mt-4 grid gap-2">
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-8 w-full animate-pulse rounded bg-muted"
+            className="h-8 w-full animate-pulse rounded bg-element"
           />
         ))}
       </div>
@@ -98,7 +101,9 @@ export function AnalyticsWeeklyVerdict({
   context: Record<string, unknown>;
   className?: string;
 }) {
-  const [state, setState] = useState<FetchState>(() => initialStateFor(platform));
+  const [state, setState] = useState<FetchState>(() =>
+    initialStateFor(platform)
+  );
 
   useEffect(() => {
     const cache = useWeeklyVerdictCache.getState();
@@ -145,27 +150,27 @@ export function AnalyticsWeeklyVerdict({
     <section
       aria-label="AI weekly verdict"
       className={cn(
-        'overflow-hidden rounded-xl border border-border/80 bg-gradient-to-br shadow-sm ring-1',
+        'overflow-hidden rounded-xl border border-default bg-gradient-to-br ring-1',
         PLATFORM_ACCENT[platform],
         className
       )}
     >
-      <header className="flex items-center justify-between gap-3 border-b border-border/60 bg-card/60 px-5 py-3">
+      <header className="flex items-center justify-between gap-3 border-b border-default bg-default px-5 py-3">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-amber-600" aria-hidden />
+          <Sparkles className="h-5 w-5 text-warning" aria-hidden />
           <div>
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-default">
               Recommendations
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[11px] text-secondary">
               Graded mini-report from the last 3 weeks of synced data
             </p>
           </div>
         </div>
         {state.status === 'loading' ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Loader2 className="h-4 w-4 animate-spin text-secondary" />
         ) : state.status === 'ready' && state.source === 'fallback' ? (
-          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+          <span className="rounded-full bg-element px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-secondary">
             Rule-based
           </span>
         ) : null}
@@ -174,42 +179,42 @@ export function AnalyticsWeeklyVerdict({
       {state.status === 'loading' ? (
         <VerdictSkeleton />
       ) : state.status === 'error' ? (
-        <p className="px-5 py-6 text-sm text-red-600">{state.error}</p>
+        <p className="px-5 py-6 text-sm text-danger">{state.error}</p>
       ) : (
         <div className="space-y-5 p-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wide text-secondary">
               This week&apos;s verdict
             </p>
-            <p className="mt-1.5 text-sm leading-relaxed text-foreground">
+            <p className="mt-1.5 text-sm leading-relaxed text-default">
               {state.payload.verdict}
             </p>
           </div>
 
           {state.payload.breakdown.length > 0 ? (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-wide text-secondary">
                 Performance breakdown
               </p>
-              <div className="mt-2 overflow-hidden rounded-lg border border-border bg-card">
+              <div className="mt-2 overflow-hidden rounded-lg border border-default bg-default">
                 <table className="w-full border-collapse text-sm">
                   <thead>
-                    <tr className="border-b border-border bg-muted text-left text-xs font-medium text-muted-foreground">
+                    <tr className="border-b border-default bg-element text-left text-xs font-medium text-secondary">
                       <th className="px-3 py-2">Area</th>
                       <th className="px-3 py-2 text-center">Grade</th>
                       <th className="px-3 py-2 text-center">Score</th>
                       <th className="px-3 py-2">Reading</th>
                     </tr>
                   </thead>
-                  <tbody className="text-foreground">
+                  <tbody className="text-default">
                     {state.payload.breakdown.map((row, i) => {
                       const style = GRADE_STYLES[row.grade];
                       return (
                         <tr
                           key={row.area + i}
-                          className="border-b border-border/60 last:border-0"
+                          className="border-b border-default last:border-0"
                         >
-                          <td className="px-3 py-2 font-medium text-foreground">
+                          <td className="px-3 py-2 font-medium text-default">
                             {row.area}
                           </td>
                           <td className="px-3 py-2 text-center">
@@ -230,7 +235,7 @@ export function AnalyticsWeeklyVerdict({
                           >
                             {row.score}
                           </td>
-                          <td className="px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+                          <td className="px-3 py-2 text-xs leading-relaxed text-secondary">
                             {row.reading}
                           </td>
                         </tr>
@@ -244,28 +249,25 @@ export function AnalyticsWeeklyVerdict({
 
           {state.payload.pullingDown.length > 0 ? (
             <div>
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <TrendingDown
-                  className="h-3.5 w-3.5 text-red-500"
-                  aria-hidden
-                />
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-secondary">
+                <TrendingDown className="h-3.5 w-3.5 text-danger" aria-hidden />
                 What&apos;s pulling the score down (in priority)
               </p>
               <ol className="mt-2 space-y-2">
                 {state.payload.pullingDown.map((item, i) => (
                   <li
                     key={i}
-                    className="flex gap-3 rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2"
+                    className="flex gap-3 rounded-lg border border-danger bg-danger px-3 py-2"
                   >
-                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-200 text-[11px] font-semibold text-red-800">
+                    <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger text-[11px] font-semibold text-danger">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-medium text-default">
                         {item.headline}
                       </p>
                       {item.detail ? (
-                        <p className="mt-0.5 text-xs leading-relaxed text-foreground">
+                        <p className="mt-0.5 text-xs leading-relaxed text-default">
                           {item.detail}
                         </p>
                       ) : null}
@@ -278,21 +280,18 @@ export function AnalyticsWeeklyVerdict({
 
           {state.payload.working.length > 0 ? (
             <div>
-              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <TrendingUp
-                  className="h-3.5 w-3.5 text-emerald-600"
-                  aria-hidden
-                />
+              <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-secondary">
+                <TrendingUp className="h-3.5 w-3.5 text-success" aria-hidden />
                 What&apos;s working (don&apos;t break these)
               </p>
               <ul className="mt-2 space-y-1.5">
                 {state.payload.working.map((line, i) => (
                   <li
                     key={i}
-                    className="flex gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm text-foreground"
+                    className="flex gap-2 rounded-lg border border-success bg-success px-3 py-2 text-sm text-default"
                   >
                     <span
-                      className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500"
+                      className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--green-9)]"
                       aria-hidden
                     />
                     <span>{line}</span>

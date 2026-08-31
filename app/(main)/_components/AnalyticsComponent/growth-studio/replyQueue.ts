@@ -1,8 +1,4 @@
-import type {
-  InstagramPost,
-  LinkedInPost,
-  Post,
-} from '../../types';
+import type { InstagramPost, LinkedInPost, Post } from '../../types';
 import type { GrowthStudioPlatform } from './_common';
 
 /**
@@ -56,7 +52,11 @@ function commentTextOf(c: SourceComment | null | undefined): string {
   return asTrimmed(c.message) || asTrimmed(c.text);
 }
 
-function commentIdOf(c: SourceComment | null | undefined, index: number, postId: string): string {
+function commentIdOf(
+  c: SourceComment | null | undefined,
+  index: number,
+  postId: string
+): string {
   const id = asTrimmed(c?.id);
   return id || `${postId}:${index}`;
 }
@@ -181,7 +181,9 @@ export function buildReplyQueueGroupsLinkedIn(
     .filter((g): g is ReplyQueueGroup => g !== null);
 }
 
-export function flattenQueueGroups(groups: readonly ReplyQueueGroup[]): ReplyQueueItem[] {
+export function flattenQueueGroups(
+  groups: readonly ReplyQueueGroup[]
+): ReplyQueueItem[] {
   const out: ReplyQueueItem[] = [];
   for (const g of groups) {
     for (const c of g.comments) {
@@ -285,7 +287,9 @@ function pickMostRecent<T extends { createdAt?: string; timestamp?: string }>(
   return ranked[0] ?? null;
 }
 
-export function mostRecentFacebookPost(posts: readonly Post[]): RecentPostSnapshot | null {
+export function mostRecentFacebookPost(
+  posts: readonly Post[]
+): RecentPostSnapshot | null {
   const p = pickMostRecent(posts);
   if (!p?.createdAt) return null;
   return {

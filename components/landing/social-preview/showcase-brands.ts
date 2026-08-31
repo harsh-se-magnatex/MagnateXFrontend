@@ -3,7 +3,12 @@
  * Add a brand here after exporting with:
  *   pnpm export-how-it-looks -- --brand=<id>
  */
-export type ShowcaseBrandId = 'magnate-regalia' | 'sunglasses' | 'clothing' | 'cafe' | 'jewelry';
+export type ShowcaseBrandId =
+  | 'magnate-regalia'
+  | 'sunglasses'
+  | 'clothing'
+  | 'cafe'
+  | 'jewelry';
 
 export type ShowcaseBrandOption = {
   id: ShowcaseBrandId;
@@ -11,31 +16,33 @@ export type ShowcaseBrandOption = {
   description: string;
 };
 
+/** Labels are the brand names as they appear in the exported fixtures, so the
+ *  switcher matches the profile the mockup actually renders. */
 export const SHOWCASE_BRAND_OPTIONS: ShowcaseBrandOption[] = [
   {
     id: 'jewelry',
-    label: 'Jewelry',
-    description: 'Jewelry',
+    label: 'Neon Luxe',
+    description: 'Jewellery',
   },
   {
     id: 'magnate-regalia',
     label: 'Magnate Regalia',
-    description: 'Real estate lifestyle',
+    description: 'Real estate',
   },
   {
     id: 'cafe',
-    label: 'Cafe',
-    description: 'Food & Beverage',
+    label: 'Neon Cafe',
+    description: 'Food & beverage',
   },
   {
     id: 'clothing',
-    label: 'Clothing',
-    description: 'Fashion clothing',
+    label: 'Neon Clothes',
+    description: 'Fashion',
   },
   {
     id: 'sunglasses',
-    label: 'SunGlasses',
-    description: 'Fashion eyewear',
+    label: 'Neon Ray Co.',
+    description: 'Eyewear',
   },
 ];
 

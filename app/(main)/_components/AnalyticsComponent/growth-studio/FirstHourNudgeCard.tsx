@@ -178,24 +178,24 @@ function PlaceholderShellInline({
   description: string;
 }) {
   return (
-    <div className="rounded-xl border border-amber-500/30 bg-card p-4 shadow-sm ring-1 ring-amber-500/20">
+    <div className="rounded-xl border border-warning bg-default p-4 ring-1 ring-[var(--border-warning)]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 rounded-lg bg-amber-500/20 p-2" aria-hidden>
-            <Zap className="h-4 w-4 text-amber-300" />
+          <div className="mt-0.5 rounded-lg bg-warning p-2" aria-hidden>
+            <Zap className="h-4 w-4 text-warning" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-default">
               First-hour seeding nudge
             </p>
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="text-xs leading-relaxed text-secondary">
               {description}
             </p>
           </div>
         </div>
         <Badge
           variant="outline"
-          className="shrink-0 bg-card/70 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+          className="shrink-0 bg-default text-[10px] font-medium uppercase tracking-wide text-secondary"
         >
           Idle
         </Badge>
@@ -204,10 +204,10 @@ function PlaceholderShellInline({
         {steps.map((label) => (
           <li
             key={label}
-            className="flex items-start gap-2 text-xs text-foreground"
+            className="flex items-start gap-2 text-xs text-default"
           >
             <Square
-              className="mt-0.5 h-4 w-4 shrink-0 text-amber-400"
+              className="mt-0.5 h-4 w-4 shrink-0 text-warning"
               aria-hidden
             />
             <span>{label}</span>
@@ -358,9 +358,9 @@ function FirstCommentPanel({
   // Sent + hydrated-from-server view: no editing, no undo.
   if (isSent && !inUndoWindow) {
     return (
-      <div className="mt-2 ml-6 flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+      <div className="mt-2 ml-6 flex items-start gap-2 rounded-lg border border-success bg-success px-3 py-2 text-xs text-success">
         <CheckCircle2
-          className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300"
+          className="mt-0.5 h-4 w-4 shrink-0 text-success"
           aria-hidden
         />
         <p className="min-w-0 flex-1">
@@ -378,22 +378,22 @@ function FirstCommentPanel({
       Math.ceil((sentAt + UNDO_WINDOW_MS - nowMs) / 1000)
     );
     return (
-      <div className="mt-2 ml-6 flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+      <div className="mt-2 ml-6 flex items-start gap-2 rounded-lg border border-success bg-success px-3 py-2 text-xs text-success">
         <CheckCircle2
-          className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300"
+          className="mt-0.5 h-4 w-4 shrink-0 text-success"
           aria-hidden
         />
         <div className="min-w-0 flex-1">
           <p className="font-medium">
             First comment sent
             {secondsLeft > 0 ? (
-              <span className="ml-1 font-normal text-emerald-300/80">
+              <span className="ml-1 font-normal text-success">
                 · Undo available {secondsLeft}s
               </span>
             ) : null}
           </p>
           {undo.status === 'error' ? (
-            <p className="mt-0.5 text-[11px] text-amber-300">
+            <p className="mt-0.5 text-[11px] text-warning">
               Couldn&apos;t undo: {undo.error}
             </p>
           ) : null}
@@ -404,7 +404,7 @@ function FirstCommentPanel({
           variant="outline"
           onClick={undoSend}
           disabled={isUndoing}
-          className="h-7 shrink-0 gap-1.5 border-emerald-500/30 bg-card px-2 text-xs text-emerald-300 hover:bg-emerald-500/10"
+          className="h-7 shrink-0 gap-1.5 border-success bg-default px-2 text-xs text-success hover:bg-success"
         >
           <RotateCcw className="h-3 w-3" aria-hidden />
           {isUndoing ? 'Undoing\u2026' : 'Undo'}
@@ -431,7 +431,7 @@ function FirstCommentPanel({
             : 'Draft first comment with AI'}
         </Button>
         {!sendSupported ? (
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-[11px] text-secondary">
             Direct send is coming soon on {platformLabel(platform)} — you can
             still copy the draft.
           </span>
@@ -453,7 +453,7 @@ function FirstCommentPanel({
           <Sparkles className="h-3 w-3" aria-hidden />
           Try again
         </Button>
-        <span className="text-[11px] text-amber-300">
+        <span className="text-[11px] text-warning">
           Couldn&apos;t draft a first comment: {suggestion.error}
         </span>
       </div>
@@ -464,14 +464,14 @@ function FirstCommentPanel({
   const draft = readDraft(suggestion);
   return (
     <div className="mt-2 ml-6 space-y-2">
-      <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-amber-200">
+      <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-warning">
         <span className="inline-flex items-center gap-1 font-medium">
           <Sparkles className="h-3 w-3" aria-hidden />
           {suggestion.source === 'openai'
             ? 'AI-drafted first comment'
             : 'Suggested first comment'}
         </span>
-        <span className="font-normal normal-case tracking-normal text-muted-foreground">
+        <span className="font-normal normal-case tracking-normal text-secondary">
           Edit before sending if you&apos;d like.
         </span>
       </div>
@@ -479,7 +479,7 @@ function FirstCommentPanel({
         value={draft}
         onChange={(event) => edit(event.target.value)}
         disabled={isSending}
-        className="min-h-[64px] resize-y border-amber-500/30 bg-card text-sm disabled:opacity-70"
+        className="min-h-[64px] resize-y border-warning bg-default text-sm disabled:text-quaternary"
         aria-label="AI-drafted first comment"
       />
       <div className="flex flex-wrap items-center gap-2">
@@ -516,17 +516,17 @@ function FirstCommentPanel({
           variant="ghost"
           onClick={generate}
           disabled={isSending}
-          className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+          className="h-7 px-2 text-xs text-secondary hover:text-default"
         >
           Regenerate
         </Button>
         {!sendSupported ? (
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-[11px] text-secondary">
             Direct send is coming soon for {platformLabel(platform)}.
           </span>
         ) : null}
         {send.status === 'error' ? (
-          <span className="text-[11px] text-amber-300">
+          <span className="text-[11px] text-warning">
             Couldn&apos;t send: {send.error}
           </span>
         ) : null}
@@ -598,20 +598,19 @@ function ActiveNudge({
   const ellipsis = recentPost.message.trim().length > 110 ? '…' : '';
 
   return (
-    <div className="rounded-xl border border-amber-500/30 bg-card p-4 shadow-sm ring-1 ring-amber-500/20">
+    <div className="rounded-xl border border-warning bg-default p-4 ring-1 ring-[var(--border-warning)]">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 rounded-lg bg-amber-500/20 p-2" aria-hidden>
-            <Zap className="h-4 w-4 text-amber-300" />
+          <div className="mt-0.5 rounded-lg bg-warning p-2" aria-hidden>
+            <Zap className="h-4 w-4 text-warning" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-default">
               First-hour seeding nudge
             </p>
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="text-xs leading-relaxed text-secondary">
               Your {platformLabel(platform)} post just went live. Knock these
-              out in the next 60 minutes so the algorithm sees engagement
-              early.
+              out in the next 60 minutes so the algorithm sees engagement early.
             </p>
           </div>
         </div>
@@ -620,8 +619,8 @@ function ActiveNudge({
           className={cn(
             'shrink-0 text-[11px] font-semibold tabular-nums ring-1 ring-inset',
             allDone
-              ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/30'
-              : 'bg-amber-500/15 text-amber-200 ring-amber-500/30'
+              ? 'bg-success text-success ring-[var(--border-success)]'
+              : 'bg-warning text-warning ring-[var(--border-warning)]'
           )}
         >
           {allDone
@@ -630,17 +629,17 @@ function ActiveNudge({
         </Badge>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-amber-500/25 bg-amber-500/10 p-2.5">
+      <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-warning bg-warning p-2.5">
         {recentPost.mediaUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={recentPost.mediaUrl}
             alt=""
-            className="h-12 w-12 shrink-0 rounded-md border border-amber-500/30 object-cover"
+            className="h-12 w-12 shrink-0 rounded-md border border-warning object-cover"
             loading="lazy"
           />
         ) : null}
-        <p className="min-w-0 flex-1 text-xs text-foreground line-clamp-2">
+        <p className="min-w-0 flex-1 text-xs text-default line-clamp-2">
           {captionPreview || 'Your latest post just published.'}
           {ellipsis}
         </p>
@@ -675,28 +674,28 @@ function ActiveNudge({
                 onClick={() => toggle(step.id)}
                 disabled={isFirstComment}
                 className={cn(
-                  'flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors',
-                  !isFirstComment && 'hover:bg-amber-500/10',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400',
+                  'flex w-full items-start gap-2 rounded-full px-2 py-1.5 text-left text-xs transition-expo',
+                  !isFirstComment && 'hover:bg-warning',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-warning)]',
                   isFirstComment && 'cursor-default'
                 )}
                 aria-pressed={isFirstComment ? undefined : isDone}
               >
                 {isDone ? (
                   <CheckSquare
-                    className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-success"
                     aria-hidden
                   />
                 ) : (
                   <Square
-                    className="mt-0.5 h-4 w-4 shrink-0 text-amber-500"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-warning"
                     aria-hidden
                   />
                 )}
                 <span
                   className={cn(
                     'leading-snug',
-                    isDone ? 'text-muted-foreground line-through' : 'text-foreground'
+                    isDone ? 'text-secondary line-through' : 'text-default'
                   )}
                 >
                   {step.label(platform)}
@@ -717,7 +716,7 @@ function ActiveNudge({
       </ul>
 
       {allDone ? (
-        <p className="mt-3 inline-flex items-center gap-1 text-xs text-emerald-300">
+        <p className="mt-3 inline-flex items-center gap-1 text-xs text-success">
           <Check className="h-3.5 w-3.5" aria-hidden />
           Seeded — momentum should pick up from here.
         </p>

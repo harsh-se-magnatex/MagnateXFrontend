@@ -29,7 +29,9 @@ export type PhoneNumberLoginProps = {
   intent: 'signin' | 'signup';
   /** After sign-in, navigate here if set (safe in-app path only). */
   returnToPath?: string | null;
-  onRecoveryNeeded?: (payload: { deletedDocId: string }) => void | Promise<void>;
+  onRecoveryNeeded?: (payload: {
+    deletedDocId: string;
+  }) => void | Promise<void>;
   className?: string;
 };
 
@@ -54,8 +56,10 @@ export function PhoneNumberLogin({
 
   useEffect(() => {
     if (recaptchaContainerRef.current) {
-      if (!(window as unknown as { recaptchaVerifier?: RecaptchaVerifier })
-        .recaptchaVerifier) {
+      if (
+        !(window as unknown as { recaptchaVerifier?: RecaptchaVerifier })
+          .recaptchaVerifier
+      ) {
         (
           window as unknown as { recaptchaVerifier: RecaptchaVerifier }
         ).recaptchaVerifier = new RecaptchaVerifier(
@@ -65,8 +69,9 @@ export function PhoneNumberLogin({
             size: 'invisible',
             callback: () => {},
             'expired-callback': () => {
-              (window as unknown as { recaptchaVerifier?: RecaptchaVerifier })
-                .recaptchaVerifier?.clear();
+              (
+                window as unknown as { recaptchaVerifier?: RecaptchaVerifier }
+              ).recaptchaVerifier?.clear();
             },
           }
         );
@@ -112,7 +117,9 @@ export function PhoneNumberLogin({
         window as unknown as { recaptchaVerifier?: RecaptchaVerifier }
       ).recaptchaVerifier;
       if (!verifier) {
-        showErrorToast('Verification could not start. Please refresh and try again.');
+        showErrorToast(
+          'Verification could not start. Please refresh and try again.'
+        );
         return;
       }
       const result = await signInWithPhoneNumber(auth, e164, verifier);
@@ -121,10 +128,7 @@ export function PhoneNumberLogin({
       toast.success('Verification code sent.');
     } catch (error: unknown) {
       console.error('Error sending SMS:', error);
-      const message = await resolvePhoneAuthErrorForDeletedAccount(
-        error,
-        e164
-      );
+      const message = await resolvePhoneAuthErrorForDeletedAccount(error, e164);
       showErrorToast(message);
     } finally {
       setLoading(false);
@@ -194,10 +198,7 @@ export function PhoneNumberLogin({
       router.replace('/home');
     } catch (error: unknown) {
       console.error('Phone login error:', error);
-      const message = await resolvePhoneAuthErrorForDeletedAccount(
-        error,
-        e164
-      );
+      const message = await resolvePhoneAuthErrorForDeletedAccount(error, e164);
       showErrorToast(message);
       try {
         await auth.signOut();
@@ -215,11 +216,11 @@ export function PhoneNumberLogin({
         <>
           {intent === 'signup' && (
             <div className="relative">
-              <label className="mb-2 block text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              <label className="mb-2 block text-xs font-semibold tracking-wider text-secondary uppercase">
                 Full name
               </label>
               <div className="relative flex items-center">
-                <User className="absolute left-3 h-5 w-5 text-muted-foreground/60" />
+                <User className="absolute left-3 h-5 w-5 text-secondary/60" />
                 <input
                   type="text"
                   name="name"
@@ -227,13 +228,13 @@ export function PhoneNumberLogin({
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Your name"
-                  className="h-11 w-full rounded-xl border border-border bg-accent/30 py-3 pr-4 pl-10 text-base text-foreground transition-colors outline-none placeholder:text-muted-foreground/50 focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20 sm:text-sm"
+                  className="h-11 w-full rounded-lg border border-default bg-hover py-3 pr-4 pl-10 text-base text-default transition-expo outline-none placeholder:text-quaternary focus:border-primary-blue focus:ring-2 focus:ring-strong sm:text-sm"
                 />
               </div>
             </div>
           )}
           <div className="relative">
-            <label className="mb-2 block text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            <label className="mb-2 block text-xs font-semibold tracking-wider text-secondary uppercase">
               Mobile number
             </label>
             <CountryCodePhoneField
@@ -244,20 +245,21 @@ export function PhoneNumberLogin({
                 setPhoneCountryCode(countryCode);
                 setPhoneNationalNumber(nationalNumber);
               }}
-              selectClassName="h-11 rounded-xl border-border bg-accent/30 px-3 text-base text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
-              customInputClassName="h-11 rounded-xl border-border bg-accent/30 px-3 text-base text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
-              numberInputClassName="h-11 rounded-xl border-border bg-accent/30 px-3 text-base text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
+              selectClassName="h-11 rounded-xl border-default bg-hover px-3 text-base text-default placeholder:text-quaternary focus-visible:border-strong focus-visible:ring-strong"
+              customInputClassName="h-11 rounded-xl border-default bg-hover px-3 text-base text-default placeholder:text-quaternary focus-visible:border-strong focus-visible:ring-strong"
+              numberInputClassName="h-11 rounded-xl border-default bg-hover px-3 text-base text-default placeholder:text-quaternary focus-visible:border-strong focus-visible:ring-strong"
               nationalPlaceholder="98765 43210"
             />
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              Select your country code, then enter your mobile number. SMS rates may apply.
+            <p className="mt-1.5 text-xs text-secondary">
+              Select your country code, then enter your mobile number. SMS rates
+              may apply.
             </p>
           </div>
           <Button
             variant="default"
             size="default"
             type="button"
-            className="h-11 w-full bg-gradient-primary text-white hover:shadow-lg hover:shadow-primary-blue/25"
+            className="h-11 w-full btn-brand-fill"
             onClick={() => void handleSendCode()}
             disabled={
               loading ||
@@ -273,9 +275,9 @@ export function PhoneNumberLogin({
       ) : (
         <>
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-secondary">
               Enter the 6-digit code sent to{' '}
-              <span className="font-medium text-foreground">{e164}</span>
+              <span className="font-medium text-default">{e164}</span>
             </p>
             <InputOTP
               maxLength={6}
@@ -297,7 +299,7 @@ export function PhoneNumberLogin({
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
-              className="text-sm font-medium text-primary-blue underline-offset-2 hover:underline"
+              className="text-sm font-medium text-link underline-offset-2 hover:underline"
               onClick={resetToPhoneStep}
             >
               Change number
@@ -306,7 +308,7 @@ export function PhoneNumberLogin({
           <Button
             variant="default"
             type="button"
-            className="h-11 w-full bg-gradient-primary text-white hover:shadow-lg hover:shadow-primary-blue/25"
+            className="h-11 w-full btn-brand-fill"
             onClick={() => void handleVerifyOtp()}
             disabled={loading || otp.length !== 6}
           >

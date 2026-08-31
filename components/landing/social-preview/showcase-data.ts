@@ -208,27 +208,48 @@ export function getPostThumbnailUrl(post: ShowcasePost): string {
   return post.imageUrl || '';
 }
 
-/** Deterministic fake engagement from post id (stable across renders). */
-export function getPostEngagement(post: ShowcasePost): {
-  likes: number;
-  comments: number;
-  shares: number;
-} {
-  let hash = 0;
-  for (let i = 0; i < post.id.length; i++) {
-    hash = (hash * 31 + post.id.charCodeAt(i)) >>> 0;
-  }
+export type ShowcaseStats = {
+  brands: number;
+  platforms: number;
+  posts: number;
+  carousels: number;
+  videos: number;
+};
+
+/**
+ * Counts derived from the fixtures themselves, never hardcoded — the numbers
+ * on the marketing page stay true automatically when a brand is added or
+ * re-exported. Every figure here is a real count of real generated output.
+ */
+export function getShowcaseStats(): ShowcaseStats {
+  const allPosts = Object.values(SHOWCASES).flatMap((bundle) => bundle.posts);
   return {
-    likes: 120 + (hash % 1800),
-    comments: 8 + (hash % 90),
-    shares: 3 + (hash % 40),
+    brands: Object.keys(SHOWCASES).length,
+    platforms: 3,
+    posts: allPosts.length,
+    carousels: allPosts.filter((p) => p.mediaType === 'carousel').length,
+    videos: allPosts.filter((p) => p.mediaType === 'video').length,
   };
+}
+
+/** Human label for what a post physically is — safe to state, unlike the
+ *  originating feature, which the fixtures do not record. */
+export function getPostTypeLabel(post: ShowcasePost): string {
+  if (post.mediaType === 'carousel') {
+    const slides = post.carouselSlides?.length ?? 0;
+    return slides > 0 ? `Carousel · ${slides} slides` : 'Carousel';
+  }
+  if (post.mediaType === 'video') return 'Video';
+  return 'Image post';
 }
 
 export function formatRelativePostTime(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return 'Just now';
   const day = date.getUTCDate();
-  const month = date.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
+  const month = date.toLocaleString('en-US', {
+    month: 'short',
+    timeZone: 'UTC',
+  });
   return `${month} ${day}`;
 }

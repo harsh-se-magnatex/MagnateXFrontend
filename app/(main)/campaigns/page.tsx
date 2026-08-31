@@ -2,13 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  addDays,
-  format,
-  isAfter,
-  parseISO,
-  startOfDay,
-} from 'date-fns';
+import { addDays, format, isAfter, parseISO, startOfDay } from 'date-fns';
 import {
   ArrowLeft,
   CalendarCheck2,
@@ -58,10 +52,7 @@ import {
   isImagePreviewOverlayMounted,
   useImagePreview,
 } from '@/components/image-preview';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import {
   allPlatformsSelectionLabel,
   areAllEnabledSelected,
@@ -354,8 +345,7 @@ function groupDraftsByCampaign(drafts: CampaignDraft[]): CampaignDraftBox[] {
   });
 }
 
-/** Parse Firestore timestamps that come back as `{_seconds, _nanoseconds}`
- *  in the JSON-encoded `unknown` we get from `axios`. */
+/** Parse Firestore timestamps that come back as `{_seconds, _nanoseconds}`*  in the JSON-encoded `unknown` we get from `axios`. */
 function unknownTsToDate(value: unknown): Date | null {
   if (!value || typeof value !== 'object') return null;
   const obj = value as {
@@ -382,17 +372,13 @@ export default function CreateCampaignPage() {
   const autoSeeded = useCampaignState((s) => s.autoSeeded);
   const pickedSuggestionId = useCampaignState((s) => s.pickedSuggestionId);
   const pickedReason = useCampaignState((s) => s.pickedReason);
-  const selectedSuggestionId = useCampaignState(
-    (s) => s.selectedSuggestionId
-  );
+  const selectedSuggestionId = useCampaignState((s) => s.selectedSuggestionId);
   const days = useCampaignState((s) => s.days);
   const theme = useCampaignState((s) => s.theme);
   const description = useCampaignState((s) => s.description);
   const genPlatforms = useCampaignState((s) => s.genPlatforms);
   const setGenPlatforms = useCampaignState((s) => s.setGenPlatforms);
-  const isLoadingSuggestions = useCampaignState(
-    (s) => s.isLoadingSuggestions
-  );
+  const isLoadingSuggestions = useCampaignState((s) => s.isLoadingSuggestions);
   const setIsLoadingSuggestions = useCampaignState(
     (s) => s.setIsLoadingSuggestions
   );
@@ -468,9 +454,7 @@ export default function CreateCampaignPage() {
 
   const datedDays = useMemo(
     () =>
-      days.filter(
-        (d): d is CampaignDayDraft & { date: string } => !!d.date
-      ),
+      days.filter((d): d is CampaignDayDraft & { date: string } => !!d.date),
     [days]
   );
   const totalCost = useMemo(
@@ -481,9 +465,7 @@ export default function CreateCampaignPage() {
     [datedDays.length, genPlatforms.length]
   );
   const insufficientCredits =
-    datedDays.length > 0 &&
-    genPlatforms.length > 0 &&
-    userCredits < totalCost;
+    datedDays.length > 0 && genPlatforms.length > 0 && userCredits < totalCost;
 
   const usedDates = useMemo(
     () => new Set(datedDays.map((day) => day.date)),
@@ -550,7 +532,9 @@ export default function CreateCampaignPage() {
           `Generated ${set.suggestions.length} campaign idea${set.suggestions.length === 1 ? '' : 's'}.`
         );
       } catch {
-        showErrorToast('Could not generate campaign suggestions. Please try again later.');
+        showErrorToast(
+          'Could not generate campaign suggestions. Please try again later.'
+        );
       } finally {
         setIsLoadingSuggestions(false);
       }
@@ -567,16 +551,14 @@ export default function CreateCampaignPage() {
         replaceSuggestion(fresh);
         toast.success('Suggestion refreshed.');
       } catch {
-        showErrorToast('Could not regenerate this suggestion. Please try again later.');
+        showErrorToast(
+          'Could not regenerate this suggestion. Please try again later.'
+        );
       } finally {
         setRegeneratingSuggestionId(null);
       }
     },
-    [
-      regeneratingSuggestionId,
-      replaceSuggestion,
-      setRegeneratingSuggestionId,
-    ]
+    [regeneratingSuggestionId, replaceSuggestion, setRegeneratingSuggestionId]
   );
 
   const handlePickDate = useCallback(
@@ -734,7 +716,10 @@ export default function CreateCampaignPage() {
         platforms: genPlatforms,
         suggestionId: selectedSuggestionId ?? undefined,
       });
-      if (response.accepted || (response.successCount === 0 && response.failedCount === 0)) {
+      if (
+        response.accepted ||
+        (response.successCount === 0 && response.failedCount === 0)
+      ) {
         void refreshDraftsRef.current?.();
         const uid = auth.currentUser?.uid;
         const expected =
@@ -749,7 +734,8 @@ export default function CreateCampaignPage() {
           });
           void refreshDraftsRef.current?.();
           if (wait.outcome === 'generated') toast.success('Generated');
-          else showErrorToast('Campaign creation failed. Please try again later.');
+          else
+            showErrorToast('Campaign creation failed. Please try again later.');
         }
         setIsSubmitting(false);
         return;
@@ -811,27 +797,29 @@ export default function CreateCampaignPage() {
       : DEFAULT_CAMPAIGN_PLAN_DAYS;
   const activeSuggestion =
     selectedSuggestionId != null
-      ? suggestions.find((s) => s.id === selectedSuggestionId) ?? null
+      ? (suggestions.find((s) => s.id === selectedSuggestionId) ?? null)
       : null;
 
   return (
     <div className="mx-auto animate-in fade-in duration-500 pb-20">
       <header className="mb-8 w-full flex flex-col md:flex-row md:items-start justify-between gap-6">
         <div>
-          <h1 className={cn(workspacePageTitleClass, 'flex items-center gap-3')}>
+          <h1
+            className={cn(workspacePageTitleClass, 'flex items-center gap-3')}
+          >
             {workspacePageTitle(WORKSPACE_NAV_HREFS.createCampaign)}
           </h1>
         </div>
 
         <div className="flex flex-col items-stretch gap-2 md:items-end">
-          <div className="inline-flex items-center gap-2 self-stretch md:self-end rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-200">
-            <Zap className="h-4 w-4 text-amber-400" />
+          <div className="inline-flex items-center gap-2 self-stretch md:self-end rounded-2xl border border-warning bg-warning px-3 py-2 text-xs font-semibold text-warning">
+            <Zap className="h-4 w-4 text-warning" />
             <span>{userCredits} credits available</span>
           </div>
           <button
             type="button"
             onClick={() => setDraftsOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-sm hover:bg-accent"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-default bg-default px-4 py-2 text-sm font-semibold text-default hover:bg-hover"
           >
             <Inbox className="h-4 w-4" />
             Drafts
@@ -884,7 +872,7 @@ export default function CreateCampaignPage() {
               <button
                 type="button"
                 onClick={handleAutoFillDates}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className="inline-flex items-center gap-1.5 rounded-full border border-default bg-default px-3 py-1.5 text-xs font-medium text-default hover:bg-hover"
                 disabled={!hasValidAnchorRange}
               >
                 <CalendarDays className="h-3.5 w-3.5" />
@@ -893,7 +881,7 @@ export default function CreateCampaignPage() {
               <button
                 type="button"
                 onClick={clearAllDates}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-accent"
+                className="inline-flex items-center gap-1.5 rounded-full border border-default bg-default px-3 py-1.5 text-xs font-medium text-default hover:bg-hover"
                 disabled={datedDays.length === 0}
               >
                 Clear dates
@@ -910,9 +898,7 @@ export default function CreateCampaignPage() {
               setGenPlatforms(togglePlatformSelection(genPlatforms, platform))
             }
             onSelectAllPlatforms={() =>
-              setGenPlatforms(
-                allPlatformsSelected ? [] : [...allowedPlatforms]
-              )
+              setGenPlatforms(allPlatformsSelected ? [] : [...allowedPlatforms])
             }
             platformSelection={platformSelection}
             datedDays={datedDays.length}
@@ -981,17 +967,17 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
     <div className="space-y-6">
       <section
         id="tour-campaign-builder"
-        className="glass-card rounded-3xl border border-border shadow-sm overflow-hidden"
+        className="glass-card rounded-3xl border border-default overflow-hidden"
       >
-        <div className="p-6 border-b border-border flex items-center gap-3 bg-card/50">
-          <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
+        <div className="p-6 border-b border-default flex items-center gap-3 bg-default">
+          <div className="p-2 bg-primary-purple/10 rounded-lg text-preview">
             <Wand2 className="h-5 w-5" />
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-foreground">
+            <h2 className="text-subsection text-default">
               1. Pick a campaign idea
             </h2>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-secondary">
               {autoSeeded && pickedSuggestionId
                 ? 'Auto mode already chose one idea for you (see the badge below). You can still pick a different card.'
                 : `Optional: tell the AI what the campaign should focus on, then hit Generate. Each idea is a ${effectiveMaxDays}-day plan you can fully edit after picking.`}
@@ -1001,9 +987,9 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
 
         <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-end">
           <label className="flex-1 block">
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <span className="text-xs font-semibold uppercase tracking-wider text-secondary">
               Campaign goal
-              <span className="ml-1 text-muted-foreground/70 normal-case font-normal tracking-normal">
+              <span className="ml-1 text-secondary/70 normal-case font-normal tracking-normal">
                 (optional)
               </span>
             </span>
@@ -1019,7 +1005,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
             onClick={onGenerateSet}
             disabled={isLoading}
             aria-busy={isLoading}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-action px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-primary-purple/25 transition hover:brightness-105 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+            className="inline-flex items-center justify-center gap-2 rounded-full btn-brand-fill px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:bg-element disabled:text-secondary disabled:shadow-none"
           >
             {isLoading ? (
               <>
@@ -1039,11 +1025,11 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
       </section>
 
       {autoSeeded && pickedReason ? (
-        <div className="rounded-2xl border border-border bg-card px-4 py-3 text-sm shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-foreground">
+        <div className="rounded-2xl border border-default bg-default px-4 py-3 text-sm">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-default">
             Why auto mode picked this
           </p>
-          <p className="mt-1 leading-relaxed text-foreground">{pickedReason}</p>
+          <p className="mt-1 leading-relaxed text-default">{pickedReason}</p>
         </div>
       ) : null}
 
@@ -1059,15 +1045,15 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
       )}
 
       {!showSkeleton && suggestions.length === 0 && (
-        <section className="glass-card rounded-3xl border border-dashed border-border bg-muted/40 p-10 text-center">
-          <Sparkles className="mx-auto h-8 w-8 text-primary-purple/60" />
-          <h3 className="mt-3 text-base font-semibold text-foreground">
+        <section className="glass-card rounded-3xl border border-dashed border-default bg-element p-10 text-center">
+          <Sparkles className="mx-auto h-8 w-8 text-preview/60" />
+          <h3 className="text-subsection text-default mt-3">
             No campaign ideas yet
           </h3>
-          <p className="mt-1 text-sm text-muted-foreground max-w-md mx-auto">
-            Click <span className="font-semibold">Generate campaign
-            ideas</span> above to get {DEFAULT_CAMPAIGN_SET_SIZE} distinct
-            multi-day concepts tailored to your brand.
+          <p className="mt-1 text-sm text-secondary max-w-md mx-auto">
+            Click <span className="font-semibold">Generate campaign ideas</span>{' '}
+            above to get {DEFAULT_CAMPAIGN_SET_SIZE} distinct multi-day concepts
+            tailored to your brand.
           </p>
         </section>
       )}
@@ -1124,10 +1110,10 @@ function SuggestionCard(props: SuggestionCardProps) {
   return (
     <div
       className={cn(
-        'group relative flex h-full flex-col rounded-3xl border bg-card p-5 shadow-sm transition hover:border-primary-purple/40 hover:shadow-md',
+        'group relative flex h-full flex-col rounded-3xl border bg-default p-5 transition hover:border-strong',
         isAiPicked
-          ? 'border-primary-purple ring-2 ring-primary-purple/20'
-          : 'border-border',
+          ? 'border-primary-purple ring-2 ring-strong'
+          : 'border-default',
         isRegenerating && 'opacity-70'
       )}
     >
@@ -1139,10 +1125,10 @@ function SuggestionCard(props: SuggestionCardProps) {
       ) : null}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-base font-bold text-foreground line-clamp-2">
+          <h3 className="text-subsection text-default line-clamp-2">
             {suggestion.theme}
           </h3>
-          <p className="mt-1 text-xs text-muted-foreground line-clamp-3">
+          <p className="mt-1 text-xs text-secondary line-clamp-3">
             {suggestion.description}
           </p>
         </div>
@@ -1152,7 +1138,7 @@ function SuggestionCard(props: SuggestionCardProps) {
           disabled={anyRegenerating}
           aria-label="Regenerate this campaign"
           title="Regenerate this campaign"
-          className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:border-primary-purple/40 hover:bg-primary-purple/10 hover:text-primary-purple disabled:cursor-not-allowed disabled:opacity-50"
+          className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full border border-default bg-default text-secondary transition hover:border-strong hover:bg-element hover:text-preview disabled:cursor-not-allowed disabled:text-quaternary"
         >
           <RefreshCcw
             className={cn('h-4 w-4', isRegenerating && 'animate-spin')}
@@ -1161,7 +1147,7 @@ function SuggestionCard(props: SuggestionCardProps) {
       </div>
 
       {suggestion.goal && (
-        <p className="mt-3 inline-flex w-fit max-w-full items-center gap-1 rounded-full bg-primary-purple/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-purple line-clamp-1">
+        <p className="mt-3 inline-flex w-fit max-w-full items-center gap-1 rounded-full bg-primary-purple/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-preview line-clamp-1">
           Goal: {suggestion.goal}
         </p>
       )}
@@ -1170,33 +1156,33 @@ function SuggestionCard(props: SuggestionCardProps) {
         {suggestion.days.slice(0, 4).map((day) => (
           <li
             key={day.dayNumber}
-            className="flex items-start gap-2 text-xs text-muted-foreground"
+            className="flex items-start gap-2 text-xs text-secondary"
           >
-            <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-bold text-foreground">
+            <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-element text-[10px] font-bold text-default">
               {day.dayNumber}
             </span>
             <span className="line-clamp-2">
-              <span className="font-semibold text-foreground">{day.title}</span>{' '}
-              <span className="text-muted-foreground">— {day.reference}</span>
+              <span className="font-semibold text-default">{day.title}</span>{' '}
+              <span className="text-secondary">— {day.reference}</span>
             </span>
           </li>
         ))}
         {suggestion.days.length > 4 && (
-          <li className="text-[11px] italic text-muted-foreground/70">
+          <li className="text-[11px] italic text-secondary/70">
             +{suggestion.days.length - 4} more day(s)
           </li>
         )}
       </ul>
 
       <div className="mt-5 flex items-center justify-between gap-3">
-        <span className="text-[11px] text-muted-foreground/70">
+        <span className="text-[11px] text-secondary/70">
           {suggestion.days.length} day{suggestion.days.length === 1 ? '' : 's'}
         </span>
         <button
           type="button"
           onClick={onSelect}
           disabled={anyRegenerating}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-primary-purple px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-full bg-primary-purple px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:text-quaternary"
         >
           Use this campaign
         </button>
@@ -1219,25 +1205,25 @@ type EditorHeaderProps = {
 function EditorHeader(props: EditorHeaderProps) {
   const { theme, description, effectiveMaxDays, onBack } = props;
   return (
-    <section className="glass-card rounded-3xl border border-border shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-border flex items-start justify-between gap-3 bg-card/50">
+    <section className="glass-card rounded-3xl border border-default overflow-hidden">
+      <div className="p-6 border-b border-default flex items-start justify-between gap-3 bg-default">
         <div className="flex items-start gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-accent"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-default bg-default text-secondary transition hover:bg-hover"
             aria-label="Back to campaign ideas"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div>
-            <h2 className="text-lg font-bold text-foreground">{theme}</h2>
-            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+            <h2 className="text-subsection text-default">{theme}</h2>
+            <p className="text-xs text-secondary mt-1 line-clamp-2">
               {description}
             </p>
           </div>
         </div>
-        <span className="hidden md:inline-flex shrink-0 items-center gap-1.5 self-start rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="hidden md:inline-flex shrink-0 items-center gap-1.5 self-start rounded-full bg-element px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-secondary">
           Up to {effectiveMaxDays} day{effectiveMaxDays === 1 ? '' : 's'}
         </span>
       </div>
@@ -1268,7 +1254,7 @@ function DayDraftList(props: DayDraftListProps) {
 
   if (days.length === 0) {
     return (
-      <section className="glass-card rounded-3xl border border-dashed border-border bg-muted/40 p-8 text-center text-sm text-muted-foreground">
+      <section className="glass-card rounded-3xl border border-dashed border-default bg-element p-8 text-center text-sm text-secondary">
         No days in this campaign. Go back and pick a campaign idea to start.
       </section>
     );
@@ -1284,19 +1270,19 @@ function DayDraftList(props: DayDraftListProps) {
     : `Pick a start date (${formatDisplayDate(firstPickBounds.min)} – ${formatDisplayDate(firstPickBounds.max)}) to open a ${MAX_CAMPAIGN_DAYS}-day window`;
 
   return (
-    <section className="glass-card rounded-3xl border border-border shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-border flex items-center gap-3 bg-card/50">
-        <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
+    <section className="glass-card rounded-3xl border border-default overflow-hidden">
+      <div className="p-6 border-b border-default flex items-center gap-3 bg-default">
+        <div className="p-2 bg-primary-purple/10 rounded-lg text-preview">
           <CalendarDays className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h2 className="text-lg font-bold text-foreground">
+          <h2 className="text-subsection text-default">
             2. Pick dates &amp; tweak briefs
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-secondary">
             Your first date sets a {MAX_CAMPAIGN_DAYS}-day window. All posts
             must fall inside that range before your plan ends.{' '}
-            <span className="font-medium text-muted-foreground">{windowHint}</span>
+            <span className="font-medium text-secondary">{windowHint}</span>
           </p>
         </div>
       </div>
@@ -1308,7 +1294,7 @@ function DayDraftList(props: DayDraftListProps) {
             <li key={day.dayNumber} className="p-5 sm:p-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="shrink-0 flex flex-row sm:flex-col items-center sm:items-start gap-3 sm:w-32">
-                  <div className="rounded-2xl bg-gradient-action text-white px-3 py-2 text-center shadow-sm shadow-primary-purple/25">
+                  <div className="rounded-2xl bg-gradient-action text-white px-3 py-2 text-center">
                     <p className="text-[10px] uppercase tracking-wider font-semibold opacity-80">
                       Day
                     </p>
@@ -1317,7 +1303,7 @@ function DayDraftList(props: DayDraftListProps) {
                     </p>
                   </div>
                   <label className="flex-1 sm:flex-none sm:mt-2 w-full">
-                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                    <span className="block text-[10px] font-semibold uppercase tracking-wider text-secondary mb-1">
                       Date
                     </span>
                     <input
@@ -1329,7 +1315,7 @@ function DayDraftList(props: DayDraftListProps) {
                         const next = e.target.value || null;
                         onPickDate(day.dayNumber, next);
                       }}
-                      className="w-full rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground focus:border-primary-purple focus:ring-1 focus:ring-primary-purple outline-none"
+                      className="w-full rounded-lg border border-default bg-default px-2 py-1.5 text-xs font-medium text-default focus:border-primary-purple focus:ring-1 focus:ring-primary-purple outline-none"
                     />
                   </label>
                   {days.length > 1 ? (
@@ -1337,7 +1323,7 @@ function DayDraftList(props: DayDraftListProps) {
                       type="button"
                       onClick={() => onRemove(day.dayNumber)}
                       title="Remove this day"
-                      className="inline-flex items-center justify-center rounded-lg border border-border bg-card p-2 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive"
+                      className="inline-flex items-center justify-center rounded-full border border-default bg-default p-2 text-secondary transition hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -1346,7 +1332,7 @@ function DayDraftList(props: DayDraftListProps) {
 
                 <div className="flex-1 space-y-2">
                   <label className="block">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-secondary">
                       Title
                     </span>
                     <Input
@@ -1359,7 +1345,7 @@ function DayDraftList(props: DayDraftListProps) {
                     />
                   </label>
                   <label className="block">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-secondary">
                       Reference brief
                     </span>
                     <Textarea
@@ -1373,9 +1359,9 @@ function DayDraftList(props: DayDraftListProps) {
                     />
                   </label>
                   <label className="block">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-secondary">
                       Caption seed
-                      <span className="ml-1 text-muted-foreground/70 normal-case font-normal tracking-normal">
+                      <span className="ml-1 text-secondary/70 normal-case font-normal tracking-normal">
                         (optional)
                       </span>
                     </span>
@@ -1447,22 +1433,20 @@ function CampaignWeeksOverview({
     : formatScheduleSpanLabel(datedDays.map((d) => d.date));
 
   return (
-    <section className="glass-card rounded-3xl border border-border shadow-sm overflow-hidden">
-      <div className="p-6 border-b border-border flex items-center gap-3 bg-card/50">
-        <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
+    <section className="glass-card rounded-3xl border border-default overflow-hidden">
+      <div className="p-6 border-b border-default flex items-center gap-3 bg-default">
+        <div className="p-2 bg-primary-purple/10 rounded-lg text-preview">
           <CalendarRange className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h2 className="text-lg font-bold text-foreground">
-            Schedule overview
-          </h2>
-          <p className="text-xs text-muted-foreground">
+          <h2 className="text-subsection text-default">Schedule overview</h2>
+          <p className="text-xs text-secondary">
             {dateAnchor
               ? `${MAX_CAMPAIGN_DAYS}-day window · ${spanLabel}`
               : spanLabel}
           </p>
         </div>
-        <span className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span className="hidden sm:inline-flex shrink-0 items-center gap-1.5 rounded-full bg-element px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-secondary">
           {datedDays.length} / {days.length} day
           {days.length === 1 ? '' : 's'}
         </span>
@@ -1471,20 +1455,20 @@ function CampaignWeeksOverview({
         {datedDays.map((day) => (
           <li
             key={day.dayNumber}
-            className="flex items-start gap-3 rounded-xl bg-muted/50 px-3 py-2"
+            className="flex items-start gap-3 rounded-xl bg-element px-3 py-2"
           >
             <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-purple text-[11px] font-bold text-white">
               {day.dayNumber}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-foreground truncate">
+              <p className="text-xs font-semibold text-default truncate">
                 {day.title || `Day ${day.dayNumber}`}
               </p>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wider text-secondary">
                 {format(parseISO(day.date), 'EEE, MMM d')}
               </p>
               {day.reference && (
-                <p className="mt-1 text-[11px] text-muted-foreground line-clamp-2">
+                <p className="mt-1 text-[11px] text-secondary line-clamp-2">
                   {day.reference}
                 </p>
               )}
@@ -1543,28 +1527,28 @@ function CampaignSummary(props: CampaignSummaryProps) {
     <aside className="lg:sticky lg:top-4 self-start">
       <section
         id="tour-campaign-confirm"
-        className="glass-card rounded-3xl p-6 border border-primary-purple/20 bg-primary-purple/5 shadow-sm"
+        className="glass-card rounded-3xl p-6 border border-primary-purple/20 bg-primary-purple/5"
       >
-        <h2 className="text-lg font-bold text-foreground mb-6">
+        <h2 className="text-section text-default mb-6">
           3. Confirm &amp; create
         </h2>
 
         <div className="space-y-4 text-sm mb-6">
           <div className="space-y-2">
-            <span className="font-medium text-muted-foreground">Post platforms:</span>
+            <span className="font-medium text-secondary">Post platforms:</span>
             {!hasSelectablePlatforms ? (
               <div
                 role="status"
-                className="rounded-xl border border-amber-500/30 bg-amber-500/15 px-4 py-3 text-sm text-amber-200"
+                className="rounded-xl border border-warning bg-warning px-4 py-3 text-sm text-warning"
               >
                 <p className="font-medium">Select your accounts first</p>
-                <p className="mt-1 text-amber-300/90">
+                <p className="mt-1 text-warning">
                   Choose which platforms you use in onboarding or social
                   settings, then come back to launch the campaign.
                 </p>
                 <Link
                   href={WORKSPACE_NAV_HREFS.linkedProfiles}
-                  className="mt-2 inline-block text-sm font-semibold text-amber-200 underline underline-offset-2 hover:text-amber-300"
+                  className="mt-2 inline-block text-sm font-semibold text-warning underline underline-offset-2 hover:text-warning"
                 >
                   {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                 </Link>
@@ -1576,14 +1560,14 @@ function CampaignSummary(props: CampaignSummaryProps) {
                     <label
                       key={p}
                       htmlFor={`campaign-platform-${p}`}
-                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
                     >
                       <input
                         id={`campaign-platform-${p}`}
                         type="checkbox"
                         checked={genPlatforms.includes(p)}
                         onChange={() => onTogglePlatform(p)}
-                        className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
+                        className="size-4 rounded border-default text-preview focus:ring-strong"
                       />
                       <span>{platformLabel(p)}</span>
                     </label>
@@ -1591,14 +1575,14 @@ function CampaignSummary(props: CampaignSummaryProps) {
                   {allowedPlatforms.length > 1 && (
                     <label
                       htmlFor="campaign-platform-all"
-                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
                     >
                       <input
                         id="campaign-platform-all"
                         type="checkbox"
                         checked={allPlatformsSelected}
                         onChange={onSelectAllPlatforms}
-                        className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
+                        className="size-4 rounded border-default text-preview focus:ring-strong"
                       />
                       <span>
                         {allPlatformsSelectionLabel(allowedPlatforms.length)}
@@ -1607,7 +1591,7 @@ function CampaignSummary(props: CampaignSummaryProps) {
                   )}
                 </div>
                 {!platformSelection.ok && (
-                  <p className="text-xs text-amber-300">
+                  <p className="text-xs text-warning">
                     {platformSelection.error}
                   </p>
                 )}
@@ -1615,27 +1599,26 @@ function CampaignSummary(props: CampaignSummaryProps) {
             )}
           </div>
 
-          <div className="flex justify-between items-center text-muted-foreground">
+          <div className="flex justify-between items-center text-secondary">
             <span className="font-medium">Days planned:</span>
-            <span className="font-bold text-foreground">
+            <span className="font-bold text-default">
               {datedDays} / {totalDays || '—'}
             </span>
           </div>
-          <div className="flex justify-between items-center text-muted-foreground">
+          <div className="flex justify-between items-center text-secondary">
             <span className="font-medium">Cost per day:</span>
-            <span className="font-bold text-foreground">
-              {CAMPAIGN_CREDIT_PER_DAY} × {Math.max(genPlatforms.length, 1)}{' '}
-              ={' '}
+            <span className="font-bold text-default">
+              {CAMPAIGN_CREDIT_PER_DAY} × {Math.max(genPlatforms.length, 1)} ={' '}
               {CAMPAIGN_CREDIT_PER_DAY * Math.max(genPlatforms.length, 1)}{' '}
               credits
             </span>
           </div>
-          <div className="flex justify-between items-center text-muted-foreground">
+          <div className="flex justify-between items-center text-secondary">
             <span className="font-medium">Credits to charge:</span>
             <span
               className={cn(
                 'font-extrabold',
-                insufficientCredits ? 'text-destructive' : 'text-primary-purple'
+                insufficientCredits ? 'text-destructive' : 'text-preview'
               )}
             >
               {totalCost}
@@ -1660,7 +1643,7 @@ function CampaignSummary(props: CampaignSummaryProps) {
           onClick={onCreate}
           disabled={!canSubmit}
           aria-busy={isSubmitting}
-          className="w-full rounded-xl bg-gradient-action px-4 py-3.5 text-sm font-bold text-white shadow-md shadow-primary-purple/25 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-purple/35 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+          className="w-full rounded-full btn-brand-fill px-4 py-3.5 text-sm font-bold transition-expo disabled:transform-none disabled:cursor-not-allowed disabled:bg-element disabled:text-secondary disabled:shadow-none"
         >
           {isSubmitting ? 'Writing your campaign…' : 'Create campaign'}
         </button>
@@ -1668,14 +1651,14 @@ function CampaignSummary(props: CampaignSummaryProps) {
         <button
           type="button"
           onClick={onViewDrafts}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-accent"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-default bg-default px-4 py-2.5 text-sm font-semibold text-default hover:bg-hover"
         >
           <Inbox className="h-4 w-4" />
           View drafts
         </button>
 
         {isSubmitting && (
-          <p className="mt-4 text-xs font-medium text-primary-purple">
+          <p className="mt-4 text-xs font-medium text-preview">
             Generating drafts…
           </p>
         )}
@@ -1714,9 +1697,9 @@ function DraftsDrawer(props: DraftsDrawerProps) {
   // per-row spinner. Set when the user clicks Regenerate, cleared once the
   // refresh after the job completes brings back the updated draft data
   // (or immediately if the API call itself rejects).
-  const [regeneratingDraftId, setRegeneratingDraftId] = useState<
-    string | null
-  >(null);
+  const [regeneratingDraftId, setRegeneratingDraftId] = useState<string | null>(
+    null
+  );
   const [removingDraftId, setRemovingDraftId] = useState<string | null>(null);
   const preview = useImagePreview();
   const { billing } = useUserPlanCredits();
@@ -1772,17 +1755,12 @@ function DraftsDrawer(props: DraftsDrawerProps) {
 
   // Bucket drafts into one box per campaign run (shared parentJobId).
   // The "all" tab skips grouping and shows a flat grid instead.
-  const campaignBoxes = useMemo(
-    () => groupDraftsByCampaign(drafts),
-    [drafts]
-  );
+  const campaignBoxes = useMemo(() => groupDraftsByCampaign(drafts), [drafts]);
 
   const handleRegenerate = useCallback(
     async (draftId: string) => {
       if (regeneratingDraftId) {
-        showErrorToast(
-          'Another draft is regenerating. Wait for it to finish.'
-        );
+        showErrorToast('Another draft is regenerating. Wait for it to finish.');
         return;
       }
       if (isCampaignJobRunning) {
@@ -1844,181 +1822,180 @@ function DraftsDrawer(props: DraftsDrawerProps) {
           onOpenChange(next);
         }}
       >
-      <SheetContent
-        side="right"
-        // Wide, rectangular drawer — caps at 1400px so the 3-column draft
-        // grid below has ~420px per card (plenty for image + controls)
-        // while never quite covering the underlying campaign editor on
-        // ultra-wide displays. Falls back to 95vw on smaller laptops so
-        // the user always gets the full grid experience.
-        className="w-full sm:!max-w-[min(95vw,1400px)] flex flex-col gap-0 p-0 bg-card border-border/50"
-        onPointerDownOutside={preventSheetDismissForImagePreview}
-        onInteractOutside={preventSheetDismissForImagePreview}
-        onFocusOutside={preventSheetDismissForImagePreview}
-        onEscapeKeyDown={(e) => {
-          if (isImagePreviewOverlayMounted()) {
-            e.preventDefault();
-          }
-        }}
-      >
-        <SheetHeader className="border-b border-border px-6 py-5">
-          <SheetTitle className="flex items-center gap-2 text-lg font-bold text-foreground">
-            <Inbox className="h-5 w-5 text-primary" />
-            Campaign drafts
-          </SheetTitle>
-          <SheetDescription className="text-xs text-muted-foreground">
-            Drafts are generated but not yet posted. AI-seeded campaigns show
-            an AI generated badge. Pick a date &amp; time to push one onto your
-            schedule.
-          </SheetDescription>
-        </SheetHeader>
+        <SheetContent
+          side="right" // Wide, rectangular drawer — caps at 1400px so the 3-column draft
+          // grid below has ~420px per card (plenty for image + controls)
+          // while never quite covering the underlying campaign editor on
+          // ultra-wide displays. Falls back to 95vw on smaller laptops so
+          // the user always gets the full grid experience.
+          className="w-full sm:!max-w-[min(95vw,1400px)] flex flex-col gap-0 p-0 bg-default border-default"
+          onPointerDownOutside={preventSheetDismissForImagePreview}
+          onInteractOutside={preventSheetDismissForImagePreview}
+          onFocusOutside={preventSheetDismissForImagePreview}
+          onEscapeKeyDown={(e) => {
+            if (isImagePreviewOverlayMounted()) {
+              e.preventDefault();
+            }
+          }}
+        >
+          <SheetHeader className="border-b border-default px-6 py-5">
+            <SheetTitle className="flex items-center gap-2 text-lg font-bold text-default">
+              <Inbox className="h-5 w-5 text-link" />
+              Campaign drafts
+            </SheetTitle>
+            <SheetDescription className="text-xs text-secondary">
+              Drafts are generated but not yet posted. AI-seeded campaigns show
+              an AI generated badge. Pick a date &amp; time to push one onto
+              your schedule.
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="border-b border-border px-6 py-3 flex items-center justify-between gap-3">
-          <div className="inline-flex flex-wrap rounded-full border border-border bg-muted p-1 text-xs font-semibold">
-            {(
-              [
-                { value: 'draft', label: 'Draft' },
-                { value: 'scheduled', label: 'Scheduled' },
-                { value: 'all', label: 'All' },
-              ] as const
-            ).map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => setFilter(tab.value)}
-                className={cn(
-                  'rounded-full px-3 py-1 transition',
-                  filter === tab.value
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
-          >
-            <RefreshCcw
-              className={cn('h-3.5 w-3.5', loading && 'animate-spin')}
-            />
-            Refresh
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
-          {loading && drafts.length === 0 && (
-            <>
-              <Skeleton className="h-28 w-full rounded-2xl" />
-              <Skeleton className="h-28 w-full rounded-2xl" />
-              <Skeleton className="h-28 w-full rounded-2xl" />
-            </>
-          )}
-          {!loading && drafts.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/40 p-6 text-center text-sm text-muted-foreground">
-              {filter === 'all'
-                ? 'No drafts yet.'
-                : `No ${filter} drafts yet.`}
-              {filter === 'draft' &&
-                ' Generate a campaign and the renders will land here.'}
-            </div>
-          )}
-          {filter === 'all' ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {drafts.map((draft) => (
-                <DraftRow
-                  key={draft.draftId}
-                  draft={draft}
-                  dateWindow={dateWindow}
-                  formattedToday={formattedToday}
-                  defaultScheduleTime={preferredScheduleTimeForPlatform(
-                    draft.platform,
-                    billing?.preferences
+          <div className="border-b border-default px-6 py-3 flex items-center justify-between gap-3">
+            <div className="inline-flex flex-wrap rounded-full border border-default bg-element p-1 text-xs font-semibold">
+              {(
+                [
+                  { value: 'draft', label: 'Draft' },
+                  { value: 'scheduled', label: 'Scheduled' },
+                  { value: 'all', label: 'All' },
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setFilter(tab.value)}
+                  className={cn(
+                    'rounded-full px-3 py-1 transition',
+                    filter === tab.value
+                      ? 'bg-primary text-link-foreground'
+                      : 'text-secondary hover:text-default'
                   )}
-                  onScheduled={handleScheduled}
-                  onRegenerate={handleRegenerate}
-                  onRemove={handleRemoveDraft}
-                  isRegenerating={regeneratingDraftId === draft.draftId}
-                  isRemoving={removingDraftId === draft.draftId}
-                  isAnyRegenInFlight={
-                    regeneratingDraftId != null || isCampaignJobRunning
-                  }
-                  isPreviewOpen={preview.isOpen}
-                  onOpenPreview={preview.open}
-                />
+                >
+                  {tab.label}
+                </button>
               ))}
             </div>
-          ) : (
-            campaignBoxes.map((box) => (
-              <article
-                key={box.key}
-                className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
-              >
-                <header className="flex items-start justify-between gap-3 border-b border-border bg-muted/50 px-4 py-3">
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
-                        <CalendarRange className="h-3.5 w-3.5 shrink-0" />
-                        {box.weekLabel}
-                      </span>
-                      {box.items.some((d) => d.autoSeeded === true) ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-primary-purple/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-purple">
-                          <Sparkles className="h-3 w-3" />
-                          AI generated
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 rounded-full border border-default bg-element px-3 py-1 text-xs font-semibold text-secondary hover:bg-hover hover:text-default disabled:text-quaternary"
+            >
+              <RefreshCcw
+                className={cn('h-3.5 w-3.5', loading && 'animate-spin')}
+              />
+              Refresh
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
+            {loading && drafts.length === 0 && (
+              <>
+                <Skeleton className="h-28 w-full rounded-2xl" />
+                <Skeleton className="h-28 w-full rounded-2xl" />
+                <Skeleton className="h-28 w-full rounded-2xl" />
+              </>
+            )}
+            {!loading && drafts.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-default bg-element p-6 text-center text-sm text-secondary">
+                {filter === 'all'
+                  ? 'No drafts yet.'
+                  : `No ${filter} drafts yet.`}
+                {filter === 'draft' &&
+                  ' Generate a campaign and the renders will land here.'}
+              </div>
+            )}
+            {filter === 'all' ? (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {drafts.map((draft) => (
+                  <DraftRow
+                    key={draft.draftId}
+                    draft={draft}
+                    dateWindow={dateWindow}
+                    formattedToday={formattedToday}
+                    defaultScheduleTime={preferredScheduleTimeForPlatform(
+                      draft.platform,
+                      billing?.preferences
+                    )}
+                    onScheduled={handleScheduled}
+                    onRegenerate={handleRegenerate}
+                    onRemove={handleRemoveDraft}
+                    isRegenerating={regeneratingDraftId === draft.draftId}
+                    isRemoving={removingDraftId === draft.draftId}
+                    isAnyRegenInFlight={
+                      regeneratingDraftId != null || isCampaignJobRunning
+                    }
+                    isPreviewOpen={preview.isOpen}
+                    onOpenPreview={preview.open}
+                  />
+                ))}
+              </div>
+            ) : (
+              campaignBoxes.map((box) => (
+                <article
+                  key={box.key}
+                  className="overflow-hidden rounded-2xl border border-default bg-default"
+                >
+                  <header className="flex items-start justify-between gap-3 border-b border-default bg-element px-4 py-3">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-2.5 py-1 text-xs font-bold text-link">
+                          <CalendarRange className="h-3.5 w-3.5 shrink-0" />
+                          {box.weekLabel}
                         </span>
-                      ) : null}
+                        {box.items.some((d) => d.autoSeeded === true) ? (
+                          <span className="inline-flex items-center gap-1 rounded-lg bg-primary-purple/15 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-preview">
+                            <Sparkles className="h-3 w-3" />
+                            AI generated
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="truncate text-sm font-semibold text-default">
+                        {box.theme}
+                      </p>
                     </div>
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {box.theme}
-                    </p>
+                    <span className="shrink-0 text-[11px] font-medium text-secondary">
+                      {box.items.length} post
+                      {box.items.length === 1 ? '' : 's'}
+                    </span>
+                  </header>
+                  <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {box.items.map((draft) => (
+                      <DraftRow
+                        key={draft.draftId}
+                        draft={draft}
+                        dateWindow={dateWindow}
+                        formattedToday={formattedToday}
+                        defaultScheduleTime={preferredScheduleTimeForPlatform(
+                          draft.platform,
+                          billing?.preferences
+                        )}
+                        onScheduled={handleScheduled}
+                        onRegenerate={handleRegenerate}
+                        onRemove={handleRemoveDraft}
+                        isRegenerating={regeneratingDraftId === draft.draftId}
+                        isRemoving={removingDraftId === draft.draftId}
+                        isAnyRegenInFlight={
+                          regeneratingDraftId != null || isCampaignJobRunning
+                        }
+                        isPreviewOpen={preview.isOpen}
+                        onOpenPreview={preview.open}
+                      />
+                    ))}
                   </div>
-                  <span className="shrink-0 text-[11px] font-medium text-muted-foreground">
-                    {box.items.length} post
-                    {box.items.length === 1 ? '' : 's'}
-                  </span>
-                </header>
-                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {box.items.map((draft) => (
-                    <DraftRow
-                      key={draft.draftId}
-                      draft={draft}
-                      dateWindow={dateWindow}
-                      formattedToday={formattedToday}
-                      defaultScheduleTime={preferredScheduleTimeForPlatform(
-                        draft.platform,
-                        billing?.preferences
-                      )}
-                      onScheduled={handleScheduled}
-                      onRegenerate={handleRegenerate}
-                      onRemove={handleRemoveDraft}
-                      isRegenerating={regeneratingDraftId === draft.draftId}
-                      isRemoving={removingDraftId === draft.draftId}
-                      isAnyRegenInFlight={
-                        regeneratingDraftId != null || isCampaignJobRunning
-                      }
-                      isPreviewOpen={preview.isOpen}
-                      onOpenPreview={preview.open}
-                    />
-                  ))}
-                </div>
-              </article>
-            ))
+                </article>
+              ))
+            )}
+          </div>
+          {preview.isOpen && (
+            <ImagePreviewOverlay
+              src={preview.previewUrl}
+              alt={preview.previewAlt}
+              onClose={preview.close}
+              portalled={false}
+            />
           )}
-        </div>
-        {preview.isOpen && (
-          <ImagePreviewOverlay
-            src={preview.previewUrl}
-            alt={preview.previewAlt}
-            onClose={preview.close}
-            portalled={false}
-          />
-        )}
-      </SheetContent>
-    </Sheet>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
@@ -2095,7 +2072,9 @@ function DraftRow(props: DraftRowProps) {
     !isPastDate &&
     !isUserRemoved;
 
-  const scheduledAtDate = isScheduled ? unknownTsToDate(draft.scheduledAt) : null;
+  const scheduledAtDate = isScheduled
+    ? unknownTsToDate(draft.scheduledAt)
+    : null;
   const { hour: timeHour, minute: timeMinute } = splitHhMm(time);
 
   const handleSchedule = useCallback(async () => {
@@ -2128,8 +2107,7 @@ function DraftRow(props: DraftRowProps) {
     }
   }, [date, draft.draftId, onScheduled, scheduling, time]);
 
-  const previewAlt =
-    draft.eventName || draft.campaignTheme || 'Campaign draft';
+  const previewAlt = draft.eventName || draft.campaignTheme || 'Campaign draft';
 
   const openPreview = useCallback(() => {
     if (!draft.imageUrl || isPreviewOpen) return;
@@ -2139,7 +2117,7 @@ function DraftRow(props: DraftRowProps) {
   const cardImage = (
     <div
       className={cn(
-        'group relative aspect-square w-full overflow-hidden bg-muted',
+        'group relative aspect-square w-full overflow-hidden bg-element',
         draft.imageUrl && 'cursor-zoom-in'
       )}
       onPointerDown={(e) => e.stopPropagation()}
@@ -2156,25 +2134,25 @@ function DraftRow(props: DraftRowProps) {
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+        <div className="flex h-full w-full items-center justify-center text-secondary">
           <ImageIcon className="h-10 w-10" />
         </div>
       )}
       <div className="absolute top-2 left-2 flex flex-wrap gap-1">
         <span
           className={cn(
-            'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm',
+            'shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
             isScheduled
-              ? 'bg-emerald-500/20 text-emerald-300'
+              ? 'bg-success text-success'
               : isUserRemoved
-                ? 'bg-slate-500/20 text-slate-200'
-                : 'bg-card/90 text-foreground ring-1 ring-border'
+                ? 'bg-subtle text-quaternary'
+                : 'bg-default text-default ring-1 ring-border'
           )}
         >
           {isScheduled ? 'scheduled' : isUserRemoved ? 'removed' : 'draft'}
         </span>
         {isAiGenerated ? (
-          <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-violet-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm">
+          <span className="inline-flex items-center gap-1 shrink-0 rounded-full bg-preview px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
             <Sparkles className="h-2.5 w-2.5" />
             AI generated
           </span>
@@ -2196,7 +2174,7 @@ function DraftRow(props: DraftRowProps) {
   return (
     <div
       className={cn(
-        'flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:shadow-md',
+        'flex h-full flex-col overflow-hidden rounded-2xl border border-default bg-default transition',
         isUserRemoved && 'opacity-80'
       )}
     >
@@ -2204,36 +2182,35 @@ function DraftRow(props: DraftRowProps) {
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground line-clamp-2 leading-snug">
+          <p className="text-sm font-bold text-default line-clamp-2 leading-snug">
             {draft.eventName || draft.campaignTheme || 'Untitled day'}
           </p>
-          <p className="mt-1 text-[11px] text-muted-foreground capitalize">
+          <p className="mt-1 text-[11px] text-secondary capitalize">
             {draft.platform || 'unknown'} ·{' '}
             {formatDisplayDate(draft.targetDate)}
-            {draft.campaignTheme &&
-            draft.campaignTheme !== draft.eventName
+            {draft.campaignTheme && draft.campaignTheme !== draft.eventName
               ? ` · ${draft.campaignTheme}`
               : ''}
           </p>
         </div>
 
         {draft.message && (
-          <p className="text-[11px] text-muted-foreground line-clamp-3">
+          <p className="text-[11px] text-secondary line-clamp-3">
             {draft.message}
           </p>
         )}
 
         {isUserRemoved ? (
-          <div className="mt-auto rounded-xl border border-border bg-muted px-3 py-3 text-center">
-            <p className="text-sm font-bold text-foreground">Removed by you</p>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+          <div className="mt-auto rounded-xl border border-default bg-element px-3 py-3 text-center">
+            <p className="text-sm font-bold text-default">Removed by you</p>
+            <p className="mt-1 text-[11px] text-secondary">
               This draft stays in your campaign history and will not be
               scheduled.
             </p>
           </div>
         ) : isScheduled ? (
           <div className="mt-auto space-y-3">
-            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[11px] font-semibold text-emerald-300">
+            <div className="rounded-xl border border-success bg-success px-3 py-2 text-[11px] font-semibold text-success">
               <p className="inline-flex items-center gap-1">
                 <CalendarCheck2 className="h-3.5 w-3.5" />
                 {scheduledAtDate
@@ -2245,10 +2222,10 @@ function DraftRow(props: DraftRowProps) {
         ) : (
           <div className="mt-auto space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-secondary">
                 <span>
                   Date
-                  <span className="ml-1 normal-case text-muted-foreground/70">
+                  <span className="ml-1 normal-case text-secondary/70">
                     (locked)
                   </span>
                 </span>
@@ -2260,11 +2237,11 @@ function DraftRow(props: DraftRowProps) {
                   disabled
                   readOnly
                   aria-readonly="true"
-                  className="mt-1 w-full rounded-lg border border-border bg-muted px-2 py-1.5 text-xs font-medium text-muted-foreground cursor-not-allowed"
+                  className="mt-1 w-full rounded-lg border border-default bg-element px-2 py-1.5 text-xs font-medium text-secondary cursor-not-allowed"
                 />
               </label>
               <div
-                className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-secondary"
                 role="group"
                 aria-label={
                   isAiGenerated
@@ -2275,7 +2252,7 @@ function DraftRow(props: DraftRowProps) {
                 <span>
                   Time (24h)
                   {isAiGenerated ? (
-                    <span className="ml-1 normal-case text-muted-foreground/70">
+                    <span className="ml-1 normal-case text-secondary/70">
                       (locked)
                     </span>
                   ) : null}
@@ -2307,7 +2284,7 @@ function DraftRow(props: DraftRowProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                  <span aria-hidden className="select-none text-muted-foreground">
+                  <span aria-hidden className="select-none text-secondary">
                     :
                   </span>
                   <Select
@@ -2344,7 +2321,7 @@ function DraftRow(props: DraftRowProps) {
               type="button"
               onClick={handleSchedule}
               disabled={scheduling || isRegenerating || isRemoving}
-              className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-action px-3 py-2 text-xs font-bold text-white shadow-sm shadow-primary-purple/25 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-1.5 rounded-full btn-brand-fill px-3 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:text-quaternary"
             >
               {scheduling ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -2354,8 +2331,8 @@ function DraftRow(props: DraftRowProps) {
               Schedule
             </button>
 
-            <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
-              <span className="text-[10px] text-muted-foreground line-clamp-2 flex-1">
+            <div className="flex items-center justify-between gap-2 border-t border-default pt-3">
+              <span className="text-[10px] text-secondary line-clamp-2 flex-1">
                 {isPastDate
                   ? 'Past date · regeneration unavailable'
                   : !canRegen
@@ -2369,10 +2346,13 @@ function DraftRow(props: DraftRowProps) {
                   type="button"
                   onClick={() => onRemove(draft.draftId)}
                   disabled={
-                    isAnyRegenInFlight || scheduling || isRemoving || isRegenerating
+                    isAnyRegenInFlight ||
+                    scheduling ||
+                    isRemoving ||
+                    isRegenerating
                   }
                   title="Remove this draft"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1 text-[11px] font-semibold text-muted-foreground transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-default bg-element px-2.5 py-1 text-[11px] font-semibold text-secondary transition hover:border-destructive/40 hover:bg-destructive/10 hover:text-destructive disabled:cursor-not-allowed disabled:text-quaternary"
                 >
                   {isRemoving ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -2392,11 +2372,11 @@ function DraftRow(props: DraftRowProps) {
                         : `Re-render this draft (${regenCost} credits)`
                     }
                     className={cn(
-                      'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition',
+                      'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition',
                       regenCost === 0
-                        ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
-                        : 'border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/15',
-                      'disabled:cursor-not-allowed disabled:opacity-50'
+                        ? 'border-primary/30 bg-primary/10 text-link hover:bg-primary/15'
+                        : 'border-warning bg-warning text-warning hover:bg-warning',
+                      'disabled:cursor-not-allowed disabled:text-quaternary'
                     )}
                   >
                     {isRegenerating ? (

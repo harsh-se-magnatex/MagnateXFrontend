@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  doc,
-  onSnapshot,
-  Timestamp,
-} from 'firebase/firestore';
+import { doc, onSnapshot, Timestamp } from 'firebase/firestore';
 import {
   createContext,
   useCallback,
@@ -32,8 +28,7 @@ import {
  * Counts refresh on mount, focus/visibility, a 30s safety-net interval, and
  * whenever `notificationsReadAt` changes (i.e. after mark-as-read).
  *
- * `notificationsReadAt` (from `users/{uid}`) is the cutoff for "unread"
- * across both halves; subscribed once and reused by everything.
+ * `notificationsReadAt` (from `users/{uid}`) is the cutoff for "unread"* across both halves; subscribed once and reused by everything.
  *
  * Mark-as-read is optimistic: the bell zeros instantly for the
  * targeted categories; the backend write + user-doc snapshot then
@@ -97,15 +92,18 @@ function tsToMillis(v: unknown): number {
   if (v && typeof v === 'object') {
     const obj = v as { seconds?: unknown; nanoseconds?: unknown };
     if (typeof obj.seconds === 'number') {
-      const nanos =
-        typeof obj.nanoseconds === 'number' ? obj.nanoseconds : 0;
+      const nanos = typeof obj.nanoseconds === 'number' ? obj.nanoseconds : 0;
       return obj.seconds * 1000 + Math.floor(nanos / 1e6);
     }
   }
   return EPOCH_MS;
 }
 
-export function NotificationCountsProvider({ children }: { children: ReactNode }) {
+export function NotificationCountsProvider({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const { user, loading: authLoading } = useAuth();
   const uid = user?.uid ?? null;
 
@@ -146,12 +144,14 @@ function NotificationCountsScope({
   // Firestore snapshots are denied.
   const [apiCounts, setApiCounts] = useState<NotificationCounts>(EMPTY_COUNTS);
 
-  const [readAt, setReadAt] = useState<Record<NotificationCategory, number>>(() => ({
-    email: EPOCH_MS,
-    postSuccess: EPOCH_MS,
-    postFailure: EPOCH_MS,
-    newReleases: EPOCH_MS,
-  }));
+  const [readAt, setReadAt] = useState<Record<NotificationCategory, number>>(
+    () => ({
+      email: EPOCH_MS,
+      postSuccess: EPOCH_MS,
+      postFailure: EPOCH_MS,
+      newReleases: EPOCH_MS,
+    })
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -263,7 +263,10 @@ function NotificationCountsScope({
 
   const total = useMemo(
     () =>
-      counts.email + counts.postSuccess + counts.postFailure + counts.newReleases,
+      counts.email +
+      counts.postSuccess +
+      counts.postFailure +
+      counts.newReleases,
     [counts]
   );
 

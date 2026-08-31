@@ -1,21 +1,31 @@
-"use client"
+'use client';
 
-import type { CSSProperties } from "react"
-import { useTheme } from "next-themes"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
-import { ERROR_TOASTER_ID } from "@/lib/show-error-toast"
+import type { CSSProperties } from 'react';
+import { useTheme } from 'next-themes';
+import { Toaster as Sonner, type ToasterProps } from 'sonner';
+import {
+  CircleCheckIcon,
+  InfoIcon,
+  TriangleAlertIcon,
+  OctagonXIcon,
+  Loader2Icon,
+} from 'lucide-react';
+import { ERROR_TOASTER_ID } from '@/lib/show-error-toast';
 
 const toasterStyle = {
-  "--normal-bg": "var(--popover)",
-  "--normal-text": "var(--popover-foreground)",
-  "--normal-border": "var(--border)",
-  "--border-radius": "var(--radius)",
-} as CSSProperties
+  '--normal-bg': 'var(--popover)',
+  '--normal-text': 'var(--popover-foreground)',
+  '--normal-border': 'var(--border)',
+  '--border-radius': 'var(--radius)',
+} as CSSProperties;
 
-const Toaster = ({ position = "bottom-right", className, ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-  const themeProp = theme as ToasterProps["theme"]
+const Toaster = ({
+  position = 'bottom-right',
+  className,
+  ...props
+}: ToasterProps) => {
+  const { theme = 'system' } = useTheme();
+  const themeProp = theme as ToasterProps['theme'];
 
   const shared = {
     ...props,
@@ -32,17 +42,19 @@ const Toaster = ({ position = "bottom-right", className, ...props }: ToasterProp
       ...props.toastOptions,
       classNames: {
         ...props.toastOptions?.classNames,
-        toast: ["cn-toast", props.toastOptions?.classNames?.toast].filter(Boolean).join(" "),
+        toast: ['cn-toast', props.toastOptions?.classNames?.toast]
+          .filter(Boolean)
+          .join(' '),
       },
     },
-  }
+  };
 
   return (
     <>
       <Sonner
         {...shared}
         position={position}
-        className={["toaster group", className].filter(Boolean).join(" ")}
+        className={['toaster group', className].filter(Boolean).join(' ')}
       />
       <Sonner
         {...shared}
@@ -57,7 +69,7 @@ const Toaster = ({ position = "bottom-right", className, ...props }: ToasterProp
         visibleToasts={5}
       />
     </>
-  )
-}
+  );
+};
 
-export { Toaster }
+export { Toaster };

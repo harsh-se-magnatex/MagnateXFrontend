@@ -45,7 +45,9 @@ This Policy applies when you visit our website, create or maintain an Account, s
 
 ### 3.2 Information collected automatically
 
-**Device and technical data** — IP address, device type, operating system, browser type and version, screen resolution, language, referring URL, error and crash logs.
+**Device and technical data** — IP address, device type, operating system, browser type and version, screen resolution, language, time zone, referring URL, error and crash logs.
+
+**Approximate country** — derived from your IP address by our hosting provider, or from your browser's reported time zone. This is country-level only, is used solely to choose which currency prices are displayed in, and is stored in a preference cookie on your device rather than on our servers. See §17 and our [Cookie Policy](https://www.sociogenie.ai/legal/cookie) §3.2.
 
 **Usage data** — features accessed, generation events, credits consumed, approval actions, posts scheduled and published, session activity.
 
@@ -224,7 +226,13 @@ For deletion of data we hold from Meta integrations, see our [Facebook Data Dele
 
 ## 17. Payments and Currency
 
-All charges are billed and settled in **USD** through **Dodo Payments Inc.**, our Merchant of Record. Approved refunds are issued by Dodo to the original payment instrument in USD; the amount credited in your local currency may vary with exchange rates and bank fees. See our [Refund Policy](https://www.sociogenie.ai/legal/refund).
+Our list prices are set in **USD**, and payments are processed by **Dodo Payments Inc.**, our Merchant of Record.
+
+**Prices displayed on our website may be shown in your local currency.** Where they are, that figure is an approximate conversion from the USD list price, provided for reference only and marked as approximate. It is not a quote. The amount and currency you are actually charged are determined at checkout by Dodo Payments, based on the billing details you provide there, and may differ from the displayed figure because of exchange rates, currency-conversion fees, and any local taxes Dodo is required to collect. To choose which currency prices are displayed in — or to see prices in USD — use the currency selector on our pricing page.
+
+To decide which currency to display, we work out an approximate country from a country code supplied by our hosting provider from your IP address, or failing that from the time zone your browser reports. This is country-level only, is used for nothing but choosing a display currency, and is stored in a preference cookie on your device rather than on our servers. We do not request or use your device's precise location. See our [Cookie Policy](https://www.sociogenie.ai/legal/cookie) §3.2.
+
+Approved refunds are issued by Dodo to the original payment instrument; the amount credited in your local currency may vary with exchange rates and bank fees. See our [Refund Policy](https://www.sociogenie.ai/legal/refund).
 
 ---
 

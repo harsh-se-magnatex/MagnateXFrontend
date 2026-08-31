@@ -114,7 +114,7 @@ export function ChatDraftActions({ result }: ChatDraftActionsProps) {
           data-icon="inline-start"
         >
           {copied ? <Check /> : <Copy />}
-          <span className={cn(copied && 'text-emerald-600')}>
+          <span className={cn(copied && 'text-success')}>
             {copied ? 'Copied' : 'Copy prompt'}
           </span>
         </Button>

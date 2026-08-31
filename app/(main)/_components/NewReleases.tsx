@@ -32,54 +32,52 @@ export function NewReleasesAlerts() {
   useEffect(() => {
     getData();
   }, []);
-  
+
   return (
     <section aria-label="Account and policy messages" className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-zinc-900">
-          Messages from SocioGenie
-        </h2>
-        <p className="text-xs text-zinc-500">
+        <h2 className="text-section text-default">Messages from SocioGenie</h2>
+        <p className="text-xs text-secondary">
           We&apos;ll email you when something important changes.
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <ul className="divide-y divide-zinc-100">
+      <div className="overflow-hidden rounded-xl border border-default bg-default">
+        <ul className="divide-y divide-[var(--border-default)]">
           {releases.map((release) => {
             const isNew = isUnread(release.createdAt);
             return (
-            <NotificationListItem key={release.id} isNew={isNew}>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {isNew ? <NotificationNewBadge /> : null}
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 bg-blue-300 text-black/90 ring-blue-100">
-                      {release.category === 'feature' && 'Feature'}
-                      {release.category === 'security' && 'Security'}
-                      {release.category === 'improvement' && 'Improvement'}
-                      {release.category === 'product' && 'Product'}
-                    </span>
-                    <span className="text-xs text-zinc-400">
-                      {fmtTimestamp(release.createdAt)}
-                    </span>
+              <NotificationListItem key={release.id} isNew={isNew}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isNew ? <NotificationNewBadge /> : null}
+                      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 bg-[var(--blue-9)] text-default/90 ring-[var(--border-info)]">
+                        {release.category === 'feature' && 'Feature'}
+                        {release.category === 'security' && 'Security'}
+                        {release.category === 'improvement' && 'Improvement'}
+                        {release.category === 'product' && 'Product'}
+                      </span>
+                      <span className="text-xs text-tertiary">
+                        {fmtTimestamp(release.createdAt)}
+                      </span>
+                    </div>
+                    <h3 className="text-subsection text-default">
+                      {release.title}
+                    </h3>
+                    <p className="text-sm text-secondary">{release.message}</p>
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-900">
-                    {release.title}
-                  </h3>
-                  <p className="text-sm text-zinc-600">{release.message}</p>
-                </div>
 
-                <div className="flex shrink-0 items-center gap-3">
-                  <Link
-                    href={`/home`}
-                    className="text-sm font-medium text-primary-purple hover:brightness-110 hover:underline"
-                  >
-                    View Release
-                  </Link>
+                  <div className="flex shrink-0 items-center gap-3">
+                    <Link
+                      href={`/home`}
+                      className="text-sm font-medium text-preview hover:brightness-110 hover:underline"
+                    >
+                      View Release
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </NotificationListItem>
+              </NotificationListItem>
             );
           })}
         </ul>

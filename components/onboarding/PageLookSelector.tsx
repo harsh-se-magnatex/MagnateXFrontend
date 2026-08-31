@@ -1,10 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import {
-  isPresetPageLook,
-  PAGE_LOOK_PRESETS,
-} from '@/lib/page-look-styles';
+import { isPresetPageLook, PAGE_LOOK_PRESETS } from '@/lib/page-look-styles';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 // import { PageLookPreview } from '@/components/onboarding/PageLookPreview';
@@ -53,17 +50,17 @@ export function PageLookSelector({
               type="button"
               onClick={() => selectPreset(preset.label)}
               className={cn(
-                'rounded-xl border px-4 py-3 text-left transition-all',
+                'rounded-full border px-4 py-3 text-left transition-expo',
                 selected
-                  ? 'border-primary-blue bg-primary-blue/10 ring-2 ring-primary-blue/30'
-                  : 'border-border bg-card hover:border-primary-blue/40 hover:bg-primary-blue/5'
+                  ? 'border-primary-blue bg-primary-blue/10 ring-2 ring-strong'
+                  : 'border-default bg-default hover:border-strong hover:bg-element'
               )}
               aria-pressed={selected}
             >
-              <span className="block text-sm font-semibold text-foreground">
+              <span className="block text-sm font-semibold text-default">
                 {preset.label}
               </span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">
+              <span className="mt-0.5 block text-xs text-secondary">
                 {preset.description}
               </span>
             </button>
@@ -85,7 +82,7 @@ export function PageLookSelector({
   //       <PageLookPreview
   //         value={value}
   //         businessName={businessName}
-  //         className="transition-all duration-300"
+  //         className="transition-expo"
   //       />
   //     </div>
   //   </div>
@@ -100,7 +97,8 @@ export function normalizePageLookValue(raw: unknown): string {
   if (!s) return '';
   if (isPresetPageLook(s)) {
     const preset = PAGE_LOOK_PRESETS.find(
-      (p) => p.label.toLowerCase() === s.toLowerCase() || p.id === s.toLowerCase()
+      (p) =>
+        p.label.toLowerCase() === s.toLowerCase() || p.id === s.toLowerCase()
     );
     return preset?.label ?? s;
   }

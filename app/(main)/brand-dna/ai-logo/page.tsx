@@ -188,7 +188,7 @@ export default function AILogoPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-lg text-center py-20">
-        <p className="text-foreground">Please sign in to continue.</p>
+        <p className="text-default">Please sign in to continue.</p>
       </div>
     );
   }
@@ -196,13 +196,13 @@ export default function AILogoPage() {
   if (!canUseFeature) {
     return (
       <div className="mx-auto max-w-xl py-16 text-center">
-        <h1 className="text-2xl font-bold text-foreground">AI Generated Logo</h1>
-        <p className="mt-3 text-muted-foreground">
+        <h1 className="text-page-title text-default">AI Generated Logo</h1>
+        <p className="mt-3 text-secondary">
           This feature is available for subscribed plans only.
         </p>
         <Link
           href="/settings/billings"
-          className="mt-6 inline-flex rounded-xl bg-gradient-action px-5 py-2.5 font-semibold text-white hover:brightness-105"
+          className="mt-6 inline-flex rounded-full btn-brand-fill px-5 py-2.5 font-semibold"
         >
           Upgrade plan
         </Link>
@@ -214,24 +214,27 @@ export default function AILogoPage() {
     <div className="mx-auto max-w-6xl pb-20 animate-in fade-in duration-500">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className={cn(workspacePageTitleClass, 'flex items-center gap-2')}>
-            <WandSparkles className="h-7 w-7 text-emerald-600" />
+          <h1
+            className={cn(workspacePageTitleClass, 'flex items-center gap-2')}
+          >
+            <WandSparkles className="h-7 w-7 text-success" />
             AI Generated Logo
           </h1>
-          <p className="mt-2 text-muted-foreground max-w-2xl">
-            Generate one logo at a time for <strong>{basics.businessName || 'your brand'}</strong>.
-            You can create up to {MAX_AI_LOGO_PICKS} options, and nothing is saved
-            until you choose one and click Use Selected Logo.
+          <p className="mt-2 text-secondary max-w-2xl">
+            Generate one logo at a time for{' '}
+            <strong>{basics.businessName || 'your brand'}</strong>. You can
+            create up to {MAX_AI_LOGO_PICKS} options, and nothing is saved until
+            you choose one and click Use Selected Logo.
           </p>
         </div>
-        <div className="inline-flex flex-col rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-left shadow-sm sm:items-end sm:text-right">
-          <span className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+        <div className="inline-flex flex-col rounded-2xl border border-success bg-success px-4 py-3 text-left sm:items-end sm:text-right">
+          <span className="text-xs font-semibold uppercase tracking-wide text-success">
             Credits available
           </span>
-          <span className="mt-1 text-2xl font-bold text-emerald-100">
+          <span className="mt-1 text-2xl font-bold text-success">
             {billing?.credits ?? 0}
           </span>
-          <span className="mt-1 text-xs font-medium text-emerald-700">
+          <span className="mt-1 text-xs font-medium text-success">
             1 credit deducted per logo generation
           </span>
         </div>
@@ -240,12 +243,16 @@ export default function AILogoPage() {
       <div className="glass-card rounded-3xl p-6 sm:p-8">
         <div className="grid gap-6 lg:grid-cols-[1fr,2fr]">
           <div className="space-y-4">
-            <div className="rounded-xl border border-border bg-muted p-4 text-sm text-foreground">
-              <p><strong>Business:</strong> {basics.businessName || '—'}</p>
-              <p className="mt-1"><strong>Industry:</strong> {basics.industry || '—'}</p>
+            <div className="rounded-xl border border-default bg-element p-4 text-sm text-default">
+              <p>
+                <strong>Business:</strong> {basics.businessName || '—'}
+              </p>
+              <p className="mt-1">
+                <strong>Industry:</strong> {basics.industry || '—'}
+              </p>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-semibold text-foreground">
+              <label className="mb-1.5 block text-sm font-semibold text-default">
                 Optional style requirements
               </label>
               <textarea
@@ -253,7 +260,7 @@ export default function AILogoPage() {
                 onChange={(e) => setRequirements(e.target.value)}
                 rows={5}
                 maxLength={600}
-                className="w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-foreground placeholder-muted-foreground focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-sm"
+                className="w-full rounded-lg border border-default bg-element px-4 py-2.5 text-default placeholder-muted-foreground focus:border-success focus:outline-none focus:ring-2 focus:ring-[var(--border-success)] transition-expo"
                 placeholder="e.g. clean geometric icon, premium minimal style, deep emerald palette"
               />
             </div>
@@ -266,7 +273,7 @@ export default function AILogoPage() {
                 !basics.businessName ||
                 !basics.industry
               }
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-muted"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--green-9)] px-4 py-3 font-semibold text-white hover:bg-success disabled:cursor-not-allowed disabled:bg-element"
             >
               {generating ? (
                 <>
@@ -284,15 +291,15 @@ export default function AILogoPage() {
                 </>
               )}
             </button>
-            <p className="text-center text-xs font-medium text-muted-foreground">
-              {picks.length}/{MAX_AI_LOGO_PICKS} logo options generated. 1 credit
-              is deducted per generation.
+            <p className="text-center text-xs font-medium text-secondary">
+              {picks.length}/{MAX_AI_LOGO_PICKS} logo options generated. 1
+              credit is deducted per generation.
             </p>
             <button
               type="button"
               onClick={() => void handleUseSelectedLogo()}
               disabled={saving || !selectedPublicUrl}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary-purple/25 bg-primary-purple/10 px-4 py-3 font-semibold text-primary-purple hover:bg-primary-purple/15 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-primary-purple/25 bg-primary-purple/10 px-4 py-3 font-semibold text-preview hover:bg-element disabled:cursor-not-allowed disabled:text-quaternary"
             >
               {saving ? (
                 <>
@@ -310,13 +317,13 @@ export default function AILogoPage() {
 
           <div>
             {picks.length === 0 && !generating ? (
-              <div className="flex h-full min-h-[260px] items-center justify-center rounded-2xl border border-dashed border-border bg-muted text-sm text-muted-foreground">
+              <div className="flex h-full min-h-[260px] items-center justify-center rounded-2xl border border-dashed border-default bg-element text-sm text-secondary">
                 Click Generate first logo to start.
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {generating && (
-                  <div className="aspect-square rounded-2xl border border-border bg-muted animate-pulse" />
+                  <div className="aspect-square rounded-2xl border border-default bg-element animate-pulse" />
                 )}
                 {picks.map((pick, idx) => {
                   const active = selectedIndex === idx;
@@ -327,10 +334,10 @@ export default function AILogoPage() {
                       onClick={() => setSelectedIndex(idx)}
                       style={{ backgroundColor: '#ffffff' }}
                       className={[
-                        'group relative aspect-square rounded-2xl border p-2 transition',
+                        'group relative aspect-square rounded-full border p-2 transition',
                         active
-                          ? 'border-primary-purple ring-2 ring-primary-purple/25'
-                          : 'border-border hover:border-primary-purple/40',
+                          ? 'border-primary-purple ring-2 ring-strong'
+                          : 'border-default hover:border-strong',
                       ].join(' ')}
                     >
                       <img

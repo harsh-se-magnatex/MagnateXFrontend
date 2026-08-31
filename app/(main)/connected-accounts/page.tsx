@@ -4,10 +4,7 @@ import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { isPlanInactive } from '@/lib/plan-access';
 import Link from 'next/link';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import { useRouter } from 'next/navigation';
 import { Check, AlertCircle, ExternalLink, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -71,8 +68,6 @@ type SocialAccountRow = {
   availablePages?: SocialAccountPage[];
   selectedPageId?: string;
 };
-
-
 
 const ALL_PLATFORMS: {
   id: PlatformId;
@@ -188,9 +183,7 @@ function getSelectedPageName(
   const acc = accounts.find((a) => a.platform === platformId);
   if (platformId === 'instagram') {
     const name = acc?.pageName;
-    return typeof name === 'string' && name.trim()
-      ? name.trim()
-      : null;
+    return typeof name === 'string' && name.trim() ? name.trim() : null;
   }
   if (platformId !== 'facebook' && platformId !== 'linkedin') return null;
   const id = acc?.selectedPageId;
@@ -267,7 +260,7 @@ function TroubleshootingDialog({
             Follow these steps, then try connecting again.
           </DialogDescription>
         </DialogHeader>
-        <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground">
+        <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-secondary">
           {content.tips.map((tip) => (
             <li key={tip.text} className="pl-1">
               <span>{tip.text}</span>
@@ -276,7 +269,7 @@ function TroubleshootingDialog({
                   {' '}
                   <Link
                     href={tip.href}
-                    className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                    className="font-medium text-default underline underline-offset-2 hover:text-link"
                   >
                     {tip.linkLabel}
                   </Link>
@@ -378,7 +371,7 @@ function SelectPageModal({
                 <div className="flex min-w-0 flex-col">
                   <span className="truncate">{page.pageName}</span>
                   {getPageProfileUrl(platform, page) ? (
-                    <span className="truncate text-xs text-muted-foreground">
+                    <span className="truncate text-xs text-secondary">
                       {getPageProfileUrl(platform, page)}
                     </span>
                   ) : null}
@@ -388,10 +381,12 @@ function SelectPageModal({
           </SelectContent>
         </Select>
         {selectedPage && selectedPageProfileUrl ? (
-          <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2 text-sm">
+          <div className="flex items-center justify-between gap-3 rounded-md border bg-element px-3 py-2 text-sm">
             <div className="min-w-0">
-              <p className="font-medium text-foreground">{selectedPage.pageName}</p>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="font-medium text-default">
+                {selectedPage.pageName}
+              </p>
+              <p className="truncate text-xs text-secondary">
                 {selectedPageProfileUrl}
               </p>
             </div>
@@ -399,7 +394,7 @@ function SelectPageModal({
               href={selectedPageProfileUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline"
+              className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-link hover:underline"
             >
               Open
               <ExternalLink className="h-3.5 w-3.5" aria-hidden />
@@ -455,7 +450,9 @@ export default function ConnectedPlatformsPage() {
       setSocialAccounts(Array.isArray(rows) ? rows : []);
     } catch (error) {
       console.error(error);
-      showErrorToast('Could not load connected platforms. Please try again later.');
+      showErrorToast(
+        'Could not load connected platforms. Please try again later.'
+      );
     } finally {
       setIsLoading(false);
       setHasLoadedOnce(true);
@@ -608,7 +605,7 @@ export default function ConnectedPlatformsPage() {
         <h1 className={workspacePageTitleClass}>
           {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
         </h1>
-        <p className="mt-3 text-base text-muted-foreground leading-relaxed max-w-2xl">
+        <p className="mt-3 text-base text-secondary leading-relaxed max-w-2xl">
           Link your social accounts so Sociogenie can schedule and publish
           approved content automatically.
         </p>
@@ -620,15 +617,15 @@ export default function ConnectedPlatformsPage() {
 
       {showSelectionIncompleteNotice && (
         <div
-          className="mb-6 flex flex-col gap-3 rounded-xl border border-blue-200 bg-blue-50/90 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          className="mb-6 flex flex-col gap-3 rounded-xl border border-info bg-info px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
           role="status"
         >
           <div className="flex items-start gap-3">
             <AlertCircle
-              className="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
+              className="mt-0.5 h-5 w-5 shrink-0 text-info"
               aria-hidden
             />
-            <p className="text-sm text-blue-900">
+            <p className="text-sm text-info">
               Your{' '}
               <span className="font-semibold capitalize">{activePlan}</span>{' '}
               plan supports{' '}
@@ -651,7 +648,7 @@ export default function ConnectedPlatformsPage() {
 
       {showPlanLimitNotice && (
         <div
-          className="mb-6 rounded-xl border border-amber-200 bg-amber-50/90 px-5 py-4 text-sm text-amber-950"
+          className="mb-6 rounded-xl border border-warning bg-warning px-5 py-4 text-sm text-warning"
           role="status"
         >
           Your current plan supports{' '}
@@ -660,7 +657,7 @@ export default function ConnectedPlatformsPage() {
           more.{' '}
           <Link
             href="/settings/billings"
-            className="font-semibold underline underline-offset-2 hover:text-amber-950/80"
+            className="font-semibold underline underline-offset-2 hover:text-warning"
           >
             View Plans
           </Link>
@@ -700,186 +697,189 @@ export default function ConnectedPlatformsPage() {
           {billingLoading || !hasLoadedOnce ? (
             <PageLoadingState className="min-h-[40vh]" />
           ) : (
-          <div className={platformListStyle.grid}>
+            <div className={platformListStyle.grid}>
               {selectedPlatforms.map((platform) => {
-                  const connected = isAccountConnected(
-                    socialAccounts,
-                    platform.id
-                  );
-                  const selectedPageName = getSelectedPageName(
-                    socialAccounts,
-                    platform.id
-                  );
-                  const selectedProfileUrl = getSelectedProfileUrl(
-                    socialAccounts,
-                    platform.id
-                  );
-                  const isPageSelectable =
-                    platform.id === 'facebook' || platform.id === 'linkedin';
-                  const availablePages = isPageSelectable
-                    ? getAvailablePages(socialAccounts, platform.id)
-                    : [];
-                  const selectedPageId = isPageSelectable
-                    ? getSelectedPageId(socialAccounts, platform.id)
-                    : null;
-                  const needsPageSelection =
-                    connected &&
-                    isPageSelectable &&
-                    availablePages.length > 0 &&
-                    selectedPageId == null;
-                  const showTroubleshooting =
-                    connected && isPageSelectable && selectedPageId == null;
-                  const n = selectedPlatforms.length;
-                  const singleOffCenterTier2 =
-                    platformLayoutTier === 2 && n === 1;
-                  const singleOffCenterTier3 =
-                    platformLayoutTier === 3 && n === 1;
-                  const troubleshooting = PLATFORM_TROUBLESHOOTING[platform.id];
+                const connected = isAccountConnected(
+                  socialAccounts,
+                  platform.id
+                );
+                const selectedPageName = getSelectedPageName(
+                  socialAccounts,
+                  platform.id
+                );
+                const selectedProfileUrl = getSelectedProfileUrl(
+                  socialAccounts,
+                  platform.id
+                );
+                const isPageSelectable =
+                  platform.id === 'facebook' || platform.id === 'linkedin';
+                const availablePages = isPageSelectable
+                  ? getAvailablePages(socialAccounts, platform.id)
+                  : [];
+                const selectedPageId = isPageSelectable
+                  ? getSelectedPageId(socialAccounts, platform.id)
+                  : null;
+                const needsPageSelection =
+                  connected &&
+                  isPageSelectable &&
+                  availablePages.length > 0 &&
+                  selectedPageId == null;
+                const showTroubleshooting =
+                  connected && isPageSelectable && selectedPageId == null;
+                const n = selectedPlatforms.length;
+                const singleOffCenterTier2 =
+                  platformLayoutTier === 2 && n === 1;
+                const singleOffCenterTier3 =
+                  platformLayoutTier === 3 && n === 1;
+                const troubleshooting = PLATFORM_TROUBLESHOOTING[platform.id];
 
-                  return (
-                    <Card
-                      key={platform.id}
-                      className={cn(
-                        'flex h-full flex-col border-border/60 py-0 shadow-sm transition-[box-shadow,ring-color] duration-200 hover:shadow-md hover:ring-border',
-                        connected &&
-                          'ring-1 ring-emerald-500/15 hover:ring-emerald-500/25',
-                        singleOffCenterTier2 &&
-                          'sm:col-span-2 sm:mx-auto sm:w-full sm:max-w-md',
-                        singleOffCenterTier3 &&
-                          'lg:col-span-3 sm:mx-auto sm:w-full sm:max-w-md lg:max-w-md'
-                      )}
-                    >
-                      <CardHeader className="flex-1 gap-4 px-5 pb-4 pt-5">
-                        <div className="flex gap-4">
-                          <div
-                            className={cn(
-                              'flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-white shadow-md ring-1 ring-black/5',
-                              platform.color
-                            )}
+                return (
+                  <Card
+                    key={platform.id}
+                    className={cn(
+                      'flex h-full flex-col border-default py-0 transition-[box-,ring-color] duration-200 hover:ring-border',
+                      connected &&
+                        'ring-1 ring-[var(--border-success)] hover:ring-[var(--border-success)]',
+                      singleOffCenterTier2 &&
+                        'sm:col-span-2 sm:mx-auto sm:w-full sm:max-w-md',
+                      singleOffCenterTier3 &&
+                        'lg:col-span-3 sm:mx-auto sm:w-full sm:max-w-md lg:max-w-md'
+                    )}
+                  >
+                    <CardHeader className="flex-1 gap-4 px-5 pb-4 pt-5">
+                      <div className="flex gap-4">
+                        <div
+                          className={cn(
+                            'flex h-14 w-14 shrink-0 items-center justify-center rounded-xl text-white ring-1 ring-black/5',
+                            platform.color
+                          )}
+                        >
+                          <svg
+                            className="h-7 w-7"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-hidden
                           >
-                            <svg
-                              className="h-7 w-7"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                              aria-hidden
-                            >
-                              {platform.icon}
-                            </svg>
-                          </div>
-                          <div className="min-w-0 flex-1 space-y-1 self-center">
-                            <CardTitle className="text-base font-semibold text-foreground sm:text-lg">
-                              {platform.name}
-                            </CardTitle>
-                            <CardDescription className="text-pretty leading-relaxed text-muted-foreground">
-                              {connected
-                                ? 'Scheduling and publishing are enabled for this channel.'
-                                : 'Connect your account to allow automated posts from Sociogenie.'}
-                            </CardDescription>
-                            {connected && selectedPageName && (
-                              <p className="text-sm font-medium text-foreground">
-                                Selected:&nbsp;
-                                {selectedProfileUrl ? (
-                                  <a
-                                    href={selectedProfileUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1 text-foreground underline decoration-border underline-offset-2 hover:decoration-foreground"
-                                  >
-                                    <span>{selectedPageName}</span>
-                                    <ExternalLink
-                                      className="h-3.5 w-3.5"
-                                      aria-hidden
-                                    />
-                                  </a>
-                                ) : (
-                                  <span className="text-foreground">
-                                    {selectedPageName}
-                                  </span>
-                                )}
-                              </p>
-                            )}
-                            {needsPageSelection && (
-                              <>
-                                <p className="text-sm text-amber-700">
-                                  No page selected yet. Pick one below to
-                                  enable publishing.
-                                </p>
-                                <div className="pt-1">
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    className="h-8"
-                                    onClick={() =>
-                                      setPageModalPlatform(
-                                        platform.id as PageSelectablePlatform
-                                      )
-                                    }
-                                  >
-                                    Select {platform.name} page
-                                  </Button>
-                                </div>
-                              </>
-                            )}
-                          </div>
+                            {platform.icon}
+                          </svg>
                         </div>
+                        <div className="min-w-0 flex-1 space-y-1 self-center">
+                          <CardTitle className="text-base font-semibold text-default sm:text-lg">
+                            {platform.name}
+                          </CardTitle>
+                          <CardDescription className="text-pretty leading-relaxed text-secondary">
+                            {connected
+                              ? 'Scheduling and publishing are enabled for this channel.'
+                              : 'Connect your account to allow automated posts from Sociogenie.'}
+                          </CardDescription>
+                          {connected && selectedPageName && (
+                            <p className="text-sm font-medium text-default">
+                              Selected:&nbsp;
+                              {selectedProfileUrl ? (
+                                <a
+                                  href={selectedProfileUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-default underline decoration-border underline-offset-2 hover:decoration-foreground"
+                                >
+                                  <span>{selectedPageName}</span>
+                                  <ExternalLink
+                                    className="h-3.5 w-3.5"
+                                    aria-hidden
+                                  />
+                                </a>
+                              ) : (
+                                <span className="text-default">
+                                  {selectedPageName}
+                                </span>
+                              )}
+                            </p>
+                          )}
+                          {needsPageSelection && (
+                            <>
+                              <p className="text-sm text-warning">
+                                No page selected yet. Pick one below to enable
+                                publishing.
+                              </p>
+                              <div className="pt-1">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="h-8"
+                                  onClick={() =>
+                                    setPageModalPlatform(
+                                      platform.id as PageSelectablePlatform
+                                    )
+                                  }
+                                >
+                                  Select {platform.name} page
+                                </Button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
 
-                        {showTroubleshooting ? (
+                      {showTroubleshooting ? (
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto w-fit max-w-full justify-start px-0 py-0 text-left text-sm font-medium whitespace-normal text-link"
+                          onClick={() =>
+                            setTroubleshootingPlatform(platform.id)
+                          }
+                        >
+                          {troubleshooting.title}
+                        </Button>
+                      ) : null}
+                    </CardHeader>
+                    <CardFooter className="flex-col gap-2 border-t border-default bg-element px-5 py-4 sm:flex-row sm:justify-end">
+                      {connected ? (
+                        <div className="w-full flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-success px-2.5 py-2 text-xs font-semibold text-success ring-1 ring-inset ring-[var(--border-success)]">
+                            <Check
+                              className="h-3.5 w-3.5 text-success"
+                              aria-hidden
+                            />
+                            Connected
+                          </span>
                           <Button
                             type="button"
-                            variant="link"
-                            className="h-auto w-fit max-w-full justify-start px-0 py-0 text-left text-sm font-medium whitespace-normal text-primary"
-                            onClick={() =>
-                              setTroubleshootingPlatform(platform.id)
-                            }
+                            variant="outline"
+                            size="sm"
+                            disabled={disconnectingPlatform === platform.id}
+                            aria-busy={disconnectingPlatform === platform.id}
+                            className="w-full border-default text-default hover:bg-hover hover:text-default sm:w-auto sm:min-w-36"
+                            onClick={() => void handleDisconnect(platform.id)}
                           >
-                            {troubleshooting.title}
-                          </Button>
-                        ) : null}
-                      </CardHeader>
-                      <CardFooter className="flex-col gap-2 border-t border-border/50 bg-muted/20 px-5 py-4 sm:flex-row sm:justify-end">
-                        {connected ? (
-                          <div className='w-full flex items-center justify-between'>
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-2 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-500/25">
-                              <Check
-                                className="h-3.5 w-3.5 text-emerald-400"
+                            {disconnectingPlatform === platform.id ? (
+                              <Loader2
+                                className="h-3.5 w-3.5 animate-spin"
                                 aria-hidden
                               />
-                              Connected
-                            </span>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={disconnectingPlatform === platform.id}
-                              aria-busy={disconnectingPlatform === platform.id}
-                              className="w-full border-border text-foreground hover:bg-accent hover:text-foreground sm:w-auto sm:min-w-36"
-                              onClick={() => void handleDisconnect(platform.id)}
-                            >
-                              {disconnectingPlatform === platform.id ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-                              ) : null}
-                              Remove connection
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button
-                            asChild
-                            size="sm"
-                            className={cn(
-                              'h-9 w-full border-0 font-semibold text-white shadow-sm hover:opacity-95 sm:w-full',
-                              platform.color,
-                              platform.ringColor,
-                              'focus-visible:ring-2 focus-visible:ring-offset-2'
-                            )}
-                          >
-                            <a href={platform.href}>Connect {platform.name}</a>
+                            ) : null}
+                            Remove connection
                           </Button>
-                        )}
-                      </CardFooter>
-                    </Card>
-                  );
-                })}
-          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          asChild
+                          size="sm"
+                          className={cn(
+                            'h-9 w-full border-0 font-semibold text-white hover:opacity-95 sm:w-full',
+                            platform.color,
+                            platform.ringColor,
+                            'focus-visible:ring-2 focus-visible:ring-offset-2'
+                          )}
+                        >
+                          <a href={platform.href}>Connect {platform.name}</a>
+                        </Button>
+                      )}
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </div>
       )}

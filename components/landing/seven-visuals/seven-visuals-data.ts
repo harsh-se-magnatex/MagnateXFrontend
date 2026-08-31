@@ -48,7 +48,11 @@ const style = (
 });
 
 export const SEVEN_VISUAL_STYLES: SevenVisualStyle[] = [
-  style('Professional', 'Professional', 'Polished content built for credibility'),
+  style(
+    'Professional',
+    'Professional',
+    'Polished content built for credibility'
+  ),
   style('vibrant', 'Vibrant', 'Energetic colour and expressive composition'),
   style('Maximalist', 'Maximalist', 'Layered, rich, and impossible to ignore'),
   style('MiniMalist', 'Minimalist', 'Clean layouts with room to breathe'),

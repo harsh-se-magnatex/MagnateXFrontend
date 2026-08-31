@@ -21,10 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { workspacePageTitleClass } from '@/lib/workspace-ui';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getTodatDate } from '@/utils/getTodayDate';
 import { EVENTS, isFestiveDateOnOrAfterToday } from './events';
@@ -66,7 +63,10 @@ function firstEnabledPlatform(
   return PLATFORM_ORDER.find((p) => accounts[p] === true);
 }
 
-function isEventWithinPlan(date: string, planExpiresYmd: string | null): boolean {
+function isEventWithinPlan(
+  date: string,
+  planExpiresYmd: string | null
+): boolean {
   return !planExpiresYmd || date <= planExpiresYmd;
 }
 
@@ -175,16 +175,12 @@ export default function AutomatedPostPage() {
   const platformCount = Math.max(genPlatforms.length, 0);
   const totalCost = selected.length * CREDIT_PER_EVENT * platformCount;
   const insufficientCredits =
-    platformCount > 0 &&
-    selected.length > 0 &&
-    userCredits < totalCost;
+    platformCount > 0 && selected.length > 0 && userCredits < totalCost;
   const selectedHasOutOfRangeEvent = selected.some((eventId) => {
     const event = [...builtInEvents, ...customEvents].find(
       (item) => item.id === eventId
     );
-    return Boolean(
-      event && !isEventWithinPlan(event.date, planExpiresYmd)
-    );
+    return Boolean(event && !isEventWithinPlan(event.date, planExpiresYmd));
   });
 
   const canSubmit =
@@ -228,9 +224,7 @@ export default function AutomatedPostPage() {
       setTimeout(() => setMessage(''), 5000);
       return;
     }
-    const eventMap = new Map(
-      allEvents.map((event) => [event.id, event])
-    );
+    const eventMap = new Map(allEvents.map((event) => [event.id, event]));
     const selectedEvents = selected
       .map((id) => eventMap.get(id))
       .filter((event): event is FestiveEventItem => !!event)
@@ -272,7 +266,10 @@ export default function AutomatedPostPage() {
           expectedCount: expected,
         });
         if (wait.outcome === 'generated') toast.success('Generated');
-        else showErrorToast('Event studio creation failed. Please try again later.');
+        else
+          showErrorToast(
+            'Event studio creation failed. Please try again later.'
+          );
       } else {
         showErrorToast('Event studio creation failed. Please try again later.');
       }
@@ -317,11 +314,11 @@ export default function AutomatedPostPage() {
   const q = search.trim().toLowerCase();
   const displayedEvents = q
     ? sortedEvents.filter(
-      (e) =>
-        e.name.toLowerCase().includes(q) ||
-        e.description.toLowerCase().includes(q) ||
-        e.reason.toLowerCase().includes(q)
-    )
+        (e) =>
+          e.name.toLowerCase().includes(q) ||
+          e.description.toLowerCase().includes(q) ||
+          e.reason.toLowerCase().includes(q)
+      )
     : sortedEvents;
 
   if (planCreditsLoading) {
@@ -336,31 +333,31 @@ export default function AutomatedPostPage() {
     <div className="mx-auto animate-in fade-in duration-500 pb-20">
       <header className="mb-8 w-full flex flex-col md:flex-row md:items-start justify-between gap-6">
         <div>
-          <h1 className={cn(workspacePageTitleClass, 'flex items-center gap-3')}>
+          <h1
+            className={cn(workspacePageTitleClass, 'flex items-center gap-3')}
+          >
             {workspacePageTitle(WORKSPACE_NAV_HREFS.festivePost)}
           </h1>
-          <p className="mt-2 text-base text-muted-foreground max-w-2xl">
-            Select upcoming events and let SocioGenie automatically
-            generate and schedule campaigns.
+          <p className="mt-2 text-base text-secondary max-w-2xl">
+            Select upcoming events and let SocioGenie automatically generate and
+            schedule campaigns.
           </p>
         </div>
 
         {/* Credit Card */}
-        <div className="glass-card flex items-center gap-4 rounded-2xl px-5 py-4 shrink-0 shadow-sm border border-border">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400">
+        <div className="glass-card flex items-center gap-4 rounded-2xl px-5 py-4 shrink-0 border border-default">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning text-warning">
             <Zap className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <p className="text-xs font-semibold text-secondary uppercase tracking-wider">
               Available Credits
             </p>
             <div className="flex items-center gap-2">
               {planCreditsLoading ? (
                 <Skeleton className="h-8 w-14 rounded-md" />
               ) : (
-                <p className="text-xl font-bold text-foreground">
-                  {userCredits}
-                </p>
+                <p className="text-xl font-bold text-default">{userCredits}</p>
               )}
               {!planCreditsLoading && userCredits < totalCost && (
                 <span className="text-[10px] font-medium bg-destructive/10 text-destructive px-2 rounded-full whitespace-nowrap border border-destructive/25">
@@ -379,9 +376,9 @@ export default function AutomatedPostPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className={cn(
-              'mb-8 p-4 rounded-2xl border flex items-center gap-3 shadow-sm',
+              'mb-8 p-4 rounded-2xl border flex items-center gap-3',
               message.includes('successfully')
-                ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300'
+                ? 'bg-success border-success text-success'
                 : 'bg-destructive/10 border-destructive/25 text-destructive'
             )}
           >
@@ -389,7 +386,7 @@ export default function AutomatedPostPage() {
               className={cn(
                 'w-5 h-5',
                 message.includes('successfully')
-                  ? 'text-emerald-400'
+                  ? 'text-success'
                   : 'text-destructive'
               )}
             />
@@ -399,13 +396,13 @@ export default function AutomatedPostPage() {
       </AnimatePresence>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-8">
-          <section className="glass-card rounded-3xl border border-border overflow-hidden shadow-sm">
-            <div className="p-6 border-b border-border flex items-center gap-3 bg-card/50">
-              <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
+          <section className="glass-card rounded-3xl border border-default overflow-hidden">
+            <div className="p-6 border-b border-default flex items-center gap-3 bg-default">
+              <div className="p-2 bg-primary-purple/10 rounded-lg text-preview">
                 <CalendarDays className="h-5 w-5" />
               </div>
               <div className="flex items-center justify-between w-full">
-                <h2 className="text-lg font-bold text-foreground">
+                <h2 className="text-subsection text-default">
                   Events Calendar
                 </h2>
                 <Input
@@ -422,8 +419,8 @@ export default function AutomatedPostPage() {
               className="overflow-x-auto max-h-[calc(100vh-10rem)] overflow-y-auto custom-scrollbar"
             >
               <table className="w-full text-left border-collapse">
-                <thead className="sticky top-0 z-10 bg-accent">
-                  <tr className="bg-muted/50 border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <thead className="sticky top-0 z-10 bg-hover">
+                  <tr className="bg-element border-b border-default text-xs font-semibold uppercase tracking-wider text-secondary">
                     <th className="p-4 pl-6 w-12 text-center">Sel</th>
                     <th className="p-4">Event Details</th>
                     <th className="p-4">Date</th>
@@ -443,10 +440,8 @@ export default function AutomatedPostPage() {
                       <tr
                         key={fest.id}
                         className={cn(
-                          'transition-colors group',
-                          isSelected
-                            ? 'bg-primary-purple/10'
-                            : 'hover:bg-accent/40'
+                          'transition-expo group',
+                          isSelected ? 'bg-primary-purple/10' : 'hover:bg-hover'
                         )}
                       >
                         <td className="p-4 pl-6 text-center align-start pt-5">
@@ -466,13 +461,13 @@ export default function AutomatedPostPage() {
                                   : undefined
                               }
                               className={cn(
-                                'w-5 h-5 rounded flex items-center justify-center transition-all border',
+                                'w-5 h-5 rounded flex items-center justify-center transition-expo border',
                                 isOutOfPlanRange &&
-                                  'cursor-not-allowed border-border/60 bg-muted text-muted-foreground opacity-70',
+                                  'cursor-not-allowed border-default bg-element text-secondary opacity-70',
                                 isSelected
                                   ? 'bg-primary-purple border-primary-purple text-white'
                                   : !isOutOfPlanRange &&
-                                      'border-border bg-card hover:border-primary-purple/50'
+                                      'border-default bg-default hover:border-strong'
                               )}
                             >
                               {isOutOfPlanRange ? (
@@ -502,7 +497,7 @@ export default function AutomatedPostPage() {
                               <input
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
-                                className="w-full rounded-lg border border-border bg-muted px-3 py-1.5 text-sm text-foreground focus:border-primary-purple focus:ring-1 focus:ring-primary-purple outline-none"
+                                className="w-full rounded-lg border border-default bg-element px-3 py-1.5 text-sm text-default focus:border-primary-purple focus:ring-1 focus:ring-primary-purple outline-none"
                                 placeholder="Event Name"
                               />
                               <input
@@ -510,34 +505,34 @@ export default function AutomatedPostPage() {
                                 onChange={(e) =>
                                   setEditDescription(e.target.value)
                                 }
-                                className="w-full rounded-lg border border-border bg-muted px-3 py-1.5 text-sm focus:border-primary-purple focus:ring-1 focus:ring-primary-purple outline-none text-muted-foreground"
+                                className="w-full rounded-lg border border-default bg-element px-3 py-1.5 text-sm focus:border-primary-purple focus:ring-1 focus:ring-primary-purple outline-none text-secondary"
                                 placeholder="Description"
                               />
                             </div>
                           ) : (
                             <div>
-                              <div className="font-bold text-foreground mb-1 flex items-center gap-2">
+                              <div className="font-bold text-default mb-1 flex items-center gap-2">
                                 {fest.name || 'Unnamed Event'}
                                 {isCustom && (
-                                  <span className="text-[10px] font-bold bg-primary-purple/15 text-primary-purple px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                  <span className="text-[10px] font-bold bg-primary-purple/15 text-preview px-1.5 py-0.5 rounded uppercase tracking-wider">
                                     Custom
                                   </span>
                                 )}
                                 {isOutOfPlanRange && (
-                                  <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                  <span className="inline-flex items-center gap-1 rounded bg-element px-1.5 py-0.5 text-[10px] font-semibold text-secondary">
                                     <Lock className="h-3 w-3" aria-hidden />
                                     Outside plan period
                                   </span>
                                 )}
                               </div>
-                              <div className="text-sm text-muted-foreground line-clamp-1">
+                              <div className="text-sm text-secondary line-clamp-1">
                                 {fest.description || 'No description provided.'}
                               </div>
                             </div>
                           )}
                         </td>
 
-                        <td className="p-4 whitespace-nowrap text-sm font-medium text-foreground align-start pt-5">
+                        <td className="p-4 whitespace-nowrap text-sm font-medium text-default align-start pt-5">
                           {isEditing ? (
                             <input
                               type="date"
@@ -545,7 +540,7 @@ export default function AutomatedPostPage() {
                               max={planExpiresYmd ?? undefined}
                               value={editDate}
                               onChange={(e) => setEditDate(e.target.value)}
-                              className="w-full rounded-lg border border-border bg-muted px-3 py-1.5 text-sm text-foreground focus:border-primary-purple focus:ring-1 focus:ring-primary-purple outline-none"
+                              className="w-full rounded-lg border border-default bg-element px-3 py-1.5 text-sm text-default focus:border-primary-purple focus:ring-1 focus:ring-primary-purple outline-none"
                             />
                           ) : fest.date ? (
                             new Date(fest.date).toLocaleDateString('en-US', {
@@ -564,7 +559,7 @@ export default function AutomatedPostPage() {
                     <tr>
                       <td
                         colSpan={4}
-                        className="p-8 text-center text-muted-foreground text-sm"
+                        className="p-8 text-center text-secondary text-sm"
                       >
                         No events found. Add a custom event to get started.
                       </td>
@@ -577,25 +572,27 @@ export default function AutomatedPostPage() {
         </div>
 
         <div className="mt-6">
-          <section className="glass-card rounded-3xl p-6 border border-primary-purple/20 bg-primary-purple/5 shadow-sm">
-            <h2 className="text-lg font-bold text-foreground mb-6">Summary</h2>
+          <section className="glass-card rounded-3xl p-6 border border-primary-purple/20 bg-primary-purple/5">
+            <h2 className="text-section text-default mb-6">Summary</h2>
 
             <div className="space-y-4 text-sm mb-6">
               <div className="space-y-2">
-                <span className="font-medium text-muted-foreground">Post platforms:</span>
+                <span className="font-medium text-secondary">
+                  Post platforms:
+                </span>
                 {showSelectAccountsFirst ? (
                   <div
                     role="status"
-                    className="rounded-xl border border-amber-500/30 bg-amber-500/15 px-4 py-3 text-sm text-amber-200"
+                    className="rounded-xl border border-warning bg-warning px-4 py-3 text-sm text-warning"
                   >
                     <p className="font-medium">Select your accounts first</p>
-                    <p className="mt-1 text-amber-300/90">
+                    <p className="mt-1 text-warning">
                       Choose which platforms you use in onboarding or social
                       settings, then come back here to schedule posts.
                     </p>
                     <Link
                       href={WORKSPACE_NAV_HREFS.linkedProfiles}
-                      className="mt-2 inline-block text-sm font-semibold text-amber-200 underline underline-offset-2 hover:text-amber-300"
+                      className="mt-2 inline-block text-sm font-semibold text-warning underline underline-offset-2 hover:text-warning"
                     >
                       {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                     </Link>
@@ -607,14 +604,14 @@ export default function AutomatedPostPage() {
                         <label
                           key={p}
                           htmlFor={`festive-platform-${p}`}
-                          className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                          className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
                         >
                           <input
                             id={`festive-platform-${p}`}
                             type="checkbox"
                             checked={genPlatforms.includes(p)}
                             onChange={() => handleToggleGenPlatform(p)}
-                            className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
+                            className="size-4 rounded border-default text-preview focus:ring-strong"
                           />
                           <span>{platformLabel(p)}</span>
                         </label>
@@ -622,25 +619,29 @@ export default function AutomatedPostPage() {
                       {allowedPlatforms.length > 1 && (
                         <label
                           htmlFor="festive-platform-all"
-                          className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                          className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
                         >
                           <input
                             id="festive-platform-all"
                             type="checkbox"
                             checked={allPlatformsSelected}
                             onChange={handleSelectAllGenPlatforms}
-                            className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
+                            className="size-4 rounded border-default text-preview focus:ring-strong"
                           />
                           <span>
-                            {allPlatformsSelectionLabel(allowedPlatforms.length)}
+                            {allPlatformsSelectionLabel(
+                              allowedPlatforms.length
+                            )}
                           </span>
                         </label>
                       )}
                     </div>
                     {!platformSelection.ok ? (
-                      <p className="text-xs text-amber-300">{platformSelection.error}</p>
+                      <p className="text-xs text-warning">
+                        {platformSelection.error}
+                      </p>
                     ) : (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-secondary">
                         {allPlatformsSelected
                           ? `Schedules one post per event on each connected platform (${allowedPlatforms.length}).`
                           : genPlatforms.length > 1
@@ -651,23 +652,23 @@ export default function AutomatedPostPage() {
                   </>
                 )}
               </div>
-              <div className="flex justify-between items-center text-muted-foreground">
+              <div className="flex justify-between items-center text-secondary">
                 <span className="font-medium">Selected Events:</span>
-                <span className="font-bold text-foreground">
+                <span className="font-bold text-default">
                   {selected.length}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-muted-foreground">
+              <div className="flex justify-between items-center text-secondary">
                 <span className="font-medium">Cost per Event:</span>
-                <span className="font-bold text-foreground">
+                <span className="font-bold text-default">
                   {CREDIT_PER_EVENT * platformCount}{' '}
-                  <span className="text-xs font-normal text-muted-foreground">
+                  <span className="text-xs font-normal text-secondary">
                     credits
                   </span>
                 </span>
               </div>
-              <div className="pt-4 border-t border-border/60 flex justify-between items-center bg-card/40 -mx-6 px-6 py-4 rounded-b-xl -mb-6">
-                <span className="font-bold text-foreground">
+              <div className="pt-4 border-t border-default flex justify-between items-center bg-default -mx-6 px-6 py-4 rounded-b-xl -mb-6">
+                <span className="font-bold text-default">
                   Credits to charge:
                 </span>
                 <span
@@ -675,7 +676,7 @@ export default function AutomatedPostPage() {
                     'text-xl font-black',
                     userCredits < totalCost
                       ? 'text-destructive'
-                      : 'text-primary-purple'
+                      : 'text-preview'
                   )}
                 >
                   {totalCost}
@@ -688,7 +689,7 @@ export default function AutomatedPostPage() {
                 onClick={handleSubmit}
                 disabled={!canSubmit}
                 aria-busy={isSubmitting}
-                className="w-full rounded-xl bg-gradient-action px-4 py-3.5 text-sm font-bold text-white shadow-md shadow-primary-purple/25 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-purple/35 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                className="w-full rounded-full btn-brand-fill px-4 py-3.5 text-sm font-bold transition-expo disabled:transform-none disabled:cursor-not-allowed disabled:bg-element disabled:text-secondary disabled:shadow-none"
               >
                 {isSubmitting ? (
                   <span className="inline-flex items-center justify-center gap-2">
@@ -700,7 +701,7 @@ export default function AutomatedPostPage() {
                 )}
               </button>
               {isSubmitting && (
-                <p className="mt-4 text-xs font-medium text-primary-purple">
+                <p className="mt-4 text-xs font-medium text-preview">
                   Generating...
                 </p>
               )}
@@ -709,7 +710,7 @@ export default function AutomatedPostPage() {
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
               <Link
                 href={WORKSPACE_NAV_HREFS.gallery}
-                className="w-full text-center py-3 rounded-full bg-gradient-action text-white font-semibold hover:opacity-90 transition"
+                className="w-full text-center py-3 rounded-full btn-brand-fill font-semibold hover:opacity-90 transition"
               >
                 {workspacePageTitle(WORKSPACE_NAV_HREFS.gallery)}
               </Link>

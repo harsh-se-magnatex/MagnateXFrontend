@@ -97,7 +97,10 @@ function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
     const token = match[0];
     if (token.startsWith('**') && token.endsWith('**')) {
       nodes.push(
-        <strong key={`${keyPrefix}-strong-${partIndex++}`} className="font-semibold">
+        <strong
+          key={`${keyPrefix}-strong-${partIndex++}`}
+          className="font-semibold"
+        >
           {token.slice(2, -2)}
         </strong>
       );
@@ -111,7 +114,7 @@ function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
       nodes.push(
         <code
           key={`${keyPrefix}-code-${partIndex++}`}
-          className="rounded bg-muted px-1 py-0.5 font-mono text-[0.85em]"
+          className="rounded bg-element px-1 py-0.5 font-mono text-[0.85em]"
         >
           {token.slice(1, -1)}
         </code>
@@ -143,10 +146,10 @@ function MarkdownBlockView({
     case 'heading': {
       const className =
         block.level === 1
-          ? 'text-base font-semibold text-foreground'
+          ? 'text-base font-semibold text-default'
           : block.level === 2
-            ? 'text-sm font-semibold text-foreground'
-            : 'text-sm font-medium text-foreground';
+            ? 'text-sm font-semibold text-default'
+            : 'text-sm font-medium text-default';
       const content = renderInlineMarkdown(block.text, `heading-${index}`);
       if (block.level === 1) {
         return <h3 className={className}>{content}</h3>;
@@ -158,17 +161,17 @@ function MarkdownBlockView({
     }
     case 'paragraph':
       return (
-        <p className="leading-relaxed text-foreground [overflow-wrap:anywhere]">
+        <p className="leading-relaxed text-default [overflow-wrap:anywhere]">
           {renderInlineMarkdown(block.text, `paragraph-${index}`)}
         </p>
       );
     case 'ul':
       return (
-        <ul className="list-disc space-y-2 pl-5 marker:text-muted-foreground">
+        <ul className="list-disc space-y-2 pl-5 marker:text-secondary">
           {block.items.map((item, itemIndex) => (
             <li
               key={`${index}-ul-${itemIndex}`}
-              className="leading-relaxed text-foreground [overflow-wrap:anywhere]"
+              className="leading-relaxed text-default [overflow-wrap:anywhere]"
             >
               {renderInlineMarkdown(item, `ul-${index}-${itemIndex}`)}
             </li>
@@ -177,11 +180,11 @@ function MarkdownBlockView({
       );
     case 'ol':
       return (
-        <ol className="list-decimal space-y-2 pl-5 marker:text-muted-foreground">
+        <ol className="list-decimal space-y-2 pl-5 marker:text-secondary">
           {block.items.map((item, itemIndex) => (
             <li
               key={`${index}-ol-${itemIndex}`}
-              className="leading-relaxed text-foreground [overflow-wrap:anywhere]"
+              className="leading-relaxed text-default [overflow-wrap:anywhere]"
             >
               {renderInlineMarkdown(item, `ol-${index}-${itemIndex}`)}
             </li>

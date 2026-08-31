@@ -13,10 +13,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
 import { toast } from 'sonner';
-import {
-  showCaughtErrorToast,
-  showErrorToast,
-} from '@/lib/show-error-toast';
+import { showCaughtErrorToast, showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
 import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { normalizeMemoryLayerUploadImage } from '@/lib/normalize-memory-layer-image';
@@ -185,8 +182,8 @@ export default function TemplateDnaMemoryLayerPage() {
   const hydrate = useUploadStore((state) => state.hydrate);
   const questions = memory?.questions ?? [];
   const pathname = usePathname();
-  
-const previousPathname = useRef(pathname);
+
+  const previousPathname = useRef(pathname);
 
   const memoryLayerPrefReady =
     !loading &&
@@ -257,7 +254,6 @@ const previousPathname = useRef(pathname);
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
-
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/sign-in');
@@ -486,19 +482,21 @@ const previousPathname = useRef(pathname);
             throw new Error('Photo upload failed');
           }
 
-          const data = (up as {
-            data?: {
-              memoryLayer?: unknown;
-              uploaded?: number;
-              described?: number;
-              describeError?: string;
-              failed?: {
-                index: number;
-                name: string;
-                reason: string;
-              }[];
-            };
-          }).data;
+          const data = (
+            up as {
+              data?: {
+                memoryLayer?: unknown;
+                uploaded?: number;
+                described?: number;
+                describeError?: string;
+                failed?: {
+                  index: number;
+                  name: string;
+                  reason: string;
+                }[];
+              };
+            }
+          ).data;
 
           const humanFailure = data?.failed?.find((failure) =>
             failure.reason.toLowerCase().includes('human or real person')
@@ -512,15 +510,11 @@ const previousPathname = useRef(pathname);
           }
 
           if (Array.isArray(data?.failed) && data.failed.length > 0) {
-            throw new Error(
-              data.failed[0]?.reason || 'Photo upload failed'
-            );
+            throw new Error(data.failed[0]?.reason || 'Photo upload failed');
           }
 
           uploadedCount +=
-            typeof data?.uploaded === 'number'
-              ? data.uploaded
-              : 1;
+            typeof data?.uploaded === 'number' ? data.uploaded : 1;
 
           if (typeof data?.described === 'number') {
             describedCount += data.described;
@@ -536,7 +530,6 @@ const previousPathname = useRef(pathname);
 
           // Successfully uploaded → remove from Zustand + IndexedDB
           await removeImage(item.id);
-
         } catch (itemErr) {
           if (
             itemErr instanceof Error &&
@@ -553,10 +546,7 @@ const previousPathname = useRef(pathname);
             failed: true,
           });
 
-          console.warn(
-            '[memory-layer] photo upload failed:',
-            itemErr
-          );
+          console.warn('[memory-layer] photo upload failed:', itemErr);
         }
       }
 
@@ -569,23 +559,19 @@ const previousPathname = useRef(pathname);
 
         toast.message(
           uploadedCount > 0
-            ? `Uploaded ${uploadedCount}; ${failedNames.length} failed${names ? ` (${names})` : ''
-            }`
+            ? `Uploaded ${uploadedCount}; ${failedNames.length} failed${names ? ` (${names})` : ''}`
             : `Upload failed${names ? `: ${names}` : ''}`
         );
-
       } else if (describeError) {
         toast.message(
           'Photos uploaded — AI descriptions unavailable. You can add them manually.'
         );
-
       } else if (describedCount > 0) {
         toast.success(
           describedCount === 1
             ? 'Photo uploaded with AI description'
             : `Photos uploaded with ${describedCount} AI descriptions`
         );
-
       } else if (uploadedCount > 0) {
         toast.success(
           uploadedCount === 1
@@ -593,7 +579,6 @@ const previousPathname = useRef(pathname);
             : `Photos uploaded (${uploadedCount})`
         );
       }
-
     } finally {
       uploadPhotosInFlightRef.current = false;
       setUploadingPhotos(false);
@@ -622,9 +607,11 @@ const previousPathname = useRef(pathname);
       if (!isOk(res as { success?: boolean })) {
         throw new Error('PDF upload failed');
       }
-      const data = (res as {
-        data?: { memoryLayer?: unknown; sourceDocumentId?: string };
-      }).data;
+      const data = (
+        res as {
+          data?: { memoryLayer?: unknown; sourceDocumentId?: string };
+        }
+      ).data;
       if (data?.memoryLayer) setMemory(parseMemory(data.memoryLayer));
       setPendingPdf(null);
       toast.success('PDF uploaded');
@@ -635,7 +622,9 @@ const previousPathname = useRef(pathname);
     }
   };
 
-  const handleGenerate = async ({ force = false }: { force?: boolean } = {}) => {
+  const handleGenerate = async ({
+    force = false,
+  }: { force?: boolean } = {}) => {
     try {
       setGenerating(true);
       const res = await generateMemoryLayerQuestions({ force });
@@ -689,51 +678,49 @@ const previousPathname = useRef(pathname);
         file: File;
         description: string;
       }[] = [];
-try {
-  
-  setConvertingPhotos(true);
-  for (const f of incoming) {
-    if (!isImageFile(f)) {
-          showErrorToast(`${f.name} is not an image`);
-          continue;
+      try {
+        setConvertingPhotos(true);
+        for (const f of incoming) {
+          if (!isImageFile(f)) {
+            showErrorToast(`${f.name} is not an image`);
+            continue;
+          }
+
+          try {
+            const normalized = await normalizeMemoryLayerUploadImage(f);
+            staged.push({
+              id: makePendingId(normalized),
+              file: normalized,
+              description: '',
+            });
+          } catch (err) {
+            showCaughtErrorToast(
+              err,
+              `${f.name} could not be prepared for upload`
+            );
+          }
         }
-        
-        try {
-          const normalized = await normalizeMemoryLayerUploadImage(f);
-          staged.push({
-            id: makePendingId(normalized),
-            file: normalized,
-            description: '',
-          });
-        } catch (err) {
-          showCaughtErrorToast(
-            err,
-            `${f.name} could not be prepared for upload`
-          );
-        } 
+
+        if (staged.length === 0) return;
+
+        const maxTotal = 30 - brandPhotos.length;
+        const room = Math.max(0, maxTotal - pendingImages.length);
+
+        if (room === 0) {
+          toast.message('30 image limit reached');
+          return;
+        }
+
+        const accepted = staged.slice(0, room);
+
+        if (staged.length > room) {
+          toast.message('30 image limit reached');
+        }
+
+        addImages(accepted);
+      } finally {
+        setConvertingPhotos(false);
       }
-      
-      if (staged.length === 0) return;
-      
-      const maxTotal = 30 - brandPhotos.length;
-      const room = Math.max(0, maxTotal - pendingImages.length);
-      
-      if (room === 0) {
-        toast.message('30 image limit reached');
-        return;
-      }
-      
-      const accepted = staged.slice(0, room);
-      
-      if (staged.length > room) {
-        toast.message('30 image limit reached');
-      }
-      
-      addImages(accepted);
-    } 
-    finally  {
-      setConvertingPhotos(false);
-    }
     })();
   };
 
@@ -741,9 +728,7 @@ try {
     const r = rowFor(q);
     if (r.skipped) return;
     const cur = 'multi' in r ? [...r.multi] : [];
-    const i = cur.findIndex(
-      (x) => x.toLowerCase() === option.toLowerCase()
-    );
+    const i = cur.findIndex((x) => x.toLowerCase() === option.toLowerCase());
     if (i === -1) cur.push(option);
     else cur.splice(i, 1);
     setRow(q.id, { skipped: false, multi: cur });
@@ -779,10 +764,7 @@ try {
       try {
         const mergedQuestions = questions.map((item) => {
           if (item.id !== q.id || item.type !== 'multiselect') return item;
-          const opts = [
-            ...(item.options ?? []),
-            ...(nextExtras[q.id] ?? []),
-          ];
+          const opts = [...(item.options ?? []), ...(nextExtras[q.id] ?? [])];
           const unique: string[] = [];
           for (const o of opts) {
             if (!unique.some((u) => u.toLowerCase() === o.toLowerCase())) {
@@ -800,7 +782,8 @@ try {
             };
           }
           const row = rowFor(item);
-          if (row.skipped) return { questionId: item.id, skipped: true as const };
+          if (row.skipped)
+            return { questionId: item.id, skipped: true as const };
           if (item.type === 'multiselect' && 'multi' in row) {
             return {
               questionId: item.id,
@@ -825,13 +808,12 @@ try {
             ? cur
             : pr
               ? (() => {
-                const row = rowFor(pr);
-                return !row.skipped && 'multi' in row ? row.multi : undefined;
-              })()
+                  const row = rowFor(pr);
+                  return !row.skipped && 'multi' in row ? row.multi : undefined;
+                })()
               : undefined;
         const putRes = await putMemoryLayer({
-          status:
-            memory?.status === 'complete' ? 'complete' : 'in_progress',
+          status: memory?.status === 'complete' ? 'complete' : 'in_progress',
           answers,
           questions: mergedQuestions,
           ...(selectedProducts?.length ? { selectedProducts } : {}),
@@ -859,7 +841,7 @@ try {
   );
 
   const inputBase =
-    'w-full rounded-xl border border-border bg-card px-4 py-2.5 text-foreground placeholder-slate-400 focus:border-primary-purple focus:outline-none focus:ring-2 focus:ring-primary-purple/20';
+    'w-full rounded-xl border border-default bg-default px-4 py-2.5 text-default placeholder:text-quaternary focus:border-primary-purple focus:outline-none focus:ring-2 focus:ring-strong';
 
   if (authLoading) return <PageLoadingState />;
   if (!user) return null;
@@ -869,18 +851,18 @@ try {
       <div className="mb-8">
         <Link
           href="/brand-dna"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-purple hover:text-primary-purple mb-4"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-preview hover:text-preview mb-4"
         >
           <ChevronLeft className="w-4 h-4" />
           Back to Business DNA
         </Link>
         <h1 className={cn(workspacePageTitleClass, 'flex items-center gap-3')}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-tr from-violet-600 to-indigo-500 text-white shadow-sm">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-tr from-[var(--purple-9)] to-[var(--purple-9)] text-white">
             <Brain className="h-5 w-5" />
           </div>
           Business Data
         </h1>
-        <p className="mt-3 text-base text-muted-foreground max-w-2xl leading-relaxed">
+        <p className="mt-3 text-base text-secondary max-w-2xl leading-relaxed">
           Product and content signals used when generating posts.
         </p>
       </div>
@@ -889,7 +871,7 @@ try {
       ) : (
         <div className="space-y-10">
           <div
-            className="flex gap-1 p-1 rounded-2xl bg-muted border border-border mb-6"
+            className="flex gap-1 p-1 rounded-2xl bg-element border border-default mb-6"
             role="tablist"
             aria-label="Business Data sections"
           >
@@ -899,10 +881,10 @@ try {
               aria-selected={activeTab === 'questionnaire'}
               onClick={() => setActiveTab('questionnaire')}
               className={cn(
-                'flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors',
+                'flex-1 inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-expo',
                 activeTab === 'questionnaire'
-                  ? 'bg-card text-foreground shadow-sm ring-1 ring-border'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-default text-default ring-1 ring-border'
+                  : 'text-secondary hover:text-default'
               )}
             >
               <MessageSquareText className="w-4 h-4 shrink-0" />
@@ -914,10 +896,10 @@ try {
               aria-selected={activeTab === 'images'}
               onClick={() => setActiveTab('images')}
               className={cn(
-                'flex-1 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors',
+                'flex-1 inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold transition-expo',
                 activeTab === 'images'
-                  ? 'bg-card text-foreground shadow-sm ring-1 ring-border'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-default text-default ring-1 ring-border'
+                  : 'text-secondary hover:text-default'
               )}
             >
               <ImageIcon className="w-4 h-4 shrink-0" />
@@ -929,17 +911,17 @@ try {
           {activeTab === 'questionnaire' ? (
             questions.length ? (
               <section
-                className="glass-card rounded-3xl p-6 sm:p-8 border border-border shadow-sm"
+                className="glass-card rounded-3xl p-6 sm:p-8 border border-default"
                 role="tabpanel"
               >
-                <div className="flex flex-wrap items-start justify-between gap-4 mb-6 pb-4 border-b border-border">
+                <div className="flex flex-wrap items-start justify-between gap-4 mb-6 pb-4 border-b border-default">
                   <div>
-                    <h2 className="text-lg font-bold text-foreground">
+                    <h2 className="text-subsection text-default">
                       Questionnaire
                     </h2>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm text-secondary mt-1">
                       Status:{' '}
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-default">
                         {memory?.status ?? '—'}
                       </span>
                     </p>
@@ -949,7 +931,7 @@ try {
                       type="button"
                       disabled={generating || savingAnswers}
                       onClick={() => void handleGenerate({ force: true })}
-                      className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-muted disabled:opacity-60"
+                      className="inline-flex items-center gap-2 rounded-full border border-default bg-default px-4 py-2.5 text-sm font-semibold text-default hover:bg-element disabled:text-quaternary"
                     >
                       {generating ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -962,7 +944,7 @@ try {
                       type="button"
                       disabled={savingAnswers || generating}
                       onClick={() => void handleSaveAnswers()}
-                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-action px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:brightness-105 disabled:opacity-60"
+                      className="inline-flex h-9 items-center gap-2 rounded-full btn-brand-fill px-4 text-sm font-medium disabled:cursor-not-allowed"
                     >
                       {savingAnswers ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -978,10 +960,10 @@ try {
                     return (
                       <div
                         key={q.id}
-                        className="pb-8 border-b border-border last:border-0 last:pb-0"
+                        className="pb-8 border-b border-default last:border-0 last:pb-0"
                       >
                         <div className="flex justify-between gap-4 mb-3">
-                          <label className="text-sm font-semibold text-foreground">
+                          <label className="text-sm font-semibold text-default">
                             {q.prompt}
                           </label>
                           <button
@@ -997,14 +979,14 @@ try {
                                 setRow(q.id, { skipped: true });
                               }
                             }}
-                            className="text-xs text-muted-foreground hover:text-foreground shrink-0"
+                            className="text-xs text-secondary hover:text-default shrink-0"
                           >
                             {r.skipped ? 'Include' : 'Skip'}
                           </button>
                         </div>
 
                         {r.skipped ? (
-                          <p className="text-sm text-muted-foreground italic">
+                          <p className="text-sm text-secondary italic">
                             Skipped
                           </p>
                         ) : q.type === 'multiselect' && q.options?.length ? (
@@ -1029,8 +1011,7 @@ try {
                                 ];
                                 return optionList.map((opt) => {
                                   const sel = selected.some(
-                                    (s) =>
-                                      s.toLowerCase() === opt.toLowerCase()
+                                    (s) => s.toLowerCase() === opt.toLowerCase()
                                   );
                                   return (
                                     <button
@@ -1038,10 +1019,10 @@ try {
                                       type="button"
                                       onClick={() => toggleMulti(q, opt)}
                                       className={cn(
-                                        'px-3 py-1.5 rounded-lg text-sm border transition-colors',
+                                        'px-3 py-1.5 rounded-full text-sm border transition-expo',
                                         sel
-                                          ? 'bg-blue-100 border-blue-300 text-blue-900'
-                                          : 'hover:bg-primary-blue/10 hover:border-primary-blue/40 hover:text-primary-blue border-border text-foreground'
+                                          ? 'bg-info border-info text-info'
+                                          : 'hover:bg-element hover:border-strong hover:text-link border-default text-default'
                                       )}
                                     >
                                       {opt}
@@ -1073,7 +1054,7 @@ try {
                                 type="button"
                                 onClick={() => addCustomTag(q)}
                                 disabled={!(customTags[q.id] ?? '').trim()}
-                                className="px-3 py-2 rounded-lg bg-muted text-sm font-medium text-foreground disabled:opacity-40"
+                                className="px-3 py-2 rounded-full bg-element text-sm font-medium text-default disabled:text-quaternary"
                               >
                                 Add
                               </button>
@@ -1093,7 +1074,7 @@ try {
                               return (
                                 <>
                                   <div className="space-y-2">
-                                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                    <p className="text-xs font-medium uppercase tracking-wide text-secondary">
                                       Suggestions — click to fill
                                     </p>
                                     {answerSuggestions.length > 0 ? (
@@ -1113,10 +1094,10 @@ try {
                                                 })
                                               }
                                               className={cn(
-                                                'inline-flex w-full items-start rounded-xl border px-3 py-2.5 text-left text-sm leading-snug transition-colors',
+                                                'inline-flex w-full items-start rounded-full border px-3 py-2.5 text-left text-sm leading-snug transition-expo',
                                                 active
-                                                  ? 'border-primary-purple/40 bg-primary-purple/10 text-primary-purple'
-                                                  : 'border-border bg-muted text-foreground hover:border-primary-purple/40 hover:bg-primary-purple/10'
+                                                  ? 'border-primary-purple/40 bg-primary-purple/10 text-preview'
+                                                  : 'border-default bg-element text-default hover:border-strong hover:bg-element'
                                               )}
                                             >
                                               <span className="break-words">
@@ -1127,7 +1108,7 @@ try {
                                         })}
                                       </div>
                                     ) : (
-                                      <p className="rounded-xl border border-dashed border-border bg-muted px-3 py-2.5 text-sm text-muted-foreground">
+                                      <p className="rounded-xl border border-dashed border-default bg-element px-3 py-2.5 text-sm text-secondary">
                                         No suggestions yet — regenerate
                                         questions or type your own answer.
                                       </p>
@@ -1181,12 +1162,12 @@ try {
                   })}
                 </div>
 
-                <div className="mt-8 flex justify-end pt-4 border-t border-border">
+                <div className="mt-8 flex justify-end pt-4 border-t border-default">
                   <button
                     type="button"
                     disabled={savingAnswers}
                     onClick={() => void handleSaveAnswers()}
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-action px-6 py-3 text-sm font-bold text-white shadow-md hover:brightness-105 disabled:opacity-60"
+                    className="inline-flex h-11 items-center gap-2 rounded-full btn-brand-fill px-6 text-sm font-medium disabled:cursor-not-allowed"
                   >
                     {savingAnswers ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -1197,22 +1178,22 @@ try {
               </section>
             ) : (
               <section
-                className="glass-card rounded-3xl p-8 border border-border shadow-sm"
+                className="glass-card rounded-3xl p-8 border border-default"
                 role="tabpanel"
               >
-                <h3 className="text-lg font-semibold text-foreground mb-2">
+                <h3 className="text-subsection text-default mb-2">
                   Your brand questionnaire isn&apos;t set up yet
                 </h3>
-                <p className="text-muted-foreground mb-6">
-                  Make sure your business profile is filled in — we&apos;ll use it
-                  to craft a personalized set of questions you can revisit and
-                  update anytime.
+                <p className="text-secondary mb-6">
+                  Make sure your business profile is filled in — we&apos;ll use
+                  it to craft a personalized set of questions you can revisit
+                  and update anytime.
                 </p>
                 <button
                   type="button"
                   disabled={generating}
                   onClick={() => void handleGenerate()}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-action px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:brightness-105 disabled:opacity-60"
+                  className="inline-flex h-9 items-center gap-2 rounded-full btn-brand-fill px-4 text-sm font-medium disabled:cursor-not-allowed"
                 >
                   {generating ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -1225,30 +1206,30 @@ try {
           {/* —— Photos —— */}
           <section
             className={cn(
-              'glass-card rounded-3xl p-6 sm:p-8 border border-border shadow-sm',
+              'glass-card rounded-3xl p-6 sm:p-8 border border-default',
               activeTab !== 'images' && 'hidden'
             )}
             role="tabpanel"
             hidden={activeTab !== 'images'}
           >
-            {activeTab === "images" && (
+            {activeTab === 'images' && (
               <section
                 className={cn(
-                  'mb-10 rounded-3xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-6 shadow-sm ring-1 ring-border/60 transition-opacity',
+                  'mb-10 rounded-3xl border border-default bg-gradient-to-br from-card via-card to-primary/5 p-6 ring-1 ring-border/60 transition-opacity',
                   !memoryLayerPrefReady && 'opacity-75'
                 )}
                 aria-busy={savingMemoryLayerPref || !memoryLayerPrefReady}
               >
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex gap-4 min-w-0">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-primary-purple/15 to-primary-blue/20 text-primary-purple shadow-inner ring-1 ring-primary-purple/20">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-primary-purple/15 to-primary-blue/20 text-preview ring-1 ring-strong">
                       <Sparkles className="h-6 w-6" aria-hidden />
                     </div>
                     <div className="min-w-0">
-                      <h2 className="text-base font-semibold tracking-tight text-foreground">
+                      <h2 className="text-section text-default">
                         Send brand images
                       </h2>
-                      <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed max-w-xl">
+                      <p className="mt-1.5 text-sm text-secondary leading-relaxed max-w-xl">
                         Upload product photos only. When this is on, those
                         product images are shared with generation so Auto-mode
                         video can run product-advert scenes and captions/visuals
@@ -1259,11 +1240,11 @@ try {
                   </div>
                   <div className="flex items-center gap-3 sm:shrink-0 sm:pl-4">
                     {!memoryLayerPrefReady ? (
-                      <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                      <span className="text-xs font-medium text-secondary whitespace-nowrap">
                         Loading…
                       </span>
                     ) : savingMemoryLayerPref ? (
-                      <span className="inline-flex items-center gap-2 text-xs font-medium text-primary-purple whitespace-nowrap">
+                      <span className="inline-flex items-center gap-2 text-xs font-medium text-preview whitespace-nowrap">
                         <Loader2
                           className="h-4 w-4 animate-spin shrink-0"
                           aria-hidden
@@ -1274,9 +1255,7 @@ try {
                       <span
                         className={cn(
                           'text-xs font-semibold whitespace-nowrap tabular-nums',
-                          memoryLayerEnabled
-                            ? 'text-emerald-700'
-                            : 'text-muted-foreground'
+                          memoryLayerEnabled ? 'text-success' : 'text-secondary'
                         )}
                       >
                         {memoryLayerEnabled ? 'On' : 'Off'}
@@ -1284,9 +1263,7 @@ try {
                     )}
                     <Switch
                       checked={Boolean(memoryLayerEnabled)}
-                      disabled={
-                        !memoryLayerPrefReady || savingMemoryLayerPref
-                      }
+                      disabled={!memoryLayerPrefReady || savingMemoryLayerPref}
                       onCheckedChange={(c) => void handleMemoryLayerToggle(c)}
                       aria-label={
                         memoryLayerEnabled
@@ -1298,12 +1275,12 @@ try {
                 </div>
 
                 {memoryLayerEnabled ? (
-                  <div className="mt-5 flex flex-col gap-3 border-t border-border/60 pt-5 sm:flex-row sm:items-end sm:justify-between">
+                  <div className="mt-5 flex flex-col gap-3 border-t border-default pt-5 sm:flex-row sm:items-end sm:justify-between">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-medium text-default">
                         Brand photo usage
                       </p>
-                      <p className="mt-1 text-sm text-muted-foreground leading-relaxed max-w-xl">
+                      <p className="mt-1 text-sm text-secondary leading-relaxed max-w-xl">
                         Strict mode always uses a Memory Layer photo. Non-strict
                         randomly mixes Memory Layer runs with generations that
                         skip brand photos.
@@ -1311,9 +1288,7 @@ try {
                     </div>
                     <Select
                       value={memoryLayerStrict ? 'strict' : 'non-strict'}
-                      disabled={
-                        !memoryLayerPrefReady || savingMemoryLayerPref
-                      }
+                      disabled={!memoryLayerPrefReady || savingMemoryLayerPref}
                       onValueChange={(v) =>
                         void handleMemoryLayerStrictChange(v === 'strict')
                       }
@@ -1339,33 +1314,33 @@ try {
                 {showStrictPhotoWarning ? (
                   <div
                     role="alert"
-                    className="mt-5 flex items-start gap-3 rounded-xl border border-amber-500/35 bg-amber-500/10 px-3.5 py-3 text-sm shadow-sm ring-1 ring-amber-500/20"
+                    className="mt-5 flex items-start gap-3 rounded-xl border border-warning bg-warning px-3.5 py-3 text-sm ring-1 ring-[var(--border-warning)]"
                   >
                     <TriangleAlert
-                      className="mt-0.5 size-4 shrink-0 text-amber-300"
+                      className="mt-0.5 size-4 shrink-0 text-warning"
                       aria-hidden
                     />
                     <div className="min-w-0 space-y-1">
-                      <p className="font-semibold text-amber-200">
+                      <p className="font-semibold text-warning">
                         Few product photos
                       </p>
-                      <p className="leading-relaxed text-amber-100/85">
+                      <p className="leading-relaxed text-warning">
                         You have fewer than 10 product photos. Turn off Strictly
-                        use Memory Layer so generation can also run without brand
-                        photos and avoid repeating the same images too often.
+                        use Memory Layer so generation can also run without
+                        brand photos and avoid repeating the same images too
+                        often.
                       </p>
                     </div>
                   </div>
                 ) : null}
               </section>
             )}
-            <div className="flex flex-wrap items-start justify-between gap-4 mb-6 pb-4 border-b border-border">
-
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-6 pb-4 border-b border-default">
               <div>
-                <h2 className="text-lg font-bold text-foreground">
+                <h2 className="text-subsection text-default">
                   Brand reference photos
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1 max-w-[48ch]">
+                <p className="text-sm text-secondary mt-1 max-w-[48ch]">
                   Product photos only — upload a product brochure PDF or
                   individual product images. SocioGenie suggests descriptions
                   when you leave them blank — edit anytime. Up to 30 images
@@ -1381,7 +1356,7 @@ try {
                   convertingPhotos
                 }
                 onClick={() => void handleUploadPhotos()}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-emerald-700 disabled:opacity-60 shrink-0"
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--green-9)] px-5 py-2.5 text-sm font-semibold text-white hover:bg-success disabled:text-quaternary shrink-0"
               >
                 {uploadingPhotos ? (
                   <>
@@ -1395,26 +1370,23 @@ try {
             </div>
 
             {isExtracting && (
-              <p className="mb-6 text-xs font-medium text-violet-800 flex items-center gap-2">
+              <p className="mb-6 text-xs font-medium text-preview flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
                 Processing upload…
               </p>
             )}
 
-            <div className="mb-8 rounded-xl border border-dashed border-border bg-muted/80 p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-black mb-2">
-                Import from PDF
-              </h3>
-              <p className="text-sm text-black mb-3 max-w-[52ch]">
+            <div className="mb-8 rounded-xl border border-dashed border-default bg-element p-4">
+              <h3 className="text-eyebrow mb-2">Import from PDF</h3>
+              <p className="text-sm text-default mb-3 max-w-[52ch]">
                 Upload a product brochure or catalog PDF (max 50MB).
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <label
                   htmlFor={pdfInputId}
                   className={cn(
-                    'inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground cursor-pointer hover:bg-accent',
-                    (isExtracting) &&
-                    'opacity-60 pointer-events-none'
+                    'inline-flex items-center gap-2 rounded-xl border border-default bg-default px-4 py-2.5 text-sm font-medium text-default cursor-pointer hover:bg-hover',
+                    isExtracting && 'opacity-60 pointer-events-none'
                   )}
                 >
                   <FileText className="w-4 h-4" />
@@ -1443,18 +1415,16 @@ try {
                   <button
                     type="button"
                     onClick={() => setPendingPdf(null)}
-                    className="text-xs text-muted-foreground hover:text-foreground"
+                    className="text-xs text-secondary hover:text-default"
                   >
                     Clear
                   </button>
                 ) : null}
                 <button
                   type="button"
-                  disabled={
-                    !pendingPdf || isExtracting
-                  }
+                  disabled={!pendingPdf || isExtracting}
                   onClick={() => void handleUploadPdf()}
-                  className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-violet-700 disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-full bg-[var(--purple-9)] px-4 py-2.5 text-sm font-semibold text-white hover:bg-preview disabled:text-quaternary"
                 >
                   Upload PDF
                 </button>
@@ -1463,28 +1433,32 @@ try {
 
             {brandPhotos.length > 0 && (
               <div className="mb-8">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                  Saved
-                </h3>
+                <h3 className="text-eyebrow mb-3">Saved</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {brandPhotos.map((p) => (
                     <div
                       key={p.path}
-                      className="rounded-xl border border-border overflow-hidden bg-muted/80 p-2 space-y-2"
+                      className="rounded-xl border border-default overflow-hidden bg-element p-2 space-y-2"
                     >
-                      <div className="relative group rounded-lg overflow-hidden aspect-square bg-muted max-h-[220px] sm:max-h-none">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={p.url}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="relative group rounded-lg overflow-hidden aspect-square bg-element max-h-[220px] sm:max-h-none">
+                        {p.url ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={p.url}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-secondary">
+                            <ImageIcon className="h-10 w-10" />
+                          </div>
+                        )}
                         <button
                           type="button"
                           disabled={removingPhotoPath === p.path}
                           aria-busy={removingPhotoPath === p.path}
                           onClick={() => void handleRemovePhoto(p.path)}
-                          className="absolute top-2 right-2 z-10 p-1.5 rounded-lg bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-black/60 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity hover:bg-danger disabled:cursor-not-allowed disabled:text-quaternary"
                           aria-label="Remove photo"
                         >
                           {removingPhotoPath === p.path ? (
@@ -1496,12 +1470,12 @@ try {
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-center justify-between gap-2">
-                          <label className="text-xs font-medium text-muted-foreground">
+                          <label className="text-xs font-medium text-secondary">
                             Image description (max {BRAND_PHOTO_DESCRIPTION_MAX}{' '}
                             characters)
                           </label>
                           {p.descriptionSource === 'ai' ? (
-                            <span className="text-[10px] font-medium uppercase tracking-wide text-violet-600">
+                            <span className="text-[10px] font-medium uppercase tracking-wide text-preview">
                               Suggested
                             </span>
                           ) : null}
@@ -1528,7 +1502,7 @@ try {
                             savingDescriptionPath === p.path && 'opacity-60'
                           )}
                         />
-                        <p className="text-[10px] text-muted-foreground text-right">
+                        <p className="text-[10px] text-secondary text-right">
                           {(photoDescriptionDrafts[p.path] ?? '').length}/
                           {BRAND_PHOTO_DESCRIPTION_MAX}
                         </p>
@@ -1540,52 +1514,50 @@ try {
             )}
 
             {convertingPhotos ? (
-              <div className="mx-auto w-full h-full flex items-center justify-center gap-2" >
+              <div className="mx-auto w-full h-full flex items-center justify-center gap-2">
                 Adding photos...
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
               </div>
             ) : (
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                Add from your device
-              </h3>
-              <label
-                htmlFor={fileInputId}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-xl border-2  bg-card px-4 py-3 text-sm font-semibold text-primary-purple cursor-pointer shadow-sm hover:bg-primary-purple/10 hover:border-primary-purple',
-                  isExtracting && 'opacity-60 pointer-events-none'
-                )}
-              >
-                <ImagePlus className="w-4 h-4 text-primary-purple" />
-                Choose images
-                <input
-                  id={fileInputId}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="sr-only"
-                  disabled={isExtracting || convertingPhotos}
-                  onChange={(e) => {
-                    const files = e.target.files;
-                    addFilesFromPicker(files);
-                    // Defer reset so the picker finishes; avoids edge cases where previews never stick.
-                    queueMicrotask(() => {
-                      e.target.value = '';
-                    });
-                  }}
-                />
-              </label>
-              <p className="text-xs text-muted-foreground mt-2">
-                {maxNewSlots} slot
-                {maxNewSlots === 1 ? '' : 's'} left. JPEG, PNG, or WebP upload
-                best. Large images are resized automatically. Leave descriptions
-                blank for suggestions.
-              </p>
-            </div>
+              <div>
+                <h3 className="text-eyebrow mb-3">Add from your device</h3>
+                <label
+                  htmlFor={fileInputId}
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-xl border-2  bg-default px-4 py-3 text-sm font-semibold text-preview cursor-pointer hover:bg-element hover:border-primary-purple',
+                    isExtracting && 'opacity-60 pointer-events-none'
+                  )}
+                >
+                  <ImagePlus className="w-4 h-4 text-preview" />
+                  Choose images
+                  <input
+                    id={fileInputId}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="sr-only"
+                    disabled={isExtracting || convertingPhotos}
+                    onChange={(e) => {
+                      const files = e.target.files;
+                      addFilesFromPicker(files);
+                      // Defer reset so the picker finishes; avoids edge cases where previews never stick.
+                      queueMicrotask(() => {
+                        e.target.value = '';
+                      });
+                    }}
+                  />
+                </label>
+                <p className="text-xs text-secondary mt-2">
+                  {maxNewSlots} slot
+                  {maxNewSlots === 1 ? '' : 's'} left. JPEG, PNG, or WebP upload
+                  best. Large images are resized automatically. Leave
+                  descriptions blank for suggestions.
+                </p>
+              </div>
             )}
             {pendingImages.length > 0 && (
               <div className="mt-6">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                <h3 className="text-eyebrow mb-3">
                   {uploadingPhotos
                     ? `Uploading… (${pendingImages.length} left)`
                     : `Ready to upload (${pendingImages.length})`}
@@ -1597,11 +1569,11 @@ try {
                       className={cn(
                         'rounded-xl border overflow-hidden p-2 space-y-2 ring-1',
                         p.failed
-                          ? 'border-red-300 bg-red-50/50 ring-red-100'
-                          : 'border-emerald-200 bg-emerald-50/40 ring-emerald-100'
+                          ? 'border-danger bg-danger ring-[var(--border-danger)]'
+                          : 'border-success bg-success ring-[var(--border-success)]'
                       )}
                     >
-                      <div className="relative aspect-square max-h-[220px] sm:max-h-none rounded-lg overflow-hidden bg-muted">
+                      <div className="relative aspect-square max-h-[220px] sm:max-h-none rounded-lg overflow-hidden bg-element">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={p.previewUrl}
@@ -1614,14 +1586,16 @@ try {
                               className="h-6 w-6 animate-spin"
                               aria-hidden
                             />
-                            <span className="text-xs font-medium">Uploading…</span>
+                            <span className="text-xs font-medium">
+                              Uploading…
+                            </span>
                           </div>
                         ) : (
                           <button
                             type="button"
                             onClick={() => removePending(p.id)}
                             disabled={uploadingPhotos}
-                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-red-600 disabled:opacity-40"
+                            className="absolute top-2 right-2 p-1.5 rounded-full bg-black/60 text-white hover:bg-danger disabled:text-quaternary"
                             aria-label="Remove from queue"
                           >
                             <X className="w-4 h-4" />
@@ -1632,8 +1606,9 @@ try {
                         </p>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">
-                          Image description (optional — SocioGenie fills if blank)
+                        <label className="text-xs font-medium text-secondary">
+                          Image description (optional — SocioGenie fills if
+                          blank)
                         </label>
                         <textarea
                           value={p.description}
@@ -1651,12 +1626,11 @@ try {
                           placeholder="Optional — leave blank for suggestion"
                           className={cn(
                             inputBase,
-                            'text-sm py-2 resize-y min-h-[72px] disabled:opacity-60'
+                            'text-sm py-2 resize-y min-h-[72px] disabled:text-quaternary'
                           )}
                         />
-                        <p className="text-[10px] text-muted-foreground text-right">
-                          {p.description.length}/
-                          {BRAND_PHOTO_DESCRIPTION_MAX}
+                        <p className="text-[10px] text-secondary text-right">
+                          {p.description.length}/{BRAND_PHOTO_DESCRIPTION_MAX}
                         </p>
                       </div>
                     </div>
@@ -1665,7 +1639,7 @@ try {
               </div>
             )}
 
-            <div className="mt-8 flex justify-end pt-4 border-t border-border">
+            <div className="mt-8 flex justify-end pt-4 border-t border-default">
               <button
                 type="button"
                 disabled={
@@ -1675,7 +1649,7 @@ try {
                   convertingPhotos
                 }
                 onClick={() => void handleUploadPhotos()}
-                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-emerald-700 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--green-9)] px-6 py-3 text-sm font-bold text-white hover:bg-success disabled:text-quaternary"
               >
                 {uploadingPhotos ? (
                   <>

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState } from 'react';
 
 type User = {
   admin: boolean;
@@ -23,6 +23,6 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (!context) throw new Error("useUser must be used inside UserProvider");
+  if (!context) throw new Error('useUser must be used inside UserProvider');
   return context;
 };

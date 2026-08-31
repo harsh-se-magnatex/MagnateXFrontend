@@ -27,7 +27,11 @@ import {
   hasSchedulableMediaPreview,
   resolveSchedulableMediaPreview,
 } from '@/lib/post-media-preview';
-import { ImagePreviewButton, ImagePreviewOverlay, useImagePreview } from '@/components/image-preview';
+import {
+  ImagePreviewButton,
+  ImagePreviewOverlay,
+  useImagePreview,
+} from '@/components/image-preview';
 import { generatedByLabel } from '@/lib/scheduled-post-status';
 
 type FirestoreTimestamp = {
@@ -133,28 +137,28 @@ function ActionButtons({
   };
   const isCard = size === 'card';
   const btn = isCard
-    ? 'rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-background'
-    : 'rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background';
+    ? 'rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-expo focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-background'
+    : 'rounded-lg px-4 py-2.5 text-sm font-semibold transition-expo focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background';
   return (
     <div className={`flex items-center gap-3 ${!isCard ? 'flex-wrap' : ''}`}>
       <button
         type="button"
         onClick={(e) => handle(onRegenerate, e)}
-        className={`${btn} bg-amber-500 text-neutral-950 hover:bg-amber-400 focus:ring-amber-500`}
+        className={`${btn} bg-[var(--amber-9)] text-default hover:bg-warning focus:ring-[var(--border-warning)]`}
       >
         Regenerate
       </button>
       <button
         type="button"
         onClick={(e) => handle(onAccept, e)}
-        className={`${btn} bg-emerald-600 text-white hover:bg-emerald-500 focus:ring-emerald-500`}
+        className={`${btn} bg-[var(--green-9)] text-white hover:bg-success focus:ring-[var(--border-success)]`}
       >
         Accept
       </button>
       <button
         type="button"
         onClick={(e) => handle(onReject, e)}
-        className={`${btn} bg-red-600 text-white hover:bg-red-500 focus:ring-red-500`}
+        className={`${btn} bg-[var(--red-9)] text-white hover:bg-danger focus:ring-[var(--border-danger)]`}
       >
         Reject
       </button>
@@ -301,7 +305,9 @@ export default function MonitoringPage() {
       try {
         await performActionOnScheduledPost(postId, action, userId, platform);
       } catch {
-        showErrorToast('Failed to perform action on scheduled post. Please try again later.');
+        showErrorToast(
+          'Failed to perform action on scheduled post. Please try again later.'
+        );
         setTabsState(previousState);
       }
     },
@@ -312,21 +318,19 @@ export default function MonitoringPage() {
     <div className="flex min-h-0 w-full flex-col">
       <div className="min-w-0 flex-1 pt-4 lg:pt-0">
         <header className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Monitoring
-          </h1>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground ">
+          <h1 className="text-page-title text-default">Monitoring</h1>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-secondary">
             Admin view of scheduled posts with status &quot;pending&quot;. Click
             a card to see full details.
           </p>
         </header>
 
-        <section className="mt-6 pt-6 border-t border-border">
+        <section className="mt-6 pt-6 border-t border-default">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-subsection text-default">
               Pending scheduled posts
             </h2>
-            <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-muted p-1">
+            <div className="flex flex-wrap gap-1 rounded-xl border border-default bg-element p-1">
               {TABS.map((tab) => {
                 const tCount = tabsState[tab].posts.length;
                 const tHasMore = tabsState[tab].hasMore;
@@ -335,10 +339,11 @@ export default function MonitoringPage() {
                     key={tab}
                     type="button"
                     onClick={() => setDateTab(tab)}
-                    className={`rounded-lg px-4 py-2 text-xs font-semibold capitalize transition-all ${dateTab === tab
-                        ? 'bg-card text-foreground shadow-sm ring-1 ring-border'
-                        : 'text-muted-foreground hover:text-foreground'
-                      }`}
+                    className={`rounded-full px-4 py-2 text-xs font-semibold capitalize transition-expo ${
+                      dateTab === tab
+                        ? 'bg-default text-default ring-1 ring-border'
+                        : 'text-secondary hover:text-default'
+                    }`}
                   >
                     {tab} ({tCount}
                     {tHasMore ? '+' : ''})
@@ -356,22 +361,22 @@ export default function MonitoringPage() {
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="rounded-xl border border-border  bg-card  overflow-hidden animate-pulse"
+                  className="rounded-xl border border-default bg-default overflow-hidden animate-pulse"
                 >
                   <div className="flex flex-col sm:flex-row gap-4 p-4">
-                    <div className="sm:w-32 h-24 rounded-lg bg-muted shrink-0" />
+                    <div className="sm:w-32 h-24 rounded-lg bg-element shrink-0" />
                     <div className="min-w-0 flex-1 space-y-3">
-                      <div className="h-4 bg-muted rounded w-full max-w-md" />
-                      <div className="h-4 bg-muted rounded w-2/3" />
-                      <div className="h-6 bg-muted rounded w-24" />
+                      <div className="h-4 bg-element rounded w-full max-w-md" />
+                      <div className="h-4 bg-element rounded w-2/3" />
+                      <div className="h-6 bg-element rounded w-24" />
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           ) : visiblePosts.length === 0 ? (
-            <div className="rounded-xl border border-border bg-muted/50 py-6 text-center">
-              <p className="text-sm text-muted-foreground">
+            <div className="rounded-xl border border-default bg-element py-6 text-center">
+              <p className="text-sm text-secondary">
                 No {dateTab} pending scheduled posts.
               </p>
               {tabState.hasMore ? (
@@ -379,7 +384,7 @@ export default function MonitoringPage() {
                   type="button"
                   onClick={() => fetchPending(dateTab)}
                   disabled={tabState.loadingMore}
-                  className="mt-3 rounded-lg border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-60"
+                  className="mt-3 rounded-full border border-default bg-default px-4 py-2 text-xs font-semibold text-default transition-expo hover:bg-element disabled:pointer-events-none disabled:text-quaternary"
                 >
                   {tabState.loadingMore
                     ? 'Loading more...'
@@ -407,14 +412,16 @@ export default function MonitoringPage() {
                       }
                     },
                     className:
-                      'rounded-xl border border-border  bg-card  shadow-sm overflow-hidden cursor-pointer hover:border-border  transition-colors focus:outline-none focus:ring-2 focus:ring-primary-purple/30 ',
+                      'rounded-xl border border-default  bg-default  overflow-hidden cursor-pointer hover:border-default  transition-expo focus:outline-none focus:ring-2 focus:ring-strong ',
                   };
                   const cardInner = (
                     <div className="flex flex-col sm:flex-row gap-4 p-4">
                       {(() => {
                         const mediaPreview =
                           resolveSchedulableMediaPreview(post);
-                        const carouselSlides = Array.isArray(post.carouselSlides)
+                        const carouselSlides = Array.isArray(
+                          post.carouselSlides
+                        )
                           ? post.carouselSlides
                               .map((slide, index) => ({
                                 index: slide.index ?? index + 1,
@@ -436,8 +443,9 @@ export default function MonitoringPage() {
                                 slides={carouselSlides}
                                 imageClassName="h-24 rounded-lg object-cover"
                               />
-                              <p className="mt-1 text-[10px] font-medium text-muted-foreground">
-                                {post.slideCount ?? carouselSlides.length} slides
+                              <p className="mt-1 text-[10px] font-medium text-secondary">
+                                {post.slideCount ?? carouselSlides.length}{' '}
+                                slides
                               </p>
                             </div>
                           );
@@ -449,14 +457,17 @@ export default function MonitoringPage() {
                           <div className="sm:w-32 shrink-0">
                             <PostMediaPreview
                               preview={mediaPreview}
-                              className="w-full h-24 object-cover  rounded-lg bg-muted"
-                              videoClassName="w-full h-24 object-cover rounded-lg bg-muted"
+                              className="w-full h-24 object-cover rounded-lg bg-element"
+                              videoClassName="w-full h-24 object-cover rounded-lg bg-element"
                               controls={false}
                               muted
                             />
                             {generatedBy ? (
-                              <div className="mt-2 inline-flex max-w-full items-center gap-1 rounded-md border border-border bg-card/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm backdrop-blur">
-                                <span className="truncate" title={`Generated by: ${generatedBy}`}>
+                              <div className="mt-2 inline-flex max-w-full items-center gap-1 rounded-md border border-default bg-default px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-default backdrop-blur">
+                                <span
+                                  className="truncate"
+                                  title={`Generated by: ${generatedBy}`}
+                                >
                                   {generatedBy}
                                 </span>
                               </div>
@@ -465,10 +476,10 @@ export default function MonitoringPage() {
                         );
                       })()}
                       <div className="min-w-0 flex-1 space-y-2">
-                        <p className="text-sm text-foreground  line-clamp-2">
+                        <p className="text-sm text-default line-clamp-2">
                           {post.message || 'No message'}
                         </p>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground ">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-secondary">
                           <span className="font-medium capitalize">
                             {post.platform}
                           </span>
@@ -476,7 +487,7 @@ export default function MonitoringPage() {
                           <span>{post.userName}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold capitalize text-foreground ring-1 ring-inset ring-border">
+                          <span className="inline-flex items-center rounded-full bg-element px-2.5 py-0.5 text-xs font-semibold capitalize text-default ring-1 ring-inset ring-border">
                             {status}
                           </span>
                         </div>
@@ -513,11 +524,7 @@ export default function MonitoringPage() {
                   );
                   if (index === visiblePosts.length - 1) {
                     return (
-                      <li
-                        key={post.postId}
-                        ref={lastPostRef}
-                        {...itemProps}
-                      >
+                      <li key={post.postId} ref={lastPostRef} {...itemProps}>
                         {cardInner}
                       </li>
                     );
@@ -531,13 +538,13 @@ export default function MonitoringPage() {
               </ul>
               {tabState.loadingMore && (
                 <div
-                  className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-border bg-muted/50 py-4 text-sm text-muted-foreground"
+                  className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-default bg-element py-4 text-sm text-secondary"
                   aria-busy="true"
                   aria-live="polite"
                   aria-label="Loading more posts"
                 >
                   <span
-                    className="size-4 shrink-0 animate-spin rounded-full border-2 border-border border-t-primary-purple"
+                    className="size-4 shrink-0 animate-spin rounded-full border-2 border-default border-t-primary-purple"
                     aria-hidden
                   />
                   Loading more…
@@ -605,20 +612,17 @@ function DetailModal({
       aria-labelledby="detail-modal-title"
     >
       <div
-        className="rounded-xl border border-border  bg-card  shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="rounded-xl border border-default bg-default max-w-lg w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-border  flex items-center justify-between">
-          <h2
-            id="detail-modal-title"
-            className="text-lg font-semibold text-foreground "
-          >
+        <div className="p-4 border-b border-default flex items-center justify-between">
+          <h2 id="detail-modal-title" className="text-section text-default">
             Scheduled post details
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground  focus:outline-none focus:ring-2 focus:ring-primary-purple/30"
+            className="rounded-full p-1.5 text-secondary hover:bg-element hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
             aria-label="Close"
           >
             <svg
@@ -639,7 +643,7 @@ function DetailModal({
         <div className="p-4 space-y-4">
           {isCarousel && carouselSlides.length > 0 ? (
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">
+              <p className="mb-1 text-xs font-medium text-secondary">
                 Carousel · {post.slideCount ?? carouselSlides.length} slides
               </p>
               <CarouselSwipePreview
@@ -650,33 +654,31 @@ function DetailModal({
             </div>
           ) : hasMedia && openUrl ? (
             <div className="">
-              <p className="text-xs font-medium text-muted-foreground mb-1">
+              <p className="text-xs font-medium text-secondary mb-1">
                 {mediaPreview.isVideo ? 'Video' : 'Image'}
               </p>
               <div className="relative">
-              <PostMediaPreview
-                preview={mediaPreview}
-                className="w-full max-h-64 object-contain rounded-lg bg-muted"
-                videoClassName="w-full max-h-64 object-contain rounded-lg bg-muted"
-                controls={mediaPreview.isVideo}
-                muted={false}
-              />
-              {!mediaPreview.isVideo && mediaPreview.imageUrl ? (
-                <div className="absolute bottom-2 right-2">
-                  <ImagePreviewButton
-                    variant="overlay-icon"
-                    stopPropagation
-                    onClick={() =>
-                      imagePreview.open(
-                        mediaPreview.imageUrl as string
-                      )
-                    }
-                  />
-                </div>
-              ) : null}
+                <PostMediaPreview
+                  preview={mediaPreview}
+                  className="w-full max-h-64 object-contain rounded-lg bg-element"
+                  videoClassName="w-full max-h-64 object-contain rounded-lg bg-element"
+                  controls={mediaPreview.isVideo}
+                  muted={false}
+                />
+                {!mediaPreview.isVideo && mediaPreview.imageUrl ? (
+                  <div className="absolute bottom-2 right-2">
+                    <ImagePreviewButton
+                      variant="overlay-icon"
+                      stopPropagation
+                      onClick={() =>
+                        imagePreview.open(mediaPreview.imageUrl as string)
+                      }
+                    />
+                  </div>
+                ) : null}
               </div>
               <div className="flex w-full justify-end">
-                <button className="bg-primary-blue flex mt-2 p-2 rounded-md text-white items-center gap-x-2">
+                <button className="bg-primary-blue flex mt-2 p-2 rounded-full text-white items-center gap-x-2">
                   <a href={openUrl} target="_blank" rel="noreferrer">
                     Open in New Tab
                   </a>
@@ -698,10 +700,8 @@ function DetailModal({
               value={generatedByLabel(post.GeneratedBy) as string}
             />
           ) : null}
-          <div className="pt-4 border-t border-border ">
-            <p className="text-xs font-medium text-muted-foreground mb-3">
-              Actions
-            </p>
+          <div className="pt-4 border-t border-default">
+            <p className="text-xs font-medium text-secondary mb-3">Actions</p>
             <ActionButtons
               size="modal"
               onRegenerate={() =>
@@ -733,10 +733,9 @@ function DetailRow({
 }) {
   return (
     <div>
-      <p className="text-xs font-medium text-muted-foreground  mb-0.5">{label}</p>
+      <p className="text-xs font-medium text-secondary mb-0.5">{label}</p>
       <p
-        className={`text-sm text-foreground ${long ? 'whitespace-pre-wrap wrap-break-word' : ''
-          }`}
+        className={`text-sm text-default ${long ? 'whitespace-pre-wrap wrap-break-word' : ''}`}
       >
         {value}
       </p>

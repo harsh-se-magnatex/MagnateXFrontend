@@ -25,10 +25,7 @@ import {
   getGeneratedMediaLibraryApi,
   type GeneratedMediaLibraryItem,
 } from '@/src/service/api/generated-media-library.service';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 
 type MediaLibraryImagePickerDialogProps = {
@@ -131,7 +128,7 @@ export function MediaLibraryImagePickerDialog({
         )}
         showCloseButton
       >
-        <DialogHeader className="shrink-0 border-b border-border px-6 py-4 pr-12">
+        <DialogHeader className="shrink-0 border-b border-default px-6 py-4 pr-12">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             {description ??
@@ -141,14 +138,14 @@ export function MediaLibraryImagePickerDialog({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
           {loading ? (
-            <div className="flex min-h-[240px] items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="flex min-h-[240px] items-center justify-center gap-2 text-sm text-secondary">
               <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
               Loading images…
             </div>
           ) : error ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : pickableItems.length === 0 ? (
-            <div className="flex min-h-[240px] flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground">
+            <div className="flex min-h-[240px] flex-col items-center justify-center gap-3 text-center text-sm text-secondary">
               <ImageOff className="h-10 w-10 opacity-60" aria-hidden />
               <p>No images in your library yet.</p>
               <Button asChild variant="secondary" size="sm">
@@ -177,16 +174,16 @@ export function MediaLibraryImagePickerDialog({
                         }
                       }}
                       className={cn(
-                        'group relative flex w-full min-w-0 cursor-pointer flex-col rounded-2xl border border-border bg-card p-3 text-left shadow-sm',
-                        'transition-all hover:border-primary/35 hover:bg-accent/40',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
+                        'group relative flex w-full min-w-0 cursor-pointer flex-col rounded-2xl border border-default bg-default p-3 text-left',
+                        'transition-expo hover:border-primary/35 hover:bg-hover',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-strong'
                       )}
                     >
-                      <div className="relative mb-2 aspect-[16/10] overflow-hidden rounded-xl border border-border bg-muted">
+                      <div className="relative mb-2 aspect-[16/10] overflow-hidden rounded-xl border border-default bg-element">
                         <img
                           src={imageUrl}
                           alt=""
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                          className="h-full w-full object-cover transition-transform duration-300"
                         />
                         <div className="absolute bottom-2 right-2">
                           <ImagePreviewButton
@@ -200,8 +197,8 @@ export function MediaLibraryImagePickerDialog({
                           />
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Calendar className="h-3.5 w-3.5 shrink-0 text-primary" />
+                      <div className="flex items-center gap-1.5 text-xs text-secondary">
+                        <Calendar className="h-3.5 w-3.5 shrink-0 text-link" />
                         <span className="truncate">{whenLabel}</span>
                       </div>
                     </div>

@@ -13,15 +13,15 @@ export default function LegalLayout({
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute -top-24 right-0 h-80 w-80 rounded-full bg-indigo-300/20 blur-3xl"
+        className="pointer-events-none absolute -top-24 right-0 h-80 w-80 rounded-full bg-preview blur-3xl"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute top-[28%] -left-24 h-72 w-72 rounded-full bg-violet-300/15 blur-3xl"
+        className="pointer-events-none absolute top-[28%] -left-24 h-72 w-72 rounded-full bg-preview blur-3xl"
         aria-hidden
       />
       <div
-        className="pointer-events-none absolute bottom-0 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-sky-200/20 blur-3xl"
+        className="pointer-events-none absolute bottom-0 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-info blur-3xl"
         aria-hidden
       />
 

@@ -22,30 +22,25 @@ export function PlatformSwitcher({ active, onChange }: PlatformSwitcherProps) {
             key={platform.id}
             type="button"
             onClick={() => onChange(platform.id)}
+            aria-pressed={isActive}
             className={cn(
-              'group flex min-w-[220px] flex-1 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all duration-200 sm:max-w-[240px]',
+              'flex min-w-[200px] flex-1 items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-expo sm:max-w-[240px]',
               isActive
-                ? 'border-primary-purple/50 bg-card/90 shadow-lg shadow-primary-purple/15 ring-1 ring-primary-purple/25'
-                : 'border-border/50 bg-card/40 hover:border-border hover:bg-card/70'
+                ? 'nav-active border-[color-mix(in_srgb,var(--brand-violet)_45%,var(--border-default))]'
+                : 'border-default bg-element hover:border-strong hover:bg-subtle'
             )}
           >
-            <PlatformIcon
-              platform={platform.id}
-              className={cn(
-                'h-10 w-10 transition-transform duration-200',
-                isActive ? 'scale-105' : 'group-hover:scale-105'
-              )}
-            />
+            <PlatformIcon platform={platform.id} className="h-10 w-10" />
             <div className="min-w-0">
               <p
                 className={cn(
-                  'text-sm font-bold',
-                  isActive ? 'text-foreground' : 'text-foreground/80'
+                  'text-sm font-semibold',
+                  isActive ? 'text-default' : 'text-secondary'
                 )}
               >
                 {platform.label}
               </p>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="truncate text-xs text-tertiary">
                 {platform.description}
               </p>
             </div>

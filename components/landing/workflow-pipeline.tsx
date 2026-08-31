@@ -78,19 +78,21 @@ function StepCard({
   step?: number;
 }) {
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-border/50 bg-card p-5 sm:p-6">
+    <article className="flex h-full flex-col rounded-2xl border border-default bg-default p-5 sm:p-6">
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-purple/10 text-primary-purple ring-1 ring-primary-purple/25">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-purple/10 text-preview ring-1 ring-strong">
           <Icon className="h-5 w-5" />
         </span>
         {step != null ? (
-          <span className="text-xs font-bold uppercase tracking-wider text-primary-blue">
+          <span className="text-xs font-bold uppercase tracking-wider text-link">
             Step {step}
           </span>
         ) : null}
       </div>
-      <h3 className="mt-4 text-base font-extrabold text-foreground sm:text-lg">{title}</h3>
-      <p className="mt-2 flex-1 font-(--font-dm-sans) text-sm leading-relaxed text-muted-foreground">
+      <h3 className="mt-4 text-base font-extrabold text-default sm:text-lg">
+        {title}
+      </h3>
+      <p className="mt-2 flex-1 font-(--font-dm-sans) text-sm leading-relaxed text-secondary">
         {description}
       </p>
     </article>
@@ -114,7 +116,7 @@ function StepRow({
           />
           {index < steps.length - 1 ? (
             <ArrowRight
-              className="absolute -right-3 top-1/2 z-10 hidden h-5 w-5 -translate-y-1/2 text-muted-foreground/50 lg:block"
+              className="absolute -right-3 top-1/2 z-10 hidden h-5 w-5 -translate-y-1/2 icon-quaternary lg:block"
               aria-hidden
             />
           ) : null}
@@ -132,13 +134,13 @@ export function HowItWorksFlow() {
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <p className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-secondary">
           Set up once
         </p>
         <StepRow steps={SETUP_STEPS} />
       </div>
       <div>
-        <p className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-secondary">
           Then, every post
         </p>
         <StepRow steps={PIPELINE_STEPS} />

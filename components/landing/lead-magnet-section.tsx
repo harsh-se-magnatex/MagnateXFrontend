@@ -65,18 +65,18 @@ function FlowProgress({ step }: { step: Step }) {
             >
               <span
                 className={[
-                  'h-1.5 w-1.5 rounded-full transition-all duration-500',
+                  'h-1.5 w-1.5 rounded-full transition-expo',
                   active
-                    ? 'scale-125 bg-white shadow-[0_0_10px_2px_rgba(199,184,253,0.55)]'
+                    ? ' bg-default shadow-[0_0_10px_2px_rgba(199,184,253,0.55)]'
                     : done
-                      ? 'bg-white/55'
-                      : 'bg-white/20',
+                      ? 'bg-default'
+                      : 'bg-default',
                 ].join(' ')}
                 aria-hidden
               />
               <span
                 className={[
-                  'landing-body text-[11px] uppercase tracking-[0.16em] transition-colors duration-500',
+                  'landing-body text-[11px] uppercase tracking-[0.16em] transition-expo',
                   active
                     ? 'text-white/85'
                     : done
@@ -90,8 +90,8 @@ function FlowProgress({ step }: { step: Step }) {
             {i < FLOW_STAGES.length - 1 ? (
               <span
                 className={[
-                  'hidden h-px w-5 transition-colors duration-500 sm:block',
-                  i < activeIndex ? 'bg-white/35' : 'bg-white/12',
+                  'hidden h-px w-5 transition-expo sm:block',
+                  i < activeIndex ? 'bg-default' : 'bg-default',
                 ].join(' ')}
                 aria-hidden
               />
@@ -138,7 +138,10 @@ function GeneratingState({
 
   // Ease toward — but never reach — completion, so the ring never implies
   // "done" while the job is still running. Caps at 92%.
-  const progress = Math.min(0.92, 1 - Math.exp(-elapsedS / GENERATING_EXPECTED_S));
+  const progress = Math.min(
+    0.92,
+    1 - Math.exp(-elapsedS / GENERATING_EXPECTED_S)
+  );
 
   const R = 34;
   const CIRC = 2 * Math.PI * R;
@@ -170,7 +173,10 @@ function GeneratingState({
             strokeLinecap="round"
             strokeDasharray={CIRC}
             strokeDashoffset={CIRC * (1 - progress)}
-            style={{ transition: 'stroke-dashoffset 900ms cubic-bezier(0.22,1,0.36,1)' }}
+            style={{
+              transition:
+                'stroke-dashoffset 900ms cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
           />
           <defs>
             <linearGradient id="lm-ring" x1="0" y1="0" x2="1" y2="1">
@@ -203,8 +209,8 @@ function GeneratingState({
             key={s.at}
             className={
               i <= stageIndex
-                ? 'h-1 w-6 rounded-full bg-white/55 transition-colors duration-500'
-                : 'h-1 w-6 rounded-full bg-white/12 transition-colors duration-500'
+                ? 'h-1 w-6 rounded-full bg-default transition-expo'
+                : 'h-1 w-6 rounded-full bg-default transition-expo'
             }
           />
         ))}
@@ -212,8 +218,8 @@ function GeneratingState({
 
       {elapsedS > 75 ? (
         <p className="landing-body text-xs text-white/40">
-          Still working — this one&apos;s taking a little longer. We&apos;ll show
-          it the moment it&apos;s ready.
+          Still working — this one&apos;s taking a little longer. We&apos;ll
+          show it the moment it&apos;s ready.
         </p>
       ) : null}
     </div>
@@ -259,7 +265,7 @@ function BrandPreviewCard({ dna }: { dna: LeadMagnetDna }) {
   return (
     <div className="overflow-hidden rounded-xl border border-white/10 bg-black/35">
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:gap-5 sm:p-5">
-        <div className="mx-auto flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5 sm:mx-0">
+        <div className="mx-auto flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-default sm:mx-0">
           {dna.logo.trim() ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -551,267 +557,276 @@ export function LeadMagnetSection() {
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             >
-          {step === 'website' && (
-            <form onSubmit={onContinueWebsite} className="space-y-4">
-              <label className="landing-body block text-sm text-white/70">
-                Your website
-                <input
-                  type="text"
-                  inputMode="url"
-                  autoComplete="url"
-                  placeholder="yourbusiness.com"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  className="lead-magnet-input mt-2"
-                  disabled={busy}
-                />
-              </label>
-              <button
-                type="submit"
-                className="landing-btn-primary w-full sm:w-auto"
-                disabled={busy || !website.trim()}
-              >
-                Continue
-                <ArrowRight className="h-4 w-4" />
-              </button>
-            </form>
-          )}
+              {step === 'website' && (
+                <form onSubmit={onContinueWebsite} className="space-y-4">
+                  <label className="landing-body block text-sm text-white/70">
+                    Your website
+                    <input
+                      type="text"
+                      inputMode="url"
+                      autoComplete="url"
+                      placeholder="yourbusiness.com"
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                      className="lead-magnet-input mt-2"
+                      disabled={busy}
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="landing-btn-primary w-full sm:w-auto"
+                    disabled={busy || !website.trim()}
+                  >
+                    Continue
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </form>
+              )}
 
-          {step === 'email' && (
-            <form onSubmit={(e) => void onContinueEmail(e)} className="space-y-4">
-              <p className="landing-body text-xs text-white/40">
-                Looking up{' '}
-                <span className="text-white/60">
-                  {website.replace(/^https?:\/\//, '')}
-                </span>{' '}
-                after we verify your email
-              </p>
-              <label className="landing-body block text-sm text-white/70">
-                Email
-                <input
-                  type="email"
-                  autoComplete="email"
-                  required
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="lead-magnet-input mt-2"
-                  disabled={busy}
-                />
-              </label>
-              <p className="landing-body -mt-1 text-xs leading-relaxed text-white/45">
-                {consentText}
-              </p>
-              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm text-white/65 transition-colors hover:border-white/20 hover:bg-white/[0.05]">
-                <input
-                  type="checkbox"
-                  checked={emailAcknowledged}
-                  onChange={(e) => {
-                    setEmailAcknowledged(e.target.checked);
-                    if (e.target.checked) setError(null);
-                  }}
-                  disabled={busy}
-                  className="mt-0.5 h-4 w-4 shrink-0 accent-violet-400"
-                />
-                <span>
-                  I acknowledge that my email address will be used to contact
-                  me about this request and relevant updates.
-                </span>
-              </label>
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="submit"
-                  className="landing-btn-primary w-full sm:w-auto"
-                  disabled={busy || !email.trim() || !emailAcknowledged}
+              {step === 'email' && (
+                <form
+                  onSubmit={(e) => void onContinueEmail(e)}
+                  className="space-y-4"
                 >
-                  {busy ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Checking…
-                    </>
-                  ) : (
-                    <>
-                      Continue
-                      <ArrowRight className="h-4 w-4" />
-                    </>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
-                  onClick={() => {
-                    setError(null);
-                    setStep('website');
-                  }}
-                  disabled={busy}
-                >
-                  Change website
-                </button>
-              </div>
-            </form>
-          )}
-
-          {step === 'loading' && (
-            <div className="flex flex-col items-center gap-4 py-10 text-center">
-              <Loader2 className="h-8 w-8 animate-spin text-white/70" />
-              <p className="landing-display text-lg text-white">
-                Looking up your brand…
-              </p>
-              <p className="landing-body max-w-sm text-sm text-white/50">
-                Pulling business details from{' '}
-                <span className="text-white/70">{website}</span>.
-              </p>
-            </div>
-          )}
-
-          {step === 'brand' && dna && (
-            <div className="space-y-5">
-              <div>
-                <p className="landing-body text-sm text-white/70">
-                  We found this brand from your website
-                </p>
-                <p className="landing-body mt-1 text-xs text-white/40">
-                  Confirm it looks right, then pick a platform for your sample
-                  post.
-                </p>
-              </div>
-              <BrandPreviewCard dna={dna} />
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  className="landing-btn-primary w-full sm:w-auto"
-                  onClick={() => {
-                    setError(null);
-                    setStep('platform');
-                    scrollToSection();
-                  }}
-                >
-                  Looks good
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
-                  onClick={() => {
-                    setDna(null);
-                    setDomainKey('');
-                    setStep('website');
-                  }}
-                >
-                  Change website
-                </button>
-              </div>
-            </div>
-          )}
-
-          {step === 'platform' && (
-            <div className="space-y-5">
-              {dna?.businessName ? (
-                <p className="landing-body text-xs text-white/40">
-                  Creating a sample for {dna.businessName}
-                </p>
-              ) : null}
-              <p className="landing-body text-sm text-white/70">
-                Choose one platform for your sample post
-              </p>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {PLATFORMS.map((p) => {
-                  const isThis = pickingPlatform === p.id;
-                  return (
+                  <p className="landing-body text-xs text-white/40">
+                    Looking up{' '}
+                    <span className="text-white/60">
+                      {website.replace(/^https?:\/\//, '')}
+                    </span>{' '}
+                    after we verify your email
+                  </p>
+                  <label className="landing-body block text-sm text-white/70">
+                    Email
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      required
+                      placeholder="you@company.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="lead-magnet-input mt-2"
+                      disabled={busy}
+                    />
+                  </label>
+                  <p className="landing-body -mt-1 text-xs leading-relaxed text-white/45">
+                    {consentText}
+                  </p>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm text-white/65 transition-expo hover:border-white/20 hover:bg-white/[0.05]">
+                    <input
+                      type="checkbox"
+                      checked={emailAcknowledged}
+                      onChange={(e) => {
+                        setEmailAcknowledged(e.target.checked);
+                        if (e.target.checked) setError(null);
+                      }}
+                      disabled={busy}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-violet-400"
+                    />
+                    <span>
+                      I acknowledge that my email address will be used to
+                      contact me about this request and relevant updates.
+                    </span>
+                  </label>
+                  <div className="flex flex-wrap items-center gap-3">
                     <button
-                      key={p.id}
-                      type="button"
-                      disabled={busy || !dna}
-                      onClick={() => void onPickPlatform(p.id)}
-                      className="lead-magnet-platform-btn"
+                      type="submit"
+                      className="landing-btn-primary w-full sm:w-auto"
+                      disabled={busy || !email.trim() || !emailAcknowledged}
                     >
-                      {isThis ? (
-                        <Loader2 className="mx-auto h-5 w-5 animate-spin" />
+                      {busy ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Checking…
+                        </>
                       ) : (
-                        p.label
+                        <>
+                          Continue
+                          <ArrowRight className="h-4 w-4" />
+                        </>
                       )}
                     </button>
-                  );
-                })}
-              </div>
-              <button
-                type="button"
-                className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
-                onClick={() => setStep('brand')}
-                disabled={busy}
-              >
-                Back to brand
-              </button>
-            </div>
-          )}
-
-          {step === 'generating' && (
-            <GeneratingState
-              elapsedMs={generatingSince != null ? Date.now() - generatingSince : 0}
-              businessName={dna?.businessName || undefined}
-              platformLabel={PLATFORMS.find((p) => p.id === platform)?.label}
-            />
-          )}
-
-          {step === 'result' && post && (
-            <div ref={resultRef} className="space-y-6">
-              <p className="landing-body text-sm text-white/55">
-                Your {PLATFORMS.find((p) => p.id === platform)?.label} sample
-                {dna?.businessName
-                  ? ` for ${dna.businessName}`
-                  : domainKey
-                    ? ` for ${domainKey}`
-                    : ''}
-              </p>
-              <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                {post.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={post.imageUrl}
-                    alt="Generated social post"
-                    className="mx-auto max-h-[min(70vh,640px)] w-full object-contain"
-                  />
-                ) : (
-                  <div className="px-4 py-16 text-center text-sm text-white/45">
-                    Image is ready in storage — refresh if it doesn&apos;t load.
+                    <button
+                      type="button"
+                      className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
+                      onClick={() => {
+                        setError(null);
+                        setStep('website');
+                      }}
+                      disabled={busy}
+                    >
+                      Change website
+                    </button>
                   </div>
-                )}
-                <div className="border-t border-white/10 p-4">
-                  <p className="landing-body whitespace-pre-wrap text-sm leading-relaxed text-white/80">
-                    {post.caption || 'No caption'}
+                </form>
+              )}
+
+              {step === 'loading' && (
+                <div className="flex flex-col items-center gap-4 py-10 text-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-white/70" />
+                  <p className="landing-display text-lg text-white">
+                    Looking up your brand…
+                  </p>
+                  <p className="landing-body max-w-sm text-sm text-white/50">
+                    Pulling business details from{' '}
+                    <span className="text-white/70">{website}</span>.
                   </p>
                 </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <GuestAuthLink
-                  href="/sign-up"
-                  className="landing-btn-primary group"
-                >
-                  Get daily posts like this
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </GuestAuthLink>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="landing-btn-secondary"
-                >
-                  Try another website
-                </button>
-                <Link
-                  href="/product"
-                  className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
-                >
-                  See how it works
-                </Link>
-              </div>
-            </div>
-          )}
+              )}
+
+              {step === 'brand' && dna && (
+                <div className="space-y-5">
+                  <div>
+                    <p className="landing-body text-sm text-white/70">
+                      We found this brand from your website
+                    </p>
+                    <p className="landing-body mt-1 text-xs text-white/40">
+                      Confirm it looks right, then pick a platform for your
+                      sample post.
+                    </p>
+                  </div>
+                  <BrandPreviewCard dna={dna} />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      className="landing-btn-primary w-full sm:w-auto"
+                      onClick={() => {
+                        setError(null);
+                        setStep('platform');
+                        scrollToSection();
+                      }}
+                    >
+                      Looks good
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
+                      onClick={() => {
+                        setDna(null);
+                        setDomainKey('');
+                        setStep('website');
+                      }}
+                    >
+                      Change website
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {step === 'platform' && (
+                <div className="space-y-5">
+                  {dna?.businessName ? (
+                    <p className="landing-body text-xs text-white/40">
+                      Creating a sample for {dna.businessName}
+                    </p>
+                  ) : null}
+                  <p className="landing-body text-sm text-white/70">
+                    Choose one platform for your sample post
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {PLATFORMS.map((p) => {
+                      const isThis = pickingPlatform === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          disabled={busy || !dna}
+                          onClick={() => void onPickPlatform(p.id)}
+                          className="lead-magnet-platform-btn"
+                        >
+                          {isThis ? (
+                            <Loader2 className="mx-auto h-5 w-5 animate-spin" />
+                          ) : (
+                            p.label
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
+                    onClick={() => setStep('brand')}
+                    disabled={busy}
+                  >
+                    Back to brand
+                  </button>
+                </div>
+              )}
+
+              {step === 'generating' && (
+                <GeneratingState
+                  elapsedMs={
+                    generatingSince != null ? Date.now() - generatingSince : 0
+                  }
+                  businessName={dna?.businessName || undefined}
+                  platformLabel={
+                    PLATFORMS.find((p) => p.id === platform)?.label
+                  }
+                />
+              )}
+
+              {step === 'result' && post && (
+                <div ref={resultRef} className="space-y-6">
+                  <p className="landing-body text-sm text-white/55">
+                    Your {PLATFORMS.find((p) => p.id === platform)?.label}{' '}
+                    sample
+                    {dna?.businessName
+                      ? ` for ${dna.businessName}`
+                      : domainKey
+                        ? ` for ${domainKey}`
+                        : ''}
+                  </p>
+                  <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                    {post.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={post.imageUrl}
+                        alt="Generated social post"
+                        className="mx-auto max-h-[min(70vh,640px)] w-full object-contain"
+                      />
+                    ) : (
+                      <div className="px-4 py-16 text-center text-sm text-white/45">
+                        Image is ready in storage — refresh if it doesn&apos;t
+                        load.
+                      </div>
+                    )}
+                    <div className="border-t border-white/10 p-4">
+                      <p className="landing-body whitespace-pre-wrap text-sm leading-relaxed text-white/80">
+                        {post.caption || 'No caption'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <GuestAuthLink
+                      href="/sign-up"
+                      className="landing-btn-primary group"
+                    >
+                      Get daily posts like this
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                    </GuestAuthLink>
+                    <button
+                      type="button"
+                      onClick={reset}
+                      className="landing-btn-secondary"
+                    >
+                      Try another website
+                    </button>
+                    <Link
+                      href="/product"
+                      className="landing-body text-sm text-white/45 underline-offset-2 hover:text-white/70 hover:underline"
+                    >
+                      See how it works
+                    </Link>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
 
           {error ? (
             <motion.p
-              className="landing-body mt-4 text-sm text-rose-300/90"
+              className="landing-body mt-4 text-sm text-danger"
               role="alert"
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}

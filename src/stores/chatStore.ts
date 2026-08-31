@@ -132,9 +132,7 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
     } catch (err) {
       set({
         streamError:
-          err instanceof Error
-            ? err.message
-            : 'Failed to load conversation.',
+          err instanceof Error ? err.message : 'Failed to load conversation.',
       });
     }
   },

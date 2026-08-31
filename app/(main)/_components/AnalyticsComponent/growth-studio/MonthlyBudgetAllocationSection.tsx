@@ -41,7 +41,7 @@ function AllocationRow({
   currency: string;
 }) {
   return (
-    <li className="rounded-lg border border-border/80 bg-card/40 p-3">
+    <li className="rounded-lg border border-default bg-default p-3">
       <div className="flex gap-3">
         {item.mediaUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -53,28 +53,26 @@ function AllocationRow({
         ) : (
           <div
             aria-hidden
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-muted text-[10px] uppercase tracking-wide text-muted-foreground"
+            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-element text-[10px] uppercase tracking-wide text-secondary"
           >
             {item.format}
           </div>
         )}
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-default">
               {formatMoney(currency, item.amount)}
-              <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+              <span className="ml-1.5 text-xs font-normal text-secondary">
                 ({item.percent}%)
               </span>
             </p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-[11px] text-secondary">
               {(item.engagementRate * 100).toFixed(2)}% eng ·{' '}
               {formatHours(item.hoursSincePost)}
             </p>
           </div>
-          <p className="line-clamp-2 text-xs text-muted-foreground">
-            {item.caption}
-          </p>
-          <p className="text-xs leading-relaxed text-foreground/90">
+          <p className="line-clamp-2 text-xs text-secondary">{item.caption}</p>
+          <p className="text-xs leading-relaxed text-secondary">
             {item.rationale}
           </p>
           {item.permalinkUrl ? (
@@ -82,7 +80,7 @@ function AllocationRow({
               href={item.permalinkUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block text-[11px] text-emerald-400 hover:underline"
+              className="inline-block text-[11px] text-success hover:underline"
             >
               View post
             </a>
@@ -137,22 +135,22 @@ export function MonthlyBudgetAllocationSection({
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h2
           id="growth-studio-budget-allocation-heading"
-          className="flex items-center gap-2 text-sm font-semibold text-foreground"
+          className="text-section text-default flex items-center gap-2"
         >
-          <IndianRupee className="h-4 w-4 text-emerald-500" aria-hidden />
+          <IndianRupee className="h-4 w-4 text-success" aria-hidden />
           Monthly budget split
         </h2>
       </header>
 
-      <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-3 space-y-3">
-        <p className="text-xs leading-relaxed text-muted-foreground">
+      <div className="rounded-xl border border-success bg-success p-3 space-y-3">
+        <p className="text-xs leading-relaxed text-secondary">
           Enter your monthly ad budget. We&apos;ll use this month&apos;s posts
           and tell you how many to put budget behind.
         </p>
 
         <div className="flex flex-wrap items-end gap-2">
           <label className="min-w-[10rem] flex-1 space-y-1">
-            <span className="text-[11px] font-medium text-muted-foreground">
+            <span className="text-[11px] font-medium text-secondary">
               Monthly budget (INR)
             </span>
             <Input
@@ -194,19 +192,19 @@ export function MonthlyBudgetAllocationSection({
         <div
           role="status"
           aria-label="Loading budget allocation"
-          className="h-36 animate-pulse rounded-xl border border-emerald-500/25 bg-emerald-500/10"
+          className="h-36 animate-pulse rounded-xl border border-success bg-success"
         />
       ) : null}
 
       {state.status === 'error' ? (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+        <p className="rounded-lg border border-warning bg-warning px-3 py-2 text-xs text-warning">
           {state.error}
         </p>
       ) : null}
 
       {state.status === 'success' ? (
         !state.payload.visible || state.payload.allocations.length === 0 ? (
-          <p className="rounded-lg border border-border bg-muted px-3 py-3 text-xs text-muted-foreground">
+          <p className="rounded-lg border border-default bg-element px-3 py-3 text-xs text-secondary">
             {state.payload.reason ??
               'Couldn’t allocate budget across this month’s posts.'}
           </p>
@@ -215,7 +213,7 @@ export function MonthlyBudgetAllocationSection({
             <div
               className={cn(
                 'rounded-lg border px-3 py-2.5 text-sm',
-                'border-emerald-500/30 bg-emerald-500/10 text-foreground'
+                'border-success bg-success text-default'
               )}
             >
               <p className="font-semibold leading-snug">
@@ -224,9 +222,9 @@ export function MonthlyBudgetAllocationSection({
                 {' — '}
                 allot budget to {state.payload.recommendedPostCount} of them.
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-secondary">
                 Total{' '}
-                <strong className="text-foreground">
+                <strong className="text-default">
                   {formatMoney(
                     state.payload.currency,
                     state.payload.monthlyBudget
@@ -240,7 +238,7 @@ export function MonthlyBudgetAllocationSection({
               </p>
             </div>
             {state.payload.summary ? (
-              <p className="text-xs leading-relaxed text-muted-foreground">
+              <p className="text-xs leading-relaxed text-secondary">
                 {state.payload.summary}
               </p>
             ) : null}

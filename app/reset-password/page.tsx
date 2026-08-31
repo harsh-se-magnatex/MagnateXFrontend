@@ -26,22 +26,17 @@ import { showErrorToast } from '@/lib/show-error-toast';
 
 type Tone = 'success' | 'error' | 'info' | '';
 
-function Notice({
-  tone,
-  children,
-}: {
-  tone: Tone;
-  children: React.ReactNode;
-}) {
+function Notice({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   if (!children) return null;
   return (
     <div
       className={cn(
         'rounded-xl border px-3 py-2 text-sm flex items-start gap-2',
-        tone === 'success' && 'border-emerald-200 bg-emerald-50 text-emerald-700',
-        tone === 'error' && 'border-destructive/20 bg-destructive/10 text-destructive',
+        tone === 'success' && 'border-success bg-success text-success',
+        tone === 'error' &&
+          'border-destructive/20 bg-destructive/10 text-destructive',
         (tone === 'info' || tone === '') &&
-          'border-border bg-accent/30 text-muted-foreground'
+          'border-default bg-hover text-secondary'
       )}
     >
       <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0" />
@@ -54,7 +49,10 @@ function ResetPasswordPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const oobCode = useMemo(() => searchParams.get('oobCode') || '', [searchParams]);
+  const oobCode = useMemo(
+    () => searchParams.get('oobCode') || '',
+    [searchParams]
+  );
   const mode = useMemo(() => searchParams.get('mode') || '', [searchParams]);
 
   const isSetNewPassword = Boolean(oobCode) && mode === 'resetPassword';
@@ -120,8 +118,10 @@ function ResetPasswordPageContent() {
       const res = await forgotPassword(trimmed);
       if (!res.success) {
         setTone('error');
-        if(res.message!.startsWith("Firebase: Error (auth/user-not-found).")){
-          showErrorToast('User with this email not found. Please sign up first.');
+        if (res.message!.startsWith('Firebase: Error (auth/user-not-found).')) {
+          showErrorToast(
+            'User with this email not found. Please sign up first.'
+          );
           return;
         }
         showErrorToast('Failed to send reset link. Please Try Again Later.');
@@ -129,11 +129,11 @@ function ResetPasswordPageContent() {
       }
       setTone('success');
       toast.success(
-        "Reset link sent. Please check your inbox (and spam folder)."
+        'Reset link sent. Please check your inbox (and spam folder).'
       );
     } catch (err: any) {
       setTone('error');
-      if(err.code ==="auth/user-not-found"){
+      if (err.code === 'auth/user-not-found') {
         showErrorToast('User not found. Please sign up first.');
         return;
       }
@@ -176,12 +176,12 @@ function ResetPasswordPageContent() {
   };
 
   return (
-    <div className="w-full max-w-[520px] glass-card rounded-3xl p-8 sm:p-10 border border-border/40 shadow-xl shadow-primary-blue/10 animate-in fade-in duration-700">
+    <div className="w-full max-w-[520px] glass-card rounded-3xl p-8 sm:p-10 border border-default animate-in fade-in duration-700">
       <Link href="/" className="flex items-center gap-2.5 w-fit group mb-8">
         <img
           src="/logo.png"
           alt="SocioGenie"
-          className="h-10 w-10 rounded-xl shadow-sm transition-transform group-hover:scale-105"
+          className="h-10 w-10 rounded-xl transition-transform"
         />
         <span className="text-xl font-bold tracking-tight bg-gradient-primary-text">
           SocioGenie
@@ -189,10 +189,10 @@ function ResetPasswordPageContent() {
       </Link>
 
       <div className="mb-6">
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+        <h1 className="text-page-title text-default">
           {isSetNewPassword ? 'Set a new password' : 'Reset your password'}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-secondary">
           {isSetNewPassword
             ? 'Choose a strong password you don’t use elsewhere.'
             : "We'll email you a secure link to reset your password."}
@@ -210,16 +210,20 @@ function ResetPasswordPageContent() {
               <FieldGroup>
                 {email && (
                   <FieldDescription className="text-sm">
-                    Resetting password for <span className="font-medium text-foreground">{email}</span>
+                    Resetting password for{' '}
+                    <span className="font-medium text-default">{email}</span>
                   </FieldDescription>
                 )}
 
                 <Field>
-                  <FieldLabel htmlFor="new-password" className="text-foreground font-medium">
+                  <FieldLabel
+                    htmlFor="new-password"
+                    className="text-default font-medium"
+                  >
                     New password
                   </FieldLabel>
                   <div className="relative flex items-center">
-                    <Lock className="absolute left-3 text-muted-foreground/60 h-5 w-5" />
+                    <Lock className="absolute left-3 text-secondary/60 h-5 w-5" />
                     <Input
                       id="new-password"
                       type="password"
@@ -227,7 +231,7 @@ function ResetPasswordPageContent() {
                       onChange={(e) => setNewPassword(e.target.value)}
                       disabled={loading}
                       placeholder="••••••••"
-                      className="h-11 pl-10 rounded-xl border-border bg-card px-3 py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
+                      className="h-11 pl-10 rounded-lg border-default bg-default px-3 py-2.5 text-default placeholder:text-quaternary focus-visible:border-strong focus-visible:ring-strong"
                       required
                       autoComplete="new-password"
                     />
@@ -235,11 +239,14 @@ function ResetPasswordPageContent() {
                 </Field>
 
                 <Field>
-                  <FieldLabel htmlFor="confirm-password" className="text-foreground font-medium">
+                  <FieldLabel
+                    htmlFor="confirm-password"
+                    className="text-default font-medium"
+                  >
                     Confirm new password
                   </FieldLabel>
                   <div className="relative flex items-center">
-                    <Lock className="absolute left-3 text-muted-foreground/60 h-5 w-5" />
+                    <Lock className="absolute left-3 text-secondary/60 h-5 w-5" />
                     <Input
                       id="confirm-password"
                       type="password"
@@ -247,7 +254,7 @@ function ResetPasswordPageContent() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       disabled={loading}
                       placeholder="••••••••"
-                      className="h-11 pl-10 rounded-xl border-border bg-card px-3 py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
+                      className="h-11 pl-10 rounded-lg border-default bg-default px-3 py-2.5 text-default placeholder:text-quaternary focus-visible:border-strong focus-visible:ring-strong"
                       required
                       autoComplete="new-password"
                     />
@@ -258,14 +265,14 @@ function ResetPasswordPageContent() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="h-11 w-full rounded-xl bg-gradient-primary text-white shadow-md shadow-primary-blue/20 transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
+                    className="h-11 w-full rounded-full btn-brand-fill transition-expo"
                   >
                     {loading ? 'Updating…' : 'Update password'}
                     {!loading && <ArrowRight className="h-4 w-4" />}
                   </Button>
                 </Field>
 
-                <FieldDescription className="text-center text-sm text-muted-foreground [&>a]:text-primary-blue [&>a]:underline [&>a]:underline-offset-2 [&>a:hover]:text-primary-purple">
+                <FieldDescription className="text-center text-sm text-secondary [&>a]:text-link [&>a]:underline [&>a]:underline-offset-2 [&>a:hover]:text-preview">
                   Back to <Link href="/sign-in">sign in</Link>
                 </FieldDescription>
               </FieldGroup>
@@ -274,11 +281,14 @@ function ResetPasswordPageContent() {
             <form onSubmit={handleRequestLink} className="mt-5">
               <FieldGroup>
                 <Field>
-                  <FieldLabel htmlFor="reset-email" className="text-foreground font-medium">
+                  <FieldLabel
+                    htmlFor="reset-email"
+                    className="text-default font-medium"
+                  >
                     Email
                   </FieldLabel>
                   <div className="relative flex items-center">
-                    <Mail className="absolute left-3 text-muted-foreground/60 h-5 w-5" />
+                    <Mail className="absolute left-3 text-secondary/60 h-5 w-5" />
                     <Input
                       id="reset-email"
                       type="email"
@@ -286,7 +296,7 @@ function ResetPasswordPageContent() {
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={loading}
                       placeholder="name@company.com"
-                      className="h-11 pl-10 pr-3 rounded-xl border-border bg-card py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
+                      className="h-11 pl-10 pr-3 rounded-lg border-default bg-default py-2.5 text-default placeholder:text-quaternary focus-visible:border-strong focus-visible:ring-strong"
                       required
                       autoComplete="email"
                     />
@@ -297,14 +307,14 @@ function ResetPasswordPageContent() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="h-11 w-full rounded-xl bg-gradient-primary text-white shadow-md shadow-primary-blue/20 transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
+                    className="h-11 w-full rounded-full btn-brand-fill transition-expo"
                   >
                     {loading ? 'Sending…' : 'Send reset link'}
                     {!loading && <ArrowRight className="h-4 w-4" />}
                   </Button>
                 </Field>
 
-                <FieldDescription className="text-center text-sm text-muted-foreground [&>a]:text-primary-blue [&>a]:underline [&>a]:underline-offset-2 [&>a:hover]:text-primary-purple">
+                <FieldDescription className="text-center text-sm text-secondary [&>a]:text-link [&>a]:underline [&>a]:underline-offset-2 [&>a:hover]:text-preview">
                   Remembered it? <Link href="/sign-in">Login</Link>
                 </FieldDescription>
               </FieldGroup>
@@ -318,18 +328,18 @@ function ResetPasswordPageContent() {
 
 function ResetPasswordPageFallback() {
   return (
-    <div className="w-full max-w-[520px] glass-card rounded-3xl p-8 sm:p-10 border border-border/40 shadow-xl shadow-primary-blue/10 animate-in fade-in duration-700">
+    <div className="w-full max-w-[520px] glass-card rounded-3xl p-8 sm:p-10 border border-default animate-in fade-in duration-700">
       <Link href="/" className="flex items-center gap-2.5 w-fit group mb-8">
         <img
           src="/logo.png"
           alt="SocioGenie"
-          className="h-10 w-10 rounded-xl shadow-sm transition-transform group-hover:scale-105"
+          className="h-10 w-10 rounded-xl transition-transform"
         />
         <span className="text-xl font-bold tracking-tight bg-gradient-primary-text">
           SocioGenie
         </span>
       </Link>
-      <p className="text-sm text-muted-foreground">Loading…</p>
+      <p className="text-sm text-secondary">Loading…</p>
     </div>
   );
 }

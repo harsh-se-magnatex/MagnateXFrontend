@@ -25,19 +25,19 @@ type SystemMessage = {
 const categoryConfig: Record<string, { label: string; className: string }> = {
   product: {
     label: 'Product',
-    className: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+    className: 'bg-success text-success ring-[var(--border-success)]',
   },
   security: {
     label: 'Security',
-    className: 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
+    className: 'bg-danger text-danger ring-[var(--border-danger)]',
   },
   alert: {
     label: 'Alert',
-    className: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
+    className: 'bg-warning text-warning ring-[var(--border-warning)]',
   },
   policy: {
     label: 'Policy',
-    className: 'bg-sky-500/15 text-sky-300 ring-sky-500/30',
+    className: 'bg-info text-info ring-[var(--border-info)]',
   },
 };
 
@@ -49,10 +49,9 @@ function resolveCategory(category: string | undefined) {
     : 'General';
   return {
     label: fallbackLabel,
-    className: 'bg-muted text-muted-foreground ring-border',
+    className: 'bg-element text-secondary ring-border',
   };
 }
-
 
 export function EmailAlerts() {
   const fmtTimestamp = useTimestampFormatter();
@@ -61,48 +60,46 @@ export function EmailAlerts() {
   const getData = async () => {
     const response = await getAllNotifications('notification');
     setNotifications(response.data.notifications);
-  }
+  };
   useEffect(() => {
     getData();
   }, []);
   return (
     <section aria-label="Account and policy messages" className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-zinc-900">
-          Messages from SocioGenie
-        </h2>
-        <p className="text-xs text-zinc-500">
+        <h2 className="text-section text-default">Messages from SocioGenie</h2>
+        <p className="text-xs text-secondary">
           We&apos;ll email you when something important changes.
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <ul className="divide-y divide-zinc-100">
+      <div className="overflow-hidden rounded-xl border border-default bg-default">
+        <ul className="divide-y divide-[var(--border-default)]">
           {notifications.map((message) => {
             const isNew = isUnread(message.createdAt);
             const category = resolveCategory(message.category);
             return (
-            <NotificationListItem key={message.id} isNew={isNew}>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {isNew ? <NotificationNewBadge /> : null}
-                    <span
-                      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${category.className}`}
-                    >
-                      {category.label}
-                    </span>
-                    <span className="text-xs text-zinc-400">
-                      {fmtTimestamp(message.createdAt)}
-                    </span>
+              <NotificationListItem key={message.id} isNew={isNew}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isNew ? <NotificationNewBadge /> : null}
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${category.className}`}
+                      >
+                        {category.label}
+                      </span>
+                      <span className="text-xs text-tertiary">
+                        {fmtTimestamp(message.createdAt)}
+                      </span>
+                    </div>
+                    <h3 className="text-subsection text-default">
+                      {message.title}
+                    </h3>
+                    <p className="text-sm text-secondary">{message.message}</p>
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-900">
-                    {message.title}
-                  </h3>
-                  <p className="text-sm text-zinc-600">{message.message}</p>
                 </div>
-              </div>
-            </NotificationListItem>
+              </NotificationListItem>
             );
           })}
         </ul>

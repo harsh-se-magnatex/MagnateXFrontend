@@ -108,8 +108,8 @@ export function CountryCodePhoneField({
     }
     return findCountryByDialDigits(dialDigits);
   }, [dialDigits, selectedIso]);
-  const [useCustom, setUseCustom] = useState(
-    () => Boolean(dialDigits && !findCountryByDialDigits(dialDigits))
+  const [useCustom, setUseCustom] = useState(() =>
+    Boolean(dialDigits && !findCountryByDialDigits(dialDigits))
   );
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -204,14 +204,14 @@ export function CountryCodePhoneField({
               aria-expanded={open}
               aria-label="Country code"
               className={cn(
-                'h-11 w-full justify-between rounded-xl border-border bg-accent/30 px-3 text-left text-base font-normal text-foreground shadow-sm hover:bg-accent/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20',
-                !selectValue && 'text-muted-foreground',
+                'h-11 w-full justify-between rounded-full border-default bg-hover px-3 text-left text-base font-normal text-default hover:bg-hover focus-visible:border-strong focus-visible:ring-strong',
+                !selectValue && 'text-secondary',
                 selectClassName
               )}
             >
               <span className="truncate">{triggerLabel}</span>
               <ChevronsUpDown
-                className="ml-2 h-4 w-4 shrink-0 text-muted-foreground opacity-70"
+                className="ml-2 h-4 w-4 shrink-0 text-secondary opacity-70"
                 aria-hidden
               />
             </Button>
@@ -222,7 +222,7 @@ export function CountryCodePhoneField({
           >
             <Command
               shouldFilter={false}
-              className="rounded-lg bg-popover text-popover-foreground"
+              className="rounded-lg bg-overlay text-popover-foreground"
             >
               <CommandInput
                 placeholder="Search country or code…"
@@ -277,7 +277,7 @@ export function CountryCodePhoneField({
 
         {showCustomInput ? (
           <div className="relative">
-            <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-muted-foreground">
+            <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-secondary">
               +
             </span>
             <input
@@ -300,7 +300,7 @@ export function CountryCodePhoneField({
 
       <div className="relative min-w-0 flex-1">
         {showPhoneIcon ? (
-          <Smartphone className="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          <Smartphone className="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 icon-tertiary" />
         ) : null}
         <input
           id={id}

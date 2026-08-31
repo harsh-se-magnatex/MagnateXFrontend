@@ -5,14 +5,13 @@ export const metadata: Metadata = {
   description:
     'Plans for AI and Studio modes: daily content, human review before publishing, and automated scheduling.',
   alternates: {
-    canonical: 'https://sociogenie.in/pricing',
+    canonical: 'https://www.sociogenie.ai/pricing',
   },
   openGraph: {
     title: 'Sociogenie Pricing',
-    description:
-      'Pricing for our plans and credit packs.',
+    description: 'Pricing for our plans and credit packs.',
     siteName: 'SocioGenie',
-    url: 'https://sociogenie.in/pricing',
+    url: 'https://www.sociogenie.ai/pricing',
     type: 'website',
     images: ['/logo.png'],
   },

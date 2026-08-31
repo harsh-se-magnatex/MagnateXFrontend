@@ -39,7 +39,8 @@ export function TourLauncher(): null {
     // first; the activeTour resume branch below handles the actual kick
     // once the new pathname mounts.
     if (requestedTour) {
-      const firstPath = TOUR_STEPS[requestedTour.tour][requestedTour.startIndex]?.path;
+      const firstPath =
+        TOUR_STEPS[requestedTour.tour][requestedTour.startIndex]?.path;
       if (firstPath && firstPath !== pathname) {
         setActiveTour({
           tour: requestedTour.tour,

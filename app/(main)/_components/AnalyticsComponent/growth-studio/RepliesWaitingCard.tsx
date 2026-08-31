@@ -37,7 +37,11 @@ import {
   postReplyUndo,
 } from '@/src/service/api/analyticService';
 
-import { type GrowthStudioPlatform, platformLabel, type PreloadedReplySuggestions } from './_common';
+import {
+  type GrowthStudioPlatform,
+  platformLabel,
+  type PreloadedReplySuggestions,
+} from './_common';
 import type { ReplyQueueGroup, ReplyQueueLoadStats } from './replyQueue';
 import { totalCommentCount } from './replyQueue';
 
@@ -155,7 +159,7 @@ function PostMediaThumb({
   return (
     <div
       className={cn(
-        'flex items-center justify-center bg-muted text-muted-foreground',
+        'flex items-center justify-center bg-element text-secondary',
         className
       )}
     >
@@ -194,34 +198,34 @@ function HoverPreviewList({
 
   return (
     <div className="space-y-2">
-      <p className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-secondary">
         <span>Waiting on {platformLabel(platform)}</span>
-        <span className="font-medium text-sky-300">{totalComments} total</span>
+        <span className="font-medium text-info">{totalComments} total</span>
       </p>
       <ul className="space-y-1.5">
         {preview.map((item) => (
           <li
             key={item.commentId}
-            className="flex items-start gap-2 rounded-md bg-muted/40 p-1.5"
+            className="flex items-start gap-2 rounded-md bg-element p-1.5"
           >
-            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md border border-border bg-card">
+            <div className="h-8 w-8 shrink-0 overflow-hidden rounded-md border border-default bg-default">
               <PostMediaThumb
                 url={item.postMediaUrl}
                 className="h-full w-full"
               />
             </div>
-            <p className="line-clamp-2 min-w-0 flex-1 break-words text-xs leading-snug text-foreground">
+            <p className="line-clamp-2 min-w-0 flex-1 break-words text-xs leading-snug text-default">
               {item.comment}
             </p>
           </li>
         ))}
       </ul>
       {remaining > 0 ? (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-[11px] text-secondary">
           +{remaining} more — click to triage
         </p>
       ) : (
-        <p className="text-[11px] text-muted-foreground">Click to triage with AI</p>
+        <p className="text-[11px] text-secondary">Click to triage with AI</p>
       )}
     </div>
   );
@@ -246,17 +250,17 @@ function CollapsedTeaser({
       type="button"
       onClick={onOpen}
       className={cn(
-        'group flex w-full items-center gap-3 overflow-hidden rounded-lg border border-sky-500/30 bg-card/80 px-3 py-3 text-left transition-colors',
-        'hover:border-sky-500/40 hover:bg-accent/50',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2'
+        'group flex w-full items-center gap-3 overflow-hidden rounded-full border border-info bg-default px-3 py-3 text-left transition-expo',
+        'hover:border-info hover:bg-hover',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-info)] focus-visible:ring-offset-2'
       )}
       aria-label={`Open replies queue, ${totalComments} comments waiting`}
     >
       <div className="relative h-12 w-14 shrink-0" aria-hidden>
-        <div className="absolute top-1.5 left-3 flex h-9 w-11 items-center justify-center rounded-md border border-sky-500/30 bg-sky-500/10 px-1 text-[10px] leading-tight text-sky-200/80 shadow-sm">
+        <div className="absolute top-1.5 left-3 flex h-9 w-11 items-center justify-center rounded-md border border-info bg-info px-1 text-[10px] leading-tight text-info">
           <MessageCircle className="h-3 w-3 opacity-70" />
         </div>
-        <div className="absolute top-0 left-0 z-10 h-10 w-10 overflow-hidden rounded-md border border-sky-500/30 bg-card shadow-sm">
+        <div className="absolute top-0 left-0 z-10 h-10 w-10 overflow-hidden rounded-md border border-info bg-default">
           <PostMediaThumb
             url={preview?.postMediaUrl}
             className="h-full w-full"
@@ -264,10 +268,10 @@ function CollapsedTeaser({
         </div>
       </div>
       <div className="min-w-0 flex-1 space-y-1">
-        <p className="text-sm font-semibold text-foreground">
+        <p className="text-sm font-semibold text-default">
           {totalComments} {totalComments === 1 ? 'reply' : 'replies'} waiting
         </p>
-        <p className="line-clamp-1 break-all text-xs text-muted-foreground">
+        <p className="line-clamp-1 break-all text-xs text-secondary">
           {previewComment
             ? `\u201C${previewComment.comment}\u201D`
             : `New ${platformLabel(platform)} comments will queue up here.`}
@@ -275,7 +279,7 @@ function CollapsedTeaser({
       </div>
       <Badge
         variant="outline"
-        className="shrink-0 bg-sky-500/10 text-sky-300 ring-1 ring-inset ring-sky-500/30"
+        className="shrink-0 bg-info text-info ring-1 ring-inset ring-[var(--border-info)]"
       >
         Open
       </Badge>
@@ -390,19 +394,19 @@ function CouldntLoadTeaser({
   const reported = formatCount(loadStats.reportedTotal);
   const postsAffected = loadStats.postsWithMissingComments;
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-3 text-xs text-amber-200">
+    <div className="flex items-start gap-2 rounded-lg border border-warning bg-warning px-3 py-3 text-xs text-warning">
       <AlertCircle
-        className="mt-0.5 h-4 w-4 shrink-0 text-amber-300"
+        className="mt-0.5 h-4 w-4 shrink-0 text-warning"
         aria-hidden
       />
       <div className="space-y-1">
-        <p className="font-medium text-amber-200">{copy.title}</p>
-        <p className="leading-relaxed text-amber-200/90">{copy.body}</p>
-        <p className="text-[11px] text-amber-200/80">
+        <p className="font-medium text-warning">{copy.title}</p>
+        <p className="leading-relaxed text-warning">{copy.body}</p>
+        <p className="text-[11px] text-warning">
           {platformLabel(platform)} reported {reported}{' '}
           {loadStats.reportedTotal === 1 ? 'comment' : 'comments'} across{' '}
-          {postsAffected}{' '}
-          {postsAffected === 1 ? 'post' : 'posts'} but returned none.
+          {postsAffected} {postsAffected === 1 ? 'post' : 'posts'} but returned
+          none.
         </p>
       </div>
     </div>
@@ -411,10 +415,10 @@ function CouldntLoadTeaser({
 
 function NoCommentsTeaser({ platform }: { platform: GrowthStudioPlatform }) {
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-dashed border-sky-500/40 bg-card/70 px-3 py-3 text-xs text-muted-foreground">
-      <Inbox className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+    <div className="flex items-start gap-2 rounded-lg border border-dashed border-info bg-default px-3 py-3 text-xs text-secondary">
+      <Inbox className="mt-0.5 h-4 w-4 shrink-0 text-secondary" aria-hidden />
       <div>
-        <p className="font-medium text-foreground">No comments yet</p>
+        <p className="font-medium text-default">No comments yet</p>
         <p className="leading-relaxed">
           No comments on your synced {platformLabel(platform)} posts yet. New
           replies will queue here automatically.
@@ -426,13 +430,13 @@ function NoCommentsTeaser({ platform }: { platform: GrowthStudioPlatform }) {
 
 function AllCaughtUpTeaser({ platform }: { platform: GrowthStudioPlatform }) {
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-3 text-xs text-emerald-300">
+    <div className="flex items-start gap-2 rounded-lg border border-success bg-success px-3 py-3 text-xs text-success">
       <CheckCircle2
-        className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300"
+        className="mt-0.5 h-4 w-4 shrink-0 text-success"
         aria-hidden
       />
       <div>
-        <p className="font-medium text-emerald-300">Inbox zero</p>
+        <p className="font-medium text-success">Inbox zero</p>
         <p className="leading-relaxed">
           Every {platformLabel(platform)} comment from the last sync has been
           replied to. New ones will queue here.
@@ -495,25 +499,25 @@ function UndoBanner({
       : lastSent.comment;
 
   return (
-    <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
+    <div className="flex items-start gap-2 rounded-lg border border-success bg-success px-3 py-2 text-xs text-success">
       <CheckCircle2
-        className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300"
+        className="mt-0.5 h-4 w-4 shrink-0 text-success"
         aria-hidden
       />
       <div className="min-w-0 flex-1">
         <p className="font-medium">
           Reply sent
           {secondsLeft > 0 ? (
-            <span className="ml-1 font-normal text-emerald-300/80">
+            <span className="ml-1 font-normal text-success">
               · Undo available {secondsLeft}s
             </span>
           ) : null}
         </p>
-        <p className="line-clamp-1 break-all text-[11px] text-emerald-300/80">
+        <p className="line-clamp-1 break-all text-[11px] text-success">
           To: &ldquo;{truncated}&rdquo;
         </p>
         {undoState.status === 'error' ? (
-          <p className="mt-0.5 text-[11px] text-amber-300">
+          <p className="mt-0.5 text-[11px] text-warning">
             Couldn&apos;t undo: {undoState.error}
           </p>
         ) : null}
@@ -524,7 +528,7 @@ function UndoBanner({
         variant="outline"
         onClick={onUndo}
         disabled={isUndoing}
-        className="h-7 shrink-0 gap-1.5 border-emerald-500/30 bg-card px-2 text-xs text-emerald-300 hover:bg-emerald-500/10"
+        className="h-7 shrink-0 gap-1.5 border-success bg-default px-2 text-xs text-success hover:bg-success"
       >
         <RotateCcw className="h-3 w-3" aria-hidden />
         {isUndoing ? 'Undoing\u2026' : 'Undo'}
@@ -533,7 +537,7 @@ function UndoBanner({
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss undo notice"
-        className="ml-1 shrink-0 rounded p-1 text-emerald-300/70 hover:bg-emerald-500/20 hover:text-emerald-300"
+        className="ml-1 shrink-0 rounded p-1 text-success hover:bg-success hover:text-success"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -592,23 +596,25 @@ function ReplyQueueRow({
   }, [draft]);
 
   return (
-    <div className="space-y-2 rounded-lg border border-border bg-card p-3">
+    <div className="space-y-2 rounded-lg border border-default bg-default p-3">
       <div className="flex items-start gap-2">
-        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+        <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-element text-secondary">
           <MessageCircle className="h-3.5 w-3.5" aria-hidden />
         </div>
-        <p className="min-w-0 flex-1 text-sm leading-snug text-foreground">
+        <p className="min-w-0 flex-1 text-sm leading-snug text-default">
           {comment}
         </p>
       </div>
       {state?.status === 'ready' ? (
         <div className="space-y-2 pl-8">
-          <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-sky-300">
+          <div className="flex items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-info">
             <span className="inline-flex items-center gap-1 font-medium">
               <Sparkles className="h-3 w-3" aria-hidden />
-              {state.source === 'openai' ? 'AI-drafted reply' : 'Suggested reply'}
+              {state.source === 'openai'
+                ? 'AI-drafted reply'
+                : 'Suggested reply'}
             </span>
-            <span className="font-normal normal-case tracking-normal text-muted-foreground">
+            <span className="font-normal normal-case tracking-normal text-secondary">
               Edit before sending if you&apos;d like.
             </span>
           </div>
@@ -616,7 +622,7 @@ function ReplyQueueRow({
             value={draft}
             onChange={(event) => onEdit(event.target.value)}
             disabled={isSending}
-            className="min-h-[60px] resize-y border-border bg-muted text-sm disabled:opacity-70"
+            className="min-h-[60px] resize-y border-default bg-element text-sm disabled:text-quaternary"
             id={`reply-${commentId}`}
             aria-label="AI-drafted reply"
           />
@@ -654,17 +660,17 @@ function ReplyQueueRow({
               variant="ghost"
               onClick={() => onRequest(true)}
               disabled={isSending}
-              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+              className="h-7 px-2 text-xs text-secondary hover:text-default"
             >
               Regenerate
             </Button>
             {!sendSupported ? (
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-[11px] text-secondary">
                 Sending from inside the app is coming soon for this platform.
               </span>
             ) : null}
             {sendState?.status === 'error' ? (
-              <span className="text-[11px] text-amber-300">
+              <span className="text-[11px] text-warning">
                 Couldn&apos;t send: {sendState.error}
               </span>
             ) : null}
@@ -686,7 +692,7 @@ function ReplyQueueRow({
               : 'Draft reply with AI'}
           </Button>
           {state?.status === 'error' ? (
-            <span className="text-[11px] text-amber-300">
+            <span className="text-[11px] text-warning">
               Couldn&apos;t draft a reply: {state.error}
             </span>
           ) : null}
@@ -720,17 +726,17 @@ function ReplyQueueGroupCard({
   const ellipsis = group.postMessage.trim().length > 140 ? '…' : '';
 
   return (
-    <article className="space-y-3 rounded-xl border border-border bg-muted/40 p-3">
+    <article className="space-y-3 rounded-xl border border-default bg-element p-3">
       <header className="flex items-start gap-3">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-border bg-card">
+        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-default bg-default">
           <PostMediaThumb url={group.postMediaUrl} className="h-full w-full" />
         </div>
         <div className="min-w-0 flex-1 space-y-1">
-          <p className="line-clamp-2 text-sm text-foreground">
+          <p className="line-clamp-2 text-sm text-default">
             {preview || 'No caption'}
             {ellipsis}
           </p>
-          <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-secondary">
             <span>
               {group.comments.length}{' '}
               {group.comments.length === 1 ? 'comment' : 'comments'}
@@ -742,7 +748,7 @@ function ReplyQueueGroupCard({
                   href={group.postPermalinkUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sky-300 hover:text-sky-900 hover:underline"
+                  className="inline-flex items-center gap-1 text-info hover:text-info hover:underline"
                 >
                   {PLATFORM_OPEN_LABEL[group.platform]}
                   <ExternalLink className="h-3 w-3" aria-hidden />
@@ -837,20 +843,20 @@ export function RepliesWaitingCard({
       return {
         label: couldntLoadCopyFor(platform).badge,
         className:
-          'shrink-0 bg-amber-500/15 text-[10px] font-semibold uppercase tracking-wide text-amber-200 ring-1 ring-inset ring-amber-500/30',
+          'shrink-0 bg-warning text-[10px] font-semibold uppercase tracking-wide text-warning ring-1 ring-inset ring-[var(--border-warning)]',
       };
     }
     if (emptyKind === 'all-caught-up') {
       return {
         label: 'All caught up',
         className:
-          'shrink-0 bg-card/70 text-[10px] font-medium uppercase tracking-wide text-muted-foreground',
+          'shrink-0 bg-default text-[10px] font-medium uppercase tracking-wide text-secondary',
       };
     }
     return {
       label: 'Inbox zero',
       className:
-        'shrink-0 bg-card/70 text-[10px] font-medium uppercase tracking-wide text-muted-foreground',
+        'shrink-0 bg-default text-[10px] font-medium uppercase tracking-wide text-secondary',
     };
   }, [emptyKind, platform]);
 
@@ -920,8 +926,7 @@ export function RepliesWaitingCard({
           expiresAt: Date.now() + UNDO_WINDOW_MS,
         });
       } catch (err) {
-        const errorMessage =
-          'Something went wrong';
+        const errorMessage = 'Something went wrong';
         setSendStates((prev) => ({
           ...prev,
           [commentId]: { status: 'error', error: errorMessage },
@@ -954,8 +959,7 @@ export function RepliesWaitingCard({
       setLastSent(null);
       setUndoState({ status: 'idle' });
     } catch (err) {
-      const errorMessage =
-        'Something went wrong';
+      const errorMessage = 'Something went wrong';
       setUndoState({ status: 'error', error: errorMessage });
     }
   }, [lastSent, platform]);
@@ -989,8 +993,7 @@ export function RepliesWaitingCard({
           [commentId]: { status: 'ready', text: suggestion, source },
         }));
       } catch (err) {
-        const message =
-          'Something went wrong';
+        const message = 'Something went wrong';
         setSuggestions((prev) => ({
           ...prev,
           [commentId]: { status: 'error', error: message },
@@ -1012,17 +1015,17 @@ export function RepliesWaitingCard({
   }, []);
 
   return (
-    <div className="rounded-xl border border-sky-500/30 bg-card p-4 shadow-sm">
+    <div className="rounded-xl border border-info bg-default p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 rounded-lg bg-sky-100 p-2" aria-hidden>
-            <MessageCircle className="h-4 w-4 text-sky-300" />
+          <div className="mt-0.5 rounded-lg bg-info p-2" aria-hidden>
+            <MessageCircle className="h-4 w-4 text-info" />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-default">
               Replies waiting
             </p>
-            <p className="text-xs leading-relaxed text-muted-foreground">
+            <p className="text-xs leading-relaxed text-secondary">
               {headerSubtitle}
             </p>
           </div>
@@ -1030,7 +1033,7 @@ export function RepliesWaitingCard({
         {visibleTotal > 0 ? (
           <Badge
             variant="outline"
-            className="shrink-0 bg-card/80 text-[11px] font-semibold text-sky-300 ring-1 ring-inset ring-sky-500/30"
+            className="shrink-0 bg-default text-[11px] font-semibold text-info ring-1 ring-inset ring-[var(--border-info)]"
           >
             {visibleTotal} waiting
           </Badge>
@@ -1073,7 +1076,7 @@ export function RepliesWaitingCard({
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <MessageCircle className="h-4 w-4 text-sky-300" aria-hidden />
+              <MessageCircle className="h-4 w-4 text-info" aria-hidden />
               Replies waiting · {platformLabel(platform)}
             </DialogTitle>
             <DialogDescription>
@@ -1098,11 +1101,8 @@ export function RepliesWaitingCard({
 
           <div className="-mx-4 max-h-[60vh] space-y-3 overflow-y-auto px-4 pb-1">
             {visibleGroups.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-sm text-muted-foreground">
-                <CheckCircle2
-                  className="h-5 w-5 text-emerald-600"
-                  aria-hidden
-                />
+              <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-default bg-element px-4 py-8 text-center text-sm text-secondary">
+                <CheckCircle2 className="h-5 w-5 text-success" aria-hidden />
                 Inbox zero — every comment from this sync has been answered.
               </div>
             ) : (

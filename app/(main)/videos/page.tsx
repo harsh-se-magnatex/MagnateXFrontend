@@ -12,10 +12,7 @@ import {
 import { waitForVideoGenerationDoc } from '@/src/lib/wait-for-parent-job';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
@@ -122,7 +119,7 @@ function FrameCard({
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-col rounded-2xl border border-border bg-card p-3 shadow-sm',
+        'flex min-w-0 flex-col rounded-2xl border border-default bg-default p-3',
         isPortraitPreview
           ? 'mx-auto w-full max-w-[13rem] sm:max-w-[15rem]'
           : 'min-w-0 flex-1'
@@ -130,15 +127,15 @@ function FrameCard({
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-foreground">{title}</p>
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
+          <p className="text-sm font-semibold text-default">{title}</p>
+          <p className="text-xs text-secondary">{subtitle}</p>
         </div>
         {frame.previewUrl ? (
           <button
             type="button"
             disabled={disabled}
             onClick={onRemove}
-            className="rounded-lg p-1.5 text-muted-foreground transition hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+            className="rounded-full p-1.5 text-secondary transition hover:bg-destructive/10 hover:text-destructive disabled:text-quaternary"
             aria-label={`Remove ${title}`}
           >
             <Trash2 className="h-4 w-4" />
@@ -149,9 +146,9 @@ function FrameCard({
       {frame.previewUrl ? (
         <div
           className={cn(
-            'relative flex w-full max-w-full items-center justify-center overflow-hidden rounded-xl border border-border',
+            'relative flex w-full max-w-full items-center justify-center overflow-hidden rounded-xl border border-default',
             previewAspectClass,
-            isLogoCard ? 'bg-background' : 'bg-muted'
+            isLogoCard ? 'bg-background' : 'bg-element'
           )}
         >
           <img
@@ -174,7 +171,7 @@ function FrameCard({
             disabled={disabled}
             onClick={() => inputRef.current?.click()}
             className={cn(
-              'flex w-full max-w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-muted/50 text-muted-foreground transition hover:border-primary-purple/40 hover:bg-primary-purple/10 disabled:opacity-50',
+              'flex w-full max-w-full flex-col items-center justify-center gap-2 rounded-full border-2 border-dashed border-default bg-element text-secondary transition hover:border-strong hover:bg-element disabled:text-quaternary',
               previewAspectClass
             )}
           >
@@ -188,7 +185,7 @@ function FrameCard({
               type="button"
               disabled={disabled}
               onClick={onPickFromGallery}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card py-2.5 text-xs font-semibold text-primary-purple transition hover:bg-primary-purple/10 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-full border border-default bg-default py-2.5 text-xs font-semibold text-preview transition hover:bg-element disabled:text-quaternary"
             >
               <Images className="h-4 w-4" aria-hidden />
               Choose from Media Library
@@ -220,7 +217,7 @@ function FrameCard({
             type="button"
             disabled={disabled}
             onClick={() => inputRef.current?.click()}
-            className="text-xs font-medium text-primary-purple hover:underline disabled:opacity-50"
+            className="text-xs font-medium text-preview hover:underline disabled:text-quaternary"
           >
             Replace image
           </button>
@@ -229,7 +226,7 @@ function FrameCard({
               type="button"
               disabled={disabled}
               onClick={onPickFromGallery}
-              className="text-xs font-medium text-primary-purple hover:underline disabled:opacity-50"
+              className="text-xs font-medium text-preview hover:underline disabled:text-quaternary"
             >
               Choose from library
             </button>
@@ -263,18 +260,14 @@ export default function VideoGenerationPage() {
     : '—';
   const userCredits = billing?.credits;
 
-  const perPlatformCost = 100;
+  const perPlatformCost = 15;
   const creditOk = userCredits !== undefined && userCredits >= perPlatformCost;
   const insufficientCredits =
     userCredits !== undefined && userCredits < perPlatformCost;
 
   const isBusy = pipelinePhase === 'generating';
 
-  const canGenerate =
-    creditOk &&
-    !!logoUrl &&
-    !isBusy &&
-    !profileLoading;
+  const canGenerate = creditOk && !!logoUrl && !isBusy && !profileLoading;
 
   useEffect(() => {
     let cancelled = false;
@@ -472,17 +465,17 @@ export default function VideoGenerationPage() {
       createdAt: Date.now(),
       lockedPlatform: 'all_platforms',
       posts: PLATFORM_ORDER.map((platform) => ({
-          imageUrl: posterUrl,
-          imageFilePath: '',
-          mediaType: 'video',
-          videoUrl,
-          videoFilePath,
-          ...(posterUrl ? { videoPosterUrl: posterUrl } : {}),
-          ...(posterFilePath ? { videoPosterPath: posterFilePath } : {}),
-          message: result.videoCaption?.trim() ?? '',
-          platform,
-          source: 'videoGeneration',
-        })),
+        imageUrl: posterUrl,
+        imageFilePath: '',
+        mediaType: 'video',
+        videoUrl,
+        videoFilePath,
+        ...(posterUrl ? { videoPosterUrl: posterUrl } : {}),
+        ...(posterFilePath ? { videoPosterPath: posterFilePath } : {}),
+        message: result.videoCaption?.trim() ?? '',
+        platform,
+        source: 'videoGeneration',
+      })),
     };
     setPostSchedulerPrefill(payload);
     router.push(`${WORKSPACE_NAV_HREFS.schedulePost}?prefill=gallery`);
@@ -527,19 +520,18 @@ export default function VideoGenerationPage() {
 
         <div className="space-y-6">
           <div className="rounded-2xl border border-primary-purple/20 bg-primary-purple/5 px-4 py-3">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-default">
               One 16:9 video for Instagram, Facebook, and LinkedIn
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Generate once, then schedule the identical video to all three platforms.
+            <p className="mt-1 text-xs text-secondary">
+              Generate once, then schedule the identical video to all three
+              platforms.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
-            <p className="text-sm font-semibold text-slate-800">
-              Logo placement
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
+          <div className="rounded-2xl border border-default bg-default p-4">
+            <p className="text-sm font-semibold text-default">Logo placement</p>
+            <p className="mt-1 text-xs text-secondary">
               Choose whether the saved business logo is shown before or after
               the main video.
             </p>
@@ -561,10 +553,10 @@ export default function VideoGenerationPage() {
                       resetRun();
                     }}
                     className={cn(
-                      'rounded-full border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50',
+                      'rounded-full border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:text-quaternary',
                       logoFramePosition === value
-                        ? 'border-violet-600 bg-violet-600 text-white'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-violet-300'
+                        ? 'border-preview bg-[var(--purple-9)] text-white'
+                        : 'border-default bg-default text-default hover:border-preview'
                     )}
                   >
                     {label}
@@ -573,7 +565,7 @@ export default function VideoGenerationPage() {
               })}
             </div>
             {!logoUrl ? (
-              <p className="mt-2 text-xs text-amber-700">
+              <p className="mt-2 text-xs text-warning">
                 Add a business logo in your profile to enable first or last
                 placement.
               </p>
@@ -672,7 +664,7 @@ export default function VideoGenerationPage() {
           <div>
             <label
               htmlFor="video-reference-prompt"
-              className="mb-2 block text-sm font-medium text-foreground"
+              className="mb-2 block text-sm font-medium text-default"
             >
               Video direction (optional)
             </label>
@@ -686,7 +678,7 @@ export default function VideoGenerationPage() {
               }}
               placeholder="Describe the story, action, audience, mood, dialogue, or result you want. Your business profile supplies the factual context."
               rows={3}
-              className="w-full rounded-xl border border-border bg-muted px-4 py-3 text-sm text-foreground outline-none focus:border-primary-purple focus:ring-2 focus:ring-primary-purple/20"
+              className="w-full rounded-lg border border-default bg-element px-4 py-3 text-sm text-default outline-none focus:border-primary-purple focus:ring-2 focus:ring-strong"
             />
           </div>
 
@@ -694,29 +686,25 @@ export default function VideoGenerationPage() {
             type="button"
             disabled={!canGenerate}
             onClick={() => void handleGenerate()}
-            className="w-full rounded-full bg-gradient-action py-3 text-sm font-semibold text-white shadow-md shadow-primary-purple/25 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-11 w-full items-center justify-center rounded-full btn-brand-fill text-sm font-medium transition-expo disabled:cursor-not-allowed"
           >
-            {isBusy
-              ? progressLabel || 'Generating...'
-              : 'Create video'}
+            {isBusy ? progressLabel || 'Generating...' : 'Create video'}
           </button>
 
           {isBusy ? (
-            <p className="text-xs font-medium text-violet-700">
-              {progressLabel}
-            </p>
+            <p className="text-xs font-medium text-preview">{progressLabel}</p>
           ) : null}
 
           {pipelinePhase === 'ready' && result?.videoUrl ? (
             <div className="space-y-4 rounded-xl border border-primary-purple/25 bg-primary-purple/10 p-4">
               <div>
-                <h2 className="text-sm font-semibold text-foreground">
+                <h2 className="text-section text-default">
                   Generated video
                   {result.videoAspectRatio
                     ? ` • ${result.videoAspectRatio}`
                     : ''}
                 </h2>
-                <p className="text-xs text-primary-purple">
+                <p className="text-xs text-preview">
                   Instagram, Facebook, and LinkedIn
                 </p>
               </div>
@@ -730,20 +718,20 @@ export default function VideoGenerationPage() {
                 src={result.videoUrl}
               />
               {result.videoCaption ? (
-                <div className="rounded-xl border border-border bg-card p-4">
+                <div className="rounded-xl border border-default bg-default p-4">
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <h3 className="text-sm font-semibold text-foreground">
+                    <h3 className="text-subsection text-default">
                       Video post caption
                     </h3>
                     <button
                       type="button"
                       onClick={() => void handleCopyCaption()}
-                      className="rounded-lg bg-primary-purple px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+                      className="rounded-full bg-primary-purple px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
                     >
                       {captionCopied ? 'Copied' : 'Copy'}
                     </button>
                   </div>
-                  <p className="whitespace-pre-line text-sm text-foreground leading-relaxed">
+                  <p className="whitespace-pre-line text-sm text-default leading-relaxed">
                     {result.videoCaption}
                   </p>
                 </div>
@@ -752,12 +740,12 @@ export default function VideoGenerationPage() {
                 <DownloadVideoButton
                   url={result.videoUrl}
                   getFilename={() => 'video-all-platforms.mp4'}
-                  className="inline-flex flex-1 items-center justify-center rounded-full border border-primary-purple/30 bg-card px-5 py-2.5 text-sm font-semibold text-primary-purple hover:bg-primary-purple/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex flex-1 items-center justify-center rounded-full border border-primary-purple/30 bg-default px-5 py-2.5 text-sm font-semibold text-preview hover:bg-element disabled:cursor-not-allowed disabled:text-quaternary"
                 />
                 <button
                   type="button"
                   onClick={handleSendToScheduler}
-                  className="inline-flex flex-1 items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                  className="inline-flex flex-1 items-center justify-center rounded-full bg-[var(--green-9)] px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90"
                 >
                   Schedule to all three platforms
                 </button>
@@ -766,16 +754,16 @@ export default function VideoGenerationPage() {
           ) : null}
 
           {pipelinePhase === 'ready' && result?.videoPrompt ? (
-            <div className="space-y-3 rounded-xl border border-violet-200 bg-violet-50/60 p-4">
+            <div className="space-y-3 rounded-xl border border-preview bg-preview p-4">
               <div>
-                <h2 className="text-sm font-semibold text-violet-900">
+                <h2 className="text-section text-default">
                   {result.promptTitle || 'Claude video prompt'}
                 </h2>
-                <p className="text-xs text-violet-700">
+                <p className="text-xs text-preview">
                   Prompt-only test completed. No video request was sent.
                 </p>
               </div>
-              <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-lg border border-violet-100 bg-white p-4 text-xs leading-relaxed text-slate-700">
+              <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-lg border border-preview bg-default p-4 text-xs leading-relaxed text-default">
                 {result.videoPrompt}
               </pre>
             </div>

@@ -34,7 +34,12 @@ function formatRelative(ms: number): string {
  * Yellow banner shown at the top of a platform tab when the latest background
  * sync failed. Renders nothing when status is missing or `'ok'`.
  */
-export function SyncErrorBanner({ platform, status, error, lastSyncAt }: Props) {
+export function SyncErrorBanner({
+  platform,
+  status,
+  error,
+  lastSyncAt,
+}: Props) {
   if (status !== 'error') return null;
 
   const ms = toMs(lastSyncAt);
@@ -47,18 +52,20 @@ export function SyncErrorBanner({ platform, status, error, lastSyncAt }: Props) 
   return (
     <div
       role="alert"
-      className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 shadow-sm"
+      className="flex items-start gap-3 rounded-xl border border-warning bg-warning px-4 py-3 text-sm text-warning"
     >
       <AlertTriangle
-        className="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+        className="mt-0.5 h-5 w-5 shrink-0 text-warning"
         aria-hidden
       />
       <div className="space-y-1">
         <p className="font-medium">
           {platform} analytics didn’t refresh
-          {when ? <span className="font-normal"> · last tried {when}</span> : null}
+          {when ? (
+            <span className="font-normal"> · last tried {when}</span>
+          ) : null}
         </p>
-        <p className="font-mono text-xs leading-relaxed text-amber-200 break-all">
+        <p className="font-mono text-xs leading-relaxed text-warning break-all">
           {message}
         </p>
       </div>

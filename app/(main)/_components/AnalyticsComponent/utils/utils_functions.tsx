@@ -6,10 +6,7 @@ import {
   Post,
 } from '../../types';
 import { trendSeries } from './facebook_components/util_component';
-import {
-  formatTimestampInTz,
-  type TimestampInput,
-} from '@/lib/user-timezone';
+import { formatTimestampInTz, type TimestampInput } from '@/lib/user-timezone';
 
 export function postFrequencyEntries(
   page:
@@ -183,14 +180,8 @@ export function weeklyDeltaFromTrend(
   // Each window should have several days — a 1-point "previous week" is not meaningful.
   if (current.length < 3 || previous.length < 3) return null;
 
-  const currentSum = current.reduce(
-    (s, p) => s + (Number(p.value) || 0),
-    0
-  );
-  const previousSum = previous.reduce(
-    (s, p) => s + (Number(p.value) || 0),
-    0
-  );
+  const currentSum = current.reduce((s, p) => s + (Number(p.value) || 0), 0);
+  const previousSum = previous.reduce((s, p) => s + (Number(p.value) || 0), 0);
 
   // No prior baseline (common right after connecting) — cannot compute WoW %.
   if (previousSum === 0) return null;

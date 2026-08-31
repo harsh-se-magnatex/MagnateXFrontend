@@ -50,7 +50,10 @@ function generateLabel(brief: PostBrief): string {
   return 'Generate this post';
 }
 
-function generationPath(brief: PostBrief, platform: GrowthStudioPlatform): string {
+function generationPath(
+  brief: PostBrief,
+  platform: GrowthStudioPlatform
+): string {
   const params = new URLSearchParams({
     prompt: brief.prompt,
     platform,
@@ -91,20 +94,20 @@ function BriefCard({
 }) {
   const Icon = ICONS[brief.key] ?? Lightbulb;
   return (
-    <div className="flex h-full flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+    <div className="flex h-full flex-col gap-3 rounded-xl border border-default bg-default p-4">
       <div className="flex items-start gap-2">
-        <div className="rounded-lg bg-emerald-500/20 p-1.5" aria-hidden>
-          <Icon className="h-4 w-4 text-emerald-300" />
+        <div className="rounded-lg bg-success p-1.5" aria-hidden>
+          <Icon className="h-4 w-4 text-success" />
         </div>
         <div className="flex-1 space-y-1">
-          <p className="text-sm font-semibold text-foreground">{brief.title}</p>
-          <p className="text-xs leading-relaxed text-muted-foreground">
+          <p className="text-sm font-semibold text-default">{brief.title}</p>
+          <p className="text-xs leading-relaxed text-secondary">
             {brief.description}
           </p>
         </div>
       </div>
 
-      <div className="rounded-md border border-dashed border-border bg-muted/40 px-2.5 py-2 text-[11px] text-muted-foreground">
+      <div className="rounded-md border border-dashed border-default bg-element px-2.5 py-2 text-[11px] text-secondary">
         {brief.hint}
       </div>
 
@@ -115,13 +118,13 @@ function BriefCard({
       */}
       {brief.prompt ? (
         <div
-          className="rounded-md border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-2 text-[11px] leading-relaxed text-emerald-300"
+          className="rounded-md border border-success bg-success px-2.5 py-2 text-[11px] leading-relaxed text-success"
           title={brief.prompt}
         >
-          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-success">
             Prompt preview
           </p>
-          <p className="line-clamp-4 whitespace-pre-wrap text-foreground">
+          <p className="line-clamp-4 whitespace-pre-wrap text-default">
             {brief.prompt}
           </p>
         </div>
@@ -145,7 +148,7 @@ function SkeletonCard() {
     <div
       role="status"
       aria-label="Loading post idea"
-      className="h-44 animate-pulse rounded-xl border border-emerald-500/25 bg-emerald-500/10"
+      className="h-44 animate-pulse rounded-xl border border-success bg-success"
     />
   );
 }
@@ -156,7 +159,9 @@ export function WhatToPostNextSection({
   platform: GrowthStudioPlatform;
 }) {
   const router = useRouter();
-  const [state, setState] = useState<FetchState>(() => initialStateFor(platform));
+  const [state, setState] = useState<FetchState>(() =>
+    initialStateFor(platform)
+  );
 
   useEffect(() => {
     const cache = useWhatToPostNextCache.getState();
@@ -197,13 +202,13 @@ export function WhatToPostNextSection({
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h2
           id="growth-studio-what-to-post-heading"
-          className="flex items-center gap-2 text-sm font-semibold text-foreground"
+          className="text-section text-default flex items-center gap-2"
         >
-          <Sparkles className="h-4 w-4 text-emerald-600" aria-hidden />
+          <Sparkles className="h-4 w-4 text-success" aria-hidden />
           What to post next
         </h2>
       </header>
-      <p className="text-xs leading-relaxed text-muted-foreground">
+      <p className="text-xs leading-relaxed text-secondary">
         Two {platformLabel(platform)} idea cards tuned to your analytics — your
         best winner, and a gap you&apos;ve been avoiding.
       </p>
@@ -214,7 +219,7 @@ export function WhatToPostNextSection({
           <SkeletonCard />
         </div>
       ) : state.status === 'error' ? (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+        <p className="rounded-lg border border-warning bg-warning px-3 py-2 text-xs text-warning">
           Couldn&apos;t load post ideas: {state.error}
         </p>
       ) : state.payload.visible && state.payload.briefs.length > 0 ? (
@@ -228,7 +233,7 @@ export function WhatToPostNextSection({
           ))}
         </div>
       ) : (
-        <p className="rounded-lg border border-border bg-muted px-3 py-3 text-xs text-muted-foreground">
+        <p className="rounded-lg border border-default bg-element px-3 py-3 text-xs text-secondary">
           {state.payload.reason ??
             'Post idea cards will appear here once we have enough data.'}
         </p>

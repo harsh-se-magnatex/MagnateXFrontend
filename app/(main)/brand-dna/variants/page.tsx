@@ -47,7 +47,8 @@ export default function LogoVariantsPage() {
     const loadLogo = async () => {
       let fromSession = '';
       try {
-        fromSession = sessionStorage.getItem('template_dna_logo_for_variants') || '';
+        fromSession =
+          sessionStorage.getItem('template_dna_logo_for_variants') || '';
         setForceFreshVariants(
           sessionStorage.getItem('template_dna_force_fresh_variants') === '1'
         );
@@ -263,7 +264,14 @@ export default function LogoVariantsPage() {
     autoStartedFreshRef.current = true;
     void generate({ isRegeneration: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional one-shot on force-fresh entry
-  }, [user, hasLoadedSaved, forceFreshVariants, sourceLogo, variants.length, isGenerating]);
+  }, [
+    user,
+    hasLoadedSaved,
+    forceFreshVariants,
+    sourceLogo,
+    variants.length,
+    isGenerating,
+  ]);
 
   if (loading) return <PageLoadingState />;
   if (!user) return null;
@@ -273,14 +281,15 @@ export default function LogoVariantsPage() {
       <header className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className={workspacePageTitleClass}>Logo Variants</h1>
-          <p className="mt-1 text-muted-foreground">
-            Generated variants from your current logo. Total requested: {VARIANT_COUNT}.
+          <p className="mt-1 text-secondary">
+            Generated variants from your current logo. Total requested:{' '}
+            {VARIANT_COUNT}.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link
             href="/brand-dna"
-            className="inline-flex items-center justify-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-lg border border-default bg-default px-4 py-2 text-sm font-semibold text-default transition-expo hover:bg-hover"
           >
             Back
           </Link>
@@ -296,7 +305,7 @@ export default function LogoVariantsPage() {
                 isSaving ||
                 (variants.length > 0 && !canRegenerate)
               }
-              className="inline-flex items-center justify-center rounded-lg border border-primary-purple/25 bg-primary-purple/10 px-4 py-2 text-sm font-semibold text-primary-purple transition-colors hover:bg-primary-purple/15 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center justify-center rounded-full border border-primary-purple/25 bg-primary-purple/10 px-4 py-2 text-sm font-semibold text-preview transition-expo hover:bg-element disabled:cursor-not-allowed disabled:text-quaternary"
             >
               {isGenerating
                 ? 'Generating...'
@@ -313,25 +322,28 @@ export default function LogoVariantsPage() {
       </header>
 
       {!canGenerate && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        <div className="rounded-xl border border-warning bg-warning p-4 text-sm text-warning">
           No logo found. Upload or save a logo first in Template DNA.
         </div>
       )}
-      {canGenerate && variantsFeatureOff && !variants.length && !autoGenPending && (
-        <div className="rounded-xl border border-border bg-muted p-4 text-sm text-foreground mb-4">
-          Logo variants are turned off in Template DNA. Turn the switch on there
-          to generate variants automatically, or use Generate here to create and
-          save up to {VARIANT_COUNT} variants.
-        </div>
-      )}
+      {canGenerate &&
+        variantsFeatureOff &&
+        !variants.length &&
+        !autoGenPending && (
+          <div className="rounded-xl border border-default bg-element p-4 text-sm text-default mb-4">
+            Logo variants are turned off in Template DNA. Turn the switch on
+            there to generate variants automatically, or use Generate here to
+            create and save up to {VARIANT_COUNT} variants.
+          </div>
+        )}
       {canGenerate && autoGenPending && !variants.length && (
-        <div className="rounded-xl border border-primary-purple/25 bg-primary-purple/10 p-4 text-sm text-primary-purple mb-4">
+        <div className="rounded-xl border border-primary-purple/25 bg-primary-purple/10 p-4 text-sm text-preview mb-4">
           Loading variants generated for your account… This can take up to a
           minute after you enable the feature.
         </div>
       )}
       {!!error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 mb-4">
+        <div className="rounded-xl border border-danger bg-danger p-4 text-sm text-danger mb-4">
           {error}
         </div>
       )}
@@ -339,18 +351,22 @@ export default function LogoVariantsPage() {
       {(!!rawLogo || !!transparentLogo) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           {!!rawLogo && (
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground border-b border-border">
+            <div className="rounded-xl border border-default bg-default overflow-hidden">
+              <div className="px-3 py-2 text-xs font-semibold text-secondary border-b border-default">
                 Raw Logo
               </div>
               <div className="h-36">
-                <img src={rawLogo} alt="Raw logo" className="w-full h-full object-contain p-2" />
+                <img
+                  src={rawLogo}
+                  alt="Raw logo"
+                  className="w-full h-full object-contain p-2"
+                />
               </div>
             </div>
           )}
           {!!transparentLogo && (
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground border-b border-border">
+            <div className="rounded-xl border border-default bg-default overflow-hidden">
+              <div className="px-3 py-2 text-xs font-semibold text-secondary border-b border-default">
                 Original (Transparent Background)
               </div>
               <div className="h-36 bg-[linear-gradient(45deg,#f1f5f9_25%,transparent_25%),linear-gradient(-45deg,#f1f5f9_25%,transparent_25%),linear-gradient(45deg,transparent_75%,#f1f5f9_75%),linear-gradient(-45deg,transparent_75%,#f1f5f9_75%)] bg-[length:16px_16px] bg-[position:0_0,0_8px,8px_-8px,-8px_0]">
@@ -367,31 +383,30 @@ export default function LogoVariantsPage() {
 
       {!!variants.length && (
         <>
-          <div className="mb-3 text-sm font-semibold text-foreground">
+          <div className="mb-3 text-sm font-semibold text-default">
             Variants ({variants.length}/{VARIANT_COUNT})
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {variants.map((variant, index) => (
-            <div
-              key={`${variant.slice(0, 24)}-${index}`}
-              className="rounded-xl border border-border bg-card overflow-hidden"
-            >
-              <div className="h-32">
-                <img
-                  src={variant}
-                  alt={`Logo variant ${index + 1}`}
-                  className="w-full h-full object-contain p-2"
-                />
+            {variants.map((variant, index) => (
+              <div
+                key={`${variant.slice(0, 24)}-${index}`}
+                className="rounded-xl border border-default bg-default overflow-hidden"
+              >
+                <div className="h-32">
+                  <img
+                    src={variant}
+                    alt={`Logo variant ${index + 1}`}
+                    className="w-full h-full object-contain p-2"
+                  />
+                </div>
+                <div className="border-t border-default px-3 py-2 text-xs font-medium text-secondary">
+                  <span>Variant {index + 1}</span>
+                </div>
               </div>
-              <div className="border-t border-border px-3 py-2 text-xs font-medium text-muted-foreground">
-                <span>Variant {index + 1}</span>
-              </div>
-            </div>
-          ))}
+            ))}
           </div>
         </>
       )}
     </div>
   );
 }
-

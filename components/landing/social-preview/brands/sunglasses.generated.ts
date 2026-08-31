@@ -6,402 +6,501 @@
  * Re-run: pnpm export-how-it-looks -- --brand=sunglasses
  *   or:   pnpm export-how-it-looks -- --brand=sunglasses --uid=5cdkAFOzCjVaiDBAoZw7504m8383
  */
-export const GENERATED_SHOWCASE_BRAND_ID = "sunglasses" as const;
+export const GENERATED_SHOWCASE_BRAND_ID = 'sunglasses' as const;
 
 export const GENERATED_SHOWCASE_BRAND = {
-  "name": "Neon Ray Co.",
-  "handle": "neon_ray_co",
-  "tagline": "Fashion",
-  "followersLabel": "1.2K",
-  "followingLabel": "186"
+  name: 'Neon Ray Co.',
+  handle: 'neon_ray_co',
+  tagline: 'Fashion',
+  followersLabel: '1.2K',
+  followingLabel: '186',
 } as const;
 
 export const GENERATED_SHOWCASE_POSTS = [
   {
-    "id": "TY6HbRFu2hQEXfHZKtMX",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-25T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Harsh glare and squinting headaches don't have to ruin your summer. Our polarized black and gold frames cut through blinding reflections, delivering crystal-clear vision and effortless sophistication. Beach, festival, or casual—one pair does it all. Backed by our 30-day guarantee.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/TY6HbRFu2hQEXfHZKtMX/image.png"
+    id: 'TY6HbRFu2hQEXfHZKtMX',
+    platform: 'instagram',
+    scheduleAt: '2026-08-25T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Harsh glare and squinting headaches don't have to ruin your summer. Our polarized black and gold frames cut through blinding reflections, delivering crystal-clear vision and effortless sophistication. Beach, festival, or casual—one pair does it all. Backed by our 30-day guarantee.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/TY6HbRFu2hQEXfHZKtMX/image.png',
   },
   {
-    "id": "OlVSP4Vh3JKCXjqiKkAQ",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-25T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "One rule guides every frame we craft: never sacrifice sight for style. These aviators pair polarized clarity with architectural gold geometry—proof that protection and sophistication work together. The best accessories earn their place. Drop a comment: what's your non-negotiable in eyewear?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/OlVSP4Vh3JKCXjqiKkAQ/image.png"
+    id: 'OlVSP4Vh3JKCXjqiKkAQ',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-25T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "One rule guides every frame we craft: never sacrifice sight for style. These aviators pair polarized clarity with architectural gold geometry—proof that protection and sophistication work together. The best accessories earn their place. Drop a comment: what's your non-negotiable in eyewear?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/OlVSP4Vh3JKCXjqiKkAQ/image.png',
   },
   {
-    "id": "EUamFtNJQrpsujjwWLao",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-25T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "As summer winds down, I'm still convinced: sharp square frames hit different than classic rounds. Built these with polarized lenses so they work as hard as you do—glare on the road, sun on the beach, anywhere. What's your frame preference?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/EUamFtNJQrpsujjwWLao/image.png"
+    id: 'EUamFtNJQrpsujjwWLao',
+    platform: 'facebook',
+    scheduleAt: '2026-08-25T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "As summer winds down, I'm still convinced: sharp square frames hit different than classic rounds. Built these with polarized lenses so they work as hard as you do—glare on the road, sun on the beach, anywhere. What's your frame preference?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/EUamFtNJQrpsujjwWLao/image.png',
   },
   {
-    "id": "rmo0FWQlnCPJ4GDW53Hb",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-22T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Don't wait for beach season to invest in lens clarity. Autumn's low-angle sun hits your eyes hardest during the commute—causing daily fatigue professionals overlook. Our tortoiseshell square frames pair technical polarization with bold design. Save this: quality eyewear is productivity gear.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/rmo0FWQlnCPJ4GDW53Hb/image.png"
+    id: 'rmo0FWQlnCPJ4GDW53Hb',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-22T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Don't wait for beach season to invest in lens clarity. Autumn's low-angle sun hits your eyes hardest during the commute—causing daily fatigue professionals overlook. Our tortoiseshell square frames pair technical polarization with bold design. Save this: quality eyewear is productivity gear.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/rmo0FWQlnCPJ4GDW53Hb/image.png',
   },
   {
-    "id": "G9o6Mu65QFCMvnExPpDD",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-22T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Late-summer glare doesn't stand a chance. Our tortoiseshell frames + blue gradient polarized lenses eliminate eye strain while elevating your entire look. 30-day satisfaction guaranteed. Frame shape or lens tech—what matters most to you?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/G9o6Mu65QFCMvnExPpDD/image.png"
+    id: 'G9o6Mu65QFCMvnExPpDD',
+    platform: 'facebook',
+    scheduleAt: '2026-08-22T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Late-summer glare doesn't stand a chance. Our tortoiseshell frames + blue gradient polarized lenses eliminate eye strain while elevating your entire look. 30-day satisfaction guaranteed. Frame shape or lens tech—what matters most to you?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/G9o6Mu65QFCMvnExPpDD/image.png',
   },
   {
-    "id": "8raFlkJUrc4C9sdx8WFf",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-22T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Late-summer calls for eyewear that delivers. Our polarized brown frames with green lenses cut glare while keeping your look sharp—whether you're at the coast or the festival stage. Durability meets design.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/8raFlkJUrc4C9sdx8WFf/image.png"
+    id: '8raFlkJUrc4C9sdx8WFf',
+    platform: 'instagram',
+    scheduleAt: '2026-08-22T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Late-summer calls for eyewear that delivers. Our polarized brown frames with green lenses cut glare while keeping your look sharp—whether you're at the coast or the festival stage. Durability meets design.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/8raFlkJUrc4C9sdx8WFf/image.png',
   },
   {
-    "id": "uW8vV42t4x1x502AUtR4",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-21T13:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "This summer, don't let glare ruin your beach days or festivals. Cheap sunglasses might look the part, but they won't protect your eyes or cut through the strain that comes with intense UV and reflection. Our Polarized Collection is engineered for those who live outdoors—reducing glare, protecting your vision, and looking sharp whether you're festival-hopping or soaking up sand. Try them risk-free for 30 days. If they're not your perfect pair, we'll make it right. Shop now and see the difference polarization makes. #NeonRayCo #PolarizedStyle #SummerEssentials\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "carouselSlides": [
+    id: 'uW8vV42t4x1x502AUtR4',
+    platform: 'facebook',
+    scheduleAt: '2026-08-21T13:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "This summer, don't let glare ruin your beach days or festivals. Cheap sunglasses might look the part, but they won't protect your eyes or cut through the strain that comes with intense UV and reflection. Our Polarized Collection is engineered for those who live outdoors—reducing glare, protecting your vision, and looking sharp whether you're festival-hopping or soaking up sand. Try them risk-free for 30 days. If they're not your perfect pair, we'll make it right. Shop now and see the difference polarization makes. #NeonRayCo #PolarizedStyle #SummerEssentials\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/facebook/uW8vV42t4x1x502AUtR4/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "uVs7Kq247PJDa4iNcdU3",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-21T13:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "Round or Aviator? Standard or Polarized? The choice is yours—but your eyes will thank you for clarity. This summer, see the difference that polarized lenses make. Shop Neon Ray's full collection now and find your perfect frame. Limited summer pricing ends soon. #NeonRay #SunglassesStyle #PolarizedVision\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "carouselSlides": [
+    id: 'uVs7Kq247PJDa4iNcdU3',
+    platform: 'instagram',
+    scheduleAt: '2026-08-21T13:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "Round or Aviator? Standard or Polarized? The choice is yours—but your eyes will thank you for clarity. This summer, see the difference that polarized lenses make. Shop Neon Ray's full collection now and find your perfect frame. Limited summer pricing ends soon. #NeonRay #SunglassesStyle #PolarizedVision\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/instagram/uVs7Kq247PJDa4iNcdU3/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "nRVft9WFGruYtDxZOYbu",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-21T13:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "Your eyes work hard—give them the protection they deserve. Polarized lenses aren't just for beach days; they're the ultimate performance upgrade for every summer move, from boardroom to festival. Discover why eye health pros and style-conscious professionals are making the switch, and lock in your pair before summer slips away. Shop with confidence—30 days to fall in love, guaranteed.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "carouselSlides": [
+    id: 'nRVft9WFGruYtDxZOYbu',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-21T13:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "Your eyes work hard—give them the protection they deserve. Polarized lenses aren't just for beach days; they're the ultimate performance upgrade for every summer move, from boardroom to festival. Discover why eye health pros and style-conscious professionals are making the switch, and lock in your pair before summer slips away. Shop with confidence—30 days to fall in love, guaranteed.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/sunglasses/linkedin/nRVft9WFGruYtDxZOYbu/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "flnDilaEGeYCwAoaToK3",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-19T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "What's the one thing you pack first for every summer trip? For us, it's a pair that works as hard as you play. Gold aviators with polarized clarity—because your summer look shouldn't compromise on vision. What's yours? Drop it in the comments.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/flnDilaEGeYCwAoaToK3/image.png"
+    id: 'flnDilaEGeYCwAoaToK3',
+    platform: 'instagram',
+    scheduleAt: '2026-08-19T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "What's the one thing you pack first for every summer trip? For us, it's a pair that works as hard as you play. Gold aviators with polarized clarity—because your summer look shouldn't compromise on vision. What's yours? Drop it in the comments.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/flnDilaEGeYCwAoaToK3/image.png',
   },
   {
-    "id": "bzPdVXG8LrmheaqM2waX",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-19T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Why black and gold? Because the best accessory works hard and looks effortless. Our Polarized Collection was designed for real life—beach days, city commutes, everything in between. One frame, endless seasons. What's the one thing you reach for no matter what? Drop it below.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/bzPdVXG8LrmheaqM2waX/image.png"
+    id: 'bzPdVXG8LrmheaqM2waX',
+    platform: 'facebook',
+    scheduleAt: '2026-08-19T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Why black and gold? Because the best accessory works hard and looks effortless. Our Polarized Collection was designed for real life—beach days, city commutes, everything in between. One frame, endless seasons. What's the one thing you reach for no matter what? Drop it below.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/bzPdVXG8LrmheaqM2waX/image.png',
   },
   {
-    "id": "XTzDFwDZcM5AwOzOT10O",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-19T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Myth: darker lenses equal better eye protection. Fact: true eye safety comes from polarization technology, not tint density alone. Our gold-framed tortoiseshell polarized collection eliminates glare from reflective surfaces, delivering crisp vision and long-term eye health. Design meets function. Save this for your next outdoor adventure.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/XTzDFwDZcM5AwOzOT10O/image.png"
+    id: 'XTzDFwDZcM5AwOzOT10O',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-19T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Myth: darker lenses equal better eye protection. Fact: true eye safety comes from polarization technology, not tint density alone. Our gold-framed tortoiseshell polarized collection eliminates glare from reflective surfaces, delivering crisp vision and long-term eye health. Design meets function. Save this for your next outdoor adventure.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/XTzDFwDZcM5AwOzOT10O/image.png',
   },
   {
-    "id": "Wdi9i6hrdltXcnStati0",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-16T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Beach or beats? 🏖️🎵 Our matte-finish polarized sunglasses keep your view crystal clear in both high-glare environments — whether you're catching waves or your favorite festival headliner. Drop your pick below! 30-day satisfaction guarantee backed.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/Wdi9i6hrdltXcnStati0/image.png"
+    id: 'Wdi9i6hrdltXcnStati0',
+    platform: 'facebook',
+    scheduleAt: '2026-08-16T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Beach or beats? 🏖️🎵 Our matte-finish polarized sunglasses keep your view crystal clear in both high-glare environments — whether you're catching waves or your favorite festival headliner. Drop your pick below! 30-day satisfaction guarantee backed.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/Wdi9i6hrdltXcnStati0/image.png',
   },
   {
-    "id": "FqPMjWSEUKIF1xUXwzEL",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-16T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Signal: Polarized lenses cut glare. Reduce eye strain during high-exposure travel. Noise: Disposable frames without clarity tech. Save this—true style is performance. 30-day guarantee included.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/FqPMjWSEUKIF1xUXwzEL/image.png"
+    id: 'FqPMjWSEUKIF1xUXwzEL',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-16T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Signal: Polarized lenses cut glare. Reduce eye strain during high-exposure travel. Noise: Disposable frames without clarity tech. Save this—true style is performance. 30-day guarantee included.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/FqPMjWSEUKIF1xUXwzEL/image.png',
   },
   {
-    "id": "5vLOjnbeJcjfr83jD2Sz",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-16T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Yellow polarized lenses aren't just bold—they're engineered to slice through beach glare and festival brightness while sharpening every color around you. These square tortoiseshell frames deliver the protection and look you need. Backed by our 30-day satisfaction guarantee. DM us to find your perfect pair.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/5vLOjnbeJcjfr83jD2Sz/image.png"
+    id: '5vLOjnbeJcjfr83jD2Sz',
+    platform: 'instagram',
+    scheduleAt: '2026-08-16T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Yellow polarized lenses aren't just bold—they're engineered to slice through beach glare and festival brightness while sharpening every color around you. These square tortoiseshell frames deliver the protection and look you need. Backed by our 30-day satisfaction guarantee. DM us to find your perfect pair.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/5vLOjnbeJcjfr83jD2Sz/image.png',
   },
   {
-    "id": "xkGPBPjERu7vJ70GeUc7",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-15T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "⏳ Time's running out! Grab your favorite summer shades before they're gone. See the world in style with Neon Ray. #sunglasses #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/xkGPBPjERu7vJ70GeUc7/image.png"
+    id: 'xkGPBPjERu7vJ70GeUc7',
+    platform: 'facebook',
+    scheduleAt: '2026-08-15T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "⏳ Time's running out! Grab your favorite summer shades before they're gone. See the world in style with Neon Ray. #sunglasses #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/xkGPBPjERu7vJ70GeUc7/image.png',
   },
   {
-    "id": "m0ALJwrXU7TNjI3YLvvH",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-15T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "This Independence Day, Neon Ray celebrates the spirit of freedom and patriotism with style. See the world in style—through iconic eyewear that honors our nation's pride. #IndependenceDay #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/m0ALJwrXU7TNjI3YLvvH/image.png"
+    id: 'm0ALJwrXU7TNjI3YLvvH',
+    platform: 'facebook',
+    scheduleAt: '2026-08-15T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "This Independence Day, Neon Ray celebrates the spirit of freedom and patriotism with style. See the world in style—through iconic eyewear that honors our nation's pride. #IndependenceDay #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/m0ALJwrXU7TNjI3YLvvH/image.png',
   },
   {
-    "id": "hOkD0RX5S83MEYqGVJPN",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-15T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Summer's slipping away—don't miss your chance to see the world in style. Grab your perfect pair from Neon Ray Co. before these final days are gone. Shop now. #sunglasses #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/hOkD0RX5S83MEYqGVJPN/image.png"
+    id: 'hOkD0RX5S83MEYqGVJPN',
+    platform: 'instagram',
+    scheduleAt: '2026-08-15T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Summer's slipping away—don't miss your chance to see the world in style. Grab your perfect pair from Neon Ray Co. before these final days are gone. Shop now. #sunglasses #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/hOkD0RX5S83MEYqGVJPN/image.png',
   },
   {
-    "id": "Zyj2BowflX5HVD6CxD8J",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-15T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "⏰ The clock is ticking on summer style. Neon Ray Co.'s best-selling shades won't last long—secure yours before they're gone. See the world in style. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/Zyj2BowflX5HVD6CxD8J/image.png"
+    id: 'Zyj2BowflX5HVD6CxD8J',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-15T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "⏰ The clock is ticking on summer style. Neon Ray Co.'s best-selling shades won't last long—secure yours before they're gone. See the world in style. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/Zyj2BowflX5HVD6CxD8J/image.png',
   },
   {
-    "id": "XzuZIooKAfr64UF5arBg",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-15T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "This Independence Day, Neon Ray Co. celebrates the spirit of freedom and pride with our community. As India honors its journey from 1947 to today, we invite you to see the world in style—with sunglasses that reflect your patriotic pride and personal flair. Freedom looks best when you're standing together. #IndependenceDay #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/XzuZIooKAfr64UF5arBg/image.png"
+    id: 'XzuZIooKAfr64UF5arBg',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-15T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "This Independence Day, Neon Ray Co. celebrates the spirit of freedom and pride with our community. As India honors its journey from 1947 to today, we invite you to see the world in style—with sunglasses that reflect your patriotic pride and personal flair. Freedom looks best when you're standing together. #IndependenceDay #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/XzuZIooKAfr64UF5arBg/image.png',
   },
   {
-    "id": "KfHOWYkwPs4UsH68oUxt",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-15T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Celebrating Independence Day in style at Neon Ray Co. — where patriotic pride meets premium eyewear. Honoring India's freedom and the tricolor spirit with curated frames that let you see the world boldly. #NeonRayCo #IndependenceDay #style #sunglasses #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/KfHOWYkwPs4UsH68oUxt/image.png"
+    id: 'KfHOWYkwPs4UsH68oUxt',
+    platform: 'instagram',
+    scheduleAt: '2026-08-15T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Celebrating Independence Day in style at Neon Ray Co. — where patriotic pride meets premium eyewear. Honoring India's freedom and the tricolor spirit with curated frames that let you see the world boldly. #NeonRayCo #IndependenceDay #style #sunglasses #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/KfHOWYkwPs4UsH68oUxt/image.png',
   },
   {
-    "id": "W9d0Vmeo3IzDCBEFkcN2",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-14T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Real Neon Ray customers, real style. Meet the community rocking our collection worldwide. See the world in style with Neon Ray. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/W9d0Vmeo3IzDCBEFkcN2/image.png"
+    id: 'W9d0Vmeo3IzDCBEFkcN2',
+    platform: 'instagram',
+    scheduleAt: '2026-08-14T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Real Neon Ray customers, real style. Meet the community rocking our collection worldwide. See the world in style with Neon Ray. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/W9d0Vmeo3IzDCBEFkcN2/image.png',
   },
   {
-    "id": "JjbcYJZWHdM2AJ7t0ZUB",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-14T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Meet our community. Real customers, real style. See the world in style with Neon Ray sunglasses. 😎 #NeonRayCo #Sunglasses #Style #WomensFashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/JjbcYJZWHdM2AJ7t0ZUB/image.png"
+    id: 'JjbcYJZWHdM2AJ7t0ZUB',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-14T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Meet our community. Real customers, real style. See the world in style with Neon Ray sunglasses. 😎 #NeonRayCo #Sunglasses #Style #WomensFashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/JjbcYJZWHdM2AJ7t0ZUB/image.png',
   },
   {
-    "id": "7cTxkAFGVeo0KdpUsXKc",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-14T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Meet our community. Real Neon Ray customers, real style. See the world through their eyes—and discover your perfect pair. #NeonRayCo #sunglasses #style\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/7cTxkAFGVeo0KdpUsXKc/image.png"
+    id: '7cTxkAFGVeo0KdpUsXKc',
+    platform: 'facebook',
+    scheduleAt: '2026-08-14T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Meet our community. Real Neon Ray customers, real style. See the world through their eyes—and discover your perfect pair. #NeonRayCo #sunglasses #style\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/7cTxkAFGVeo0KdpUsXKc/image.png',
   },
   {
-    "id": "XTOvJtQtvXaPSZPdhlWT",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-13T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "From sketch to style: witness the meticulous design process behind every Neon Ray Co. frame. Our team pours precision, creativity, and passion into crafting sunglasses that let you see the world in style. Explore the artistry. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/XTOvJtQtvXaPSZPdhlWT/image.png"
+    id: 'XTOvJtQtvXaPSZPdhlWT',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-13T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'From sketch to style: witness the meticulous design process behind every Neon Ray Co. frame. Our team pours precision, creativity, and passion into crafting sunglasses that let you see the world in style. Explore the artistry. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/XTOvJtQtvXaPSZPdhlWT/image.png',
   },
   {
-    "id": "SExHCnIvlnqWQgm3JAKo",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-13T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Every frame of Neon Ray Co. sunglasses is born from meticulous design, skilled hands, and obsessive attention to detail. Sketches to finished product—this is the craft behind your style. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/SExHCnIvlnqWQgm3JAKo/image.png"
+    id: 'SExHCnIvlnqWQgm3JAKo',
+    platform: 'facebook',
+    scheduleAt: '2026-08-13T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Every frame of Neon Ray Co. sunglasses is born from meticulous design, skilled hands, and obsessive attention to detail. Sketches to finished product—this is the craft behind your style. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/SExHCnIvlnqWQgm3JAKo/image.png',
   },
   {
-    "id": "K6XLvRPCDHKSf7H4eEOE",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-13T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "From sketch to style—witness the meticulous craftsmanship behind every Neon Ray Co. pair. Each frame is designed with precision, passion, and an eye for detail. See the world in style. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/K6XLvRPCDHKSf7H4eEOE/image.png"
+    id: 'K6XLvRPCDHKSf7H4eEOE',
+    platform: 'instagram',
+    scheduleAt: '2026-08-13T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'From sketch to style—witness the meticulous craftsmanship behind every Neon Ray Co. pair. Each frame is designed with precision, passion, and an eye for detail. See the world in style. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/K6XLvRPCDHKSf7H4eEOE/image.png',
   },
   {
-    "id": "jOY8zfVPew7YEGSR8lvL",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-12T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Summer calls for style—and savings. Bundle two pairs of Neon Ray Co. sunglasses and enjoy 10% off. See the world in style this season. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/jOY8zfVPew7YEGSR8lvL/image.png"
+    id: 'jOY8zfVPew7YEGSR8lvL',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-12T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Summer calls for style—and savings. Bundle two pairs of Neon Ray Co. sunglasses and enjoy 10% off. See the world in style this season. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/jOY8zfVPew7YEGSR8lvL/image.png',
   },
   {
-    "id": "JkoMVf3bLYl3gAGanGwh",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-12T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Double the style, double the savings. Bundle two pairs of sunglasses and see 10% off your order. Mix, match, and discover your perfect summer look with Neon Ray Co. #sunglasses #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/JkoMVf3bLYl3gAGanGwh/image.png"
+    id: 'JkoMVf3bLYl3gAGanGwh',
+    platform: 'instagram',
+    scheduleAt: '2026-08-12T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Double the style, double the savings. Bundle two pairs of sunglasses and see 10% off your order. Mix, match, and discover your perfect summer look with Neon Ray Co. #sunglasses #NeonRayCo #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/JkoMVf3bLYl3gAGanGwh/image.png',
   },
   {
-    "id": "0kW1ufayyYQfRa1kVLjI",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-12T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Double the style, double the savings! Grab two pairs of Neon Ray Co. sunglasses and enjoy 10% off your entire bundle. See the world in style. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/0kW1ufayyYQfRa1kVLjI/image.png"
+    id: '0kW1ufayyYQfRa1kVLjI',
+    platform: 'facebook',
+    scheduleAt: '2026-08-12T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Double the style, double the savings! Grab two pairs of Neon Ray Co. sunglasses and enjoy 10% off your entire bundle. See the world in style. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/0kW1ufayyYQfRa1kVLjI/image.png',
   },
   {
-    "id": "eYNLyxr9lBVSzjfPidZr",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-11T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Summer calls for a fresh perspective. Discover Neon Ray Co.'s latest sunglasses collection—bold designs, premium styles for every face. See the world in style. Shop now. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/eYNLyxr9lBVSzjfPidZr/image.png"
+    id: 'eYNLyxr9lBVSzjfPidZr',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-11T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Summer calls for a fresh perspective. Discover Neon Ray Co.'s latest sunglasses collection—bold designs, premium styles for every face. See the world in style. Shop now. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/eYNLyxr9lBVSzjfPidZr/image.png',
   },
   {
-    "id": "BB79Pi9hFl4saK7Bje5P",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-11T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "New sunglasses just dropped. Discover exclusive styles for men and women—available now. See the world in style with Neon Ray. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/BB79Pi9hFl4saK7Bje5P/image.png"
+    id: 'BB79Pi9hFl4saK7Bje5P',
+    platform: 'facebook',
+    scheduleAt: '2026-08-11T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'New sunglasses just dropped. Discover exclusive styles for men and women—available now. See the world in style with Neon Ray. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/BB79Pi9hFl4saK7Bje5P/image.png',
   },
   {
-    "id": "57CO7RnmcLP9UXCD2fUY",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-11T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Introducing our exclusive new collection. Bold designs, vibrant colors, and timeless styles for every face shape and mood. See the world in style with Neon Ray Co. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/57CO7RnmcLP9UXCD2fUY/image.png"
+    id: '57CO7RnmcLP9UXCD2fUY',
+    platform: 'instagram',
+    scheduleAt: '2026-08-11T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Introducing our exclusive new collection. Bold designs, vibrant colors, and timeless styles for every face shape and mood. See the world in style with Neon Ray Co. #NeonRayCo #sunglasses #style #menfashion #womenfashion\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/57CO7RnmcLP9UXCD2fUY/image.png',
   },
   {
-    "id": "qxMme1RITV3rFVEtsn0W",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-09T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Tortoiseshell rectangles work with every face shape. Yellow polarized lenses cut glare while bridging summer vibrancy and autumn earth tones. Functional style for active living—try risk-free for 30 days. Save this.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/qxMme1RITV3rFVEtsn0W/image.png"
+    id: 'qxMme1RITV3rFVEtsn0W',
+    platform: 'instagram',
+    scheduleAt: '2026-08-09T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Tortoiseshell rectangles work with every face shape. Yellow polarized lenses cut glare while bridging summer vibrancy and autumn earth tones. Functional style for active living—try risk-free for 30 days. Save this.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/qxMme1RITV3rFVEtsn0W/image.png',
   },
   {
-    "id": "JhgzYYZXevyGj850Sd8I",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-09T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "High-performance polarized lenses meet timeless tortoiseshell elegance. This season's essential—superior glare reduction without sacrificing bold, sophisticated style. Perfect for travel, professional settings, and every adventure between.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/JhgzYYZXevyGj850Sd8I/image.png"
+    id: 'JhgzYYZXevyGj850Sd8I',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-09T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "High-performance polarized lenses meet timeless tortoiseshell elegance. This season's essential—superior glare reduction without sacrificing bold, sophisticated style. Perfect for travel, professional settings, and every adventure between.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/JhgzYYZXevyGj850Sd8I/image.png',
   },
   {
-    "id": "Atk9rNbsMCxIjqi5uwru",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-09T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Your eyewear should be as bold as your weekend plans. These oversized green-striped frames with gold accents deliver statement style without sacrificing vision—polarized lenses keep your vibe sharp in every light. Where's your summer destination?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/Atk9rNbsMCxIjqi5uwru/image.png"
+    id: 'Atk9rNbsMCxIjqi5uwru',
+    platform: 'facebook',
+    scheduleAt: '2026-08-09T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Your eyewear should be as bold as your weekend plans. These oversized green-striped frames with gold accents deliver statement style without sacrificing vision—polarized lenses keep your vibe sharp in every light. Where's your summer destination?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/Atk9rNbsMCxIjqi5uwru/image.png',
   },
   {
-    "id": "pkeRBIAcysWEAFg7In1V",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-08T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Glare gone. Vision sharp. Our polarized gold-framed sunglasses transform washed-out summer brightness into crisp, vibrant clarity—without sacrificing an ounce of style. Brown lenses meet tortoiseshell luxury. Satisfaction guaranteed. 30-day returns.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/instagram/pkeRBIAcysWEAFg7In1V/image.png"
+    id: 'pkeRBIAcysWEAFg7In1V',
+    platform: 'instagram',
+    scheduleAt: '2026-08-08T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Glare gone. Vision sharp. Our polarized gold-framed sunglasses transform washed-out summer brightness into crisp, vibrant clarity—without sacrificing an ounce of style. Brown lenses meet tortoiseshell luxury. Satisfaction guaranteed. 30-day returns.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/instagram/pkeRBIAcysWEAFg7In1V/image.png',
   },
   {
-    "id": "hjABOMODCRYrRmuL5ach",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-08T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Gold-framed aviators that protect as beautifully as they perform. Polarized lenses cut glare for beach days and festivals. Sophisticated style meets optical clarity. 30-day satisfaction guaranteed. Share with your summer crew.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/facebook/hjABOMODCRYrRmuL5ach/image.png"
+    id: 'hjABOMODCRYrRmuL5ach',
+    platform: 'facebook',
+    scheduleAt: '2026-08-08T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Gold-framed aviators that protect as beautifully as they perform. Polarized lenses cut glare for beach days and festivals. Sophisticated style meets optical clarity. 30-day satisfaction guaranteed. Share with your summer crew.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/facebook/hjABOMODCRYrRmuL5ach/image.png',
   },
   {
-    "id": "4C6v9v631ypPEDRGI6Zh",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-08T13:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Gold-framed polarized sunglasses with tortoiseshell arms and gradient blue lenses—engineered for the professional who values both clarity and confidence. Reduce glare on outdoor calls and commutes without sacrificing style. 30-day satisfaction guarantee. Explore our polarized collection now.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "imageUrl": "/landing/how-it-looks/sunglasses/linkedin/4C6v9v631ypPEDRGI6Zh/image.png"
+    id: '4C6v9v631ypPEDRGI6Zh',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-08T13:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Gold-framed polarized sunglasses with tortoiseshell arms and gradient blue lenses—engineered for the professional who values both clarity and confidence. Reduce glare on outdoor calls and commutes without sacrificing style. 30-day satisfaction guarantee. Explore our polarized collection now.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/4C6v9v631ypPEDRGI6Zh/image.png',
   },
   {
-    "id": "a8BTCSkc6D8Jkuxk8Iin",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-07T09:35:16.537Z",
-    "mediaType": "video",
-    "caption": "Tortoiseshell frames that deliver true clarity in every glance. Whether your day calls for understated elegance or bold confidence, these timeless shades work for everyone. What's your go-to style? Drop a comment below.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "videoUrl": "/landing/how-it-looks/sunglasses/facebook/a8BTCSkc6D8Jkuxk8Iin/video.mp4",
-    "posterUrl": "/landing/how-it-looks/sunglasses/facebook/a8BTCSkc6D8Jkuxk8Iin/poster.png"
+    id: 'a8BTCSkc6D8Jkuxk8Iin',
+    platform: 'facebook',
+    scheduleAt: '2026-08-07T09:35:16.537Z',
+    mediaType: 'video',
+    caption:
+      "Tortoiseshell frames that deliver true clarity in every glance. Whether your day calls for understated elegance or bold confidence, these timeless shades work for everyone. What's your go-to style? Drop a comment below.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    videoUrl:
+      '/landing/how-it-looks/sunglasses/facebook/a8BTCSkc6D8Jkuxk8Iin/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/sunglasses/facebook/a8BTCSkc6D8Jkuxk8Iin/poster.png',
   },
   {
-    "id": "b7TH5oQWxFOzX8k78Z9F",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-07T09:29:33.457Z",
-    "mediaType": "video",
-    "caption": "Your eyes deserve more than protection—they deserve perspective.\n\nThis green-striped design balances bold fashion with optical clarity, designed for anyone who refuses to compromise between style and function. Whether you're navigating boardroom meetings or weekend escapes, these shades deliver the clarity and confidence you need.\n\nExplore our full collection for men and women. What's your go-to style?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "videoUrl": "/landing/how-it-looks/sunglasses/linkedin/b7TH5oQWxFOzX8k78Z9F/video.mp4",
-    "posterUrl": "/landing/how-it-looks/sunglasses/linkedin/b7TH5oQWxFOzX8k78Z9F/poster.png"
+    id: 'b7TH5oQWxFOzX8k78Z9F',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-07T09:29:33.457Z',
+    mediaType: 'video',
+    caption:
+      "Your eyes deserve more than protection—they deserve perspective.\n\nThis green-striped design balances bold fashion with optical clarity, designed for anyone who refuses to compromise between style and function. Whether you're navigating boardroom meetings or weekend escapes, these shades deliver the clarity and confidence you need.\n\nExplore our full collection for men and women. What's your go-to style?\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    videoUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/b7TH5oQWxFOzX8k78Z9F/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/sunglasses/linkedin/b7TH5oQWxFOzX8k78Z9F/poster.png',
   },
   {
-    "id": "9SWDIX7BbpXLWzEYHvfl",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-07T09:22:04.547Z",
-    "mediaType": "video",
-    "caption": "Gradient lenses. Sharp vision. That's the difference clarity makes. What frames your world? Drop a comment — we'd love to hear your style.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
-    "videoUrl": "/landing/how-it-looks/sunglasses/instagram/9SWDIX7BbpXLWzEYHvfl/video.mp4",
-    "posterUrl": "/landing/how-it-looks/sunglasses/instagram/9SWDIX7BbpXLWzEYHvfl/poster.png"
-  }
+    id: '9SWDIX7BbpXLWzEYHvfl',
+    platform: 'instagram',
+    scheduleAt: '2026-08-07T09:22:04.547Z',
+    mediaType: 'video',
+    caption:
+      "Gradient lenses. Sharp vision. That's the difference clarity makes. What frames your world? Drop a comment — we'd love to hear your style.\n\nWebsite:- neonray.com\nContact:- +919725692072\nEmail:- ray@neon.com",
+    videoUrl:
+      '/landing/how-it-looks/sunglasses/instagram/9SWDIX7BbpXLWzEYHvfl/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/sunglasses/instagram/9SWDIX7BbpXLWzEYHvfl/poster.png',
+  },
 ] as const;

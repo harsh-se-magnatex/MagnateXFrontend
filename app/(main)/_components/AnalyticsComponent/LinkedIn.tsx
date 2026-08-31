@@ -64,7 +64,8 @@ type LiFocusMetric =
   | 'posts'
   | 'engagement';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '') ?? '';
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '') ?? '';
 
 function linkedInOAuthAnalyticsHref(): string | null {
   if (!BACKEND_URL) return null;
@@ -119,21 +120,21 @@ function LinkedInMetricDetailPanel({
 
   return (
     <div
-      className="rounded-xl border border-border bg-muted/60 p-4 text-sm text-foreground"
+      className="rounded-xl border border-default bg-element p-4 text-sm text-default"
       role="region"
       aria-live="polite"
     >
       {metric === 'followers' ? (
         <div className="space-y-2">
-          <p className="font-medium text-foreground">Followers</p>
+          <p className="font-medium text-default">Followers</p>
           <p>
-            Followers for your selected LinkedIn organization. The Growth chart shows
-            how this changed over reported periods.
+            Followers for your selected LinkedIn organization. The Growth chart
+            shows how this changed over reported periods.
           </p>
           {fmtDelta(fd) ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-secondary">
               Latest change vs previous bucket:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {fmtDelta(fd)}
               </span>
             </p>
@@ -142,17 +143,17 @@ function LinkedInMetricDetailPanel({
       ) : null}
       {metric === 'pageViews' ? (
         <div className="space-y-2">
-          <p className="font-medium text-foreground">Page views</p>
+          <p className="font-medium text-default">Page views</p>
           <p>
-            <span className="font-medium tabular-nums text-foreground">
+            <span className="font-medium tabular-nums text-default">
               {formatCompact(merged.totalPageViews)}
             </span>{' '}
             total LinkedIn organization page views in the current rollup.
           </p>
           {fmtDelta(pd) ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-secondary">
               Page views vs previous period:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {fmtDelta(pd)}
               </span>
             </p>
@@ -161,17 +162,17 @@ function LinkedInMetricDetailPanel({
       ) : null}
       {metric === 'impressions' ? (
         <div className="space-y-2">
-          <p className="font-medium text-foreground">Impressions</p>
+          <p className="font-medium text-default">Impressions</p>
           <p>
-            <span className="font-medium tabular-nums text-foreground">
+            <span className="font-medium tabular-nums text-default">
               {formatCompact(merged.totalImpressions)}
             </span>{' '}
             impressions in your current rollup.
           </p>
           {fmtDelta(id) ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-secondary">
               Impressions vs previous period:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {fmtDelta(id)}
               </span>
             </p>
@@ -180,28 +181,28 @@ function LinkedInMetricDetailPanel({
       ) : null}
       {metric === 'posts' ? (
         <div className="space-y-2">
-          <p className="font-medium text-foreground">Posts</p>
+          <p className="font-medium text-default">Posts</p>
           <p>
-            <span className="font-medium tabular-nums text-foreground">
+            <span className="font-medium tabular-nums text-default">
               {postCount}
             </span>{' '}
             posts stored for analytics (ranked by engagement below).
           </p>
           {merged.postFrequencyTop.length > 0 ? (
             <div>
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-secondary">
                 Recent days by volume
               </p>
               <ul className="flex flex-wrap gap-2">
                 {merged.postFrequencyTop.map(({ date, count }) => (
                   <li
                     key={date}
-                    className="rounded-lg bg-card px-2.5 py-1 text-xs ring-1 ring-border"
+                    className="rounded-lg bg-default px-2.5 py-1 text-xs ring-1 ring-border"
                   >
-                    <span className="text-muted-foreground">
+                    <span className="text-secondary">
                       {formatChartTooltipDate(date)}
                     </span>{' '}
-                    <span className="font-medium tabular-nums text-foreground">
+                    <span className="font-medium tabular-nums text-default">
                       ×{count}
                     </span>
                   </li>
@@ -213,11 +214,11 @@ function LinkedInMetricDetailPanel({
       ) : null}
       {metric === 'engagement' ? (
         <div className="space-y-2">
-          <p className="font-medium text-foreground">Engagement</p>
+          <p className="font-medium text-default">Engagement</p>
           {merged.totalEngagementsPage > 0 ? (
             <p>
               Page-level engagement total:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {formatCompact(merged.totalEngagementsPage)}
               </span>
               .
@@ -225,16 +226,16 @@ function LinkedInMetricDetailPanel({
           ) : (
             <p>
               Sum of engagement scores across stored posts:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {formatCompact(merged.engagementsFromPosts)}
               </span>
               .
             </p>
           )}
           {fmtDelta(ed) ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-secondary">
               Engagement vs previous period:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {fmtDelta(ed)}
               </span>
             </p>
@@ -273,7 +274,10 @@ export default function WLinkedInAnalyticsView({
   topPosts: LinkedInPost[];
   expandedPost: Post | null;
   setExpandedPost: (post: Post | null) => void;
-  audienceRanked: { countries: { name: string; count: number }[]; cities: { name: string; count: number }[] };
+  audienceRanked: {
+    countries: { name: string; count: number }[];
+    cities: { name: string; count: number }[];
+  };
   pageAiContext: Record<string, unknown>;
   followersChartData: { date: string; followers: number }[];
   pageViewsChartData: { date: string; pageViews: number }[];
@@ -357,15 +361,15 @@ export default function WLinkedInAnalyticsView({
   if (!connection.connected) {
     const oauthHref = linkedInOAuthAnalyticsHref();
     return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/40 px-6 py-14 text-center">
+      <div className="rounded-xl border border-dashed border-default bg-element px-6 py-14 text-center">
         <Linkedin className="mx-auto h-10 w-10 text-[#0a66c2]" aria-hidden />
-        <p className="mt-3 text-sm font-medium text-foreground">
+        <p className="mt-3 text-sm font-medium text-default">
           Connect LinkedIn analytics
         </p>
-        <p className="mt-1 mb-6 text-sm text-muted-foreground">
-          We don&apos;t have analytics saved for your selected LinkedIn page yet.
-          Connect LinkedIn, select an organization, and sync insights to see
-          them here.
+        <p className="mt-1 mb-6 text-sm text-secondary">
+          We don&apos;t have analytics saved for your selected LinkedIn page
+          yet. Connect LinkedIn, select an organization, and sync insights to
+          see them here.
         </p>
         {oauthHref ? (
           <Button
@@ -375,9 +379,9 @@ export default function WLinkedInAnalyticsView({
             <a href={oauthHref}>Connect LinkedIn</a>
           </Button>
         ) : (
-          <p className="text-xs text-amber-200">
-            Set <span className="font-mono">NEXT_PUBLIC_BACKEND_URL</span> to enable
-            the connect button.
+          <p className="text-xs text-warning">
+            Set <span className="font-mono">NEXT_PUBLIC_BACKEND_URL</span> to
+            enable the connect button.
           </p>
         )}
       </div>
@@ -405,29 +409,29 @@ export default function WLinkedInAnalyticsView({
         lastSyncAt={li?.lastSyncAt}
       />
       <header className="space-y-1">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="flex items-center gap-3 text-page-title text-default">
           <Linkedin className="h-7 w-7 text-[#0a66c2]" aria-hidden />
           Analytics
         </h1>
         {li?.pageName || li?.displayName ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-secondary">
             {profileUrl ? (
               <a
                 href={profileUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 font-medium text-foreground underline decoration-border underline-offset-2 hover:decoration-foreground"
+                className="inline-flex items-center gap-1 font-medium text-default underline decoration-border underline-offset-2 hover:decoration-foreground"
               >
                 <span>{li.pageName ?? li.displayName}</span>
                 <ExternalLink className="h-3.5 w-3.5" aria-hidden />
               </a>
             ) : (
-              li.pageName ?? li.displayName
+              (li.pageName ?? li.displayName)
             )}
           </p>
         ) : null}
         {updatedLabel ? (
-          <p className="text-sm text-muted-foreground">Last updated {updatedLabel}</p>
+          <p className="text-sm text-secondary">Last updated {updatedLabel}</p>
         ) : null}
       </header>
 
@@ -503,11 +507,11 @@ export default function WLinkedInAnalyticsView({
         >
           <h2
             id="li-top-three-heading"
-            className="flex items-center gap-2 text-lg font-semibold text-foreground"
+            className="text-section text-default flex items-center gap-2"
           >
-            <Crown className="h-5 w-5 text-amber-500" aria-hidden />
+            <Crown className="h-5 w-5 text-warning" aria-hidden />
             Top 3 ranked posts
-            <span className="text-xs font-normal text-muted-foreground">
+            <span className="text-xs font-normal text-secondary">
               best performers in the last 3 weeks
             </span>
           </h2>
@@ -540,7 +544,7 @@ export default function WLinkedInAnalyticsView({
       >
         <h2
           id="li-growth-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-foreground"
+          className="text-section text-default flex items-center gap-2"
         >
           <TrendingUp className="h-5 w-5 text-[#0a66c2]" aria-hidden />
           Growth
@@ -577,16 +581,16 @@ export default function WLinkedInAnalyticsView({
       >
         <h2
           id="li-top-posts-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-foreground"
+          className="text-section text-default flex items-center gap-2"
         >
-          <Trophy className="h-5 w-5 text-amber-600" aria-hidden />
+          <Trophy className="h-5 w-5 text-warning" aria-hidden />
           Top posts
-          <span className="text-xs font-normal text-muted-foreground">
+          <span className="text-xs font-normal text-secondary">
             classified vs. the cohort average (1.5× cutoff)
           </span>
         </h2>
         {topAsPosts.length === 0 ? (
-          <p className="rounded-xl border border-border bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
+          <p className="rounded-xl border border-default bg-element px-4 py-8 text-center text-sm text-secondary">
             No post data yet. Sync LinkedIn insights to populate this section.
           </p>
         ) : (
@@ -594,13 +598,13 @@ export default function WLinkedInAnalyticsView({
             <TabsList className="grid h-auto w-full max-w-sm grid-cols-2 gap-1">
               <TabsTrigger value="nudge" className="gap-2">
                 Nudges
-                <span className="rounded-full bg-emerald-500/20 px-1.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
+                <span className="rounded-full bg-success px-1.5 text-[10px] font-semibold text-success ring-1 ring-inset ring-[var(--border-success)]">
                   {nudgeDud.nudges.length}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="dud" className="gap-2">
                 Duds
-                <span className="rounded-full bg-accent px-1.5 text-[10px] font-semibold text-foreground ring-1 ring-inset ring-border">
+                <span className="rounded-full bg-hover px-1.5 text-[10px] font-semibold text-default ring-1 ring-inset ring-border">
                   {nudgeDud.duds.length}
                 </span>
               </TabsTrigger>
@@ -608,10 +612,10 @@ export default function WLinkedInAnalyticsView({
 
             <TabsContent value="nudge" className="space-y-4 outline-none">
               {nudgeDud.nudges.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
-                  No nudges yet — nothing in this window scored 1.5× above
-                  your average. Recreate the framing of past winners to
-                  push one over the bar.
+                <p className="rounded-xl border border-dashed border-default bg-element px-4 py-6 text-center text-sm text-secondary">
+                  No nudges yet — nothing in this window scored 1.5× above your
+                  average. Recreate the framing of past winners to push one over
+                  the bar.
                 </p>
               ) : (
                 nudgeDud.nudges.map((post, i) => (
@@ -629,7 +633,7 @@ export default function WLinkedInAnalyticsView({
 
             <TabsContent value="dud" className="space-y-4 outline-none">
               {nudgeDud.duds.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
+                <p className="rounded-xl border border-dashed border-default bg-element px-4 py-6 text-center text-sm text-secondary">
                   No duds — every recent post is performing at or above the
                   nudge bar. Keep the streak going.
                 </p>
@@ -653,31 +657,30 @@ export default function WLinkedInAnalyticsView({
       <section className="space-y-4" aria-labelledby="li-audience-heading">
         <h2
           id="li-audience-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-foreground"
+          className="text-section text-default flex items-center gap-2"
         >
           <MapPin className="h-5 w-5 text-[#0a66c2]" aria-hidden />
           Audience
         </h2>
         {audienceRanked.countries.length === 0 &&
         audienceRanked.cities.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
-            Location breakdown will appear here when your sync includes geography.
+          <p className="rounded-xl border border-dashed border-default bg-element px-4 py-6 text-center text-sm text-secondary">
+            Location breakdown will appear here when your sync includes
+            geography.
           </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {audienceRanked.countries.length > 0 ? (
-              <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-foreground">
-                  Top countries
-                </h3>
-                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <div className="rounded-xl border border-default bg-default p-4">
+                <h3 className="text-subsection text-default">Top countries</h3>
+                <ul className="mt-3 space-y-2 text-sm text-secondary">
                   {audienceRanked.countries.map(({ name, count }) => (
                     <li
                       key={name}
-                      className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
+                      className="flex items-center justify-between gap-2 border-b border-default pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-foreground">{name}</span>
-                      <span className="tabular-nums text-muted-foreground">
+                      <span className="font-medium text-default">{name}</span>
+                      <span className="tabular-nums text-secondary">
                         {formatCompact(count)}
                       </span>
                     </li>
@@ -686,16 +689,16 @@ export default function WLinkedInAnalyticsView({
               </div>
             ) : null}
             {audienceRanked.cities.length > 0 ? (
-              <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-foreground">Top cities</h3>
-                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <div className="rounded-xl border border-default bg-default p-4">
+                <h3 className="text-subsection text-default">Top cities</h3>
+                <ul className="mt-3 space-y-2 text-sm text-secondary">
                   {audienceRanked.cities.map(({ name, count }) => (
                     <li
                       key={name}
-                      className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
+                      className="flex items-center justify-between gap-2 border-b border-default pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-foreground">{name}</span>
-                      <span className="tabular-nums text-muted-foreground">
+                      <span className="font-medium text-default">{name}</span>
+                      <span className="tabular-nums text-secondary">
                         {formatCompact(count)}
                       </span>
                     </li>

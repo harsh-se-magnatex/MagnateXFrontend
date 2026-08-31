@@ -167,7 +167,9 @@ export default function SupportAndLegalPage() {
       setRefundForm({ reason: '', details: '' });
       toast.success('Refund request submitted successfully.');
     } catch (err: any) {
-      showErrorToast('Failed to submit refund request. Please Try Again Later.');
+      showErrorToast(
+        'Failed to submit refund request. Please Try Again Later.'
+      );
     } finally {
       setRefundSending(false);
     }
@@ -179,9 +181,7 @@ export default function SupportAndLegalPage() {
   return (
     <div className="max-w-6xl mx-auto animate-in fade-in duration-500">
       <div className="mb-8">
-        <h1 className={workspacePageTitleClass}>
-          Support & Legal
-        </h1>
+        <h1 className={workspacePageTitleClass}>Support & Legal</h1>
         <p className={workspacePageDescriptionSmClass}>
           Get help with your account, report issues, request refunds, and read
           our policies.
@@ -192,13 +192,11 @@ export default function SupportAndLegalPage() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Contact Support */}
           <section className={cn(workspaceSectionCardClass, 'h-fit')}>
-            <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
-              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            <div className="flex items-center gap-3 mb-6 border-b border-default pb-4">
+              <div className="p-2 bg-primary/10 rounded-lg text-link">
                 <Mail className="h-5 w-5" />
               </div>
-              <h2 className={workspaceSectionTitleClass}>
-                Contact Us
-              </h2>
+              <h2 className={workspaceSectionTitleClass}>Contact Us</h2>
             </div>
 
             <form onSubmit={handleContactSubmit} className="space-y-4">
@@ -232,7 +230,7 @@ export default function SupportAndLegalPage() {
               <button
                 type="submit"
                 disabled={contactSending}
-                className="w-full rounded-xl bg-gradient-action px-4 py-3 text-sm font-semibold text-white transition-all shadow-md shadow-primary-purple/25 hover:brightness-105 active:scale-95 disabled:opacity-50"
+                className="w-full rounded-full btn-brand-fill px-4 py-3 text-sm font-semibold transition-expo disabled:text-quaternary"
               >
                 {contactSending ? 'Sending message...' : 'Send Message'}
               </button>
@@ -241,13 +239,11 @@ export default function SupportAndLegalPage() {
 
           {/* Report a Bug */}
           <section className="glass-card rounded-3xl p-6 sm:p-8 h-fit">
-            <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
-              <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
+            <div className="flex items-center gap-3 mb-6 border-b border-default pb-4">
+              <div className="p-2 bg-warning rounded-lg text-warning">
                 <Bug className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">
-                Report a Bug
-              </h2>
+              <h2 className="text-subsection text-default">Report a Bug</h2>
             </div>
 
             <form onSubmit={handleBugSubmit} className="space-y-4">
@@ -272,7 +268,7 @@ export default function SupportAndLegalPage() {
               <button
                 type="submit"
                 disabled={bugSending}
-                className="w-full rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-600 transition-all hover:bg-amber-100 active:scale-95 disabled:opacity-50"
+                className="w-full rounded-full border border-warning bg-warning px-4 py-3 text-sm font-semibold text-warning transition-expo hover:bg-warning disabled:text-quaternary"
               >
                 {bugSending ? 'Submitting...' : 'Submit Bug Report'}
               </button>
@@ -281,13 +277,11 @@ export default function SupportAndLegalPage() {
 
           {/* Request a Refund */}
           <section className="glass-card rounded-3xl p-6 sm:p-8 h-fit">
-            <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
-              <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
+            <div className="flex items-center gap-3 mb-6 border-b border-default pb-4">
+              <div className="p-2 bg-success rounded-lg text-success">
                 <BadgeDollarSign className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">
-                Request a Refund
-              </h2>
+              <h2 className="text-subsection text-default">Request a Refund</h2>
             </div>
 
             <form onSubmit={handleRefundSubmit} className="space-y-4">
@@ -312,7 +306,7 @@ export default function SupportAndLegalPage() {
               <button
                 type="submit"
                 disabled={refundSending}
-                className="w-full rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 transition-all hover:bg-emerald-100 active:scale-95 disabled:opacity-50"
+                className="w-full rounded-full border border-success bg-success px-4 py-3 text-sm font-semibold text-success transition-expo hover:bg-success disabled:text-quaternary"
               >
                 {refundSending ? 'Submitting...' : 'Submit Refund Request'}
               </button>
@@ -322,11 +316,11 @@ export default function SupportAndLegalPage() {
 
         {/* FAQs */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
-            <div className="p-2 bg-sky-50 rounded-lg text-sky-600">
+          <div className="flex items-center gap-3 mb-6 border-b border-default pb-4">
+            <div className="p-2 bg-info rounded-lg text-info">
               <HelpCircle className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">
+            <h2 className="text-section text-default">
               Frequently Asked Questions
             </h2>
           </div>
@@ -336,10 +330,10 @@ export default function SupportAndLegalPage() {
               <div
                 key={index}
                 className={cn(
-                  'rounded-2xl border transition-all duration-200 overflow-hidden',
+                  'rounded-2xl border transition-expo overflow-hidden',
                   openFaqIndex === index
                     ? 'border-primary/30 bg-primary/10'
-                    : 'border-border bg-card hover:border-border hover:bg-accent/40'
+                    : 'border-default bg-default hover:border-default hover:bg-hover'
                 )}
               >
                 <button
@@ -347,26 +341,26 @@ export default function SupportAndLegalPage() {
                   onClick={() =>
                     setOpenFaqIndex(openFaqIndex === index ? null : index)
                   }
-                  className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-semibold text-foreground focus:outline-none"
+                  className="flex w-full items-center justify-between px-5 py-4 text-left text-sm font-semibold text-default focus:outline-none"
                 >
                   {faq.question}
                   <ChevronDown
                     className={cn(
-                      'h-5 w-5 text-muted-foreground transition-transform duration-200',
-                      openFaqIndex === index ? 'rotate-180 text-primary-purple' : ''
+                      'h-5 w-5 text-secondary transition-transform duration-200',
+                      openFaqIndex === index ? 'rotate-180 text-preview' : ''
                     )}
                   />
                 </button>
                 <div
                   className={cn(
-                    'grid transition-all duration-200 ease-in-out',
+                    'grid transition-expo ease-in-out',
                     openFaqIndex === index
                       ? 'grid-rows-[1fr] opacity-100'
                       : 'grid-rows-[0fr] opacity-0'
                   )}
                 >
                   <div className="overflow-hidden">
-                    <p className="px-5 pb-4 text-sm text-muted-foreground leading-relaxed">
+                    <p className="px-5 pb-4 text-sm text-secondary leading-relaxed">
                       {faq.answer}
                     </p>
                   </div>
@@ -377,16 +371,14 @@ export default function SupportAndLegalPage() {
         </section>
 
         {/* Data Deletion */}
-        <section className="glass-card rounded-3xl p-6 sm:p-8 border-2 border-indigo-100">
-          <div className="flex items-center gap-3 mb-2 border-b border-border pb-4">
-            <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
+        <section className="glass-card rounded-3xl p-6 sm:p-8 border-2 border-preview">
+          <div className="flex items-center gap-3 mb-2 border-b border-default pb-4">
+            <div className="p-2 bg-primary-purple/10 rounded-lg text-preview">
               <Shield className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">
-              Data Deletion
-            </h2>
+            <h2 className="text-section text-default">Data Deletion</h2>
           </div>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-secondary mb-6">
             Remove platform connection data stored by SocioGenie when you
             disconnect an account or submit a Meta deletion request.
           </p>
@@ -397,31 +389,29 @@ export default function SupportAndLegalPage() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'group flex flex-col rounded-2xl border-2 p-5 transition-all hover:shadow-md hover:-translate-y-1',
+                  'group flex flex-col rounded-2xl border-2 p-5 transition-expo',
                   item.accent === 'facebook'
-                    ? 'border-blue-200 bg-blue-50/60 hover:border-blue-300'
-                    : 'border-pink-200 bg-pink-50/60 hover:border-pink-300',
+                    ? 'border-info bg-info hover:border-info'
+                    : 'border-preview bg-preview hover:border-preview'
                 )}
               >
                 <span
                   className={cn(
-                    'font-semibold transition-colors mb-2',
+                    'font-semibold transition-expo mb-2',
                     item.accent === 'facebook'
-                      ? 'text-blue-800 group-hover:text-blue-900'
-                      : 'text-pink-800 group-hover:text-pink-900',
+                      ? 'text-info group-hover:text-info'
+                      : 'text-preview group-hover:text-preview'
                   )}
                 >
                   {item.label}
                 </span>
-                <span className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-xs text-secondary leading-relaxed">
                   {item.description}
                 </span>
                 <span
                   className={cn(
                     'mt-4 text-xs font-semibold underline underline-offset-2',
-                    item.accent === 'facebook'
-                      ? 'text-blue-700'
-                      : 'text-pink-700',
+                    item.accent === 'facebook' ? 'text-info' : 'text-preview'
                   )}
                 >
                   View instructions →
@@ -433,13 +423,11 @@ export default function SupportAndLegalPage() {
 
         {/* Legal */}
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
-            <div className="p-2 bg-muted rounded-lg text-foreground">
+          <div className="flex items-center gap-3 mb-6 border-b border-default pb-4">
+            <div className="p-2 bg-element rounded-lg text-default">
               <Shield className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">
-              Legal & Policies
-            </h2>
+            <h2 className="text-section text-default">Legal & Policies</h2>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-3">
@@ -447,12 +435,12 @@ export default function SupportAndLegalPage() {
               <a
                 key={item.href}
                 href={item.href}
-                className="group flex flex-col rounded-2xl border border-border bg-card p-5 transition-all hover:border-primary/40 hover:shadow-md hover:-translate-y-1"
+                className="group flex flex-col rounded-2xl border border-default bg-default p-5 transition-expo hover:border-primary/40"
               >
-                <span className="font-semibold text-foreground group-hover:text-primary-purple transition-colors mb-2">
+                <span className="font-semibold text-default group-hover:text-preview transition-expo mb-2">
                   {item.label}
                 </span>
-                <span className="text-xs text-muted-foreground leading-relaxed">
+                <span className="text-xs text-secondary leading-relaxed">
                   {item.description}
                 </span>
               </a>

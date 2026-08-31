@@ -20,8 +20,10 @@ function SubBlock({
 }) {
   return (
     <div className={cn('space-y-1', className)}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="text-sm leading-relaxed text-foreground">{children}</div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-secondary">
+        {label}
+      </p>
+      <div className="text-sm leading-relaxed text-default">{children}</div>
     </div>
   );
 }
@@ -38,13 +40,15 @@ function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+    <section className="space-y-3 rounded-lg border border-default bg-element p-4">
       <div>
-        <h3 className="text-base font-semibold text-foreground">
+        <h3 className="text-subsection text-default">
           {number}. {title}
         </h3>
         {description ? (
-          <p className="mt-1 text-xs text-muted-foreground leading-snug">{description}</p>
+          <p className="mt-1 text-xs text-secondary leading-snug">
+            {description}
+          </p>
         ) : null}
       </div>
       <div className="space-y-3">{children}</div>
@@ -93,16 +97,18 @@ function NaturalLanguageSnapshot({
     bits.push(`${formatCompact(mediaCount)} media in account snapshot`);
   }
   const eng = Number(context.engagementTotal) || Number(context.interactions);
-  if (eng) bits.push(`${formatCompact(eng)} engagement-related activity in summary`);
+  if (eng)
+    bits.push(`${formatCompact(eng)} engagement-related activity in summary`);
   const views = Number(context.views);
-  if (platform === 'instagram' && views) bits.push(`${formatCompact(views)} views`);
+  if (platform === 'instagram' && views)
+    bits.push(`${formatCompact(views)} views`);
 
   const paragraph =
     bits.length > 0
       ? `In human-readable terms: ${bits.join('; ')}. Use the numbered sections below for interpretation—not raw dashboards alone.`
       : 'Sync analytics to populate a readable snapshot of followers, reach, and activity.';
 
-  return <p className="text-sm leading-relaxed text-foreground">{paragraph}</p>;
+  return <p className="text-sm leading-relaxed text-default">{paragraph}</p>;
 }
 
 export function AnalyticsStructuredInsightsPanel({
@@ -119,12 +125,12 @@ export function AnalyticsStructuredInsightsPanel({
   error: string | null;
 }) {
   if (error) {
-    return <p className="py-4 text-sm text-red-600">{error}</p>;
+    return <p className="py-4 text-sm text-danger">{error}</p>;
   }
 
   if (loading || !payload?.structured) {
     return (
-      <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 py-10 text-sm text-secondary">
         <Loader2 className="h-5 w-5 animate-spin" />
         Generating structured insights…
       </div>
@@ -148,16 +154,17 @@ export function AnalyticsStructuredInsightsPanel({
 
   const accent =
     platform === 'facebook'
-      ? 'text-blue-700'
+      ? 'text-info'
       : platform === 'linkedin'
         ? 'text-[#0a66c2]'
-        : 'text-pink-600';
+        : 'text-preview';
 
   return (
     <div className="space-y-4 pb-2">
       {payload?.source === 'fallback' ? (
-        <p className="text-[11px] text-muted-foreground">
-          Rule-based structured fill-in. Configure the server OpenAI key for full AI narrative in every section.
+        <p className="text-[11px] text-secondary">
+          Rule-based structured fill-in. Configure the server OpenAI key for
+          full AI narrative in every section.
         </p>
       ) : null}
 
@@ -169,7 +176,9 @@ export function AnalyticsStructuredInsightsPanel({
         <SubBlock label="Best-performing">{a1.bestPerforming}</SubBlock>
         <SubBlock label="Optimal posting">{a1.optimalPosting}</SubBlock>
         <SubBlock label="Audience engagement">{a1.audienceEngagement}</SubBlock>
-        <SubBlock label="Content recommendations">{a1.contentRecommendations}</SubBlock>
+        <SubBlock label="Content recommendations">
+          {a1.contentRecommendations}
+        </SubBlock>
       </Section>
 
       <Section
@@ -177,9 +186,15 @@ export function AnalyticsStructuredInsightsPanel({
         title="Predictive analytics"
         description="Qualitative outlooks from historical performance—illustrative, not guarantees."
       >
-        <SubBlock label="Expected reach of a new post">{p2.expectedReachNewPost}</SubBlock>
-        <SubBlock label="Probability / upside (“viral”) discussion">{p2.viralProbability}</SubBlock>
-        <SubBlock label="Audience behavior trends">{p2.audienceBehaviorTrends}</SubBlock>
+        <SubBlock label="Expected reach of a new post">
+          {p2.expectedReachNewPost}
+        </SubBlock>
+        <SubBlock label="Probability / upside (“viral”) discussion">
+          {p2.viralProbability}
+        </SubBlock>
+        <SubBlock label="Audience behavior trends">
+          {p2.audienceBehaviorTrends}
+        </SubBlock>
       </Section>
 
       <Section
@@ -197,7 +212,9 @@ export function AnalyticsStructuredInsightsPanel({
       >
         <SubBlock label="Rapid engagement">{v5.rapidEngagement}</SubBlock>
         <SubBlock label="High share velocity">{v5.highShareVelocity}</SubBlock>
-        <SubBlock label="Increasing comment rate">{v5.increasingCommentRate}</SubBlock>
+        <SubBlock label="Increasing comment rate">
+          {v5.increasingCommentRate}
+        </SubBlock>
         <SubBlock label="Example alert">
           <span className={cn('font-medium', accent)}>{v5.exampleAlert}</span>
         </SubBlock>
@@ -208,7 +225,7 @@ export function AnalyticsStructuredInsightsPanel({
         title="Anomaly detection"
         description="Unusual changes worth investigating when the data supports it."
       >
-        <ul className="list-disc space-y-2 pl-4 text-sm text-foreground">
+        <ul className="list-disc space-y-2 pl-4 text-sm text-default">
           {an6.items.map((line, i) => (
             <li key={i}>{line}</li>
           ))}
@@ -220,34 +237,41 @@ export function AnalyticsStructuredInsightsPanel({
         title="Sentiment analysis on comments"
         description="Positive, neutral, and negative mix. Percentages only when sentiment exists in your metrics payload."
       >
-        <p className="text-sm text-foreground">{se4.narrative}</p>
-        <div className="overflow-hidden rounded-md border border-border bg-card text-sm">
+        <p className="text-sm text-default">{se4.narrative}</p>
+        <div className="overflow-hidden rounded-md border border-default bg-default text-sm">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-border bg-muted text-left text-xs font-medium text-muted-foreground">
+              <tr className="border-b border-default bg-element text-left text-xs font-medium text-secondary">
                 <th className="px-3 py-2">Sentiment</th>
                 <th className="px-3 py-2">Percentage</th>
               </tr>
             </thead>
-            <tbody className="text-foreground">
-              <tr className="border-b border-border/60">
+            <tbody className="text-default">
+              <tr className="border-b border-default">
                 <td className="px-3 py-2">Positive</td>
-                <td className="px-3 py-2 tabular-nums">{formatPct(se4.positivePercent)}</td>
+                <td className="px-3 py-2 tabular-nums">
+                  {formatPct(se4.positivePercent)}
+                </td>
               </tr>
-              <tr className="border-b border-border/60">
+              <tr className="border-b border-default">
                 <td className="px-3 py-2">Neutral</td>
-                <td className="px-3 py-2 tabular-nums">{formatPct(se4.neutralPercent)}</td>
+                <td className="px-3 py-2 tabular-nums">
+                  {formatPct(se4.neutralPercent)}
+                </td>
               </tr>
               <tr>
                 <td className="px-3 py-2">Negative</td>
-                <td className="px-3 py-2 tabular-nums">{formatPct(se4.negativePercent)}</td>
+                <td className="px-3 py-2 tabular-nums">
+                  {formatPct(se4.negativePercent)}
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
         {!hasSentimentNumbers ? (
-          <p className="text-xs text-muted-foreground">
-            Percentages stay blank until comment sentiment is supplied in analytics data.
+          <p className="text-xs text-secondary">
+            Percentages stay blank until comment sentiment is supplied in
+            analytics data.
           </p>
         ) : null}
       </Section>

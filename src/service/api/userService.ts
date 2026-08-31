@@ -104,15 +104,17 @@ export const uploadLogo = async (
 export const uploadVideoAvatar = async (avatar: File) => {
   const formData = new FormData();
   formData.append('avatar', avatar);
-  return apiPost<
-    ApiEnvelope<{ avatarUrl: string; enabled: boolean }>
-  >('/api/v1/user/upload-video-avatar', formData);
+  return apiPost<ApiEnvelope<{ avatarUrl: string; enabled: boolean }>>(
+    '/api/v1/user/upload-video-avatar',
+    formData
+  );
 };
 
 export const setVideoAvatarPreference = async (enabled: boolean) => {
-  return apiPut<
-    ApiEnvelope<{ enabled: boolean; avatarUrl: string | null }>
-  >('/api/v1/user/video-avatar-preference', { enabled });
+  return apiPut<ApiEnvelope<{ enabled: boolean; avatarUrl: string | null }>>(
+    '/api/v1/user/video-avatar-preference',
+    { enabled }
+  );
 };
 
 export const getProfile = async () => {

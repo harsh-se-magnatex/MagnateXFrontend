@@ -1,10 +1,7 @@
 import Link from 'next/link';
 import { Trash2 } from 'lucide-react';
 import { LegalDocument, LegalPage } from '../_components/legal-page';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 
 export default function FacebookDataDeletionInstructionPage() {
   return (
@@ -19,9 +16,9 @@ export default function FacebookDataDeletionInstructionPage() {
         <p>
           <strong>SocioGenie</strong> (operated by <strong>MAGNATEX LLP</strong>
           ) lets you connect a Facebook account to publish and manage content on
-          Facebook Pages. This page explains what Facebook-related data we store,
-          how you can delete it, and how we handle deletion requests initiated
-          through Meta.
+          Facebook Pages. This page explains what Facebook-related data we
+          store, how you can delete it, and how we handle deletion requests
+          initiated through Meta.
         </p>
 
         <h2>1. Facebook data we store</h2>
@@ -71,8 +68,8 @@ export default function FacebookDataDeletionInstructionPage() {
         </ol>
         <p>
           Disconnecting revokes our access tokens and removes Facebook
-          connection fields from your account, including tokens, and page details,
-          stored for that connection.
+          connection fields from your account, including tokens, and page
+          details, stored for that connection.
         </p>
 
         <h2>3. Delete data through Facebook / Meta</h2>

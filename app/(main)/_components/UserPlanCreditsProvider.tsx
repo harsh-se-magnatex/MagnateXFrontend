@@ -164,14 +164,28 @@ function parseBilling(
   data: Record<string, unknown> | undefined
 ): UserPlanCredits | null {
   if (!data) return null;
-  const plan = (data.plan && typeof data.plan === 'object' ? data.plan : {}) as Record<string, unknown>;
-  const creditsData = (data.credits && typeof data.credits === 'object' ? data.credits : {}) as Record<string, unknown>;
-  const account = (data.account && typeof data.account === 'object' ? data.account : {}) as Record<string, unknown>;
-  const aiPlan = (data.aiPlan && typeof data.aiPlan === 'object' ? data.aiPlan : {}) as Record<string, unknown>;
-  const rawPreferences = (data.preferences && typeof data.preferences === 'object'
-    ? data.preferences
-    : {}) as Record<string, unknown>;
-  const socialSummary = (data.socialSummary && typeof data.socialSummary === 'object' ? data.socialSummary : {}) as Record<string, { connected?: unknown }>;
+  const plan = (
+    data.plan && typeof data.plan === 'object' ? data.plan : {}
+  ) as Record<string, unknown>;
+  const creditsData = (
+    data.credits && typeof data.credits === 'object' ? data.credits : {}
+  ) as Record<string, unknown>;
+  const account = (
+    data.account && typeof data.account === 'object' ? data.account : {}
+  ) as Record<string, unknown>;
+  const aiPlan = (
+    data.aiPlan && typeof data.aiPlan === 'object' ? data.aiPlan : {}
+  ) as Record<string, unknown>;
+  const rawPreferences = (
+    data.preferences && typeof data.preferences === 'object'
+      ? data.preferences
+      : {}
+  ) as Record<string, unknown>;
+  const socialSummary = (
+    data.socialSummary && typeof data.socialSummary === 'object'
+      ? data.socialSummary
+      : {}
+  ) as Record<string, { connected?: unknown }>;
   const planCredits = numField(creditsData.planBalance);
   const topupCredits = numField(creditsData.topupBalance);
   const usesSplitCreditPools = true;
@@ -184,14 +198,15 @@ function parseBilling(
   const normalizedPlanCreditsExpiresAt = normalizeTimestamp(
     creditsData.planExpiresAt ?? plan.expiresAt ?? data.planExpiresAt
   );
-  const normalizedTopupExpiresAt = normalizeTimestamp(creditsData.topupExpiresAt);
+  const normalizedTopupExpiresAt = normalizeTimestamp(
+    creditsData.topupExpiresAt
+  );
   const topupExpiresMs = timestampMillis(normalizedTopupExpiresAt);
   const planExpiresMs = timestampMillis(normalizedPlanCreditsExpiresAt);
   const now = Date.now();
   const isTopupCreditsExpired =
     topupCredits > 0 ? topupExpiresMs == null || topupExpiresMs < now : true;
-  const isPlanCreditsExpired =
-    planExpiresMs == null || planExpiresMs < now;
+  const isPlanCreditsExpired = planExpiresMs == null || planExpiresMs < now;
   const credits =
     numField(isPlanCreditsExpired ? 0 : planCredits) +
     numField(isTopupCreditsExpired ? 0 : topupCredits);
@@ -201,12 +216,14 @@ function parseBilling(
     plan.id !== 'non-subscribed' &&
     plan.status === 'active' &&
     account.frozen !== true;
-  const connected = parseSelectedPlatforms(Object.fromEntries(
-    ['facebook', 'instagram', 'linkedin'].map((platform) => [
-      platform,
-      socialSummary[platform]?.connected === true,
-    ])
-  ));
+  const connected = parseSelectedPlatforms(
+    Object.fromEntries(
+      ['facebook', 'instagram', 'linkedin'].map((platform) => [
+        platform,
+        socialSummary[platform]?.connected === true,
+      ])
+    )
+  );
 
   return {
     usesSplitCreditPools,
@@ -216,10 +233,8 @@ function parseBilling(
     planCreditsExpiresAt: normalizedPlanCreditsExpiresAt,
     topupCredits: isTopupCreditsExpired ? 0 : topupCredits,
     topupCreditsExpiresAt: normalizedTopupExpiresAt,
-    activePlan:
-      typeof plan.id === 'string' ? plan.id : 'non-subscribed',
-    mode:
-      plan.mode === 'auto' || plan.mode === 'manual' ? plan.mode : null,
+    activePlan: typeof plan.id === 'string' ? plan.id : 'non-subscribed',
+    mode: plan.mode === 'auto' || plan.mode === 'manual' ? plan.mode : null,
     isAccountFrozen: account.frozen === true,
     planExpiresAt: normalizedPlanExpiresAt,
     planStartedAt: normalizedPlanStartedAt,
@@ -234,11 +249,16 @@ function parseBilling(
         typeof rawPreferences.timeZone === 'string'
           ? rawPreferences.timeZone
           : undefined,
-      analyticsOptimalPosting:
-        rawPreferences.analyticsOptimalPosting === true,
-      optimalFacebookTime: rawPreferences.optimalFacebookTime as string | undefined,
-      optimalInstagramTime: rawPreferences.optimalInstagramTime as string | undefined,
-      optimalLinkedinTime: rawPreferences.optimalLinkedinTime as string | undefined,
+      analyticsOptimalPosting: rawPreferences.analyticsOptimalPosting === true,
+      optimalFacebookTime: rawPreferences.optimalFacebookTime as
+        | string
+        | undefined,
+      optimalInstagramTime: rawPreferences.optimalInstagramTime as
+        | string
+        | undefined,
+      optimalLinkedinTime: rawPreferences.optimalLinkedinTime as
+        | string
+        | undefined,
     },
     subscription:
       typeof data.subscription === 'string' ? data.subscription : undefined,
@@ -249,19 +269,31 @@ function parseBilling(
     connected,
     aiPlanSelected: parseSelectedPlatforms(
       Array.isArray(aiPlan.selectedPlatforms)
-        ? Object.fromEntries((aiPlan.selectedPlatforms as string[]).map((platform) => [platform, true]))
+        ? Object.fromEntries(
+            (aiPlan.selectedPlatforms as string[]).map((platform) => [
+              platform,
+              true,
+            ])
+          )
         : null
     ),
     selectedPlatformsLocked: aiPlan.lockedAt != null,
     campaignSeedPendingPlatformConfirm: aiPlan.status === 'awaiting_selection',
-    pendingSelected: aiPlan.nextCycle && typeof aiPlan.nextCycle === 'object'
-      ? parseSelectedPlatforms(Object.fromEntries(
-          (((aiPlan.nextCycle as Record<string, unknown>).selectedPlatforms as string[] | undefined) ?? [])
-            .map((platform) => [platform, true])
-        ))
-      : null,
+    pendingSelected:
+      aiPlan.nextCycle && typeof aiPlan.nextCycle === 'object'
+        ? parseSelectedPlatforms(
+            Object.fromEntries(
+              (
+                ((aiPlan.nextCycle as Record<string, unknown>)
+                  .selectedPlatforms as string[] | undefined) ?? []
+              ).map((platform) => [platform, true])
+            )
+          )
+        : null,
     pendingSelectedForPlan:
-      aiPlan.nextCycle && typeof aiPlan.nextCycle === 'object' && typeof (aiPlan.nextCycle as Record<string, unknown>).planId === 'string'
+      aiPlan.nextCycle &&
+      typeof aiPlan.nextCycle === 'object' &&
+      typeof (aiPlan.nextCycle as Record<string, unknown>).planId === 'string'
         ? String((aiPlan.nextCycle as Record<string, unknown>).planId)
         : null,
   };

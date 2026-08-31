@@ -70,7 +70,7 @@ type BusinessProfileForm = {
 };
 
 const inputBase =
-  'w-full rounded-xl border border-border bg-muted px-4 py-2.5 text-foreground placeholder-muted-foreground focus:border-primary-purple focus:outline-none focus:ring-2 focus:ring-primary-purple/20 transition-all shadow-sm';
+  'w-full rounded-xl border border-default bg-element px-4 py-2.5 text-default placeholder-muted-foreground focus:border-primary-purple focus:outline-none focus:ring-2 focus:ring-strong transition-expo';
 
 function digitsOnly(value: string): string {
   return value.replace(/\D/g, '');
@@ -91,7 +91,11 @@ function parseHashtagTokens(raw: unknown): string[] {
   if (raw == null || raw === '') return [];
   if (Array.isArray(raw)) {
     return raw
-      .map((t) => String(t ?? '').replace(/^#+/, '').trim())
+      .map((t) =>
+        String(t ?? '')
+          .replace(/^#+/, '')
+          .trim()
+      )
       .filter(Boolean);
   }
   const s = String(raw).trim();
@@ -140,7 +144,6 @@ function uniqueHashtagList(items: string[]): string[] {
   }
   return out;
 }
-
 
 export default function BusinessProfilePage() {
   const { user, loading } = useAuth();
@@ -199,9 +202,7 @@ export default function BusinessProfilePage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleWebsiteFieldBlur = (
-    e: React.FocusEvent<HTMLInputElement>
-  ) => {
+  const handleWebsiteFieldBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const raw = e.target.value.trim();
     if (!raw) return;
     const normalized = normalizeWebsiteUrl(raw);
@@ -298,10 +299,10 @@ export default function BusinessProfilePage() {
     const p = suggestPayloadFromFields(fields);
     return Boolean(
       p.businessName?.trim() ||
-        p.industry?.trim() ||
-        p.location?.trim() ||
-        p.website?.trim() ||
-        p.brandDescription?.trim()
+      p.industry?.trim() ||
+      p.location?.trim() ||
+      p.website?.trim() ||
+      p.brandDescription?.trim()
     );
   };
 
@@ -379,9 +380,7 @@ export default function BusinessProfilePage() {
             const copy = await fetchBrandCopySuggestions(p);
             if (copy) {
               recommendedHashtags =
-                copy.hashtags.length > 0
-                  ? copy.hashtags
-                  : recommendedHashtags;
+                copy.hashtags.length > 0 ? copy.hashtags : recommendedHashtags;
               recommendedSlogans =
                 copy.slogans.length > 0 ? copy.slogans : recommendedSlogans;
               setFormData((prev) => ({
@@ -415,7 +414,9 @@ export default function BusinessProfilePage() {
       setUseVideoAvatar(response.data?.enabled === true);
       toast.success('AI avatar created');
     } catch {
-      showErrorToast('Could not create your AI avatar. Please try again later.');
+      showErrorToast(
+        'Could not create your AI avatar. Please try again later.'
+      );
     } finally {
       setAvatarSaving(false);
     }
@@ -428,9 +429,13 @@ export default function BusinessProfilePage() {
     try {
       const response = await setVideoAvatarPreference(next);
       setUseVideoAvatar(response.data?.enabled === true);
-      toast.success(next ? 'Avatar enabled for videos' : 'Avatar disabled for videos');
+      toast.success(
+        next ? 'Avatar enabled for videos' : 'Avatar disabled for videos'
+      );
     } catch {
-      showErrorToast('Could not update the avatar preference. Please try again later.');
+      showErrorToast(
+        'Could not update the avatar preference. Please try again later.'
+      );
     } finally {
       setAvatarSaving(false);
     }
@@ -449,9 +454,9 @@ export default function BusinessProfilePage() {
         );
         colorTemplatesGenerationStarted =
           uploaded?.data?.colorTemplatesGenerationStarted === true;
-          setFormData((prev) => ({ ...prev, logo: finalLogoForVariants }));
-          setSelectedImage(null);
-      }else if (
+        setFormData((prev) => ({ ...prev, logo: finalLogoForVariants }));
+        setSelectedImage(null);
+      } else if (
         typeof formData.logo === 'string' &&
         formData.logo.trim() &&
         !isAppStoredLogoUrl(formData.logo)
@@ -502,9 +507,7 @@ export default function BusinessProfilePage() {
       setCommittedHashtagsSaved(
         parseHashtagTokens(formData.hashtags).length > 0
       );
-      setCommittedSloganSaved(
-        !!String(formData.brandSlogan ?? '').trim()
-      );
+      setCommittedSloganSaved(!!String(formData.brandSlogan ?? '').trim());
       if (finalLogoForVariants) {
         try {
           sessionStorage.setItem(
@@ -592,7 +595,9 @@ export default function BusinessProfilePage() {
       const dnaFields = payload.dna ?? payload;
       await applyExtractedDna(dnaFields as Record<string, unknown>, websiteUrl);
     } catch (error: unknown) {
-      showErrorToast('Failed to extract business data. Please Try Again Later.');
+      showErrorToast(
+        'Failed to extract business data. Please Try Again Later.'
+      );
     } finally {
       setFetchingBusinessData(false);
     }
@@ -618,7 +623,9 @@ export default function BusinessProfilePage() {
       }
       toast.success('Business data extracted from catalog');
     } catch (error: unknown) {
-      showErrorToast('Failed to extract business data from catalog. Please Try Again Later.');
+      showErrorToast(
+        'Failed to extract business data from catalog. Please Try Again Later.'
+      );
     } finally {
       setFetchingBusinessData(false);
     }
@@ -658,7 +665,10 @@ export default function BusinessProfilePage() {
       }));
       if (checked && formData.logo) {
         try {
-          sessionStorage.setItem('template_dna_logo_for_variants', formData.logo);
+          sessionStorage.setItem(
+            'template_dna_logo_for_variants',
+            formData.logo
+          );
           sessionStorage.setItem('template_dna_force_fresh_variants', '1');
         } catch {}
       }
@@ -671,12 +681,13 @@ export default function BusinessProfilePage() {
           : 'Logo variants are off. AI images will use only your main logo.'
       );
     } catch (error: unknown) {
-      showErrorToast('Could not update variant preference. Please Try Again Later.');
+      showErrorToast(
+        'Could not update variant preference. Please Try Again Later.'
+      );
     } finally {
       setVariantsPreferenceLoading(false);
     }
   };
-
 
   if (loading) return <PageLoadingState />;
   if (!user) return null;
@@ -687,13 +698,13 @@ export default function BusinessProfilePage() {
         <h1 className={cn(workspacePageTitleClass, 'flex items-center gap-3')}>
           Brand Identity & DNA
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary-purple/10 border border-primary-purple/20">
-            <Fingerprint className="w-4 h-4 text-primary-purple" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-primary-purple">
+            <Fingerprint className="w-4 h-4 text-preview" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-preview">
               Core Setup
             </span>
           </div>
         </h1>
-        <p className="mt-2 text-base text-muted-foreground max-w-2xl">
+        <p className="mt-2 text-base text-secondary max-w-2xl">
           Manage your business details here.
         </p>
       </header>
@@ -701,17 +712,15 @@ export default function BusinessProfilePage() {
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="space-y-8">
           {/* Business Profile */}
-          <section className="glass-card rounded-3xl p-6 sm:p-8 border border-border shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-purple/10 rounded-full blur-3xl opacity-50 -z-10 translate-x-1/2 -translate-y-1/2"></div>
+          <section className="glass-card rounded-3xl p-6 sm:p-8 border border-default relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-purple/10 rounded-full blur-3xl opacity-50 -z-10 translate-x-1/2/2"></div>
 
-            <div className="flex items-center gap-3 mb-8 border-b border-border ">
-              <div className="p-2.5 bg-primary-purple/10 rounded-xl text-primary-purple">
+            <div className="flex items-center gap-3 mb-8 border-b border-default">
+              <div className="p-2.5 bg-primary-purple/10 rounded-xl text-preview">
                 <Building2 className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-foreground">
-                  Business Profile
-                </h2>
+                <h2 className="text-section text-default">Business Profile</h2>
               </div>
             </div>
 
@@ -726,15 +735,15 @@ export default function BusinessProfilePage() {
                   Fetch business DNA from your website or catalog PDF
                 </h3>
 
-                <div className="flex rounded-xl border border-white/15 bg-white/5 p-1">
+                <div className="flex rounded-xl border border-white/15 bg-default p-1">
                   <button
                     type="button"
                     onClick={() => setSourceMode('website')}
                     className={cn(
-                      'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      'flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-expo',
                       sourceMode === 'website'
-                        ? 'bg-primary text-white shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'bg-primary text-white'
+                        : 'text-secondary hover:text-default'
                     )}
                   >
                     <Globe className="h-4 w-4" />
@@ -744,10 +753,10 @@ export default function BusinessProfilePage() {
                     type="button"
                     onClick={() => setSourceMode('catalog')}
                     className={cn(
-                      'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      'flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-expo',
                       sourceMode === 'catalog'
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'bg-primary text-link-foreground'
+                        : 'text-secondary hover:text-default'
                     )}
                   >
                     <FileText className="h-4 w-4" />
@@ -767,7 +776,7 @@ export default function BusinessProfilePage() {
                     />
                     <button
                       type="button"
-                      className="bg-gradient-primary text-white px-4 py-2 rounded-xl text-sm cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                      className="btn-brand-fill px-4 py-2 rounded-full text-sm cursor-pointer disabled:cursor-not-allowed disabled:text-quaternary"
                       onClick={() => fetchOnboarding(websiteUrl)}
                       disabled={!websiteUrl || fetchingBusinessData}
                     >
@@ -781,31 +790,31 @@ export default function BusinessProfilePage() {
                     <label
                       htmlFor="template-dna-catalog-upload"
                       className={cn(
-                        'group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-border bg-muted/50 px-6 py-8 text-center transition-all',
-                        'hover:border-primary-purple/40 hover:bg-primary-purple/10'
+                        'group relative flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-default bg-element px-6 py-8 text-center transition-expo',
+                        'hover:border-strong hover:bg-element'
                       )}
                     >
                       {catalogFile ? (
                         <div className="flex flex-col items-center gap-2">
-                          <FileText className="h-10 w-10 text-primary-purple" />
-                          <p className="text-sm font-medium text-foreground">
+                          <FileText className="h-10 w-10 text-preview" />
+                          <p className="text-sm font-medium text-default">
                             {catalogFile.name}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-secondary">
                             {(catalogFile.size / (1024 * 1024)).toFixed(1)} MB ·
                             Click to replace
                           </p>
                         </div>
                       ) : (
                         <>
-                          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-primary text-white shadow-sm transition-transform group-hover:scale-105">
+                          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-primary text-white transition-expo-transform">
                             <Upload className="h-5 w-5" />
                           </span>
                           <div className="space-y-1">
-                            <p className="text-sm font-medium text-foreground">
+                            <p className="text-sm font-medium text-default">
                               Upload your catalog or brochure PDF
                             </p>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-secondary">
                               PDF only · up to 50 MB
                             </p>
                           </div>
@@ -824,7 +833,7 @@ export default function BusinessProfilePage() {
                         <button
                           type="button"
                           onClick={() => setCatalogFile(null)}
-                          className="text-sm text-muted-foreground hover:text-foreground"
+                          className="text-sm text-secondary hover:text-default"
                         >
                           Remove file
                         </button>
@@ -833,7 +842,7 @@ export default function BusinessProfilePage() {
                       )}
                       <button
                         type="button"
-                        className="bg-gradient-primary text-white px-4 py-2 rounded-xl text-sm cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                        className="btn-brand-fill px-4 py-2 rounded-full text-sm cursor-pointer disabled:cursor-not-allowed disabled:text-quaternary"
                         onClick={() => void fetchFromCatalog()}
                         disabled={!catalogFile || fetchingBusinessData}
                       >
@@ -855,7 +864,7 @@ export default function BusinessProfilePage() {
                     <div>
                       <label
                         htmlFor="businessName"
-                        className="mb-1.5 block text-sm font-semibold text-foreground"
+                        className="mb-1.5 block text-sm font-semibold text-default"
                       >
                         Business Name
                       </label>
@@ -872,7 +881,7 @@ export default function BusinessProfilePage() {
                     <div>
                       <label
                         htmlFor="businessEmail"
-                        className="mb-1.5 block text-sm font-semibold text-foreground"
+                        className="mb-1.5 block text-sm font-semibold text-default"
                       >
                         BusinessEmail Address
                       </label>
@@ -890,24 +899,24 @@ export default function BusinessProfilePage() {
                     <div className="sm:col-span-2">
                       <label
                         htmlFor="businesscontact"
-                        className="mb-1.5 block text-sm font-semibold text-foreground"
+                        className="mb-1.5 block text-sm font-semibold text-default"
                       >
                         Business Contact
                       </label>
                       <CountryCodePhoneField
-                      id="businesscontact"
-                      countryCode={phoneCountryCode}
-                      nationalNumber={phoneNationalNumber}
-                      onChange={updatePhone}
-                      selectClassName={inputBase}
-                      customInputClassName={inputBase}
-                      numberInputClassName={inputBase}
+                        id="businesscontact"
+                        countryCode={phoneCountryCode}
+                        nationalNumber={phoneNationalNumber}
+                        onChange={updatePhone}
+                        selectClassName={inputBase}
+                        customInputClassName={inputBase}
+                        numberInputClassName={inputBase}
                       />
                     </div>
                     <div>
                       <label
                         htmlFor="industry"
-                        className="mb-1.5 block text-sm font-semibold text-foreground"
+                        className="mb-1.5 block text-sm font-semibold text-default"
                       >
                         Industry
                       </label>
@@ -924,7 +933,7 @@ export default function BusinessProfilePage() {
                     <div>
                       <label
                         htmlFor="website"
-                        className="mb-1.5 block text-sm font-semibold text-foreground"
+                        className="mb-1.5 block text-sm font-semibold text-default"
                       >
                         Website URL
                       </label>
@@ -942,7 +951,7 @@ export default function BusinessProfilePage() {
                     <div>
                       <label
                         htmlFor="location"
-                        className="mb-1.5 block text-sm font-semibold text-foreground"
+                        className="mb-1.5 block text-sm font-semibold text-default"
                       >
                         Location
                       </label>
@@ -959,7 +968,7 @@ export default function BusinessProfilePage() {
                     <div>
                       <label
                         htmlFor="hashtags"
-                        className="mb-1.5 block text-sm font-semibold text-foreground"
+                        className="mb-1.5 block text-sm font-semibold text-default"
                       >
                         Default Hashtags
                       </label>
@@ -974,13 +983,13 @@ export default function BusinessProfilePage() {
                       />
                     </div>
                     {showRecommendedHashtags ? (
-                      <div className="sm:col-span-2 rounded-xl border border-white/15 bg-white/5 p-4">
+                      <div className="sm:col-span-2 rounded-xl border border-white/15 bg-default p-4">
                         <p className="mb-1 text-sm font-semibold text-white">
                           Suggested hashtags
                         </p>
                         <p className="mb-3 text-xs text-white/65">
-                          Tap chips to add or remove hashtags in the field above.
-                          After you save with at least one hashtag, these
+                          Tap chips to add or remove hashtags in the field
+                          above. After you save with at least one hashtag, these
                           suggestions stay hidden.
                         </p>
                         <div className="flex flex-wrap gap-2">
@@ -993,10 +1002,10 @@ export default function BusinessProfilePage() {
                                 key={tag}
                                 onClick={() => toggleRecommendedHashtag(tag)}
                                 className={cn(
-                                  'rounded-full border px-3 py-1 text-sm transition-all',
+                                  'rounded-full border px-3 py-1 text-sm transition-expo',
                                   on
                                     ? 'border-primary-purple bg-primary-purple text-white'
-                                    : 'border-white/20 bg-white/10 text-white hover:border-indigo-400/80'
+                                    : 'border-white/20 bg-default text-white hover:border-preview'
                                 )}
                               >
                                 #{tag.replace(/^#+/, '')}
@@ -1009,19 +1018,19 @@ export default function BusinessProfilePage() {
                     <div className="sm:col-span-2">
                       <label
                         htmlFor="brandSlogan"
-                        className="mb-1.5 block text-sm font-semibold text-foreground"
+                        className="mb-1.5 block text-sm font-semibold text-default"
                       >
                         Brand slogan
                       </label>
                       {showRecommendedSlogans ? (
-                        <div className="mb-3 rounded-xl border border-white/15 bg-white/5 p-4">
+                        <div className="mb-3 rounded-xl border border-white/15 bg-default p-4">
                           <p className="mb-1 text-sm font-semibold text-white">
                             Suggested slogans
                           </p>
                           <p className="mb-3 text-xs text-white/65">
                             Pick one line — choosing another replaces it. After
-                            you save with a slogan, these suggestions stay hidden.
-                            You can still edit or type your own below.
+                            you save with a slogan, these suggestions stay
+                            hidden. You can still edit or type your own below.
                           </p>
                           <div className="flex flex-col gap-2">
                             {formData.recommendedSlogans.map((line) => {
@@ -1039,10 +1048,10 @@ export default function BusinessProfilePage() {
                                     }))
                                   }
                                   className={cn(
-                                    'rounded-lg border px-3 py-2 text-left text-sm transition-all',
+                                    'rounded-full border px-3 py-2 text-left text-sm transition-expo',
                                     picked
                                       ? 'border-primary-purple bg-primary-purple/30 text-white'
-                                      : 'border-white/20 bg-white/10 text-white/90 hover:border-indigo-400/80'
+                                      : 'border-white/20 bg-default text-white/90 hover:border-preview'
                                   )}
                                 >
                                   {line}
@@ -1067,7 +1076,7 @@ export default function BusinessProfilePage() {
                   <div className="pt-2">
                     <label
                       htmlFor="brandDescription"
-                      className="mb-1.5 block text-sm font-semibold text-foreground"
+                      className="mb-1.5 block text-sm font-semibold text-default"
                     >
                       Brand Description & Voice
                     </label>
@@ -1083,26 +1092,26 @@ export default function BusinessProfilePage() {
                   </div>
 
                   <div className="pt-2">
-                    <p className="mb-1.5 block text-sm font-semibold text-foreground">
+                    <p className="mb-1.5 block text-sm font-semibold text-default">
                       Page look & visual style
                     </p>
-                    <p className="mb-3 text-xs text-muted-foreground">
+                    <p className="mb-3 text-xs text-secondary">
                       Choose how your social page should feel — used for Content
-                      Studio, carousels, Occasion Posts, and Autopilot generations.
+                      Studio, carousels, Occasion Posts, and Autopilot
+                      generations.
                     </p>
                     <PageLookSelector
                       value={formData.imageStyle}
                       onChange={(next) =>
                         setFormData((prev) => ({ ...prev, imageStyle: next }))
                       }
-                      idPrefix="template-dna-page-look"
-                      // businessName={formData.businessName}
+                      idPrefix="template-dna-page-look" // businessName={formData.businessName}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
                     <div>
-                      <label className="mb-1.5 block text-sm font-semibold text-foreground">
+                      <label className="mb-1.5 block text-sm font-semibold text-default">
                         Brand Colors
                       </label>
                       <div className="flex gap-3">
@@ -1130,7 +1139,7 @@ export default function BusinessProfilePage() {
                             key={colorField.id}
                             className="relative group flex-1"
                           >
-                            <div className="absolute inset-0 rounded-xl shadow-sm border border-border overflow-hidden bg-card">
+                            <div className="absolute inset-0 rounded-xl border border-default overflow-hidden bg-default">
                               <input
                                 id={colorField.id}
                                 name={colorField.name}
@@ -1149,12 +1158,12 @@ export default function BusinessProfilePage() {
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-border space-y-4">
-                    <label className="mb-1.5 block text-sm font-semibold text-foreground">
+                  <div className="pt-6 border-t border-default space-y-4">
+                    <label className="mb-1.5 block text-sm font-semibold text-default">
                       Logo
                     </label>
                     <div className="flex flex-col sm:flex-row gap-6 items-start">
-                      <div className="shrink-0 w-28 h-28 rounded-xl border-2 border-dashed border-border bg-muted/50 flex items-center justify-center overflow-hidden">
+                      <div className="shrink-0 w-28 h-28 rounded-xl border-2 border-dashed border-default bg-element flex items-center justify-center overflow-hidden">
                         {formData.logo ? (
                           <img
                             src={formData.logo}
@@ -1162,7 +1171,7 @@ export default function BusinessProfilePage() {
                             className="w-full h-full object-contain p-1"
                           />
                         ) : (
-                          <div className="text-muted-foreground flex flex-col items-center gap-1">
+                          <div className="text-secondary flex flex-col items-center gap-1">
                             <ImagePlus className="w-8 h-8" />
                             <span className="text-[10px] font-medium">
                               No logo
@@ -1172,7 +1181,7 @@ export default function BusinessProfilePage() {
                       </div>
                       <div className="flex-1 space-y-3 min-w-0">
                         <div className="flex items-center gap-2">
-                          <label className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-accent cursor-pointer transition-colors">
+                          <label className="inline-flex items-center justify-center gap-2 rounded-lg border border-default bg-default px-4 py-2 text-sm font-medium text-default hover:bg-hover cursor-pointer transition-expo">
                             <ImagePlus className="w-4 h-4" />
                             Upload image
                             <input
@@ -1182,58 +1191,54 @@ export default function BusinessProfilePage() {
                               onChange={handleLogoFile}
                             />
                           </label>
-                            <button
-                              type="button"
-                              onClick={handleGenerateVariants}
-                              disabled={!formData.logo}
-                              className="inline-flex items-center justify-center rounded-lg border border-primary-purple/25 bg-primary-purple/10 px-4 py-2 text-sm font-semibold text-primary-purple transition-colors hover:bg-primary-purple/15 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              Variants
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                router.push('/brand-dna/ai-logo')
-                              }
-                              className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
-                            >
-                              <WandSparkles className="h-4 w-4" />
-                              AI Generated Logo
-                            </button>
+                          <button
+                            type="button"
+                            onClick={handleGenerateVariants}
+                            disabled={!formData.logo}
+                            className="inline-flex items-center justify-center rounded-full border border-primary-purple/25 bg-primary-purple/10 px-4 py-2 text-sm font-semibold text-preview transition-expo hover:bg-element disabled:cursor-not-allowed disabled:text-quaternary"
+                          >
+                            Variants
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => router.push('/brand-dna/ai-logo')}
+                            className="inline-flex items-center justify-center gap-1.5 rounded-full border border-success bg-success px-4 py-2 text-sm font-semibold text-success transition-expo hover:bg-success"
+                          >
+                            <WandSparkles className="h-4 w-4" />
+                            AI Generated Logo
+                          </button>
                         </div>
-                          <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="min-w-0 space-y-0.5">
-                              <p className="text-sm font-semibold text-foreground">
-                                Use logo variants in AI-generated images
-                              </p>
-                              <p className="text-xs text-muted-foreground leading-relaxed">
-                                Off by default. Turning on generates logo
-                                variants on the server and uses them in AI
-                                images. Turning off uses only your main logo;
-                                saved variants are kept.
-                              </p>
-                            </div>
-                            <Switch
-                              checked={
-                                formData.useLogoVariantsForImages === true
-                              }
-                              disabled={variantsPreferenceLoading}
-                              onCheckedChange={(v) =>
-                                void handleVariantsForImagesToggle(Boolean(v))
-                              }
-                              className="shrink-0 sm:ml-4"
-                              aria-label="Use logo variants in AI-generated images"
-                            />
+                        <div className="flex flex-col gap-2 rounded-xl border border-default bg-element px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0 space-y-0.5">
+                            <p className="text-sm font-semibold text-default">
+                              Use logo variants in AI-generated images
+                            </p>
+                            <p className="text-xs text-secondary leading-relaxed">
+                              Off by default. Turning on generates logo variants
+                              on the server and uses them in AI images. Turning
+                              off uses only your main logo; saved variants are
+                              kept.
+                            </p>
                           </div>
+                          <Switch
+                            checked={formData.useLogoVariantsForImages === true}
+                            disabled={variantsPreferenceLoading}
+                            onCheckedChange={(v) =>
+                              void handleVariantsForImagesToggle(Boolean(v))
+                            }
+                            className="shrink-0 sm:ml-4"
+                            aria-label="Use logo variants in AI-generated images"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-border">
-                    <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                  <div className="pt-6 border-t border-default">
+                    <div className="rounded-2xl border border-default bg-default p-4">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-violet-200 bg-white">
+                          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-preview bg-default">
                             {avatarUrl ? (
                               <img
                                 src={avatarUrl}
@@ -1241,21 +1246,25 @@ export default function BusinessProfilePage() {
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <UserRound className="h-7 w-7 text-slate-400" aria-hidden />
+                              <UserRound
+                                className="h-7 w-7 text-tertiary"
+                                aria-hidden
+                              />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-foreground">
+                            <p className="text-sm font-semibold text-default">
                               Use my AI avatar in videos
                             </p>
-                            <p className="text-xs leading-relaxed text-muted-foreground">
-                              Upload a photo and we’ll create an animated AI avatar for your videos.
+                            <p className="text-xs leading-relaxed text-secondary">
+                              Upload a photo and we’ll create an animated AI
+                              avatar for your videos.
                             </p>
                             <button
                               type="button"
                               disabled={avatarSaving}
                               onClick={() => avatarInputRef.current?.click()}
-                              className="mt-2 text-xs font-semibold text-violet-700 hover:underline disabled:opacity-50"
+                              className="mt-2 text-xs font-semibold text-preview hover:underline disabled:text-quaternary"
                             >
                               {avatarSaving
                                 ? 'Creating AI avatar…'
@@ -1272,17 +1281,21 @@ export default function BusinessProfilePage() {
                           disabled={!avatarUrl || avatarSaving}
                           onClick={() => void handleAvatarToggle()}
                           className={cn(
-                            'relative h-7 w-12 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-50',
-                            useVideoAvatar ? 'bg-violet-600' : 'bg-slate-300'
+                            'relative h-7 w-12 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:text-quaternary',
+                            useVideoAvatar
+                              ? 'bg-[var(--purple-9)]'
+                              : 'bg-selected'
                           )}
                         >
                           <span
                             className={cn(
-                              'absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform',
+                              'absolute left-1 top-1 h-5 w-5 rounded-full bg-default transition-transform',
                               useVideoAvatar ? 'translate-x-5' : 'translate-x-0'
                             )}
                           />
-                          <span className="sr-only">Use avatar in generated videos</span>
+                          <span className="sr-only">
+                            Use avatar in generated videos
+                          </span>
                         </button>
                       </div>
                       <input
@@ -1298,18 +1311,19 @@ export default function BusinessProfilePage() {
                         }}
                       />
                       {useVideoAvatar ? (
-                        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                          A real-person avatar photo may require portrait authorization from the video service.
+                        <p className="mt-3 rounded-lg border border-warning bg-warning px-3 py-2 text-xs text-warning">
+                          A real-person avatar photo may require portrait
+                          authorization from the video service.
                         </p>
                       ) : null}
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-border flex justify-end">
+                  <div className="pt-6 border-t border-default flex justify-end">
                     <button
                       type="submit"
                       disabled={saving}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-action px-6 py-3 text-sm font-bold text-white shadow-md shadow-primary-purple/25 transition-all hover:brightness-105 hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:bg-muted disabled:shadow-none min-w-[160px]"
+                      className="inline-flex items-center justify-center gap-2 rounded-full btn-brand-fill px-6 py-3 text-sm font-bold transition-expo disabled:transform-none disabled:cursor-not-allowed disabled:bg-element disabled:shadow-none min-w-[160px]"
                     >
                       {saving ? (
                         <>
@@ -1332,35 +1346,33 @@ export default function BusinessProfilePage() {
               </div>
             )}
           </section>
-
         </div>
         <div className="space-y-6">
-          <section className="glass-card rounded-3xl p-6 border border-border shadow-sm bg-linear-to-b from-card to-muted/30 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-full h-1 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+          <section className="glass-card rounded-3xl p-6 border border-default bg-linear-to-b from-card to-muted/30 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-full h-1 bg-linear-to-r from-[var(--purple-9)] via-[var(--purple-9)] to-[var(--purple-9)]"></div>
 
             <div className="flex items-center gap-3 mb-5">
-              <div className="p-2 bg-purple-50 rounded-lg bg-purple-600">
+              <div className="p-2 bg-preview rounded-lg bg-[var(--purple-9)]">
                 <Sparkles className="w-5 h-5" />
               </div>
-              <h2 className="text-lg font-bold text-foreground">
-                Business Data
-              </h2>
+              <h2 className="text-subsection text-default">Business Data</h2>
             </div>
 
-            <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                Manage your business data with questionnaire answers and brand reference images for auto generated content.
+            <p className="text-sm text-secondary leading-relaxed mb-6">
+              Manage your business data with questionnaire answers and brand
+              reference images for auto generated content.
             </p>
 
             <nav className="flex flex-col gap-3">
               <Link
                 href="/brand-dna/business-data"
-                className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 shadow-sm hover:shadow-primary-purple/15"
+                className="group relative overflow-hidden rounded-xl border border-default bg-default p-4 transition-expo"
               >
                 <div className="flex items-center justify-between relative z-10">
-                  <span className="font-semibold text-foreground transition-colors group-hover:text-foreground">
+                  <span className="font-semibold text-default transition-expo group-hover:text-default">
                     Business Data
                   </span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-tr from-violet-600 to-indigo-500 text-white shadow-sm transition-transform group-hover:scale-110">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-tr from-[var(--purple-9)] to-[var(--purple-9)] text-white transition-transform">
                     <Brain className="w-4 h-4" />
                   </div>
                 </div>

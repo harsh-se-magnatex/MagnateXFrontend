@@ -42,10 +42,7 @@ export function formatAuthLinkError(code: string): string {
 async function syncBackendAfterLink(user: User, method: 'phone' | 'password') {
   const idToken = await user.getIdToken(true);
   await loginUser(idToken, 'signin', method);
-  await linkProvider(
-    idToken,
-    method === 'phone' ? 'phone' : 'password'
-  );
+  await linkProvider(idToken, method === 'phone' ? 'phone' : 'password');
   await user.reload();
 }
 
@@ -143,7 +140,9 @@ export async function completeAccountEmailLink(
 
   const u = auth.currentUser;
   if (!u) {
-    throw new Error('Session lost after linking. Please sign in and try again.');
+    throw new Error(
+      'Session lost after linking. Please sign in and try again.'
+    );
   }
   await u.reload();
 

@@ -6,354 +6,441 @@
  * Re-run: pnpm export-how-it-looks -- --brand=cafe
  *   or:   pnpm export-how-it-looks -- --brand=cafe --uid=W3D00I7INzQ5Y1RUD0Kg5GlPXgu1
  */
-export const GENERATED_SHOWCASE_BRAND_ID = "cafe" as const;
+export const GENERATED_SHOWCASE_BRAND_ID = 'cafe' as const;
 
 export const GENERATED_SHOWCASE_BRAND = {
-  "name": "Neon Cafe",
-  "handle": "neon_cafe",
-  "tagline": "Food & Beverage",
-  "followersLabel": "1.2K",
-  "followingLabel": "186"
+  name: 'Neon Cafe',
+  handle: 'neon_cafe',
+  tagline: 'Food & Beverage',
+  followersLabel: '1.2K',
+  followingLabel: '186',
 } as const;
 
 export const GENERATED_SHOWCASE_POSTS = [
   {
-    "id": "rv8EzbtXyvuHKKEOkjZ0",
-    "platform": "facebook",
-    "scheduleAt": "2026-09-09T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Afternoon slump hitting hard? Ditch the processed snacks. This layered yogurt dessert—fresh raspberries, creamy middle, ripe strawberries—resets your 3 PM energy with locally sourced goodness. Quality tastes different. Save this for your next cafe visit.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/rv8EzbtXyvuHKKEOkjZ0/image.png"
+    id: 'rv8EzbtXyvuHKKEOkjZ0',
+    platform: 'facebook',
+    scheduleAt: '2026-09-09T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Afternoon slump hitting hard? Ditch the processed snacks. This layered yogurt dessert—fresh raspberries, creamy middle, ripe strawberries—resets your 3 PM energy with locally sourced goodness. Quality tastes different. Save this for your next cafe visit.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/rv8EzbtXyvuHKKEOkjZ0/image.png',
   },
   {
-    "id": "mlLalYArUexFnL4hzIVP",
-    "platform": "linkedin",
-    "scheduleAt": "2026-09-09T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "As we move into Q4, transparency isn't just a buzzword at Neon Cafe — it's how we build trust with you. Every cherry tomato, leaf of arugula, and slice of avocado in our salads comes from carefully sourced local producers we know by name. We believe premium dining starts with honest ingredients and clear supply chains. What influences your choice of workspace and dining destination? Is it the story behind the food, the operational integrity, or both? We'd love to hear your take below.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/mlLalYArUexFnL4hzIVP/image.png"
+    id: 'mlLalYArUexFnL4hzIVP',
+    platform: 'linkedin',
+    scheduleAt: '2026-09-09T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "As we move into Q4, transparency isn't just a buzzword at Neon Cafe — it's how we build trust with you. Every cherry tomato, leaf of arugula, and slice of avocado in our salads comes from carefully sourced local producers we know by name. We believe premium dining starts with honest ingredients and clear supply chains. What influences your choice of workspace and dining destination? Is it the story behind the food, the operational integrity, or both? We'd love to hear your take below.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/mlLalYArUexFnL4hzIVP/image.png',
   },
   {
-    "id": "I8yHNn4ZK5fVYPOzYkHQ",
-    "platform": "instagram",
-    "scheduleAt": "2026-09-09T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Struggling to find a workspace that feels genuinely restorative? Our signature cappuccino—locally sourced beans, intricate latte art, served with a delicate cookie—anchors your focus and transforms a coffee break into a ritual that sharpens your best thinking. Save this for your next workday reset.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/I8yHNn4ZK5fVYPOzYkHQ/image.png"
+    id: 'I8yHNn4ZK5fVYPOzYkHQ',
+    platform: 'instagram',
+    scheduleAt: '2026-09-09T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Struggling to find a workspace that feels genuinely restorative? Our signature cappuccino—locally sourced beans, intricate latte art, served with a delicate cookie—anchors your focus and transforms a coffee break into a ritual that sharpens your best thinking. Save this for your next workday reset.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/I8yHNn4ZK5fVYPOzYkHQ/image.png',
   },
   {
-    "id": "b08iHB8PYEYdUiBlHuLJ",
-    "platform": "instagram",
-    "scheduleAt": "2026-09-05T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Teachers shape minds over countless conversations—much like great food nourishes the soul. At Neon Cafe, we honor every mentor who inspires growth and learning. Happy Teachers' Day. #NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/b08iHB8PYEYdUiBlHuLJ/image.png"
+    id: 'b08iHB8PYEYdUiBlHuLJ',
+    platform: 'instagram',
+    scheduleAt: '2026-09-05T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Teachers shape minds over countless conversations—much like great food nourishes the soul. At Neon Cafe, we honor every mentor who inspires growth and learning. Happy Teachers' Day. #NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/b08iHB8PYEYdUiBlHuLJ/image.png',
   },
   {
-    "id": "ZR5A4o3mcBukwKpUcKxk",
-    "platform": "linkedin",
-    "scheduleAt": "2026-09-05T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Teachers shape futures with patience, wisdom, and boundless belief in their students. This Teachers' Day, Neon Cafe celebrates the educators who light up classrooms and inspire minds.\n\nWe gather in spaces where learning happens — over conversations, shared meals, and moments that matter. Thank you to every teacher who mentors, challenges, and lifts others higher.\n\n#TeachersDay #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/ZR5A4o3mcBukwKpUcKxk/image.png"
+    id: 'ZR5A4o3mcBukwKpUcKxk',
+    platform: 'linkedin',
+    scheduleAt: '2026-09-05T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Teachers shape futures with patience, wisdom, and boundless belief in their students. This Teachers' Day, Neon Cafe celebrates the educators who light up classrooms and inspire minds.\n\nWe gather in spaces where learning happens — over conversations, shared meals, and moments that matter. Thank you to every teacher who mentors, challenges, and lifts others higher.\n\n#TeachersDay #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/ZR5A4o3mcBukwKpUcKxk/image.png',
   },
   {
-    "id": "A7YE0MxEpOu8DJSH5l9d",
-    "platform": "facebook",
-    "scheduleAt": "2026-09-05T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "A teacher's hands guide eager minds—the truest gift. At Neon Cafe, we celebrate those who shape futures with patience, wisdom, and heart. Happy Teachers' Day. #NeonCafe #CafeCulture #CoffeeTime #CafeVibes\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/A7YE0MxEpOu8DJSH5l9d/image.png"
+    id: 'A7YE0MxEpOu8DJSH5l9d',
+    platform: 'facebook',
+    scheduleAt: '2026-09-05T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "A teacher's hands guide eager minds—the truest gift. At Neon Cafe, we celebrate those who shape futures with patience, wisdom, and heart. Happy Teachers' Day. #NeonCafe #CafeCulture #CoffeeTime #CafeVibes\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/A7YE0MxEpOu8DJSH5l9d/image.png',
   },
   {
-    "id": "mkr4Z9Cq8UmUUiDC1aTk",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-29T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Signal: Flaky croissants on vintage china, berry jam, real coffee. Noise: sterile cafe feeds that look perfect but taste hollow. Choose spaces that restore, not distract—where artisanal care and locally sourced ingredients turn your break into ritual. Save this for your next quiet moment.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/mkr4Z9Cq8UmUUiDC1aTk/image.png"
+    id: 'mkr4Z9Cq8UmUUiDC1aTk',
+    platform: 'instagram',
+    scheduleAt: '2026-08-29T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Signal: Flaky croissants on vintage china, berry jam, real coffee. Noise: sterile cafe feeds that look perfect but taste hollow. Choose spaces that restore, not distract—where artisanal care and locally sourced ingredients turn your break into ritual. Save this for your next quiet moment.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/mkr4Z9Cq8UmUUiDC1aTk/image.png',
   },
   {
-    "id": "lWLHF3RvvixecM19zzaN",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-29T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "One rule we live by: quality begins with where your ingredients come from.\n\nEvery layer of our chocolate mousse cake—from the cocoa to the cream—starts with local sourcing. No shortcuts. No compromise. When you choose ingredients that matter, every bite tastes like intention.\n\nAs autumn settles in and you're seeking that perfect 'third place' between work and home, we're here. A space where indulgence and productivity coexist, built on a foundation of trust in every flavor we serve.\n\nWhat does quality mean to you when you're choosing where to spend your time? Drop your thoughts below.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/lWLHF3RvvixecM19zzaN/image.png"
+    id: 'lWLHF3RvvixecM19zzaN',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-29T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "One rule we live by: quality begins with where your ingredients come from.\n\nEvery layer of our chocolate mousse cake—from the cocoa to the cream—starts with local sourcing. No shortcuts. No compromise. When you choose ingredients that matter, every bite tastes like intention.\n\nAs autumn settles in and you're seeking that perfect 'third place' between work and home, we're here. A space where indulgence and productivity coexist, built on a foundation of trust in every flavor we serve.\n\nWhat does quality mean to you when you're choosing where to spend your time? Drop your thoughts below.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/lWLHF3RvvixecM19zzaN/image.png',
   },
   {
-    "id": "3cWmrg8krH61Yd4DRJs5",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-29T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Farm-fresh basil. Vine-ripened tomatoes. One perfectly charred Margherita crafted for those who know the difference. Quality tastes better—especially on your afternoon break. Save this for your next visit.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/3cWmrg8krH61Yd4DRJs5/image.png"
+    id: '3cWmrg8krH61Yd4DRJs5',
+    platform: 'facebook',
+    scheduleAt: '2026-08-29T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Farm-fresh basil. Vine-ripened tomatoes. One perfectly charred Margherita crafted for those who know the difference. Quality tastes better—especially on your afternoon break. Save this for your next visit.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/3cWmrg8krH61Yd4DRJs5/image.png',
   },
   {
-    "id": "isLb3Ot1XkBcEebTYiDm",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-27T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Sunset moments taste better at Neon Cafe. There's something magical about crispy golden fries, perfectly paired dipping sauces, and the glow of neon lights framing your evening escape. Every bite celebrates the simple joy of good food shared in a stylish setting. Whether you're catching the golden hour or unwinding after a long day, our outdoor seating invites you to slow down and savor. Experience the joy of good food. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/isLb3Ot1XkBcEebTYiDm/image.png"
+    id: 'isLb3Ot1XkBcEebTYiDm',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-27T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Sunset moments taste better at Neon Cafe. There's something magical about crispy golden fries, perfectly paired dipping sauces, and the glow of neon lights framing your evening escape. Every bite celebrates the simple joy of good food shared in a stylish setting. Whether you're catching the golden hour or unwinding after a long day, our outdoor seating invites you to slow down and savor. Experience the joy of good food. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/isLb3Ot1XkBcEebTYiDm/image.png',
   },
   {
-    "id": "P0qKqOIP8Xrhxl720UDP",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-27T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Unwind with a perfectly crafted meal in our serene café escape. Fresh, vibrant, and made for moments of pure joy. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/P0qKqOIP8Xrhxl720UDP/image.png"
+    id: 'P0qKqOIP8Xrhxl720UDP',
+    platform: 'facebook',
+    scheduleAt: '2026-08-27T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Unwind with a perfectly crafted meal in our serene café escape. Fresh, vibrant, and made for moments of pure joy. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/P0qKqOIP8Xrhxl720UDP/image.png',
   },
   {
-    "id": "382oxa7lGo1aB0o0zxB8",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-27T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Sunset moments taste better at Neon Cafe. Savor premium western food in our stylish outdoor escape, where every bite brings joy. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/382oxa7lGo1aB0o0zxB8/image.png"
+    id: '382oxa7lGo1aB0o0zxB8',
+    platform: 'instagram',
+    scheduleAt: '2026-08-27T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Sunset moments taste better at Neon Cafe. Savor premium western food in our stylish outdoor escape, where every bite brings joy. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/382oxa7lGo1aB0o0zxB8/image.png',
   },
   {
-    "id": "qIrDq6EGjjV4dYInLNeL",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-26T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Gather close. Share good food, good coffee, and better moments with the ones you love. Experience the joy at Neon Cafe. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/qIrDq6EGjjV4dYInLNeL/image.png"
+    id: 'qIrDq6EGjjV4dYInLNeL',
+    platform: 'instagram',
+    scheduleAt: '2026-08-26T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Gather close. Share good food, good coffee, and better moments with the ones you love. Experience the joy at Neon Cafe. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/qIrDq6EGjjV4dYInLNeL/image.png',
   },
   {
-    "id": "o7SI4igXweP7cgrzOs3e",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-26T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Gather around good food and great company. Neon Cafe brings the joy of sharing to every table. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/o7SI4igXweP7cgrzOs3e/image.png"
+    id: 'o7SI4igXweP7cgrzOs3e',
+    platform: 'facebook',
+    scheduleAt: '2026-08-26T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Gather around good food and great company. Neon Cafe brings the joy of sharing to every table. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/o7SI4igXweP7cgrzOs3e/image.png',
   },
   {
-    "id": "9cW5LmmBmv1xZXNVwwVj",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-26T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Good food tastes even better when shared. At Neon Cafe, we believe the joy of dining comes alive around a table with people you care about. Our western sharing platters are crafted to bring everyone together—crispy, flavorful, and meant for hands reaching in from all sides. Whether it's nachos loaded with fresh toppings or any of our premium offerings, every bite is an invitation to connect, laugh, and savor the moment. Experience the joy of good food with your loved ones. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/9cW5LmmBmv1xZXNVwwVj/image.png"
+    id: '9cW5LmmBmv1xZXNVwwVj',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-26T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Good food tastes even better when shared. At Neon Cafe, we believe the joy of dining comes alive around a table with people you care about. Our western sharing platters are crafted to bring everyone together—crispy, flavorful, and meant for hands reaching in from all sides. Whether it's nachos loaded with fresh toppings or any of our premium offerings, every bite is an invitation to connect, laugh, and savor the moment. Experience the joy of good food with your loved ones. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/9cW5LmmBmv1xZXNVwwVj/image.png',
   },
   {
-    "id": "z81gmBntSFQh6bpEJNUq",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-25T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Flavorful moments start here. Every dessert at Neon Cafe is crafted to bring joy with every spoonful. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/z81gmBntSFQh6bpEJNUq/image.png"
+    id: 'z81gmBntSFQh6bpEJNUq',
+    platform: 'facebook',
+    scheduleAt: '2026-08-25T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Flavorful moments start here. Every dessert at Neon Cafe is crafted to bring joy with every spoonful. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/z81gmBntSFQh6bpEJNUq/image.png',
   },
   {
-    "id": "lDEHYNgmg3I0MXSaLiGA",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-25T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Decadent chocolate mousse cake that melts moments into memories. At Neon Cafe, every layer tells a story of pure indulgence. Experience the joy of good food. #NeonCafe #CafeCulture #FoodLovers #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/lDEHYNgmg3I0MXSaLiGA/image.png"
+    id: 'lDEHYNgmg3I0MXSaLiGA',
+    platform: 'instagram',
+    scheduleAt: '2026-08-25T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Decadent chocolate mousse cake that melts moments into memories. At Neon Cafe, every layer tells a story of pure indulgence. Experience the joy of good food. #NeonCafe #CafeCulture #FoodLovers #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/lDEHYNgmg3I0MXSaLiGA/image.png',
   },
   {
-    "id": "LYYKKjkh8tAxqU7G6NIl",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-25T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "At Neon Cafe, every moment is crafted for joy. From the golden warmth of our croissants to the first sip of freshly brewed coffee, we believe the best conversations happen over exceptional food. There's something magical about sharing a table, tasting flavors that transport you, and seeing smiles light up around you.\n\nBecause great food isn't just nourishment—it's connection. It's the pause in your day that matters.\n\n#NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/LYYKKjkh8tAxqU7G6NIl/image.png"
+    id: 'LYYKKjkh8tAxqU7G6NIl',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-25T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "At Neon Cafe, every moment is crafted for joy. From the golden warmth of our croissants to the first sip of freshly brewed coffee, we believe the best conversations happen over exceptional food. There's something magical about sharing a table, tasting flavors that transport you, and seeing smiles light up around you.\n\nBecause great food isn't just nourishment—it's connection. It's the pause in your day that matters.\n\n#NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/LYYKKjkh8tAxqU7G6NIl/image.png',
   },
   {
-    "id": "VaiazctZgTVTTdutj2vD",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-24T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Every corner of Neon Cafe holds a moment worth savoring. Whether it's the perfect bite of our signature burger, the warmth of expertly brewed coffee, or simply the vibe of a space designed for joy—this is where good food and great atmosphere meet.\n\nExperience the joy of good food. Find your sanctuary at Neon Cafe.\n\n#NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/VaiazctZgTVTTdutj2vD/image.png"
+    id: 'VaiazctZgTVTTdutj2vD',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-24T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Every corner of Neon Cafe holds a moment worth savoring. Whether it's the perfect bite of our signature burger, the warmth of expertly brewed coffee, or simply the vibe of a space designed for joy—this is where good food and great atmosphere meet.\n\nExperience the joy of good food. Find your sanctuary at Neon Cafe.\n\n#NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/VaiazctZgTVTTdutj2vD/image.png',
   },
   {
-    "id": "3cPEGGGwCVEHjiJZOR77",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-24T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Golden, crispy, and made for sharing. Our French fries are the perfect companion to your coffee moment at Neon Cafe. Discover your happy place. #NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/3cPEGGGwCVEHjiJZOR77/image.png"
+    id: '3cPEGGGwCVEHjiJZOR77',
+    platform: 'instagram',
+    scheduleAt: '2026-08-24T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Golden, crispy, and made for sharing. Our French fries are the perfect companion to your coffee moment at Neon Cafe. Discover your happy place. #NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/3cPEGGGwCVEHjiJZOR77/image.png',
   },
   {
-    "id": "aHJxgJAYX6QpzFSD9iz2",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-24T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Discover your sanctuary at Neon Cafe. Fresh, flavorful, and crafted to inspire joy in every bite. #NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/aHJxgJAYX6QpzFSD9iz2/image.png"
+    id: 'aHJxgJAYX6QpzFSD9iz2',
+    platform: 'facebook',
+    scheduleAt: '2026-08-24T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Discover your sanctuary at Neon Cafe. Fresh, flavorful, and crafted to inspire joy in every bite. #NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/aHJxgJAYX6QpzFSD9iz2/image.png',
   },
   {
-    "id": "bNRu7ImTl1YaFK6x6VMC",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-23T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Culinary artistry meets Neon Cafe vibes. Every plate tells a story of fresh, gourmet flavor. Experience the joy of good food. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/bNRu7ImTl1YaFK6x6VMC/image.png"
+    id: 'bNRu7ImTl1YaFK6x6VMC',
+    platform: 'facebook',
+    scheduleAt: '2026-08-23T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Culinary artistry meets Neon Cafe vibes. Every plate tells a story of fresh, gourmet flavor. Experience the joy of good food. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/bNRu7ImTl1YaFK6x6VMC/image.png',
   },
   {
-    "id": "L4lztlcQfL4KRIHWlarV",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-23T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Culinary artistry meets vibrant café culture at Neon Cafe. Every plate tells a story—fresh ingredients, thoughtful presentation, and the joy of indulgence. From perfectly topped nachos to carefully curated sides, we believe food should delight all your senses. Experience the craft behind every bite. When you dine with us, you're not just eating; you're celebrating the art of good food. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/L4lztlcQfL4KRIHWlarV/image.png"
+    id: 'L4lztlcQfL4KRIHWlarV',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-23T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Culinary artistry meets vibrant café culture at Neon Cafe. Every plate tells a story—fresh ingredients, thoughtful presentation, and the joy of indulgence. From perfectly topped nachos to carefully curated sides, we believe food should delight all your senses. Experience the craft behind every bite. When you dine with us, you're not just eating; you're celebrating the art of good food. #NeonCafe #CafeCulture #FoodLovers #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/L4lztlcQfL4KRIHWlarV/image.png',
   },
   {
-    "id": "APEK1DVi5c2KVANQLBK0",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-23T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Savor the artistry in every sip at Neon Cafe. Where gourmet western vibes meet the perfect pour—experience the joy of good food. #NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/APEK1DVi5c2KVANQLBK0/image.png"
+    id: 'APEK1DVi5c2KVANQLBK0',
+    platform: 'instagram',
+    scheduleAt: '2026-08-23T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Savor the artistry in every sip at Neon Cafe. Where gourmet western vibes meet the perfect pour—experience the joy of good food. #NeonCafe #CafeCulture #FoodLovers #CoffeeTime #CafeVibes #Delicious\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/APEK1DVi5c2KVANQLBK0/image.png',
   },
   {
-    "id": "bVhjafaN02b2Z6Ion6xF",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-22T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Late August slump? Your afternoon productivity hinge on one choice: nutrient-dense fueling over empty caffeine spikes.\n\nOur signature layered berry smoothie isn't just refreshment—it's strategic reset. Locally sourced strawberries, raspberry, and creamy yogurt deliver sustained energy that powers deep work without the crash.\n\nWhen you choose quality ingredients and intentional breaks, you reclaim focus. Step into Q4 sharp, not burnt.\n\nSave this habit for your next afternoon block.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/bVhjafaN02b2Z6Ion6xF/image.png"
+    id: 'bVhjafaN02b2Z6Ion6xF',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-22T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Late August slump? Your afternoon productivity hinge on one choice: nutrient-dense fueling over empty caffeine spikes.\n\nOur signature layered berry smoothie isn't just refreshment—it's strategic reset. Locally sourced strawberries, raspberry, and creamy yogurt deliver sustained energy that powers deep work without the crash.\n\nWhen you choose quality ingredients and intentional breaks, you reclaim focus. Step into Q4 sharp, not burnt.\n\nSave this habit for your next afternoon block.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/bVhjafaN02b2Z6Ion6xF/image.png',
   },
   {
-    "id": "WhVJVkSH7QnOKaOMszN6",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-22T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Locally sourced, carefully crafted, intentionally plated. Every golden croissant and spoonful of house-made jam tells the story of our morning ritual. This is your workspace, reimagined. Share your favorite Neon Cafe moment.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/WhVJVkSH7QnOKaOMszN6/image.png"
+    id: 'WhVJVkSH7QnOKaOMszN6',
+    platform: 'facebook',
+    scheduleAt: '2026-08-22T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Locally sourced, carefully crafted, intentionally plated. Every golden croissant and spoonful of house-made jam tells the story of our morning ritual. This is your workspace, reimagined. Share your favorite Neon Cafe moment.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/WhVJVkSH7QnOKaOMszN6/image.png',
   },
   {
-    "id": "HrdgCrBrhQ6o0YrAV9PU",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-22T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Neon Cafe shares a mistake to avoid built for Food & Beverage audiences.\n\nTap like if this resonates and tell us what stands out to you.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/HrdgCrBrhQ6o0YrAV9PU/image.png"
+    id: 'HrdgCrBrhQ6o0YrAV9PU',
+    platform: 'instagram',
+    scheduleAt: '2026-08-22T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Neon Cafe shares a mistake to avoid built for Food & Beverage audiences.\n\nTap like if this resonates and tell us what stands out to you.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/HrdgCrBrhQ6o0YrAV9PU/image.png',
   },
   {
-    "id": "jGoDAtLC4LR6CGSH8xZv",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-19T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Stop confusing productivity with sterility.\n\nA high-impact afternoon isn't built in bland. It's built with a Margherita pizza—authentic charred crust, vibrant basil, locally sourced mozzarella—paired alongside your workflow. Premium ingredients fuel premium focus.\n\nThat's why professionals choose the third space that refuses to compromise: quality ingredients, genuine flavor, real productivity gains. Your lunch break doesn't have to be a break from excellence.\n\nSave this for your next workspace upgrade.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/linkedin/jGoDAtLC4LR6CGSH8xZv/image.png"
+    id: 'jGoDAtLC4LR6CGSH8xZv',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-19T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Stop confusing productivity with sterility.\n\nA high-impact afternoon isn't built in bland. It's built with a Margherita pizza—authentic charred crust, vibrant basil, locally sourced mozzarella—paired alongside your workflow. Premium ingredients fuel premium focus.\n\nThat's why professionals choose the third space that refuses to compromise: quality ingredients, genuine flavor, real productivity gains. Your lunch break doesn't have to be a break from excellence.\n\nSave this for your next workspace upgrade.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/linkedin/jGoDAtLC4LR6CGSH8xZv/image.png',
   },
   {
-    "id": "fX1At9w0ADyoRlzJ34sq",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-19T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Afternoon slump? Not anymore. 🍔 Our gourmet veggie burger—packed with fresh arugula, grilled onions, and a thick veggie patty on that signature glossy orange bun—fuels your focus when it matters. Local ingredients, real flavor, sustained energy. What's your 3 PM power move?\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/facebook/fX1At9w0ADyoRlzJ34sq/image.png"
+    id: 'fX1At9w0ADyoRlzJ34sq',
+    platform: 'facebook',
+    scheduleAt: '2026-08-19T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Afternoon slump? Not anymore. 🍔 Our gourmet veggie burger—packed with fresh arugula, grilled onions, and a thick veggie patty on that signature glossy orange bun—fuels your focus when it matters. Local ingredients, real flavor, sustained energy. What's your 3 PM power move?\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    imageUrl:
+      '/landing/how-it-looks/cafe/facebook/fX1At9w0ADyoRlzJ34sq/image.png',
   },
   {
-    "id": "Dshy93DzrT1QfI3N2FIM",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-19T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Stop settling for ordinary fries. Our double-fried, locally sourced approach delivers what matters: a crunchy golden shell protecting a fluffy, farm-fresh interior. Premium ingredients, zero compromise. Save this—your afternoon productivity deserves the upgrade.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "imageUrl": "/landing/how-it-looks/cafe/instagram/Dshy93DzrT1QfI3N2FIM/image.png"
+    id: 'Dshy93DzrT1QfI3N2FIM',
+    platform: 'instagram',
+    scheduleAt: '2026-08-19T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Stop settling for ordinary fries. Our double-fried, locally sourced approach delivers what matters: a crunchy golden shell protecting a fluffy, farm-fresh interior. Premium ingredients, zero compromise. Save this—your afternoon productivity deserves the upgrade.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    imageUrl:
+      '/landing/how-it-looks/cafe/instagram/Dshy93DzrT1QfI3N2FIM/image.png',
   },
   {
-    "id": "rVudB8tMRMaOQnUzkLcc",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-18T14:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "When your afternoon meeting stretches into evening, your fuel matters. At Neon Cafe, we believe young professionals deserve more than office snacks—you deserve locally sourced, thoughtfully crafted meals that taste as good as they feel. Our artisan sandwiches, fresh salads, gourmet burgers, and signature smoothies are built for focus, flavor, and the way you actually work. This summer, beat the heat with our refreshing smoothie specials while you power through your day in our cozy, creative workspace. Quality ingredients. Unique flavors. Real rest stops for real work.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "carouselSlides": [
+    id: 'rVudB8tMRMaOQnUzkLcc',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-18T14:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      'When your afternoon meeting stretches into evening, your fuel matters. At Neon Cafe, we believe young professionals deserve more than office snacks—you deserve locally sourced, thoughtfully crafted meals that taste as good as they feel. Our artisan sandwiches, fresh salads, gourmet burgers, and signature smoothies are built for focus, flavor, and the way you actually work. This summer, beat the heat with our refreshing smoothie specials while you power through your day in our cozy, creative workspace. Quality ingredients. Unique flavors. Real rest stops for real work.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com',
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/cafe/linkedin/rVudB8tMRMaOQnUzkLcc/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "YSXB1jZgw49SbvuK3K6l",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-18T14:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "Your Neon Cafe ritual doesn't have to be complicated. Grab a specialty coffee, find your spot, fuel up with something fresh—a gourmet burger, an artisan sandwich, or a crisp salad made with locally sourced ingredients. When that afternoon slump hits, a signature smoothie brings back the energy. And when you're ready to celebrate the win? Our dessert platters (like that decadent chocolate mousse cake) remind you why quality ingredients and unique flavors matter. Whether you're building a spreadsheet or catching up with friends, Neon Cafe is where your third space comes to life. Come craft your moment with us. 🍰☕\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "carouselSlides": [
+    id: 'YSXB1jZgw49SbvuK3K6l',
+    platform: 'facebook',
+    scheduleAt: '2026-08-18T14:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "Your Neon Cafe ritual doesn't have to be complicated. Grab a specialty coffee, find your spot, fuel up with something fresh—a gourmet burger, an artisan sandwich, or a crisp salad made with locally sourced ingredients. When that afternoon slump hits, a signature smoothie brings back the energy. And when you're ready to celebrate the win? Our dessert platters (like that decadent chocolate mousse cake) remind you why quality ingredients and unique flavors matter. Whether you're building a spreadsheet or catching up with friends, Neon Cafe is where your third space comes to life. Come craft your moment with us. 🍰☕\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/cafe/facebook/YSXB1jZgw49SbvuK3K6l/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "JmsziYxDxSxTs4O3YnhE",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-18T14:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "Your afternoon just got a major upgrade. Neon Cafe brings you gourmet flavors, locally sourced freshness, and the perfect vibe to power through your day—whether you're grinding on a project or catching up with friends. From our crispy nachos to signature smoothies and specialty coffees, every plate is crafted for taste and energy. Find your table, grab your brain fuel, and taste the difference quality makes.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "carouselSlides": [
+    id: 'JmsziYxDxSxTs4O3YnhE',
+    platform: 'instagram',
+    scheduleAt: '2026-08-18T14:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "Your afternoon just got a major upgrade. Neon Cafe brings you gourmet flavors, locally sourced freshness, and the perfect vibe to power through your day—whether you're grinding on a project or catching up with friends. From our crispy nachos to signature smoothies and specialty coffees, every plate is crafted for taste and energy. Find your table, grab your brain fuel, and taste the difference quality makes.\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/cafe/instagram/JmsziYxDxSxTs4O3YnhE/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "K9PxY3TOeUqdKwy9IQBE",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-15T14:30:00.000Z",
-    "mediaType": "video",
-    "caption": "Your morning just got an upgrade.\n\nWarm croissants. Fresh-brewed espresso. That first sip of orange juice. At Neon Cafe, we believe the best part of your day starts with real ingredients, real craft, and zero compromises.\n\nWhether you're catching up before a meeting or taking time for yourself, our western breakfast menu is designed for those who know the difference between fast food and something worth savoring.\n\nWhat's your go-to cafe order? Drop it below—we'd love to know.",
-    "videoUrl": "/landing/how-it-looks/cafe/linkedin/K9PxY3TOeUqdKwy9IQBE/video.mp4",
-    "posterUrl": "/landing/how-it-looks/cafe/linkedin/K9PxY3TOeUqdKwy9IQBE/poster.png"
+    id: 'K9PxY3TOeUqdKwy9IQBE',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-15T14:30:00.000Z',
+    mediaType: 'video',
+    caption:
+      "Your morning just got an upgrade.\n\nWarm croissants. Fresh-brewed espresso. That first sip of orange juice. At Neon Cafe, we believe the best part of your day starts with real ingredients, real craft, and zero compromises.\n\nWhether you're catching up before a meeting or taking time for yourself, our western breakfast menu is designed for those who know the difference between fast food and something worth savoring.\n\nWhat's your go-to cafe order? Drop it below—we'd love to know.",
+    videoUrl:
+      '/landing/how-it-looks/cafe/linkedin/K9PxY3TOeUqdKwy9IQBE/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/cafe/linkedin/K9PxY3TOeUqdKwy9IQBE/poster.png',
   },
   {
-    "id": "Js7WVVV1ydYOaZZlE8vL",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-15T14:30:00.000Z",
-    "mediaType": "video",
-    "caption": "Fresh basil, golden oil, and honest flavors. Every slice is a reminder that good food doesn't rush. What's your go-to order at the cafe?",
-    "videoUrl": "/landing/how-it-looks/cafe/instagram/Js7WVVV1ydYOaZZlE8vL/video.mp4",
-    "posterUrl": "/landing/how-it-looks/cafe/instagram/Js7WVVV1ydYOaZZlE8vL/poster.png"
+    id: 'Js7WVVV1ydYOaZZlE8vL',
+    platform: 'instagram',
+    scheduleAt: '2026-08-15T14:30:00.000Z',
+    mediaType: 'video',
+    caption:
+      "Fresh basil, golden oil, and honest flavors. Every slice is a reminder that good food doesn't rush. What's your go-to order at the cafe?",
+    videoUrl:
+      '/landing/how-it-looks/cafe/instagram/Js7WVVV1ydYOaZZlE8vL/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/cafe/instagram/Js7WVVV1ydYOaZZlE8vL/poster.png',
   },
   {
-    "id": "4YSrKg0VI1dE2s5hR1yY",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-15T14:30:00.000Z",
-    "mediaType": "video",
-    "caption": "Crafted, stacked, and made to share. Every bite carries the flavor we're proud of—and the joy of good company makes it taste even better. What's your go-to sandwich?\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
-    "videoUrl": "/landing/how-it-looks/cafe/facebook/4YSrKg0VI1dE2s5hR1yY/video.mp4",
-    "posterUrl": "/landing/how-it-looks/cafe/facebook/4YSrKg0VI1dE2s5hR1yY/poster.png"
-  }
+    id: '4YSrKg0VI1dE2s5hR1yY',
+    platform: 'facebook',
+    scheduleAt: '2026-08-15T14:30:00.000Z',
+    mediaType: 'video',
+    caption:
+      "Crafted, stacked, and made to share. Every bite carries the flavor we're proud of—and the joy of good company makes it taste even better. What's your go-to sandwich?\n\nWebsite:- neoncafe.com\nContact:- +919823478921\nEmail:- cafe@neon.com",
+    videoUrl:
+      '/landing/how-it-looks/cafe/facebook/4YSrKg0VI1dE2s5hR1yY/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/cafe/facebook/4YSrKg0VI1dE2s5hR1yY/poster.png',
+  },
 ] as const;

@@ -69,10 +69,7 @@ export type WeeklyVerdictResponse = {
 };
 
 export const syncInsights = async () => {
-  return apiPost<ApiEnvelope<{ synced: true }>>(
-    '/api/v1/insights/sync',
-    {}
-  );
+  return apiPost<ApiEnvelope<{ synced: true }>>('/api/v1/insights/sync', {});
 };
 
 export const postAnalyticsRecommendations = async (body: {
@@ -407,4 +404,3 @@ export const postBudgetAllocation = async (body: BudgetAllocationInput) => {
     body
   );
 };
-

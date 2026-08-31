@@ -39,17 +39,19 @@ export const updateSupportMessageStatus = async (
   ticketId: string,
   status: string
 ) => {
-  return apiPut<ApiEnvelope>(
-    '/api/v1/admin/update-support-message-status',
-    {
+  return apiPut<ApiEnvelope>('/api/v1/admin/update-support-message-status', {
     userId,
     ticketId,
     status,
-    }
-  );
+  });
 };
 
-export const sendNotification = async (category: string, title: string, message: string, type: 'notification' | 'release') => {
+export const sendNotification = async (
+  category: string,
+  title: string,
+  message: string,
+  type: 'notification' | 'release'
+) => {
   return apiPost<ApiEnvelope>('/api/v1/admin/send-notification', {
     category,
     title,
@@ -147,6 +149,7 @@ export type ContentCalendarReviewUser = {
 
 export type AdminContentPlanGeneratedItem = {
   kind: string;
+  origin: 'auto' | 'manual';
   status:
     | 'draft'
     | 'scheduled'

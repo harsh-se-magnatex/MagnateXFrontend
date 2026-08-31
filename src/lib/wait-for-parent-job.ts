@@ -29,7 +29,9 @@ function slotWeight(data: Record<string, unknown>): {
   const status = String(data.generationStatus ?? '').toLowerCase();
   const failed = status === 'failed' || status === 'error';
   const rawSlots = Number(data.resultSlots ?? 1);
-  const slots = Number.isFinite(rawSlots) ? Math.max(1, Math.floor(rawSlots)) : 1;
+  const slots = Number.isFinite(rawSlots)
+    ? Math.max(1, Math.floor(rawSlots))
+    : 1;
   return { slots, failed };
 }
 
@@ -124,7 +126,10 @@ export function waitForParentJobDocs(args: {
           let failedCount = 0;
           let totalSlots = 0;
           const docIds: string[] = [];
-          const matchedDocs: Array<{ id: string; data: Record<string, unknown> }> = [];
+          const matchedDocs: Array<{
+            id: string;
+            data: Record<string, unknown>;
+          }> = [];
           for (const d of snap.docs) {
             docIds.push(d.id);
             const data = d.data() as Record<string, unknown>;
@@ -170,12 +175,7 @@ export function waitForVideoGenerationDoc(args: {
   status: string | null;
   data: Record<string, unknown> | null;
 }> {
-  const {
-    uid,
-    docId,
-    timeoutMs = DEFAULT_TIMEOUT_MS,
-    signal,
-  } = args;
+  const { uid, docId, timeoutMs = DEFAULT_TIMEOUT_MS, signal } = args;
 
   if (!docId) {
     return Promise.resolve({

@@ -39,15 +39,14 @@ export function CarouselSwipePreview({
         {valid.map((slide, i) => {
           const url = slide.imageUrl.trim();
           const label =
-            slide.headline?.trim() ||
-            `Slide ${slide.index ?? i + 1}`;
+            slide.headline?.trim() || `Slide ${slide.index ?? i + 1}`;
           const body = (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={url}
               alt={label}
               className={cn(
-                'w-full aspect-[4/5] object-cover bg-muted',
+                'w-full aspect-[4/5] object-cover bg-element',
                 imageClassName
               )}
               loading="lazy"
@@ -55,11 +54,11 @@ export function CarouselSwipePreview({
           );
           return (
             <CarouselItem key={`${slide.index ?? i}-${url.slice(-24)}`}>
-              <div className="overflow-hidden rounded-xl border border-border bg-muted/20">
+              <div className="overflow-hidden rounded-xl border border-default bg-element">
                 {onImageClick ? (
                   <button
                     type="button"
-                    className="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className="block w-full focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
                     onClick={() => onImageClick(url, label)}
                     aria-label={`Open ${label}`}
                   >
@@ -69,12 +68,12 @@ export function CarouselSwipePreview({
                   body
                 )}
                 {showCaptions ? (
-                  <div className="p-2.5 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground">
+                  <div className="p-2.5 text-xs text-secondary">
+                    <span className="font-medium text-default">
                       Slide {slide.index ?? i + 1}
                     </span>
                     {slide.headline?.trim() ? (
-                      <p className="mt-0.5 line-clamp-2 text-foreground/90">
+                      <p className="mt-0.5 line-clamp-2 text-secondary">
                         {slide.headline.trim()}
                       </p>
                     ) : null}
@@ -95,13 +94,13 @@ export function CarouselSwipePreview({
           <div className="pointer-events-none absolute inset-y-0 left-0 z-30 flex w-14 items-center justify-center">
             <CarouselPrevious
               size="icon"
-              className="pointer-events-auto static inset-auto top-auto left-auto size-10 translate-x-0 translate-y-0 bg-background/95 shadow-md backdrop-blur-sm"
+              className="pointer-events-auto static inset-auto top-auto left-auto size-10 translate-x-0 bg-background/95 backdrop-blur-sm"
             />
           </div>
           <div className="pointer-events-none absolute inset-y-0 right-0 z-30 flex w-14 items-center justify-center">
             <CarouselNext
               size="icon"
-              className="pointer-events-auto static inset-auto top-auto right-auto size-10 translate-x-0 translate-y-0 bg-background/95 shadow-md backdrop-blur-sm"
+              className="pointer-events-auto static inset-auto top-auto right-auto size-10 translate-x-0 bg-background/95 backdrop-blur-sm"
             />
           </div>
         </>

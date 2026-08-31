@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (!ALLOWED_HOSTS.has(parsed.hostname)) {
-    return NextResponse.json({ error: 'URL host not allowed' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'URL host not allowed' },
+      { status: 403 }
+    );
   }
 
   const filename = safeFilename(

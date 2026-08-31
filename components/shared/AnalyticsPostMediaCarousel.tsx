@@ -19,15 +19,20 @@ export function AnalyticsPostMediaThumbnail({
   if (!cover) return null;
 
   return (
-    <div className={cn('relative h-full w-full overflow-hidden bg-muted', className)}>
+    <div
+      className={cn(
+        'relative h-full w-full overflow-hidden bg-element',
+        className
+      )}
+    >
       {valid.length > 1 ? (
         <>
           <div
-            className="absolute inset-y-2 right-2 left-4 rounded-lg bg-muted-foreground/15 ring-1 ring-border/40"
+            className="absolute inset-y-2 right-2 left-4 rounded-lg bg-element-foreground/15 ring-1 ring-border/40"
             aria-hidden
           />
           <div
-            className="absolute inset-y-1 right-1 left-2 rounded-lg bg-muted-foreground/10 ring-1 ring-border/30"
+            className="absolute inset-y-1 right-1 left-2 rounded-lg bg-element-foreground/10 ring-1 ring-border/30"
             aria-hidden
           />
         </>
@@ -74,7 +79,7 @@ export function AnalyticsPostMediaCarousel({
     <CarouselSwipePreview
       slides={slides}
       className={cn('w-full', className)}
-      imageClassName="aspect-auto h-auto max-h-[min(70vh,720px)] w-full object-contain bg-muted/30"
+      imageClassName="aspect-auto h-auto max-h-[min(70vh,720px)] w-full object-contain bg-element"
       showCaptions
     />
   );

@@ -40,11 +40,13 @@ function stripBakedDate(message: string): string {
 export function PostFailureAlerts() {
   const fmtTimestamp = useTimestampFormatter();
   const { isUnread } = useNotificationUnreadHighlight('postFailure');
-  const [failureNotifications, setFailureNotifications] = useState<PostFailureAlert[]>([]);
+  const [failureNotifications, setFailureNotifications] = useState<
+    PostFailureAlert[]
+  >([]);
   const getData = async () => {
     const response = await getFailureNotifications();
     setFailureNotifications(response.data.failureNotifications);
-  }
+  };
   useEffect(() => {
     getData();
   }, []);
@@ -52,44 +54,46 @@ export function PostFailureAlerts() {
   return (
     <section aria-label="Account and policy messages" className="space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold text-zinc-900">
-          Messages from SocioGenie
-        </h2>
-        <p className="text-xs text-zinc-500">
+        <h2 className="text-section text-default">Messages from SocioGenie</h2>
+        <p className="text-xs text-secondary">
           We&apos;ll email you when something important changes.
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        <ul className="divide-y divide-zinc-100">
+      <div className="overflow-hidden rounded-xl border border-default bg-default">
+        <ul className="divide-y divide-[var(--border-default)]">
           {failureNotifications.map((notification) => {
             const isNew = isUnread(
               notification.createdAt ?? notification.failedAt
             );
             return (
-            <NotificationListItem
-              key={notification.postId + notification.failedAt._seconds}
-              isNew={isNew}
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    {isNew ? <NotificationNewBadge /> : null}
-                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 bg-red-50 text-red-700 ring-red-100">
-                      {notification.platform}
-                    </span>
-                    <span className="text-xs text-zinc-400">
-                      {fmtTimestamp(notification.failedAt, { style: 'datetime-short' })}
-                    </span>
+              <NotificationListItem
+                key={notification.postId + notification.failedAt._seconds}
+                isNew={isNew}
+              >
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isNew ? <NotificationNewBadge /> : null}
+                      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 bg-danger text-danger ring-[var(--border-danger)]">
+                        {notification.platform}
+                      </span>
+                      <span className="text-xs text-tertiary">
+                        {fmtTimestamp(notification.failedAt, {
+                          style: 'datetime-short',
+                        })}
+                      </span>
+                    </div>
+                    <h3 className="text-subsection text-default">
+                      {stripBakedDate(notification.message.split(' on ')[0])} on{' '}
+                      {fmtTimestamp(notification.failedAt)}
+                    </h3>
+                    <p className="text-sm text-secondary">
+                      {notification.errors.join(', ')}
+                    </p>
                   </div>
-                  <h3 className="text-sm font-semibold text-zinc-900">
-                    {stripBakedDate(notification.message.split(' on ')[0])} on{' '}
-                    {fmtTimestamp(notification.failedAt)}
-                  </h3>
-                  <p className="text-sm text-zinc-600">{notification.errors.join(', ')}</p>
                 </div>
-                </div>
-            </NotificationListItem>
+              </NotificationListItem>
             );
           })}
         </ul>

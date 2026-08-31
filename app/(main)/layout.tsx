@@ -19,7 +19,6 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-
   return (
     <SidebarProvider>
       <UserProvider>
@@ -39,7 +38,9 @@ export default async function MainLayout({
                             globals.css — it targets this element's
                             grandchildren, i.e. each page's top-level
                             sections, so no page needs its own wiring. */}
-                        <main className="app-main flex-1 min-w-0 px-4 py-6">{children}</main>
+                        <main className="app-main flex-1 min-w-0 px-4 py-6">
+                          {children}
+                        </main>
                         <AssistantWidget />
                       </ExpiredPlanGuard>
                     </FrozenAccountGuard>

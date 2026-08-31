@@ -61,9 +61,7 @@ export function UpgradeGate({
   // collapsed to two-line min-content width.
   if (!gated) {
     if (!className) return <>{children}</>;
-    return (
-      <span className={cn('inline-flex', className)}>{children}</span>
-    );
+    return <span className={cn('inline-flex', className)}>{children}</span>;
   }
 
   return (

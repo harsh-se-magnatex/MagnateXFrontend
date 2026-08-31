@@ -48,12 +48,7 @@ export default function SendNotificationPage() {
   const handleSubmit = async (type: 'notification' | 'release') => {
     try {
       setSending(true);
-      await sendNotification(
-        data.category,
-        data.title,
-        data.message,
-        type,
-      );
+      await sendNotification(data.category, data.title, data.message, type);
       setData({
         category: '',
         message: '',
@@ -126,7 +121,7 @@ export default function SendNotificationPage() {
               </Field>
             </FieldGroup>
             <Button
-              onClick={()=>handleSubmit('notification')}
+              onClick={() => handleSubmit('notification')}
               disabled={!data.category || !data.title || !data.message}
             >
               {sending ? 'Sending...' : 'Send Notification'}
@@ -185,7 +180,7 @@ export default function SendNotificationPage() {
               </Field>
             </FieldGroup>
             <Button
-              onClick={()=>handleSubmit('release')}
+              onClick={() => handleSubmit('release')}
               disabled={!data.category || !data.title || !data.message}
             >
               {sending ? 'Sending...' : 'Send Release Notification'}

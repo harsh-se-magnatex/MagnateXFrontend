@@ -33,9 +33,7 @@ export type AnalyticsSnapshotDocument = {
   whatToPostNext: Partial<
     Record<AnalyticsSnapshotPlatform, WhatToPostNextPayload>
   >;
-  whereToSpend: Partial<
-    Record<AnalyticsSnapshotPlatform, WhereToSpendPayload>
-  >;
+  whereToSpend: Partial<Record<AnalyticsSnapshotPlatform, WhereToSpendPayload>>;
   /** Present on snapshots built after the weekly-verdict cache rollout. */
   weeklyVerdict?: Partial<
     Record<

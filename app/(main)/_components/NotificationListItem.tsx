@@ -21,10 +21,8 @@ export function NotificationListItem({
   return (
     <li
       className={cn(
-        'border-l-4 p-4 sm:p-5 transition-colors',
-        isNew
-          ? 'border-l-indigo-400 pl-3 sm:pl-4'
-          : 'border-l-transparent'
+        'border-l-4 p-4 sm:p-5 transition-expo',
+        isNew ? 'border-l-indigo-400 pl-3 sm:pl-4' : 'border-l-transparent'
       )}
     >
       {children}

@@ -30,20 +30,20 @@ function AutomationTabs({ active }: { active: 'unpaid' | 'landing' }) {
     <div className="mb-6 flex flex-wrap gap-2">
       <Link
         href="/admin/automation"
-        className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+        className={`rounded-lg px-4 py-2 text-sm font-semibold transition-expo ${
           active === 'unpaid'
             ? 'bg-[#00D1FF] text-[#0B1020]'
-            : 'border border-white/20 text-white/80 hover:bg-white/10'
+            : 'border border-white/20 text-white/80 hover:bg-default'
         }`}
       >
         Unpaid signups
       </Link>
       <Link
         href="/admin/automation/landing-leads"
-        className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+        className={`rounded-lg px-4 py-2 text-sm font-semibold transition-expo ${
           active === 'landing'
             ? 'bg-[#00D1FF] text-[#0B1020]'
-            : 'border border-white/20 text-white/80 hover:bg-white/10'
+            : 'border border-white/20 text-white/80 hover:bg-default'
         }`}
       >
         Landing first posts
@@ -134,10 +134,10 @@ export default function AdminLandingLeadsPage() {
 
   return (
     <div className="min-h-screen bg-[#0B1020] text-white px-6 py-8 md:px-10">
-      <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-[#6C5CE7] to-[#00D1FF] mb-2">
+      <h1 className="text-page-title text-default mb-2">
         Admin - Landing first posts
       </h1>
-      <p className="mb-6 max-w-2xl text-sm text-gray-300">
+      <p className="mb-6 max-w-2xl text-sm text-tertiary">
         People who entered their email on the landing page and generated a free
         sample post (marketing leads).
       </p>
@@ -146,54 +146,54 @@ export default function AdminLandingLeadsPage() {
 
       <form
         onSubmit={handleFilter}
-        className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5"
+        className="mb-6 rounded-2xl border border-white/10 bg-default p-4 md:p-5"
       >
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_120px_110px]">
-          <label className="text-xs text-gray-400">
+          <label className="text-xs text-tertiary">
             From
             <input
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              className="mt-1 h-11 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
+              className="mt-1 h-11 w-full rounded-lg border border-white/20 bg-default px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
             />
           </label>
-          <label className="text-xs text-gray-400">
+          <label className="text-xs text-tertiary">
             To
             <input
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              className="mt-1 h-11 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
+              className="mt-1 h-11 w-full rounded-lg border border-white/20 bg-default px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
             />
           </label>
-          <label className="text-xs text-gray-400">
+          <label className="text-xs text-tertiary">
             Search
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Email, domain, business…"
-              className="mt-1 h-11 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
+              className="mt-1 h-11 w-full rounded-lg border border-white/20 bg-default px-3 text-white placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
             />
           </label>
           <button
             type="submit"
-            className="h-11 self-end rounded-lg bg-[#00D1FF] px-5 font-semibold text-[#0B1020] hover:bg-[#32dbff] transition-colors"
+            className="h-11 self-end rounded-full bg-[#00D1FF] px-5 font-semibold text-[#0B1020] hover:bg-[#32dbff] transition-expo"
           >
             Apply
           </button>
           <button
             type="button"
             onClick={handleReset}
-            className="h-11 self-end rounded-lg border border-white/30 px-4 font-semibold text-white hover:bg-white/10 transition-colors"
+            className="h-11 self-end rounded-full border border-white/30 px-4 font-semibold text-white hover:bg-default transition-expo"
           >
             Reset
           </button>
         </div>
       </form>
 
-      <div className="mb-4 text-sm text-gray-300">{summary}.</div>
+      <div className="mb-4 text-sm text-tertiary">{summary}.</div>
 
       {loading ? (
         <PageLoadingState
@@ -201,13 +201,13 @@ export default function AdminLandingLeadsPage() {
           message="Loading landing leads..."
         />
       ) : leads.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-gray-300">
+        <div className="rounded-2xl border border-white/10 bg-default p-8 text-center text-tertiary">
           No landing leads in this date range.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
+        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-default">
           <table className="min-w-full text-sm">
-            <thead className="bg-white/10 text-left">
+            <thead className="bg-default text-left">
               <tr>
                 <th className="px-4 py-3 font-semibold">Email</th>
                 <th className="px-4 py-3 font-semibold">Business</th>
@@ -230,7 +230,7 @@ export default function AdminLandingLeadsPage() {
                     <td className="px-4 py-3">
                       <div>{lead.businessName}</div>
                       {lead.industry !== '—' ? (
-                        <div className="mt-1 text-xs text-gray-400">
+                        <div className="mt-1 text-xs text-tertiary">
                           {lead.industry}
                         </div>
                       ) : null}
@@ -256,19 +256,19 @@ export default function AdminLandingLeadsPage() {
                     <td className="px-4 py-3 capitalize">{lead.platform}</td>
                     <td className="px-4 py-3">
                       {lead.postStatus === 'ready' ? (
-                        <span className="rounded-full bg-emerald-500/20 px-2.5 py-1 text-emerald-200">
+                        <span className="rounded-full bg-success px-2.5 py-1 text-success">
                           Ready
                         </span>
                       ) : lead.postStatus === 'generating' ? (
-                        <span className="rounded-full bg-amber-500/20 px-2.5 py-1 text-amber-200">
+                        <span className="rounded-full bg-warning px-2.5 py-1 text-warning">
                           Generating
                         </span>
                       ) : lead.postStatus === 'failed' ? (
-                        <span className="rounded-full bg-red-500/20 px-2.5 py-1 text-red-200">
+                        <span className="rounded-full bg-danger px-2.5 py-1 text-danger">
                           Failed
                         </span>
                       ) : (
-                        <span className="rounded-full bg-white/10 px-2.5 py-1 text-gray-300">
+                        <span className="rounded-full bg-default px-2.5 py-1 text-tertiary">
                           {lead.postStatus || 'None'}
                         </span>
                       )}
@@ -280,10 +280,8 @@ export default function AdminLandingLeadsPage() {
                       {lead.postStatus === 'ready' ? (
                         <button
                           type="button"
-                          onClick={() =>
-                            setExpandedId(open ? null : lead.id)
-                          }
-                          className="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-semibold hover:bg-white/10"
+                          onClick={() => setExpandedId(open ? null : lead.id)}
+                          className="rounded-full border border-white/20 px-3 py-1.5 text-xs font-semibold hover:bg-default"
                         >
                           {open ? 'Hide' : 'View'}
                         </button>

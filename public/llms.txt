@@ -1,0 +1,21 @@
+# SocioGenie
+
+> AI social media management for small businesses. Researches, writes, designs, reviews and publishes posts to Instagram, Facebook and LinkedIn via official platform APIs — either fully automated (AI Plan) or on-demand (Studio).
+
+## Core pages
+- [Homepage](https://www.sociogenie.ai/): what SocioGenie is and how it works
+- [Product](https://www.sociogenie.ai/product): full feature list, how-it-works, FAQ
+- [Pricing](https://www.sociogenie.ai/pricing): plans, credits, credit packs, billing FAQ
+- [Try it](https://www.sociogenie.ai/try-it): generate one free sample post from your website, no signup
+- [How it looks](https://www.sociogenie.ai/how-it-looks): example posts across Instagram, Facebook and LinkedIn
+
+## Facts
+- Two plan types: **Studio** (manual — you trigger every post) and **AI Plan** (automated — a monthly content calendar runs itself).
+- Pricing (USD, monthly): Studio $14.99 (100 credits) · Prime AI $49.99 (50 credits) · Elite AI $69.99 (100 credits) · Legacy AI $84.99 (150 credits).
+- Credit packs (one-time, valid 30 days): Starter $6.99/40 credits · Basic $14.99/100 credits · Growth $28.99/200 credits · Business $41.99/300 credits.
+- Credit cost per manually-triggered action: Create Post 2 · Occasion Post 2 · Campaign 3/day · Product Post 4 (asset) or 6 (full social) · Carousel 3/slide · Video 15.
+- AI Plan automation never charges credits — it runs on the subscription itself, generating 19 pieces of content per cycle (5 campaigns, 7 automated posts, 3 quick-create, 2 videos, 2 carousels) plus a variable number of seasonal/occasion posts, at no additional credit cost.
+- Every post goes through a review step before publishing: Manual Review (you approve each post yourself) is the default; Auto Approve routes it through SocioGenie's own in-house team for brand, caption and technical checks — not a fact-check or legal/compliance review.
+- Publishes via official Instagram, Facebook and LinkedIn platform APIs, not unofficial or scraper-based methods.
+- Operated by MAGNATEX LLP (LLPIN ACU-5689), Ahmedabad, Gujarat, India. Commercially launched 28 July 2026.
+- Payments processed by Dodo Payments Inc. (Merchant of Record), billed in USD.

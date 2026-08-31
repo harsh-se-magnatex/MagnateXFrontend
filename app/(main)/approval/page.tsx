@@ -1,6 +1,9 @@
 'use client';
 
-import { getScheduledPosts, ScheduledPostsPageCursor } from '@/src/service/api/social.servce';
+import {
+  getScheduledPosts,
+  ScheduledPostsPageCursor,
+} from '@/src/service/api/social.servce';
 import {
   useCallback,
   useEffect,
@@ -10,7 +13,14 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { Calendar, ExternalLink, Info, Loader2, Search, Sparkles } from 'lucide-react';
+import {
+  Calendar,
+  ExternalLink,
+  Info,
+  Loader2,
+  Search,
+  Sparkles,
+} from 'lucide-react';
 import { performActionByUserOnScheduledPost } from '@/src/service/api/userService';
 import { GenerationResearchDialog } from '@/components/generation-research-dialog';
 import {
@@ -119,8 +129,8 @@ function ApprovalActionButtons({
   };
   const isCard = size === 'card';
   const btn = isCard
-    ? 'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none'
-    : 'rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
+    ? 'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-expo focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:text-quaternary disabled:pointer-events-none'
+    : 'rounded-lg px-4 py-2.5 text-sm font-medium transition-expo focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:text-quaternary disabled:pointer-events-none';
   return (
     <div
       className={`flex items-center gap-3 ${!isCard ? 'flex-wrap' : 'flex-wrap'}`}
@@ -136,15 +146,15 @@ function ApprovalActionButtons({
               ? `Next regeneration will deduct ${SCHEDULED_POST_REGENERATE_CREDIT} credit`
               : undefined
           }
-          className={`${btn} bg-amber-200 text-neutral-900 cursor-pointer  hover:bg-amber-200 focus:ring-amber-500 ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
+          className={`${btn} bg-warning text-default cursor-pointer  hover:bg-warning focus:ring-[var(--border-warning)] ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
         >
           <span>Regenerate {!regenChargesCredits && 'Free'}</span>
           {regenChargesCredits ? (
             <span
               className={
                 isCard
-                  ? 'max-w-44 text-[9px] font-normal leading-snug text-neutral-900 '
-                  : 'max-w-56 text-[11px] font-normal leading-snug text-neutral-900 '
+                  ? 'max-w-44 text-[9px] font-normal leading-snug text-default '
+                  : 'max-w-56 text-[11px] font-normal leading-snug text-default '
               }
             >
               {`${SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted`}
@@ -156,7 +166,7 @@ function ApprovalActionButtons({
         type="button"
         disabled={disabled}
         onClick={(e) => handle(onAccept, e)}
-        className={`${btn} bg-emerald-100 text-emerald-800 hover:bg-emerald-200 focus:ring-emerald-500`}
+        className={`${btn} bg-success text-success hover:bg-success focus:ring-[var(--border-success)]`}
       >
         Accept
       </button>
@@ -164,7 +174,7 @@ function ApprovalActionButtons({
         type="button"
         disabled={disabled}
         onClick={(e) => handle(onReject, e)}
-        className={`${btn} bg-red-300 text-red-900 cursor-pointer hover:bg-red-200 focus:ring-red-500`}
+        className={`${btn} bg-[var(--red-9)] text-danger cursor-pointer hover:bg-danger focus:ring-[var(--border-danger)]`}
       >
         Reject
       </button>
@@ -228,24 +238,24 @@ function PendingPostCard({
         }
       }}
       className={cn(
-        'group relative flex min-w-0 flex-col rounded-2xl border border-border bg-card p-4 shadow-sm',
-        'transition-all duration-300',
+        'group relative flex min-w-0 flex-col rounded-2xl border border-default bg-default p-4',
+        'transition-expo',
         isRegenerating
           ? 'cursor-not-allowed'
-          : 'hover:border-primary-blue/35 hover:bg-muted/50/80 hover:shadow-md hover:shadow-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-blue/30'
+          : 'hover:border-strong hover:bg-element/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-strong'
       )}
     >
-      <div className="relative mb-3 overflow-hidden rounded-xl border border-border bg-muted aspect-4/3">
+      <div className="relative mb-3 overflow-hidden rounded-xl border border-default bg-element aspect-4/3">
         {hasMedia ? (
           <PostMediaPreview
             preview={mediaPreview}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            className="h-full w-full object-cover transition-transform duration-300"
             videoClassName="h-full w-full object-cover"
             controls={mediaPreview.isVideo}
             muted
           />
         ) : (
-          <div className="flex h-full min-h-[140px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-full min-h-[140px] items-center justify-center text-sm text-secondary">
             No media
           </div>
         )}
@@ -264,10 +274,10 @@ function PendingPostCard({
         {generatedBy ? (
           <div className="absolute right-2 top-2 max-w-[60%]">
             <span
-              className="inline-flex items-center gap-1 rounded-md border border-border bg-card/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm backdrop-blur"
+              className="inline-flex items-center gap-1 rounded-md border border-default bg-default px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-default backdrop-blur"
               title={`Generated by: ${generatedBy}`}
             >
-              <Sparkles className="h-3 w-3 text-primary-blue" />
+              <Sparkles className="h-3 w-3 text-link" />
               <span className="truncate">{generatedBy}</span>
             </span>
           </div>
@@ -277,50 +287,48 @@ function PendingPostCard({
             <ImagePreviewButton
               variant="overlay-icon"
               stopPropagation
-              onClick={() =>
-                onPreviewImage(previewUrl, 'Scheduled post image')
-              }
+              onClick={() => onPreviewImage(previewUrl, 'Scheduled post image')}
             />
           </div>
         ) : null}
         {isRegenerating ? (
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-card/75 backdrop-blur-sm"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-default backdrop-blur-sm"
             aria-live="polite"
           >
-            <Loader2 className="h-6 w-6 animate-spin text-primary-blue" aria-hidden />
-            <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+            <Loader2 className="h-6 w-6 animate-spin text-link" aria-hidden />
+            <span className="text-xs font-semibold uppercase tracking-wide text-default">
               Regenerating…
             </span>
-            <span className="px-3 text-center text-[11px] leading-snug text-muted-foreground">
+            <span className="px-3 text-center text-[11px] leading-snug text-secondary">
               Generating a new version…
             </span>
           </div>
         ) : null}
       </div>
 
-      <p className="line-clamp-3 text-sm font-medium leading-snug text-foreground">
+      <p className="line-clamp-3 text-sm font-medium leading-snug text-default">
         {post.message || (
-          <span className="text-muted-foreground italic">No caption</span>
+          <span className="text-secondary italic">No caption</span>
         )}
       </p>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-secondary">
         <span className="inline-flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5 text-primary-blue" />
+          <Calendar className="h-3.5 w-3.5 text-link" />
           <span className="truncate">{scheduleAt}</span>
         </span>
         {post.platform ? (
           <>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground">{post.platform}</span>
+            <span className="text-secondary">·</span>
+            <span className="text-secondary">{post.platform}</span>
           </>
         ) : null}
       </div>
 
       {status.reason ? (
         <p
-          className="mt-2 line-clamp-2 rounded-md border border-red-100 bg-red-500/20 px-2 py-1 text-[11px] leading-snug text-red-700"
+          className="mt-2 line-clamp-2 rounded-md border border-danger bg-danger px-2 py-1 text-[11px] leading-snug text-danger"
           title={status.reason}
         >
           <span className="font-semibold">Reason: </span>
@@ -341,7 +349,7 @@ function PendingPostCard({
             regenChargesCredits={regenChargesCredits}
           />
         ) : null}
-        <p className="text-[11px] text-muted-foreground group-hover:text-muted-foreground">
+        <p className="text-[11px] text-secondary group-hover:text-secondary">
           {isRegenerating
             ? 'Regeneration in progress'
             : 'Click for full details'}
@@ -362,12 +370,12 @@ function DetailRow({
 }) {
   return (
     <div className={long ? 'min-w-0' : undefined}>
-      <p className="text-xs font-medium text-muted-foreground mb-0.5">{label}</p>
+      <p className="text-xs font-medium text-secondary mb-0.5">{label}</p>
       <p
         className={
           long
-            ? 'text-sm text-foreground min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
-            : 'text-sm text-foreground'
+            ? 'text-sm text-default min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
+            : 'text-sm text-default'
         }
       >
         {value}
@@ -448,17 +456,17 @@ function DetailModal({
       aria-labelledby="detail-modal-title"
     >
       <div
-        className="relative z-10 rounded-2xl border border-border bg-card text-foreground shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
+        className="relative z-10 rounded-2xl border border-default bg-default text-default max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 p-4 border-b border-border flex items-center justify-between gap-3">
-          <h2 id="detail-modal-title" className="text-lg font-semibold">
+        <div className="shrink-0 p-4 border-b border-default flex items-center justify-between gap-3">
+          <h2 id="detail-modal-title" className="text-section text-default">
             Scheduled post details
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="rounded-full p-1.5 text-secondary hover:bg-hover hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
             aria-label="Close"
           >
             <svg
@@ -479,14 +487,14 @@ function DetailModal({
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-10 space-y-4 overscroll-contain">
           {hasMedia ? (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">
+              <p className="text-xs font-medium text-secondary mb-1">
                 {mediaPreview.isVideo ? 'Video' : 'Image'}
               </p>
               {mediaPreview.isVideo ? (
                 <PostMediaPreview
                   preview={mediaPreview}
-                  className="w-full max-h-64 object-contain rounded-xl bg-muted border border-border"
-                  videoClassName="w-full max-h-64 object-contain rounded-xl bg-black border border-border"
+                  className="w-full max-h-64 object-contain rounded-xl bg-element border border-default"
+                  videoClassName="w-full max-h-64 object-contain rounded-xl bg-black border border-default"
                   controls
                   muted={false}
                 />
@@ -494,17 +502,14 @@ function DetailModal({
                 <button
                   type="button"
                   onClick={() =>
-                    onPreviewImage(
-                      openUrl as string,
-                      'Scheduled post image'
-                    )
+                    onPreviewImage(openUrl as string, 'Scheduled post image')
                   }
-                  className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="group relative block w-full overflow-hidden rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
                   aria-label="Open image preview"
                 >
                   <PostMediaPreview
                     preview={mediaPreview}
-                    className="w-full max-h-64 object-contain rounded-xl bg-muted border border-border transition-transform duration-200 group-hover:scale-[1.01]"
+                    className="w-full max-h-64 object-contain rounded-xl bg-element border border-default transition-transform duration-200"
                   />
                 </button>
               )}
@@ -514,7 +519,7 @@ function DetailModal({
                     onClick={() =>
                       onPreviewImage(openUrl, 'Scheduled post image')
                     }
-                    className="rounded-lg border border-primary/30 bg-card text-primary hover:bg-primary/10 hover:opacity-100 px-4 py-2"
+                    className="rounded-lg border border-primary/30 bg-default text-link hover:bg-primary/10 hover:opacity-100 px-4 py-2"
                   />
                 </div>
               ) : null}
@@ -524,7 +529,7 @@ function DetailModal({
                     href={openUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-primary/20"
+                    className="mt-2 inline-flex items-center gap-2 rounded-full btn-brand-fill px-3 py-2 text-sm font-medium"
                   >
                     Open in new tab
                     <ExternalLink className="h-4 w-4" />
@@ -533,18 +538,25 @@ function DetailModal({
               ) : null}
             </div>
           ) : null}
-          <DetailRow label="Caption / Message" value={post.message || '—'} long />
+          <DetailRow
+            label="Caption / Message"
+            value={post.message || '—'}
+            long
+          />
           <DetailRow label="Schedule at" value={scheduleAt} />
           <DetailRow label="Created at" value={createdAt} />
           <div>
-            <p className="text-xs font-medium text-muted-foreground mb-1">Status</p>
+            <p className="text-xs font-medium text-secondary mb-1">Status</p>
             <span
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold',
                 statusBadgeClasses(status.variant)
               )}
             >
-              <StatusBadgeIcon variant={status.variant} className="h-3.5 w-3.5" />
+              <StatusBadgeIcon
+                variant={status.variant}
+                className="h-3.5 w-3.5"
+              />
               {status.label}
             </span>
             {status.variant === 'failed' ? (
@@ -560,13 +572,13 @@ function DetailModal({
           ) : null}
           {showResearch ? (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">
+              <p className="text-xs font-medium text-secondary mb-2">
                 Research
               </p>
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-lg border-primary/30 text-primary hover:bg-primary/10"
+                className="rounded-full border-primary/30 text-link hover:bg-primary/10"
                 onClick={() => setResearchOpen(true)}
               >
                 <Search className="mr-2 h-4 w-4" />
@@ -575,13 +587,11 @@ function DetailModal({
             </div>
           ) : null}
           {showActions ? (
-            <div className="pt-4 border-t border-border">
-              <p className="text-xs font-medium text-muted-foreground mb-3">
-                Actions
-              </p>
+            <div className="pt-4 border-t border-default">
+              <p className="text-xs font-medium text-secondary mb-3">Actions</p>
               {regenChargesCredits ? (
                 <div
-                  className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200"
+                  className="mb-3 flex items-start gap-2 rounded-lg border border-warning bg-warning px-3 py-2 text-xs text-warning"
                   role="note"
                 >
                   <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
@@ -660,7 +670,10 @@ export default function ApprovalPage() {
     }
     try {
       const response = await getScheduledPosts({
-        cursor: cursorRef.current as unknown as ScheduledPostsPageCursor | null | undefined,
+        cursor: cursorRef.current as unknown as
+          | ScheduledPostsPageCursor
+          | null
+          | undefined,
       });
       const data = response.data;
       const incoming: PendingScheduledPost[] = data.posts ?? [];
@@ -714,8 +727,7 @@ export default function ApprovalPage() {
   const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(
     () => new Set()
   );
-  // Synchronous lock — React state updaters run async, so reading `accepted`
-  // from inside setState always returned false and skipped the API call.
+  // Synchronous lock — React state updaters run async, so reading `accepted`// from inside setState always returned false and skipped the API call.
   const regeneratingPostIdsRef = useRef<Set<string>>(new Set());
 
   const markRegenerating = useCallback((postId: string) => {
@@ -764,7 +776,9 @@ export default function ApprovalPage() {
   const handleAction = useCallback(
     async (postId: string, action: ApprovalAction, platform: string) => {
       if (!planActionsAllowed) {
-        showErrorToast('Your plan has expired. Renew to approve or reject posts.');
+        showErrorToast(
+          'Your plan has expired. Renew to approve or reject posts.'
+        );
         return;
       }
       if (!postId) {
@@ -812,7 +826,9 @@ export default function ApprovalPage() {
           await silentRefresh();
         }
       } catch {
-        showErrorToast('Failed to perform action on scheduled post. Please try again later.');
+        showErrorToast(
+          'Failed to perform action on scheduled post. Please try again later.'
+        );
         if (isRegen) {
           cancelRegeneration(postId);
         } else {
@@ -840,9 +856,9 @@ export default function ApprovalPage() {
 
   if (!needApproval) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-full text-muted-foreground">
+      <div className="flex flex-col items-center justify-center w-full h-full text-secondary">
         Approval is not enabled. Please enable it in the
-        <Link href="/settings/autopilot-preference" className="text-blue-500">
+        <Link href="/settings/autopilot-preference" className="text-info">
           Automation Preferences
         </Link>
       </div>
@@ -861,24 +877,24 @@ export default function ApprovalPage() {
 
   return (
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
-      <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+      <div className="overflow-hidden rounded-3xl border border-default bg-default">
         <div className="px-6 pb-8 pt-8 sm:px-10 sm:pt-10">
           <header className="mb-8 max-w-2xl">
-            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              <span className="text-black">Approval</span>
+            <h1 className="text-page-title text-default">
+              <span className="text-default">Approval</span>
             </h1>
-            <p className="mt-3 text-base text-muted-foreground">
-              Review scheduled posts that need your approval. Accept to keep them
-              in the queue, reject to discard them, or regenerate to get a fresh
-              variation.
+            <p className="mt-3 text-base text-secondary">
+              Review scheduled posts that need your approval. Accept to keep
+              them in the queue, reject to discard them, or regenerate to get a
+              fresh variation.
             </p>
           </header>
 
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-subsection text-default">
               Pending scheduled posts for approval
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-secondary">
               {visiblePendingPosts.length} in view
             </p>
           </div>
@@ -891,21 +907,21 @@ export default function ApprovalPage() {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <div
                   key={i}
-                  className="flex flex-col rounded-2xl border border-border bg-card p-4 shadow-sm"
+                  className="flex flex-col rounded-2xl border border-default bg-default p-4"
                 >
-                  <div className="mb-3 aspect-4/3 animate-pulse rounded-xl bg-muted" />
-                  <div className="h-3 w-4/5 animate-pulse rounded bg-muted" />
-                  <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-muted" />
+                  <div className="mb-3 aspect-4/3 animate-pulse rounded-xl bg-element" />
+                  <div className="h-3 w-4/5 animate-pulse rounded bg-element" />
+                  <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-element" />
                 </div>
               ))}
             </div>
           ) : visiblePendingPosts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/50 px-6 py-16 text-center">
-              <Calendar className="mx-auto mb-3 h-10 w-10 text-primary-blue/60" />
-              <p className="text-sm font-medium text-foreground">
+            <div className="rounded-2xl border border-dashed border-default bg-element px-6 py-16 text-center">
+              <Calendar className="mx-auto mb-3 h-10 w-10 text-link/60" />
+              <p className="text-sm font-medium text-default">
                 No posts waiting for your approval
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-secondary">
                 When new scheduled posts need your review, they will show up
                 here as cards.
               </p>
@@ -946,13 +962,13 @@ export default function ApprovalPage() {
 
           {loadingMore && !initialLoading && (
             <div
-              className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-border bg-muted/50 py-4 text-sm text-muted-foreground"
+              className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-default bg-element py-4 text-sm text-secondary"
               aria-busy="true"
               aria-live="polite"
               aria-label="Loading more posts"
             >
               <span
-                className="size-4 shrink-0 animate-spin rounded-full border-2 border-border border-t-primary-blue"
+                className="size-4 shrink-0 animate-spin rounded-full border-2 border-default border-t-primary-blue"
                 aria-hidden
               />
               Loading more…

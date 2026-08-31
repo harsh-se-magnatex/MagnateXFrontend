@@ -30,9 +30,7 @@ function ResearchSection({
 }) {
   return (
     <section className="space-y-2">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </h3>
+      <h3 className="text-eyebrow">{label}</h3>
       {children}
     </section>
   );
@@ -61,7 +59,7 @@ export function GenerationResearchDialog({
   const contextText = research.context
     ? formatResearchContextForDisplay(research.context)
     : '';
-    
+
   return createPortal(
     <div
       className="fixed inset-0 z-[220] flex items-center justify-center p-4 sm:p-6 bg-black/55 backdrop-blur-sm"
@@ -72,15 +70,15 @@ export function GenerationResearchDialog({
       aria-labelledby="generation-research-dialog-title"
     >
       <div
-        className="rounded-2xl border border-border bg-card text-foreground shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
+        className="rounded-2xl border border-default bg-default text-default max-w-2xl w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="shrink-0 p-4 border-b border-border flex items-center justify-between gap-3">
+        <div className="shrink-0 p-4 border-b border-default flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
-            <Search className="h-5 w-5 shrink-0 text-primary" aria-hidden />
+            <Search className="h-5 w-5 shrink-0 text-link" aria-hidden />
             <h2
               id="generation-research-dialog-title"
-              className="text-lg font-semibold truncate"
+              className="text-section text-default truncate"
             >
               {title}
             </h2>
@@ -88,7 +86,7 @@ export function GenerationResearchDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="rounded-full p-1.5 text-secondary hover:bg-hover hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
             aria-label="Close research dialog"
           >
             <svg
@@ -110,15 +108,15 @@ export function GenerationResearchDialog({
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-5 overscroll-contain">
           {research.contentTypeLabel || research.contentType ? (
             <ResearchSection label="Content type">
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
-                <p className="text-sm font-medium text-foreground">
+              <div className="rounded-xl border border-default bg-element p-3">
+                <p className="text-sm font-medium text-default">
                   {research.contentTypeLabel ?? research.contentType}
                 </p>
                 {research.contentTypeLabel &&
                 research.contentType &&
                 research.contentTypeLabel.toLowerCase() !==
                   research.contentType.replace(/_/g, ' ').toLowerCase() ? (
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-1 text-xs text-secondary">
                     {research.contentType}
                   </p>
                 ) : null}
@@ -128,7 +126,7 @@ export function GenerationResearchDialog({
 
           {research.contentAngle ? (
             <ResearchSection label="Content angle">
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
+              <div className="rounded-xl border border-default bg-element p-3">
                 <ResearchMarkdownContent markdown={research.contentAngle} />
               </div>
             </ResearchSection>
@@ -136,14 +134,14 @@ export function GenerationResearchDialog({
 
           {contextText ? (
             <ResearchSection label="Industry research">
-              <div className="rounded-xl border border-border bg-muted/30 p-3">
+              <div className="rounded-xl border border-default bg-element p-3">
                 <ResearchMarkdownContent markdown={contextText} />
               </div>
             </ResearchSection>
           ) : null}
         </div>
 
-        <div className="shrink-0 border-t border-border bg-muted/30 px-4 py-3 flex justify-end">
+        <div className="shrink-0 border-t border-default bg-element px-4 py-3 flex justify-end">
           <Button type="button" variant="outline" onClick={onClose}>
             Close
           </Button>

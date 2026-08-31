@@ -19,7 +19,6 @@ import type {
   ShowcasePost,
 } from '@/components/landing/social-preview/showcase-data';
 import {
-  getPostEngagement,
   pickShowcaseFeedPosts,
 } from '@/components/landing/social-preview/showcase-data';
 import { ShowcaseMedia } from '@/components/landing/social-preview/showcase-media';
@@ -36,10 +35,14 @@ type InstagramPageMockupProps = {
 
 function MockAvatar({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const sizeClass =
-    size === 'sm' ? 'h-8 w-8' : size === 'lg' ? 'h-14 w-14 sm:h-16 sm:w-16' : 'h-10 w-10';
+    size === 'sm'
+      ? 'h-8 w-8'
+      : size === 'lg'
+        ? 'h-14 w-14 sm:h-16 sm:w-16'
+        : 'h-10 w-10';
   return (
     <div
-      className={`${sizeClass} shrink-0 rounded-full bg-gradient-to-br from-primary-purple/80 to-primary-blue/80 ring-2 ring-white`}
+      className={`${sizeClass} shrink-0 rounded-full bg-gradient-to-br from-primary-purple/80 to-primary-blue/80 ring-2 ring-[var(--pf-surface)]`}
       aria-hidden
     />
   );
@@ -56,21 +59,22 @@ function InstagramFeedPost({
   sponsored?: boolean;
   onOpen: () => void;
 }) {
-  const { likes } = getPostEngagement(post);
   return (
-    <article className="border-b border-neutral-200 bg-white last:border-b-0">
+    <article className="border-b border-[var(--pf-border)] bg-[var(--pf-surface)] last:border-b-0">
       <div className="flex items-center gap-2 px-2.5 py-2 sm:gap-3 sm:px-3 sm:py-2.5">
         <MockAvatar size="sm" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[12px] font-semibold text-neutral-900 sm:text-[13px]">
+          <p className="truncate text-[12px] font-semibold text-[var(--pf-text)] sm:text-[13px]">
             {brand.handle}
           </p>
           {sponsored && (
-            <p className="text-[10px] text-neutral-500 sm:text-[11px]">Sponsored</p>
+            <p className="text-[10px] text-[var(--pf-text-muted)] sm:text-[11px]">
+              Sponsored
+            </p>
           )}
         </div>
       </div>
-      <div className="relative aspect-square w-full bg-neutral-100">
+      <div className="relative aspect-square w-full bg-[var(--pf-surface-2)]">
         <ShowcaseMedia
           post={post}
           playVideo={false}
@@ -82,18 +86,18 @@ function InstagramFeedPost({
         />
       </div>
       <div className="px-2.5 py-2 sm:px-3 sm:py-2.5">
-        <div className="flex items-center justify-between text-neutral-800">
+        <div className="flex items-center justify-between text-[var(--pf-text)]">
           <div className="flex items-center gap-3 sm:gap-4">
             <Heart className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.75} />
-            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.75} />
+            <MessageCircle
+              className="h-5 w-5 sm:h-6 sm:w-6"
+              strokeWidth={1.75}
+            />
             <Send className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.75} />
           </div>
           <Bookmark className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.75} />
         </div>
-        <p className="mt-1.5 text-[12px] font-semibold text-neutral-900 sm:mt-2 sm:text-[13px]">
-          {likes.toLocaleString()} likes
-        </p>
-        <p className="mt-1 line-clamp-3 text-[12px] leading-snug text-neutral-800 sm:text-[13px]">
+        <p className="mt-2 line-clamp-3 text-[12px] leading-snug text-[var(--pf-text)] sm:text-[13px]">
           <span className="font-semibold">{brand.handle} </span>
           {post.caption}
         </p>
@@ -115,20 +119,23 @@ function InstagramFeedColumn({
   const feedPosts = pickShowcaseFeedPosts(posts, 4);
 
   return (
-    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-neutral-200 bg-white">
-      <div className="shrink-0 border-b border-neutral-200 bg-neutral-50 px-3 py-2">
-        <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-neutral-500 sm:text-[11px]">
+    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-[var(--pf-border)] bg-[var(--pf-surface)]">
+      <div className="shrink-0 border-b border-[var(--pf-border)] bg-[var(--pf-surface-2)] px-3 py-2">
+        <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--pf-text-muted)] sm:text-[11px]">
           Home feed
         </p>
       </div>
 
-      <div className="shrink-0 flex gap-2 overflow-x-auto border-b border-neutral-200 px-2 py-2.5 sm:gap-3 sm:px-3 sm:py-3">
+      <div className="shrink-0 flex gap-2 overflow-x-auto border-b border-[var(--pf-border)] px-2 py-2.5 sm:gap-3 sm:px-3 sm:py-3">
         {stories.map((story) => (
-          <div key={story} className="flex shrink-0 flex-col items-center gap-1">
+          <div
+            key={story}
+            className="flex shrink-0 flex-col items-center gap-1"
+          >
             <div className="rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-[2px]">
               <MockAvatar size="sm" />
             </div>
-            <span className="max-w-[52px] truncate text-[10px] text-neutral-600 sm:max-w-[64px] sm:text-[11px]">
+            <span className="max-w-[52px] truncate text-[10px] text-[var(--pf-text-muted)] sm:max-w-[64px] sm:text-[11px]">
               {story === 0 ? 'Your story' : `story_${story}`}
             </span>
           </div>
@@ -160,9 +167,9 @@ function InstagramProfileColumn({
   onSelectPost: (postId: string) => void;
 }) {
   return (
-    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-white">
-      <div className="shrink-0 border-b border-neutral-200 bg-neutral-50 px-3 py-2">
-        <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-neutral-500 sm:text-[11px]">
+    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--pf-surface)]">
+      <div className="shrink-0 border-b border-[var(--pf-border)] bg-[var(--pf-surface-2)] px-3 py-2">
+        <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-[var(--pf-text-muted)] sm:text-[11px]">
           Profile grid
         </p>
       </div>
@@ -173,41 +180,45 @@ function InstagramProfileColumn({
             <MockAvatar size="lg" />
             <div className="grid flex-1 grid-cols-3 gap-1 text-center sm:gap-3">
               <div>
-                <p className="text-sm font-semibold text-neutral-900 sm:text-base">
+                <p className="text-sm font-semibold text-[var(--pf-text)] sm:text-base">
                   {posts.length}
                 </p>
-                <p className="text-[10px] text-neutral-500 sm:text-xs">posts</p>
+                <p className="text-[10px] text-[var(--pf-text-muted)] sm:text-xs">posts</p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-neutral-900 sm:text-base">
+                <p className="text-sm font-semibold text-[var(--pf-text)] sm:text-base">
                   {brand.followersLabel}
                 </p>
-                <p className="text-[10px] text-neutral-500 sm:text-xs">followers</p>
+                <p className="text-[10px] text-[var(--pf-text-muted)] sm:text-xs">
+                  followers
+                </p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-neutral-900 sm:text-base">
+                <p className="text-sm font-semibold text-[var(--pf-text)] sm:text-base">
                   {brand.followingLabel}
                 </p>
-                <p className="text-[10px] text-neutral-500 sm:text-xs">following</p>
+                <p className="text-[10px] text-[var(--pf-text-muted)] sm:text-xs">
+                  following
+                </p>
               </div>
             </div>
           </div>
 
           <div className="mt-2 sm:mt-3">
-            <p className="text-xs font-semibold text-neutral-900 sm:text-sm">
+            <p className="text-xs font-semibold text-[var(--pf-text)] sm:text-sm">
               {brand.name}
             </p>
-            <p className="mt-0.5 text-[10px] leading-relaxed text-neutral-600 sm:text-xs">
+            <p className="mt-0.5 text-[10px] leading-relaxed text-[var(--pf-text-muted)] sm:text-xs">
               {brand.tagline}
             </p>
           </div>
         </div>
 
-        <div className="flex border-y border-neutral-200" aria-hidden>
-          <div className="flex flex-1 items-center justify-center border-b-2 border-neutral-900 py-2 text-neutral-900 sm:py-2.5">
+        <div className="flex border-y border-[var(--pf-border)]" aria-hidden>
+          <div className="flex flex-1 items-center justify-center border-b-2 border-[var(--pf-text)] py-2 text-[var(--pf-text)] sm:py-2.5">
             <Grid3x3 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
-          <div className="flex flex-1 items-center justify-center py-2 text-neutral-400 sm:py-2.5">
+          <div className="flex flex-1 items-center justify-center py-2 text-[var(--pf-text-muted)] sm:py-2.5">
             <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </div>
         </div>
@@ -226,13 +237,15 @@ export function InstagramPageMockup({
   onClosePost,
 }: InstagramPageMockupProps) {
   return (
-    <div className="relative mx-auto flex h-full w-full max-w-4xl flex-col bg-white">
-      <header className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-4 py-3">
+    <div className="relative mx-auto flex h-full w-full max-w-4xl flex-col bg-[var(--pf-surface)]">
+      <header className="flex shrink-0 items-center justify-between border-b border-[var(--pf-border)] px-4 py-3">
         <div className="flex items-center gap-2">
           <PlatformIcon platform="instagram" className="h-7 w-7" />
-          <p className="text-lg font-semibold tracking-tight text-neutral-900">Instagram</p>
+          <p className="text-lg font-semibold tracking-tight text-[var(--pf-text)]">
+            Instagram
+          </p>
         </div>
-        <div className="flex items-center gap-4 text-neutral-800">
+        <div className="flex items-center gap-4 text-[var(--pf-text)]">
           <Heart className="h-5 w-5" strokeWidth={1.75} />
           <Send className="h-5 w-5" strokeWidth={1.75} />
         </div>
@@ -252,11 +265,11 @@ export function InstagramPageMockup({
       </div>
 
       <nav
-        className="shrink-0 border-t border-neutral-200 bg-white"
+        className="shrink-0 border-t border-[var(--pf-border)] bg-[var(--pf-surface)]"
         aria-label="Instagram-style navigation"
       >
-        <div className="flex items-center justify-around px-2 py-2.5 text-neutral-800">
-          <Home className="h-6 w-6 fill-neutral-900 stroke-none" />
+        <div className="flex items-center justify-around px-2 py-2.5 text-[var(--pf-text)]">
+          <Home className="h-6 w-6 fill-[var(--pf-text)] stroke-none" />
           <Search className="h-6 w-6" strokeWidth={1.75} />
           <PlusSquare className="h-6 w-6" strokeWidth={1.75} />
           <Film className="h-6 w-6" strokeWidth={1.75} />

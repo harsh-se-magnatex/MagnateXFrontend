@@ -22,10 +22,7 @@ import {
   selectNextPlanPlatformsApi,
   type NextPlanPlatformsPayload,
 } from '@/src/service/api/userService';
-import {
-  PLATFORM_ORDER,
-  type SocialPlatform,
-} from '@/lib/platform-selection';
+import { PLATFORM_ORDER, type SocialPlatform } from '@/lib/platform-selection';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import { useUserPlanCredits } from '../../_components/UserPlanCreditsProvider';
 import { isPlanInactive } from '@/lib/plan-access';
@@ -41,17 +38,17 @@ const PLATFORM_META: Record<
   instagram: {
     label: 'Instagram',
     icon: Instagram,
-    accent: 'from-pink-500 to-purple-500',
+    accent: 'from-[var(--purple-9)] to-[var(--purple-9)]',
   },
   facebook: {
     label: 'Facebook',
     icon: Facebook,
-    accent: 'from-blue-600 to-indigo-500',
+    accent: 'from-[var(--blue-9)] to-[var(--purple-9)]',
   },
   linkedin: {
     label: 'LinkedIn',
     icon: Linkedin,
-    accent: 'from-sky-600 to-cyan-500',
+    accent: 'from-[var(--blue-9)] to-[var(--blue-9)]',
   },
 };
 
@@ -75,7 +72,8 @@ export default function NextPlanPlatformsPage() {
 
   const [data, setData] = useState<NextPlanPlatformsPayload | null>(null);
   const [loadingData, setLoadingData] = useState(true);
-  const [localSelected, setLocalSelected] = useState<SelectedMap>(emptySelected);
+  const [localSelected, setLocalSelected] =
+    useState<SelectedMap>(emptySelected);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -94,7 +92,9 @@ export default function NextPlanPlatformsPage() {
         setLocalSelected(emptySelected());
       }
     } catch {
-      showErrorToast('Could not load next-plan platform settings. Please Try Again Later.');
+      showErrorToast(
+        'Could not load next-plan platform settings. Please Try Again Later.'
+      );
     } finally {
       setLoadingData(false);
     }
@@ -175,7 +175,10 @@ export default function NextPlanPlatformsPage() {
           ? (err as { response?: { data?: { message?: string } } }).response
               ?.data?.message
           : undefined;
-      showErrorToast(message || 'Failed to save next-cycle platforms. Please Try Again Later.');
+      showErrorToast(
+        message ||
+          'Failed to save next-cycle platforms. Please Try Again Later.'
+      );
     } finally {
       setSaving(false);
     }
@@ -200,40 +203,35 @@ export default function NextPlanPlatformsPage() {
     <div className="max-w-2xl mx-auto animate-in fade-in duration-500 pb-12">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary">
+          <div className="p-2 rounded-lg bg-primary/10 text-link">
             <Share2 className="h-5 w-5" />
           </div>
-          <h1 className={workspacePageTitleClass}>
-            Next plan platforms
-          </h1>
+          <h1 className={workspacePageTitleClass}>Next plan platforms</h1>
         </div>
-        <p className="mt-2 text-sm text-muted-foreground max-w-xl">
+        <p className="mt-2 text-sm text-secondary max-w-xl">
           Choose the social platforms you want when your plan renews. If you
           skip this step, we will continue with your current selection
-          {maxAllowed < 3
-            ? ' (trimmed to fit your next plan)'
-            : ''}
-          .
+          {maxAllowed < 3 ? ' (trimmed to fit your next plan)' : ''}.
         </p>
       </div>
 
-      <section className="glass-card rounded-3xl border border-border p-6 sm:p-8 space-y-5">
+      <section className="glass-card rounded-3xl border border-default p-6 sm:p-8 space-y-5">
         <div className="grid gap-3 sm:grid-cols-2 text-sm">
-          <div className="rounded-2xl border border-border bg-muted/40 px-4 py-3">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          <div className="rounded-2xl border border-default bg-element px-4 py-3">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-secondary">
               Current plan
             </p>
-            <p className="mt-1 font-semibold text-foreground">
+            <p className="mt-1 font-semibold text-default">
               {formatPlanLabel(data.activePlan)}
             </p>
           </div>
           <div className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3">
-            <p className="text-[11px] font-bold uppercase tracking-wide text-primary">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-link">
               {data.hasPendingPlanChange ? 'Next plan' : 'Renewing as'}
             </p>
-            <p className="mt-1 font-semibold text-foreground">
+            <p className="mt-1 font-semibold text-default">
               {formatPlanLabel(data.targetPlan)}
-              <span className="ml-2 text-xs font-medium text-primary">
+              <span className="ml-2 text-xs font-medium text-link">
                 · up to {maxAllowed} platform{maxAllowed === 1 ? '' : 's'}
               </span>
             </p>
@@ -241,13 +239,13 @@ export default function NextPlanPlatformsPage() {
         </div>
 
         {data.nextBillingDate ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-secondary">
             Renews on{' '}
-            <span className="font-semibold text-foreground">
+            <span className="font-semibold text-default">
               {fmtTimestamp(data.nextBillingDate)}
             </span>
             {data.withinSelectionWindow ? (
-              <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-200 ring-1 ring-amber-500/30">
+              <span className="ml-2 inline-flex items-center rounded-full bg-warning px-2 py-0.5 text-[11px] font-semibold text-warning ring-1 ring-[var(--border-warning)]">
                 Within 15 days
               </span>
             ) : null}
@@ -256,27 +254,25 @@ export default function NextPlanPlatformsPage() {
 
         {data.selectionComplete ? (
           <div
-            className="rounded-2xl border border-emerald-500/35 bg-emerald-500/10 px-4 py-3 text-sm"
+            className="rounded-2xl border border-success bg-success px-4 py-3 text-sm"
             role="status"
           >
-            <p className="font-semibold flex items-center gap-2 text-emerald-300">
+            <p className="font-semibold flex items-center gap-2 text-success">
               <Check className="h-4 w-4" />
               Next-cycle platforms saved
             </p>
-            <p className="mt-1 text-emerald-200/80">
-              These will apply automatically when your plan renews. You can still
-              update them below before then.
+            <p className="mt-1 text-success">
+              These will apply automatically when your plan renews. You can
+              still update them below before then.
             </p>
           </div>
         ) : (
           <div
-            className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm"
+            className="rounded-2xl border border-warning bg-warning px-4 py-3 text-sm"
             role="status"
           >
-            <p className="font-semibold text-amber-200">
-              Selection recommended
-            </p>
-            <p className="mt-1 text-amber-200/80">
+            <p className="font-semibold text-warning">Selection recommended</p>
+            <p className="mt-1 text-warning">
               For a smoother renewal, select your next-cycle platforms early. If
               you do not, we will keep your current platforms.
             </p>
@@ -284,7 +280,7 @@ export default function NextPlanPlatformsPage() {
         )}
 
         <div className="space-y-3 pt-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-wide text-secondary">
             Select up to {maxAllowed}
           </p>
           <div className="grid gap-3">
@@ -300,10 +296,10 @@ export default function NextPlanPlatformsPage() {
                   onClick={() => togglePlatform(platform)}
                   disabled={atCap}
                   className={cn(
-                    'flex items-center gap-4 rounded-2xl border px-4 py-4 text-left transition-colors',
+                    'flex items-center gap-4 rounded-full border px-4 py-4 text-left transition-expo',
                     checked
-                      ? 'border-primary/50 bg-primary/15 ring-1 ring-primary/30'
-                      : 'border-border bg-card hover:bg-muted/50',
+                      ? 'border-primary/50 bg-primary/15 ring-1 ring-strong'
+                      : 'border-default bg-default hover:bg-element',
                     atCap && 'opacity-50 cursor-not-allowed'
                   )}
                 >
@@ -316,8 +312,8 @@ export default function NextPlanPlatformsPage() {
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">{meta.label}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="font-semibold text-default">{meta.label}</p>
+                    <p className="text-xs text-secondary">
                       {checked ? 'Selected for next cycle' : 'Tap to include'}
                     </p>
                   </div>
@@ -325,7 +321,7 @@ export default function NextPlanPlatformsPage() {
                     className={cn(
                       'flex h-6 w-6 items-center justify-center rounded-full border',
                       checked
-                        ? 'border-primary bg-primary text-primary-foreground'
+                        ? 'border-primary bg-primary text-link-foreground'
                         : 'border-muted-foreground/40'
                     )}
                   >
@@ -340,7 +336,7 @@ export default function NextPlanPlatformsPage() {
         <div className="flex flex-wrap items-center gap-3 pt-2">
           <Button
             type="button"
-            className="rounded-xl"
+            className="rounded-full"
             disabled={!canSave}
             onClick={() => void handleSave()}
           >
@@ -349,10 +345,15 @@ export default function NextPlanPlatformsPage() {
             ) : null}
             Save next-cycle platforms
           </Button>
-          <Button asChild type="button" variant="outline" className="rounded-xl">
+          <Button
+            asChild
+            type="button"
+            variant="outline"
+            className="rounded-full"
+          >
             <Link href="/settings/billings">Back to Billing</Link>
           </Button>
-          <p className="text-xs text-muted-foreground w-full sm:w-auto">
+          <p className="text-xs text-secondary w-full sm:w-auto">
             {selectedCount}/{maxAllowed} selected
           </p>
         </div>

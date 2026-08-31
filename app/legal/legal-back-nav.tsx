@@ -21,13 +21,13 @@ export function LegalBackNav() {
   const pathname = usePathname();
 
   return (
-    <div className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/85 backdrop-blur-xl">
+    <div className="sticky top-0 z-40 border-b border-default bg-default backdrop-blur-xl">
       <div className="mx-auto max-w-6xl space-y-4 px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => router.back()}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:border-indigo-200 hover:text-indigo-700"
+            className="inline-flex items-center gap-2 rounded-full border border-default bg-default px-3.5 py-1.5 text-sm font-medium text-secondary transition-expo hover:border-preview hover:text-preview"
           >
             <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden />
             Back
@@ -35,7 +35,7 @@ export function LegalBackNav() {
 
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:border-indigo-200 hover:text-indigo-700"
+            className="inline-flex items-center gap-2 rounded-full border border-default bg-default px-3.5 py-1.5 text-sm font-semibold text-default transition-expo hover:border-preview hover:text-preview"
           >
             <img src="/logo.png" alt="" className="h-5 w-5 rounded-md" />
             SocioGenie
@@ -54,10 +54,10 @@ export function LegalBackNav() {
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all',
+                  'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-expo',
                   active
-                    ? 'border-indigo-300 bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700',
+                    ? 'border-preview bg-[var(--purple-9)] text-white'
+                    : 'border-default bg-default text-secondary hover:border-preview hover:bg-preview hover:text-preview'
                 )}
               >
                 {link.label}

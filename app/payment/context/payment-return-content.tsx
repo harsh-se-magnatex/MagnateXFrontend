@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   CheckCircle2,
   ArrowRight,
@@ -16,31 +16,31 @@ import {
   Loader2,
   AlertTriangle,
   Lock,
-} from "lucide-react";
+} from 'lucide-react';
 
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import {
   getOrderPaymentStatus,
   reconcileCheckoutSession,
-} from "@/src/service/api/paymentService";
+} from '@/src/service/api/paymentService';
 
 /** Dodo returns to the same URL for both outcomes; payment result is in `status`. */
 const CHECKOUT_FAILURE = new Set([
-  "failure",
-  "failed",
-  "fail",
-  "error",
-  "cancelled",
-  "canceled",
-  "declined",
+  'failure',
+  'failed',
+  'fail',
+  'error',
+  'cancelled',
+  'canceled',
+  'declined',
 ]);
 
 /**
  * Dodo uses `pending` when the customer opens a checkout link after it has expired.
  * When `session_id` is present we skip this branch so an active session can reconcile.
  */
-const CHECKOUT_EXPIRED_LINK = new Set(["pending"]);
+const CHECKOUT_EXPIRED_LINK = new Set(['pending']);
 
 function sleep(ms: number) {
   return new Promise<void>((resolve) => {
@@ -62,35 +62,35 @@ function formatLabelStatus(status: string) {
   return status
     .split(/[-_]/g)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-    .join(" ");
+    .join(' ');
 }
 
 /** Dodo sometimes leaves template tokens (e.g. `{CHECKOUT_SESSION_ID}`) in the URL unchanged. */
 function isLiteralCheckoutPlaceholder(sessionId: string): boolean {
   const s = sessionId.trim();
   if (!s) return false;
-  if (s === "{CHECKOUT_SESSION_ID}") return true;
+  if (s === '{CHECKOUT_SESSION_ID}') return true;
   return /^\{[A-Z0-9_]+\}$/.test(s);
 }
 
 type ConfirmPhase =
-  | "idle"
-  | "needs_auth"
-  | "working"
-  | "confirmed"
-  | "timed_out"
-  | "error";
+  | 'idle'
+  | 'needs_auth'
+  | 'working'
+  | 'confirmed'
+  | 'timed_out'
+  | 'error';
 
 export function PaymentReturnContent() {
   const searchParams = useSearchParams();
   const { subscriptionId, status, email, rawSessionFromUrl, orderIdFromUrl } =
     useMemo(
       () => ({
-        subscriptionId: searchParams.get("subscription_id")?.trim() ?? "",
-        status: searchParams.get("status")?.trim() ?? "",
-        email: searchParams.get("email")?.trim() ?? "",
-        rawSessionFromUrl: searchParams.get("session_id")?.trim() ?? "",
-        orderIdFromUrl: searchParams.get("order_id")?.trim() ?? "",
+        subscriptionId: searchParams.get('subscription_id')?.trim() ?? '',
+        status: searchParams.get('status')?.trim() ?? '',
+        email: searchParams.get('email')?.trim() ?? '',
+        rawSessionFromUrl: searchParams.get('session_id')?.trim() ?? '',
+        orderIdFromUrl: searchParams.get('order_id')?.trim() ?? '',
       }),
       [searchParams]
     );
@@ -105,32 +105,30 @@ export function PaymentReturnContent() {
 
   const reconcileParams = useMemo(() => {
     if (orderIdFromUrl) return { orderId: orderIdFromUrl };
-    if (
-      rawSessionFromUrl &&
-      !isLiteralCheckoutPlaceholder(rawSessionFromUrl)
-    ) {
+    if (rawSessionFromUrl && !isLiteralCheckoutPlaceholder(rawSessionFromUrl)) {
       return { sessionId: rawSessionFromUrl };
     }
     return null;
   }, [orderIdFromUrl, rawSessionFromUrl]);
 
-  const wantsConfirm = Boolean(reconcileParams) && !checkoutFailed && !checkoutLinkExpired;
+  const wantsConfirm =
+    Boolean(reconcileParams) && !checkoutFailed && !checkoutLinkExpired;
 
-  const [confirmPhase, setConfirmPhase] = useState<ConfirmPhase>("idle");
+  const [confirmPhase, setConfirmPhase] = useState<ConfirmPhase>('idle');
 
   const runCheckoutConfirmation = useCallback(async () => {
     if (!reconcileParams || !user) return;
-    setConfirmPhase("working");
+    setConfirmPhase('working');
     try {
       const initial = await reconcileCheckoutSession(reconcileParams);
       const initPayload = initial.data;
 
-      if (initPayload.orderStatus === "paid") {
-        setConfirmPhase("confirmed");
+      if (initPayload.orderStatus === 'paid') {
+        setConfirmPhase('confirmed');
         return;
       }
-      if (initPayload.orderStatus === "failed") {
-        setConfirmPhase("error");
+      if (initPayload.orderStatus === 'failed') {
+        setConfirmPhase('error');
         return;
       }
 
@@ -144,26 +142,26 @@ export function PaymentReturnContent() {
           const again = await reconcileCheckoutSession(reconcileParams);
           const p = again.data;
           pollOrderId = p.orderId;
-          if (p.orderStatus === "paid") {
-            setConfirmPhase("confirmed");
+          if (p.orderStatus === 'paid') {
+            setConfirmPhase('confirmed');
             return;
           }
-          if (p.orderStatus === "failed") {
-            setConfirmPhase("error");
+          if (p.orderStatus === 'failed') {
+            setConfirmPhase('error');
             return;
           }
         }
 
         const st = await getOrderPaymentStatus(pollOrderId);
-        if (st.data.status === "paid") {
-          setConfirmPhase("confirmed");
+        if (st.data.status === 'paid') {
+          setConfirmPhase('confirmed');
           return;
         }
       }
 
-      setConfirmPhase("timed_out");
+      setConfirmPhase('timed_out');
     } catch {
-      setConfirmPhase("error");
+      setConfirmPhase('error');
     }
   }, [reconcileParams, user]);
 
@@ -171,7 +169,7 @@ export function PaymentReturnContent() {
     if (!wantsConfirm) return;
     if (authLoading) return;
     if (!user) {
-      setConfirmPhase("needs_auth");
+      setConfirmPhase('needs_auth');
       return;
     }
     void runCheckoutConfirmation();
@@ -180,7 +178,7 @@ export function PaymentReturnContent() {
   const displaySessionId =
     rawSessionFromUrl && !isLiteralCheckoutPlaceholder(rawSessionFromUrl)
       ? rawSessionFromUrl
-      : "";
+      : '';
 
   const hasDetails = Boolean(
     subscriptionId || status || email || displaySessionId || orderIdFromUrl
@@ -188,48 +186,48 @@ export function PaymentReturnContent() {
 
   if (checkoutFailed) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-default">
         <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute -top-[10%] right-[-4%] h-[min(460px,80vw)] w-[min(460px,80vw)] rounded-full bg-rose-500/12 blur-[100px]" />
-          <div className="absolute -bottom-[12%] left-[-8%] h-[min(340px,72vw)] w-[min(340px,72vw)] rounded-full bg-red-500/8 blur-[95px]" />
+          <div className="absolute -top-[10%] right-[-4%] h-[min(460px,80vw)] w-[min(460px,80vw)] rounded-full bg-danger blur-[100px]" />
+          <div className="absolute -bottom-[12%] left-[-8%] h-[min(340px,72vw)] w-[min(340px,72vw)] rounded-full bg-danger blur-[95px]" />
         </div>
 
         <div className="relative w-full max-w-lg animate-in fade-in zoom-in-95 duration-500">
-          <div className="glass-card rounded-3xl border border-rose-500/25 bg-card/95 p-8 shadow-lg shadow-rose-500/5 sm:p-10">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-950/50 text-rose-400 ring-1 ring-rose-500/35">
+          <div className="glass-card rounded-3xl border border-danger bg-default p-8 sm:p-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-danger text-danger ring-1 ring-[var(--border-danger)]">
               <XCircle className="h-9 w-9" aria-hidden />
             </div>
 
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-rose-100 sm:text-3xl">
+            <h1 className="text-page-title text-default">
               Payment didn&apos;t go through
             </h1>
-            <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground font-(--font-dm-sans)">
-              We couldn&apos;t complete the charge. No money was taken. Try again
-              with the same or a different payment method, or reach out if the
-              problem persists.
+            <p className="mt-4 text-center text-sm leading-relaxed text-secondary font-(--font-dm-sans)">
+              We couldn&apos;t complete the charge. No money was taken. Try
+              again with the same or a different payment method, or reach out if
+              the problem persists.
             </p>
 
             {hasDetails ? (
-              <dl className="mt-6 space-y-3 rounded-2xl border border-rose-500/25 bg-rose-950/25 p-4 text-sm font-(--font-dm-sans)">
+              <dl className="mt-6 space-y-3 rounded-2xl border border-danger bg-danger p-4 text-sm font-(--font-dm-sans)">
                 {email ? (
                   <div className="flex gap-3">
-                    <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                    <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                       <Mail className="size-3.5 shrink-0" aria-hidden />
                       <span>Email</span>
                     </dt>
-                    <dd className="min-w-0 break-all font-medium text-foreground">
+                    <dd className="min-w-0 break-all font-medium text-default">
                       {email}
                     </dd>
                   </div>
                 ) : null}
                 {status ? (
                   <div className="flex gap-3">
-                    <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                    <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                       <Activity className="size-3.5 shrink-0" aria-hidden />
                       <span>Status</span>
                     </dt>
                     <dd>
-                      <span className="inline-flex items-center rounded-full bg-rose-500/25 px-2.5 py-0.5 text-xs font-semibold text-rose-200">
+                      <span className="inline-flex items-center rounded-full bg-danger px-2.5 py-0.5 text-xs font-semibold text-danger">
                         {formatLabelStatus(status)}
                       </span>
                     </dd>
@@ -237,11 +235,11 @@ export function PaymentReturnContent() {
                 ) : null}
                 {subscriptionId ? (
                   <div className="flex gap-3">
-                    <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                    <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                       <Hash className="size-3.5 shrink-0" aria-hidden />
                       <span>Reference</span>
                     </dt>
-                    <dd className="min-w-0 font-mono text-xs font-medium text-foreground break-all">
+                    <dd className="min-w-0 font-mono text-xs font-medium text-default break-all">
                       {subscriptionId}
                     </dd>
                   </div>
@@ -276,48 +274,48 @@ export function PaymentReturnContent() {
 
   if (checkoutLinkExpired) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-default">
         <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[100px]" />
-          <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-orange-500/8 blur-[90px]" />
+          <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-warning blur-[100px]" />
+          <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-warning blur-[90px]" />
         </div>
 
         <div className="relative w-full max-w-lg animate-in fade-in zoom-in-95 duration-500">
-          <div className="glass-card rounded-3xl border border-amber-500/25 bg-card/95 p-8 shadow-lg shadow-amber-500/5 sm:p-10">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-950/40 text-amber-400 ring-1 ring-amber-500/30">
+          <div className="glass-card rounded-3xl border border-warning bg-default p-8 sm:p-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-warning text-warning ring-1 ring-[var(--border-warning)]">
               <Clock className="h-9 w-9" aria-hidden />
             </div>
 
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-100 sm:text-3xl">
+            <h1 className="text-page-title text-default">
               Payment link expired
             </h1>
-            <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground font-(--font-dm-sans)">
-              This checkout session is no longer valid. Payment links expire after a
-              set time for security. Nothing was charged. Start a new checkout from
-              billings whenever you&apos;re ready.
+            <p className="mt-4 text-center text-sm leading-relaxed text-secondary font-(--font-dm-sans)">
+              This checkout session is no longer valid. Payment links expire
+              after a set time for security. Nothing was charged. Start a new
+              checkout from billings whenever you&apos;re ready.
             </p>
 
             {hasDetails ? (
-              <dl className="mt-6 space-y-3 rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4 text-sm font-(--font-dm-sans)">
+              <dl className="mt-6 space-y-3 rounded-2xl border border-warning bg-warning p-4 text-sm font-(--font-dm-sans)">
                 {email ? (
                   <div className="flex gap-3">
-                    <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                    <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                       <Mail className="size-3.5 shrink-0" aria-hidden />
                       <span>Email</span>
                     </dt>
-                    <dd className="min-w-0 break-all font-medium text-foreground">
+                    <dd className="min-w-0 break-all font-medium text-default">
                       {email}
                     </dd>
                   </div>
                 ) : null}
                 {status ? (
                   <div className="flex gap-3">
-                    <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                    <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                       <Activity className="size-3.5 shrink-0" aria-hidden />
                       <span>Status</span>
                     </dt>
                     <dd>
-                      <span className="inline-flex items-center rounded-full bg-amber-500/25 px-2.5 py-0.5 text-xs font-semibold text-amber-200">
+                      <span className="inline-flex items-center rounded-full bg-warning px-2.5 py-0.5 text-xs font-semibold text-warning">
                         {formatLabelStatus(status)}
                       </span>
                     </dd>
@@ -325,11 +323,11 @@ export function PaymentReturnContent() {
                 ) : null}
                 {subscriptionId ? (
                   <div className="flex gap-3">
-                    <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                    <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                       <Hash className="size-3.5 shrink-0" aria-hidden />
                       <span>Reference</span>
                     </dt>
-                    <dd className="min-w-0 font-mono text-xs font-medium text-foreground break-all">
+                    <dd className="min-w-0 font-mono text-xs font-medium text-default break-all">
                       {subscriptionId}
                     </dd>
                   </div>
@@ -344,7 +342,12 @@ export function PaymentReturnContent() {
                   Billings — new checkout
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto gap-2">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto gap-2"
+              >
                 <Link href="/support">
                   <LifeBuoy className="size-4" aria-hidden />
                   Get help
@@ -364,50 +367,50 @@ export function PaymentReturnContent() {
 
   if (!checkoutFailed && !checkoutLinkExpired && hasBrokenSessionPlaceholder) {
     return (
-      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-default">
         <div className="pointer-events-none fixed inset-0 -z-10">
-          <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[100px]" />
-          <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-orange-500/8 blur-[90px]" />
+          <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-warning blur-[100px]" />
+          <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-warning blur-[90px]" />
         </div>
 
         <div className="relative w-full max-w-lg animate-in fade-in zoom-in-95 duration-500">
-          <div className="glass-card rounded-3xl border border-amber-500/25 bg-card/95 p-8 shadow-lg shadow-amber-500/5 sm:p-10">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-950/40 text-amber-400 ring-1 ring-amber-500/30">
+          <div className="glass-card rounded-3xl border border-warning bg-default p-8 sm:p-10">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-warning text-warning ring-1 ring-[var(--border-warning)]">
               <AlertTriangle className="h-9 w-9" aria-hidden />
             </div>
 
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-100 sm:text-3xl">
+            <h1 className="text-page-title text-default">
               Checkout link wasn&apos;t finalized
             </h1>
-            <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground font-(--font-dm-sans)">
-              The payment provider returned a placeholder instead of a real checkout
-              session id, so this page can&apos;t confirm your order automatically.
-              If Dodo shows your subscription or charge as active, your payment likely
-              went through — open Billings to verify. New checkouts use an internal
-              order id to avoid this.
+            <p className="mt-4 text-center text-sm leading-relaxed text-secondary font-(--font-dm-sans)">
+              The payment provider returned a placeholder instead of a real
+              checkout session id, so this page can&apos;t confirm your order
+              automatically. If Dodo shows your subscription or charge as
+              active, your payment likely went through — open Billings to
+              verify. New checkouts use an internal order id to avoid this.
             </p>
 
             {hasDetails ? (
-              <dl className="mt-6 space-y-3 rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4 text-sm font-(--font-dm-sans)">
+              <dl className="mt-6 space-y-3 rounded-2xl border border-warning bg-warning p-4 text-sm font-(--font-dm-sans)">
                 {email ? (
                   <div className="flex gap-3">
-                    <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                    <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                       <Mail className="size-3.5 shrink-0" aria-hidden />
                       <span>Email</span>
                     </dt>
-                    <dd className="min-w-0 break-all font-medium text-foreground">
+                    <dd className="min-w-0 break-all font-medium text-default">
                       {email}
                     </dd>
                   </div>
                 ) : null}
                 {status ? (
                   <div className="flex gap-3">
-                    <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                    <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                       <Activity className="size-3.5 shrink-0" aria-hidden />
                       <span>Status</span>
                     </dt>
                     <dd>
-                      <span className="inline-flex items-center rounded-full bg-amber-500/25 px-2.5 py-0.5 text-xs font-semibold text-amber-200">
+                      <span className="inline-flex items-center rounded-full bg-warning px-2.5 py-0.5 text-xs font-semibold text-warning">
                         {formatLabelStatus(status)}
                       </span>
                     </dd>
@@ -415,11 +418,11 @@ export function PaymentReturnContent() {
                 ) : null}
                 {subscriptionId ? (
                   <div className="flex gap-3">
-                    <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                    <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                       <Hash className="size-3.5 shrink-0" aria-hidden />
                       <span>Subscription</span>
                     </dt>
-                    <dd className="min-w-0 font-mono text-xs font-medium text-foreground break-all">
+                    <dd className="min-w-0 font-mono text-xs font-medium text-default break-all">
                       {subscriptionId}
                     </dd>
                   </div>
@@ -434,7 +437,12 @@ export function PaymentReturnContent() {
                   Open billings
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto"
+              >
                 <Link href="/home">Back to home</Link>
               </Button>
             </div>
@@ -447,37 +455,36 @@ export function PaymentReturnContent() {
   const signInReturnTo = useMemo(
     () =>
       encodeURIComponent(
-        `/payment/context${searchParams.toString() ? `?${searchParams.toString()}` : ""}`
+        `/payment/context${searchParams.toString() ? `?${searchParams.toString()}` : ''}`
       ),
     [searchParams]
   );
 
-  const isErrorUi = wantsConfirm && confirmPhase === "error";
-  const isTimeoutUi = wantsConfirm && confirmPhase === "timed_out";
+  const isErrorUi = wantsConfirm && confirmPhase === 'error';
+  const isTimeoutUi = wantsConfirm && confirmPhase === 'timed_out';
   const isBusyUi =
-    wantsConfirm &&
-    (confirmPhase === "working" || confirmPhase === "idle");
+    wantsConfirm && (confirmPhase === 'working' || confirmPhase === 'idle');
 
-  const isNeedsAuthUi = wantsConfirm && confirmPhase === "needs_auth";
+  const isNeedsAuthUi = wantsConfirm && confirmPhase === 'needs_auth';
 
   let subtitle = wantsConfirm
-    ? "Hang tight while we confirm your payment and update your account."
-    : "Thank you. Your transaction completed and your subscription or credits will update shortly. You can review details anytime in billing.";
+    ? 'Hang tight while we confirm your payment and update your account.'
+    : 'Thank you. Your transaction completed and your subscription or credits will update shortly. You can review details anytime in billing.';
 
   if (wantsConfirm) {
-    if (confirmPhase === "needs_auth") {
+    if (confirmPhase === 'needs_auth') {
       subtitle =
-        "Login with the account you used for checkout so we can confirm your payment and apply your plan or credits.";
-    } else if (confirmPhase === "working") {
+        'Login with the account you used for checkout so we can confirm your payment and apply your plan or credits.';
+    } else if (confirmPhase === 'working') {
       subtitle =
-        "Confirming payment with our billing provider and updating your account…";
-    } else if (confirmPhase === "confirmed") {
+        'Confirming payment with our billing provider and updating your account…';
+    } else if (confirmPhase === 'confirmed') {
       subtitle =
         "You're all set — your subscription or credits are updated in your account.";
-    } else if (confirmPhase === "timed_out") {
+    } else if (confirmPhase === 'timed_out') {
       subtitle =
         "We're still finalizing your payment. Open billings to verify, or refresh this page in a moment.";
-    } else if (confirmPhase === "error") {
+    } else if (confirmPhase === 'error') {
       subtitle =
         "We couldn't confirm your payment from this page. Your charge may still succeed — check billings or try confirming again.";
     }
@@ -488,33 +495,33 @@ export function PaymentReturnContent() {
     !isErrorUi &&
     !isTimeoutUi &&
     !isNeedsAuthUi &&
-    (confirmPhase === "working" ||
-      (confirmPhase === "idle" && Boolean(user) && !authLoading));
+    (confirmPhase === 'working' ||
+      (confirmPhase === 'idle' && Boolean(user) && !authLoading));
 
   const cardRing =
     isErrorUi || isTimeoutUi
-      ? "border-amber-500/25 shadow-amber-500/5"
+      ? 'border-warning'
       : isBusyUi || isNeedsAuthUi
-        ? "border-indigo-500/25 shadow-indigo-500/5"
-        : "border-emerald-500/20 shadow-emerald-500/5";
+        ? 'border-preview'
+        : 'border-success';
 
   const iconWrap =
     isErrorUi || isTimeoutUi
-      ? "bg-amber-950/40 text-amber-400 ring-amber-500/30"
+      ? 'bg-warning text-warning ring-[var(--border-warning)]'
       : isBusyUi || isNeedsAuthUi
-        ? "bg-indigo-950/40 text-indigo-400 ring-indigo-500/25"
-        : "bg-emerald-950/40 text-emerald-400 ring-emerald-500/30";
+        ? 'bg-preview text-preview ring-[var(--border-preview)]'
+        : 'bg-success text-success ring-[var(--border-success)]';
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-foreground">
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-12 font-(--font-sora) text-default">
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-emerald-500/10 blur-[100px]" />
-        <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-teal-500/8 blur-[90px]" />
+        <div className="absolute -top-[10%] left-1/2 h-[min(480px,85vw)] w-[min(480px,85vw)] -translate-x-1/2 rounded-full bg-success blur-[100px]" />
+        <div className="absolute -bottom-[8%] right-[-6%] h-[min(360px,70vw)] w-[min(360px,70vw)] rounded-full bg-success blur-[90px]" />
       </div>
 
       <div className="relative w-full max-w-lg animate-in fade-in zoom-in-95 duration-500">
         <div
-          className={`glass-card rounded-3xl border bg-card/95 p-8 shadow-lg sm:p-10 ${cardRing}`}
+          className={`glass-card rounded-3xl border bg-default p-8 sm:p-10 ${cardRing}`}
         >
           <div
             className={`mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl ring-1 ${iconWrap}`}
@@ -529,43 +536,41 @@ export function PaymentReturnContent() {
           </div>
 
           {isErrorUi ? (
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-100 sm:text-3xl">
+            <h1 className="text-page-title text-default">
               Couldn&apos;t verify from this page
             </h1>
           ) : isTimeoutUi ? (
-            <h1 className="text-center text-2xl font-extrabold tracking-tight text-amber-100 sm:text-3xl">
-              Still confirming
-            </h1>
+            <h1 className="text-page-title text-default">Still confirming</h1>
           ) : isNeedsAuthUi ? (
-            <h1 className="text-center text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <span className="text-indigo-400">Login</span>{" "}
+            <h1 className="text-page-title text-default">
+              <span className="text-preview">Login</span>{' '}
               <span className="bg-gradient-primary-text">to finish</span>
             </h1>
           ) : isBusyUi ? (
-            <h1 className="text-center text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <span className="text-indigo-400">Confirming</span>{" "}
+            <h1 className="text-page-title text-default">
+              <span className="text-preview">Confirming</span>{' '}
               <span className="bg-gradient-primary-text">payment</span>
             </h1>
           ) : (
-            <h1 className="text-center text-2xl font-extrabold tracking-tight sm:text-3xl">
-              <span className="text-emerald-400">Payment</span>{" "}
+            <h1 className="text-page-title text-default">
+              <span className="text-success">Payment</span>{' '}
               <span className="bg-gradient-primary-text">successful</span>
             </h1>
           )}
-          <p className="mt-4 text-center text-sm leading-relaxed text-muted-foreground font-(--font-dm-sans)">
+          <p className="mt-4 text-center text-sm leading-relaxed text-secondary font-(--font-dm-sans)">
             {subtitle}
           </p>
           {showSpinner ? (
             <div className="mt-4 flex justify-center">
               <Loader2
-                className={`size-8 animate-spin ${isBusyUi ? "text-indigo-400" : "text-emerald-400"}`}
+                className={`size-8 animate-spin ${isBusyUi ? 'text-preview' : 'text-success'}`}
                 aria-hidden
               />
               <span className="sr-only">Confirming payment</span>
             </div>
           ) : null}
 
-          {wantsConfirm && confirmPhase === "needs_auth" ? (
+          {wantsConfirm && confirmPhase === 'needs_auth' ? (
             <div className="mt-6 flex justify-center">
               <Button asChild size="lg" className="gap-2">
                 <Link href={`/sign-in?returnTo=${signInReturnTo}`}>
@@ -576,7 +581,7 @@ export function PaymentReturnContent() {
             </div>
           ) : null}
 
-          {wantsConfirm && confirmPhase === "error" ? (
+          {wantsConfirm && confirmPhase === 'error' ? (
             <div className="mt-6 flex justify-center">
               <Button
                 type="button"
@@ -593,24 +598,24 @@ export function PaymentReturnContent() {
             <dl
               className={`mt-6 space-y-3 rounded-2xl border p-4 text-sm font-(--font-dm-sans) ${
                 isErrorUi || isTimeoutUi
-                  ? "border-amber-500/20 bg-amber-950/20"
-                  : "border-emerald-500/20 bg-emerald-950/20"
+                  ? 'border-warning bg-warning'
+                  : 'border-success bg-success'
               }`}
             >
               {email ? (
                 <div className="flex gap-3">
-                  <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                  <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                     <Mail className="size-3.5 shrink-0" aria-hidden />
                     <span>Email</span>
                   </dt>
-                  <dd className="min-w-0 break-all font-medium text-foreground">
+                  <dd className="min-w-0 break-all font-medium text-default">
                     {email}
                   </dd>
                 </div>
               ) : null}
               {status ? (
                 <div className="flex gap-3">
-                  <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                  <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                     <Activity className="size-3.5 shrink-0" aria-hidden />
                     <span>Status</span>
                   </dt>
@@ -618,8 +623,8 @@ export function PaymentReturnContent() {
                     <span
                       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                         isErrorUi || isTimeoutUi
-                          ? "bg-amber-500/25 text-amber-200"
-                          : "bg-emerald-500/20 text-emerald-300"
+                          ? 'bg-warning text-warning'
+                          : 'bg-success text-success'
                       }`}
                     >
                       {formatLabelStatus(status)}
@@ -629,33 +634,33 @@ export function PaymentReturnContent() {
               ) : null}
               {subscriptionId ? (
                 <div className="flex gap-3">
-                  <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                  <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                     <Hash className="size-3.5 shrink-0" aria-hidden />
                     <span>Subscription</span>
                   </dt>
-                  <dd className="min-w-0 font-mono text-xs font-medium text-foreground break-all">
+                  <dd className="min-w-0 font-mono text-xs font-medium text-default break-all">
                     {subscriptionId}
                   </dd>
                 </div>
               ) : null}
               {orderIdFromUrl ? (
                 <div className="flex gap-3">
-                  <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                  <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                     <Hash className="size-3.5 shrink-0" aria-hidden />
                     <span>Order</span>
                   </dt>
-                  <dd className="min-w-0 font-mono text-xs font-medium text-foreground break-all">
+                  <dd className="min-w-0 font-mono text-xs font-medium text-default break-all">
                     {orderIdFromUrl}
                   </dd>
                 </div>
               ) : null}
               {displaySessionId ? (
                 <div className="flex gap-3">
-                  <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                  <dt className="flex shrink-0 items-center gap-1.5 text-secondary">
                     <Hash className="size-3.5 shrink-0" aria-hidden />
                     <span>Checkout session</span>
                   </dt>
-                  <dd className="min-w-0 font-mono text-xs font-medium text-foreground break-all">
+                  <dd className="min-w-0 font-mono text-xs font-medium text-default break-all">
                     {displaySessionId}
                   </dd>
                 </div>
@@ -670,7 +675,12 @@ export function PaymentReturnContent() {
                 <ArrowRight className="size-4" aria-hidden />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+            >
               <Link href="/home">Back to home</Link>
             </Button>
           </div>

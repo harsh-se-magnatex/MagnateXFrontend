@@ -18,7 +18,7 @@ function DismissButton({ onDismiss }: { onDismiss?: () => void }) {
       type="button"
       onClick={onDismiss}
       aria-label="Dismiss"
-      className="absolute right-1 top-1 inline-flex size-5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      className="absolute right-1 top-1 inline-flex size-5 items-center justify-center rounded-full text-secondary transition-expo hover:bg-element hover:text-default"
     >
       <X className="size-3" />
     </button>
@@ -29,15 +29,23 @@ function cardClass(extra?: string) {
   return cn('relative', extra);
 }
 
-function getString(payload: Record<string, unknown>, key: string): string | null {
+function getString(
+  payload: Record<string, unknown>,
+  key: string
+): string | null {
   const value = payload[key];
   return typeof value === 'string' && value.trim() ? value : null;
 }
 
-function getArrayString(payload: Record<string, unknown>, key: string): string[] {
+function getArrayString(
+  payload: Record<string, unknown>,
+  key: string
+): string[] {
   const value = payload[key];
   if (!Array.isArray(value)) return [];
-  return value.filter((v): v is string => typeof v === 'string' && v.length > 0);
+  return value.filter(
+    (v): v is string => typeof v === 'string' && v.length > 0
+  );
 }
 
 export function ChatToolResultCard({
@@ -56,12 +64,13 @@ export function ChatToolResultCard({
         <div
           className={cardClass(
             cn(
-              'mt-2 rounded-lg border border-dashed border-muted-foreground/40 bg-background/60 p-2 text-xs text-muted-foreground',
+              'mt-2 rounded-lg border border-dashed border-muted-foreground/40 bg-background/60 p-2 text-xs text-secondary',
               rightPad
             )
           )}
         >
-          {platform} isn&apos;t connected yet — open Connected Accounts to add it.
+          {platform} isn&apos;t connected yet — open Connected Accounts to add
+          it.
           <DismissButton onDismiss={onDismiss} />
         </div>
       );
@@ -73,14 +82,16 @@ export function ChatToolResultCard({
       <div
         className={cardClass(
           cn(
-            'mt-2 rounded-lg border border-border bg-background/60 p-2 text-xs',
+            'mt-2 rounded-lg border border-default bg-background/60 p-2 text-xs',
             rightPad
           )
         )}
       >
         <div className="font-medium capitalize">{platform} snapshot</div>
-        <ul className="mt-1 space-y-0.5 text-muted-foreground">
-          {followers != null && <li>Followers: {followers.toLocaleString()}</li>}
+        <ul className="mt-1 space-y-0.5 text-secondary">
+          {followers != null && (
+            <li>Followers: {followers.toLocaleString()}</li>
+          )}
           {reach != null && <li>Reach: {reach.toLocaleString()}</li>}
           {engagements != null && (
             <li>Engagements: {engagements.toLocaleString()}</li>
@@ -99,17 +110,17 @@ export function ChatToolResultCard({
       <div
         className={cardClass(
           cn(
-            'mt-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2 text-xs',
+            'mt-2 rounded-lg border border-warning bg-warning p-2 text-xs',
             rightPad
           )
         )}
       >
-        <div className="font-medium text-amber-700 dark:text-amber-400">
+        <div className="font-medium text-warning dark:text-warning">
           What this means
         </div>
-        <p className="mt-1 text-foreground">{friendly}</p>
+        <p className="mt-1 text-default">{friendly}</p>
         {action && (
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-1 text-secondary">
             <strong className="font-medium">Next:</strong> {action}
           </p>
         )}
@@ -126,26 +137,24 @@ export function ChatToolResultCard({
       <div
         className={cardClass(
           cn(
-            'mt-2 rounded-lg border border-border bg-background/60 p-2 text-xs',
+            'mt-2 rounded-lg border border-default bg-background/60 p-2 text-xs',
             rightPad
           )
         )}
       >
-        {summary && <div className="font-medium text-foreground">{summary}</div>}
+        {summary && <div className="font-medium text-default">{summary}</div>}
         {prompt && (
           <details className="mt-1">
-            <summary className="cursor-pointer select-none text-muted-foreground">
+            <summary className="cursor-pointer select-none text-secondary">
               View generation prompt
             </summary>
-            <p className="mt-1 whitespace-pre-wrap text-muted-foreground">
-              {prompt}
-            </p>
+            <p className="mt-1 whitespace-pre-wrap text-secondary">{prompt}</p>
           </details>
         )}
         {hashtags.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex flex-wrap gap-1 text-[11px] text-secondary">
             {hashtags.map((tag) => (
-              <span key={tag} className="rounded bg-muted px-1.5 py-0.5">
+              <span key={tag} className="rounded bg-element px-1.5 py-0.5">
                 {tag.startsWith('#') ? tag : `#${tag}`}
               </span>
             ))}
@@ -165,7 +174,7 @@ export function ChatToolResultCard({
         <div
           className={cardClass(
             cn(
-              'mt-2 rounded-lg border border-dashed border-muted-foreground/40 bg-background/60 p-2 text-xs text-muted-foreground',
+              'mt-2 rounded-lg border border-dashed border-muted-foreground/40 bg-background/60 p-2 text-xs text-secondary',
               rightPad
             )
           )}
@@ -179,12 +188,12 @@ export function ChatToolResultCard({
       <div
         className={cardClass(
           cn(
-            'mt-2 rounded-lg border border-border bg-background/60 p-2 text-xs',
+            'mt-2 rounded-lg border border-default bg-background/60 p-2 text-xs',
             rightPad
           )
         )}
       >
-        <div className="mb-1 font-medium text-foreground">Upcoming festivals</div>
+        <div className="mb-1 font-medium text-default">Upcoming festivals</div>
         <ul className="space-y-1">
           {festivals.slice(0, 5).map((f) => {
             const name = typeof f.name === 'string' ? f.name : 'Festival';
@@ -195,22 +204,21 @@ export function ChatToolResultCard({
             const whyItFits =
               typeof f.whyItFits === 'string' ? f.whyItFits : '';
             return (
-              <li key={`${name}-${date}`} className="text-foreground">
+              <li key={`${name}-${date}`} className="text-default">
                 <span className="font-medium">{name}</span>{' '}
-                <span className="text-muted-foreground">
+                <span className="text-secondary">
                   · {date}
-                  {daysAway != null && ` (${daysAway}d${approximate ? ' approx' : ''})`}
+                  {daysAway != null &&
+                    ` (${daysAway}d${approximate ? ' approx' : ''})`}
                 </span>
-                {whyItFits && (
-                  <div className="text-muted-foreground">{whyItFits}</div>
-                )}
+                {whyItFits && <div className="text-secondary">{whyItFits}</div>}
               </li>
             );
           })}
         </ul>
-        <p className="mt-1.5 text-[11px] text-muted-foreground">
-          Pick the event on the Occasion Posts page — the engine writes the caption
-          and image for you from your brand context.
+        <p className="mt-1.5 text-[11px] text-secondary">
+          Pick the event on the Occasion Posts page — the engine writes the
+          caption and image for you from your brand context.
         </p>
         <DismissButton onDismiss={onDismiss} />
       </div>

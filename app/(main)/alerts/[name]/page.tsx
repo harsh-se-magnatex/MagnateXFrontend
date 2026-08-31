@@ -6,9 +6,7 @@ import { EmailAlerts } from '../../_components/EmailAlerts';
 import { PostSuccessAlerts } from '../../_components/PostSuccessAlert';
 import { PostFailureAlerts } from '../../_components/PostFailure';
 import { NewReleasesAlerts } from '../../_components/NewReleases';
-import {
-  useNotificationCounts,
-} from '../../_components/NotificationCountsProvider';
+import { useNotificationCounts } from '../../_components/NotificationCountsProvider';
 import {
   NOTIFICATION_CATEGORIES,
   type NotificationCategory,
@@ -25,8 +23,7 @@ export default function AlertsPage() {
   /**
    * Marking the category as read happens as a side-effect of *viewing*
    * the alert list — there is no per-row dismiss action today and these
-   * pages render every item (including older ones) so "I've seen them"
-   * is the right semantic. The user-doc snapshot listener inside the
+   * pages render every item (including older ones) so "I've seen them"* is the right semantic. The user-doc snapshot listener inside the
    * provider then clears the badge in real time.
    */
   useEffect(() => {

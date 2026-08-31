@@ -22,14 +22,22 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { InsightMetric, PageAnalytics, PageTrendKey, Post } from '../../../types';
+import {
+  InsightMetric,
+  PageAnalytics,
+  PageTrendKey,
+  Post,
+} from '../../../types';
 import { cn } from '@/lib/utils';
 import {
   useTimestampFormatter,
   type TimestampInput,
 } from '@/lib/user-timezone';
 import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
-import { AnalyticsPostMediaCarousel, AnalyticsPostMediaThumbnail } from '@/components/shared/AnalyticsPostMediaCarousel';
+import {
+  AnalyticsPostMediaCarousel,
+  AnalyticsPostMediaThumbnail,
+} from '@/components/shared/AnalyticsPostMediaCarousel';
 import { resolveSchedulableMediaPreview } from '@/lib/post-media-preview';
 import {
   collectPostImageUrls,
@@ -65,7 +73,7 @@ export function DeltaBadge({
     return (
       <span
         className={cn(
-          'inline-flex items-center gap-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-inset ring-border',
+          'inline-flex items-center gap-0.5 rounded-full bg-element px-1.5 py-0.5 text-[10px] font-medium text-secondary ring-1 ring-inset ring-border',
           className
         )}
         title="Not enough recent data to compare to last week"
@@ -79,14 +87,15 @@ export function DeltaBadge({
   const isUp = rounded > 0;
   const Icon = isFlat ? Minus : isUp ? ArrowUpRight : ArrowDownRight;
   const tone = isFlat
-    ? 'bg-muted text-muted-foreground ring-border'
+    ? 'bg-element text-secondary ring-border'
     : isUp
-      ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/30'
-      : 'bg-red-500/15 text-red-300 ring-red-500/30';
+      ? 'bg-success text-success ring-[var(--border-success)]'
+      : 'bg-danger text-danger ring-[var(--border-danger)]';
   const sign = isFlat ? '' : isUp ? '+' : '';
-  const displayPct = Math.abs(rounded) >= 1000
-    ? `${(rounded / 1000).toFixed(1)}k`
-    : rounded.toFixed(Math.abs(rounded) < 10 ? 1 : 0);
+  const displayPct =
+    Math.abs(rounded) >= 1000
+      ? `${(rounded / 1000).toFixed(1)}k`
+      : rounded.toFixed(Math.abs(rounded) < 10 ? 1 : 0);
   return (
     <span
       className={cn(
@@ -127,34 +136,32 @@ export function StatCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-xl border bg-card p-4 text-left shadow-sm transition-all',
-        'hover:border-border hover:bg-muted/50',
+        'rounded-full border bg-default p-4 text-left transition-expo',
+        'hover:border-default hover:bg-element',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2',
-        selected
-          ? 'border-primary ring-2 ring-primary/25'
-          : 'border-border',
+        selected ? 'border-primary ring-2 ring-strong' : 'border-default',
         className
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <Icon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+        <p className="text-sm font-medium text-secondary">{label}</p>
+        <Icon className="h-5 w-5 shrink-0 text-secondary" aria-hidden />
       </div>
       <div className="mt-2 flex items-center gap-2">
-        <p className="text-2xl font-semibold tabular-nums text-foreground">
+        <p className="text-2xl font-semibold tabular-nums text-default">
           {value}
         </p>
         {delta !== undefined ? <DeltaBadge pct={delta} /> : null}
       </div>
       {delta !== undefined ? (
-        <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+        <p className="mt-0.5 text-[10px] uppercase tracking-wide text-secondary">
           vs last week
         </p>
       ) : null}
       {hint ? (
-        <p className="mt-1.5 text-xs leading-snug text-muted-foreground">{hint}</p>
+        <p className="mt-1.5 text-xs leading-snug text-secondary">{hint}</p>
       ) : (
-        <p className="mt-1.5 text-xs text-muted-foreground">Click for details</p>
+        <p className="mt-1.5 text-xs text-secondary">Click for details</p>
       )}
     </button>
   );
@@ -217,18 +224,18 @@ export function GrowthAreaChart({
 
   if (data.length === 0) {
     return (
-      <div className="flex min-h-[220px] flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
-        <p className="text-sm font-medium text-foreground">{title}</p>
-        <div className="mt-4 flex flex-1 items-center justify-center rounded-lg border border-dashed border-border bg-muted/60">
-          <span className="text-sm text-muted-foreground">{emptyHint}</span>
+      <div className="flex min-h-[220px] flex-col rounded-xl border border-default bg-default p-4">
+        <p className="text-sm font-medium text-default">{title}</p>
+        <div className="mt-4 flex flex-1 items-center justify-center rounded-lg border border-dashed border-default bg-element">
+          <span className="text-sm text-secondary">{emptyHint}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col rounded-xl border border-border bg-card p-4 shadow-sm">
-      <p className="text-sm font-medium text-foreground">{title}</p>
+    <div className="flex flex-col rounded-xl border border-default bg-default p-4">
+      <p className="text-sm font-medium text-default">{title}</p>
       <ChartContainer
         config={config}
         className="mt-2 aspect-auto h-[260px] w-full sm:h-[280px]"
@@ -284,10 +291,10 @@ export function GrowthAreaChart({
                 }
                 formatter={(value, name) => (
                   <div className="flex w-full min-w-48 items-center justify-between gap-4">
-                    <span className="text-muted-foreground capitalize">
+                    <span className="text-secondary capitalize">
                       {String(name)}
                     </span>
-                    <span className="font-mono font-medium tabular-nums text-foreground">
+                    <span className="font-mono font-medium tabular-nums text-default">
                       {Number(value).toLocaleString()}
                     </span>
                   </div>
@@ -309,10 +316,8 @@ export function GrowthAreaChart({
 }
 
 /**
- * Compact pill that classifies an individual post as either a "Nudge"
- * (engagement ≥ 1.5× the visible cohort average) or a "Dud" (everything
- * else). Rendered inline at the top of `TopPostCard` / `InstagramMediaCard`
- * so a quick scan tells the user which posts are worth recreating.
+ * Compact pill that classifies an individual post as either a "Nudge"* (engagement ≥ 1.5× the visible cohort average) or a "Dud" (everything
+ * else). Rendered inline at the top of `TopPostCard` / `InstagramMediaCard`* so a quick scan tells the user which posts are worth recreating.
  */
 export function NudgeDudBadge({
   kind,
@@ -328,8 +333,8 @@ export function NudgeDudBadge({
       className={cn(
         'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ring-1 ring-inset',
         isNudge
-          ? 'bg-emerald-500/10 text-emerald-300 ring-emerald-500/30'
-          : 'bg-muted text-muted-foreground ring-border',
+          ? 'bg-success text-success ring-[var(--border-success)]'
+          : 'bg-element text-secondary ring-border',
         className
       )}
       title={
@@ -379,20 +384,21 @@ export function TopPostCard({
   const preview = post.message?.trim().slice(0, 160) || 'No caption';
   const ellipsis = post.message && post.message.length > 160 ? '…' : '';
   const permalink = post.permalinkUrl?.trim();
-  const canOpenDetails = Boolean(onExpandImage) && externalSiteName === 'LinkedIn';
+  const canOpenDetails =
+    Boolean(onExpandImage) && externalSiteName === 'LinkedIn';
   const mediaPreview = facebookPostMediaPreview(post);
   const imageUrls = collectPostImageUrls(post);
   const isCarousel = isMultiImageAnalyticsPost(post) && imageUrls.length > 1;
   const hasMedia = imageUrls.length > 0 || Boolean(post.videoUrl?.trim());
 
   return (
-    <article className="overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md">
+    <article className="overflow-hidden rounded-xl border border-default bg-default transition-">
       <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-stretch">
         {hasMedia ? (
           <button
             type="button"
             onClick={() => onExpandImage?.(post)}
-            className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-lg border-0 bg-muted p-0 text-left ring-offset-2 transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-border sm:h-auto sm:w-40"
+            className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-full border-0 bg-element p-0 text-left ring-offset-2 transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-border sm:h-auto sm:w-40"
             aria-label={
               isCarousel
                 ? `Open carousel preview, ${imageUrls.length} images`
@@ -402,13 +408,16 @@ export function TopPostCard({
             }
           >
             {isCarousel ? (
-              <AnalyticsPostMediaThumbnail urls={imageUrls} className="h-full w-full" />
+              <AnalyticsPostMediaThumbnail
+                urls={imageUrls}
+                className="h-full w-full"
+              />
             ) : (
               <PostMediaPreview
                 preview={mediaPreview}
-                className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-                videoClassName="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-                imageClassName="h-full w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                className="h-full w-full object-cover transition-transform duration-200"
+                videoClassName="h-full w-full object-cover transition-transform duration-200"
+                imageClassName="h-full w-full object-cover transition-transform duration-200"
                 muted
                 playsInline
                 preload="metadata"
@@ -426,19 +435,19 @@ export function TopPostCard({
           <button
             type="button"
             onClick={() => onExpandImage?.(post)}
-            className="flex h-36 w-full shrink-0 cursor-zoom-in items-center justify-center rounded-lg bg-muted text-muted-foreground ring-offset-2 transition-colors hover:bg-accent/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-border sm:h-auto sm:w-40"
+            className="flex h-36 w-full shrink-0 cursor-zoom-in items-center justify-center rounded-full bg-element text-secondary ring-offset-2 transition-expo hover:bg-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-border sm:h-auto sm:w-40"
             aria-label="Open post details"
           >
             <FileText className="h-10 w-10" aria-hidden />
           </button>
         ) : (
-          <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground sm:h-auto sm:w-40">
+          <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-lg bg-element text-secondary sm:h-auto sm:w-40">
             <FileText className="h-10 w-10" aria-hidden />
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-amber-300">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-secondary">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-warning text-warning">
               {rank}
             </span>
             <span>
@@ -447,7 +456,7 @@ export function TopPostCard({
               })}
             </span>
             {post.type ? (
-              <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+              <span className="rounded-md bg-element px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-secondary">
                 {post.type}
               </span>
             ) : null}
@@ -457,70 +466,70 @@ export function TopPostCard({
                 href={permalink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-auto inline-flex items-center gap-1 text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                className="ml-auto inline-flex items-center gap-1 text-secondary underline-offset-2 hover:text-default hover:underline"
               >
                 Open on {externalSiteName}
                 <ExternalLink className="h-3 w-3" aria-hidden />
               </a>
             ) : null}
           </div>
-          <p className="mt-2 line-clamp-3 text-sm text-foreground">
+          <p className="mt-2 line-clamp-3 text-sm text-default">
             {preview}
             {ellipsis}
           </p>
-          <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-secondary">
             <div>
-              <dt className="inline text-muted-foreground">Reactions </dt>
-              <dd className="inline font-medium tabular-nums text-foreground">
+              <dt className="inline text-secondary">Reactions </dt>
+              <dd className="inline font-medium tabular-nums text-default">
                 {formatCompact(post.reactions)}
               </dd>
             </div>
             <div>
-              <dt className="inline text-muted-foreground">Comments </dt>
-              <dd className="inline font-medium tabular-nums text-foreground">
+              <dt className="inline text-secondary">Comments </dt>
+              <dd className="inline font-medium tabular-nums text-default">
                 {formatCompact(post.comments)}
               </dd>
             </div>
             <div>
-              <dt className="inline text-muted-foreground">Shares </dt>
-              <dd className="inline font-medium tabular-nums text-foreground">
+              <dt className="inline text-secondary">Shares </dt>
+              <dd className="inline font-medium tabular-nums text-default">
                 {formatCompact(post.shares)}
               </dd>
             </div>
             <div>
-              <dt className="inline text-muted-foreground">Score </dt>
-              <dd className="inline font-medium tabular-nums text-foreground">
+              <dt className="inline text-secondary">Score </dt>
+              <dd className="inline font-medium tabular-nums text-default">
                 {formatCompact(post.engagementScore)}
               </dd>
             </div>
             {post.impressions != null ? (
               <div>
-                <dt className="inline text-muted-foreground">Impressions </dt>
-                <dd className="inline font-medium tabular-nums text-foreground">
+                <dt className="inline text-secondary">Impressions </dt>
+                <dd className="inline font-medium tabular-nums text-default">
                   {formatCompact(post.impressions)}
                 </dd>
               </div>
             ) : null}
             {post.uniqueImpressions != null ? (
               <div>
-                <dt className="inline text-muted-foreground">Unique </dt>
-                <dd className="inline font-medium tabular-nums text-foreground">
+                <dt className="inline text-secondary">Unique </dt>
+                <dd className="inline font-medium tabular-nums text-default">
                   {formatCompact(post.uniqueImpressions)}
                 </dd>
               </div>
             ) : null}
             {post.clicks != null ? (
               <div>
-                <dt className="inline text-muted-foreground">Clicks </dt>
-                <dd className="inline font-medium tabular-nums text-foreground">
+                <dt className="inline text-secondary">Clicks </dt>
+                <dd className="inline font-medium tabular-nums text-default">
                   {formatCompact(post.clicks)}
                 </dd>
               </div>
             ) : null}
             {post.engagementRate != null ? (
               <div>
-                <dt className="inline text-muted-foreground">Eng. rate </dt>
-                <dd className="inline font-medium tabular-nums text-foreground">
+                <dt className="inline text-secondary">Eng. rate </dt>
+                <dd className="inline font-medium tabular-nums text-default">
                   {post.engagementRate.toFixed(1)}%
                 </dd>
               </div>
@@ -567,21 +576,21 @@ export function InsightDetailPanel({
 
   return (
     <div
-      className="rounded-xl border border-border bg-muted/60 p-4 text-sm text-foreground"
+      className="rounded-xl border border-default bg-element p-4 text-sm text-default"
       role="region"
       aria-live="polite"
     >
       {metric === 'followers' ? (
         <div className="space-y-2">
-          <p className="font-medium text-foreground">Followers</p>
+          <p className="font-medium text-default">Followers</p>
           <p>
             Followers for your selected Facebook page. The Growth chart below
             shows how this changed over the reported periods.
           </p>
           {fmtDelta(fd) ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-secondary">
               Latest change vs previous bucket:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {fmtDelta(fd)}
               </span>
             </p>
@@ -590,16 +599,16 @@ export function InsightDetailPanel({
       ) : null}
       {metric === 'reach' ? (
         <div className="space-y-2">
-          <p className="font-medium text-foreground">Reach</p>
+          <p className="font-medium text-default">Reach</p>
           <p>
-            <span className="font-medium tabular-nums text-foreground">
+            <span className="font-medium tabular-nums text-default">
               {formatCompact(merged.totalReach)}
             </span>{' '}
             media views (reach)
             {merged.totalUniqueReach > 0 ? (
               <>
                 {' · '}
-                <span className="font-medium tabular-nums text-foreground">
+                <span className="font-medium tabular-nums text-default">
                   {formatCompact(merged.totalUniqueReach)}
                 </span>{' '}
                 unique media views
@@ -608,9 +617,9 @@ export function InsightDetailPanel({
             .
           </p>
           {fmtDelta(rd) ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-secondary">
               Reach vs previous period:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {fmtDelta(rd)}
               </span>
             </p>
@@ -619,28 +628,28 @@ export function InsightDetailPanel({
       ) : null}
       {metric === 'posts' ? (
         <div className="space-y-2">
-          <p className="font-medium text-foreground">Posts</p>
+          <p className="font-medium text-default">Posts</p>
           <p>
-            <span className="font-medium tabular-nums text-foreground">
+            <span className="font-medium tabular-nums text-default">
               {postCount}
             </span>{' '}
             posts stored for analytics for this page.
           </p>
           {merged.postFrequencyTop.length > 0 ? (
             <div>
-              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-secondary">
                 Recent days by volume
               </p>
               <ul className="flex flex-wrap gap-2">
                 {merged.postFrequencyTop.map(({ date, count }) => (
                   <li
                     key={date}
-                    className="rounded-lg bg-card px-2.5 py-1 text-xs ring-1 ring-border"
+                    className="rounded-lg bg-default px-2.5 py-1 text-xs ring-1 ring-border"
                   >
-                    <span className="text-muted-foreground">
+                    <span className="text-secondary">
                       {formatChartTooltipDate(date)}
                     </span>{' '}
-                    <span className="font-medium tabular-nums text-foreground">
+                    <span className="font-medium tabular-nums text-default">
                       ×{count}
                     </span>
                   </li>
@@ -652,11 +661,11 @@ export function InsightDetailPanel({
       ) : null}
       {metric === 'engagement' ? (
         <div className="space-y-2">
-          <p className="font-medium text-foreground">Engagement</p>
+          <p className="font-medium text-default">Engagement</p>
           {merged.totalEngagementsPage > 0 ? (
             <p>
               Page-level post engagements (Meta insight):{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {formatCompact(merged.totalEngagementsPage)}
               </span>
               .
@@ -664,22 +673,22 @@ export function InsightDetailPanel({
           ) : (
             <p>
               Sum of reactions, comments, and shares across stored posts:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {formatCompact(merged.engagementsFromPosts)}
               </span>
               .
             </p>
           )}
           {fmtDelta(ed) ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-secondary">
               Page engagements vs previous period:{' '}
-              <span className="font-medium tabular-nums text-foreground">
+              <span className="font-medium tabular-nums text-default">
                 {fmtDelta(ed)}
               </span>
             </p>
           ) : null}
-          <p className="text-xs text-muted-foreground">
-            Open <strong className="text-foreground">Top posts</strong> below for
+          <p className="text-xs text-secondary">
+            Open <strong className="text-default">Top posts</strong> below for
             per-post breakdown (impressions, clicks, rate).
           </p>
         </div>
@@ -724,7 +733,10 @@ export function TopPostImageDialog({
           {hasMedia ? (
             <div className="flex max-h-[min(70vh,720px)] items-center justify-center bg-background/40">
               {isCarousel ? (
-                <AnalyticsPostMediaCarousel urls={imageUrls} className="w-full" />
+                <AnalyticsPostMediaCarousel
+                  urls={imageUrls}
+                  className="w-full"
+                />
               ) : (
                 <PostMediaPreview
                   preview={mediaPreview}
@@ -739,12 +751,12 @@ export function TopPostImageDialog({
               )}
             </div>
           ) : (
-            <div className="flex min-h-48 items-center justify-center bg-background/40 text-muted-foreground">
+            <div className="flex min-h-48 items-center justify-center bg-background/40 text-secondary">
               <FileText className="h-14 w-14" aria-hidden />
             </div>
           )}
-          <DialogHeader className="gap-1 border-t border-border p-4 text-left sm:p-5">
-            <DialogTitle className="text-base text-foreground">
+          <DialogHeader className="gap-1 border-t border-default p-4 text-left sm:p-5">
+            <DialogTitle className="text-base text-default">
               {isCarousel ? 'Carousel preview' : 'Top post preview'}
             </DialogTitle>
             <DialogDescription className="sr-only">
@@ -753,75 +765,75 @@ export function TopPostImageDialog({
                 : 'Enlarged post image with full caption and engagement metrics.'}
             </DialogDescription>
             {dateLabel ? (
-              <p className="text-xs text-muted-foreground">{dateLabel}</p>
+              <p className="text-xs text-secondary">{dateLabel}</p>
             ) : null}
             {permalink ? (
               <a
                 href={permalink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex w-fit items-center gap-1 text-xs font-medium text-primary hover:underline"
+                className="inline-flex w-fit items-center gap-1 text-xs font-medium text-link hover:underline"
               >
                 View on {externalSiteName}
                 <ExternalLink className="h-3 w-3" aria-hidden />
               </a>
             ) : null}
-            <p className="pt-2 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+            <p className="pt-2 text-sm leading-relaxed text-default whitespace-pre-wrap">
               {caption}
             </p>
-            <dl className="flex flex-wrap gap-x-5 gap-y-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+            <dl className="flex flex-wrap gap-x-5 gap-y-2 border-t border-default pt-3 text-xs text-secondary">
               <div>
-                <dt className="text-muted-foreground">Reactions</dt>
-                <dd className="font-medium tabular-nums text-foreground">
+                <dt className="text-secondary">Reactions</dt>
+                <dd className="font-medium tabular-nums text-default">
                   {formatCompact(post.reactions)}
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Comments</dt>
-                <dd className="font-medium tabular-nums text-foreground">
+                <dt className="text-secondary">Comments</dt>
+                <dd className="font-medium tabular-nums text-default">
                   {formatCompact(post.comments)}
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Shares</dt>
-                <dd className="font-medium tabular-nums text-foreground">
+                <dt className="text-secondary">Shares</dt>
+                <dd className="font-medium tabular-nums text-default">
                   {formatCompact(post.shares)}
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Engagement score</dt>
-                <dd className="font-medium tabular-nums text-foreground">
+                <dt className="text-secondary">Engagement score</dt>
+                <dd className="font-medium tabular-nums text-default">
                   {formatCompact(post.engagementScore)}
                 </dd>
               </div>
               {post.impressions != null ? (
                 <div>
-                  <dt className="text-muted-foreground">Impressions</dt>
-                  <dd className="font-medium tabular-nums text-foreground">
+                  <dt className="text-secondary">Impressions</dt>
+                  <dd className="font-medium tabular-nums text-default">
                     {formatCompact(post.impressions)}
                   </dd>
                 </div>
               ) : null}
               {post.uniqueImpressions != null ? (
                 <div>
-                  <dt className="text-muted-foreground">Unique impressions</dt>
-                  <dd className="font-medium tabular-nums text-foreground">
+                  <dt className="text-secondary">Unique impressions</dt>
+                  <dd className="font-medium tabular-nums text-default">
                     {formatCompact(post.uniqueImpressions)}
                   </dd>
                 </div>
               ) : null}
               {post.clicks != null ? (
                 <div>
-                  <dt className="text-muted-foreground">Clicks</dt>
-                  <dd className="font-medium tabular-nums text-foreground">
+                  <dt className="text-secondary">Clicks</dt>
+                  <dd className="font-medium tabular-nums text-default">
                     {formatCompact(post.clicks)}
                   </dd>
                 </div>
               ) : null}
               {post.engagementRate != null ? (
                 <div>
-                  <dt className="text-muted-foreground">Engagement rate</dt>
-                  <dd className="font-medium tabular-nums text-foreground">
+                  <dt className="text-secondary">Engagement rate</dt>
+                  <dd className="font-medium tabular-nums text-default">
                     {post.engagementRate.toFixed(1)}%
                   </dd>
                 </div>
@@ -829,15 +841,15 @@ export function TopPostImageDialog({
             </dl>
             {aiFooter}
             {post.commentsList && post.commentsList.length > 0 ? (
-              <div className="border-t border-border/60 pt-3">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <div className="border-t border-default pt-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-secondary">
                   Recent comments
                 </p>
                 <ul className="mt-2 space-y-2">
                   {post.commentsList.slice(0, 5).map((comment, index) => (
                     <li
                       key={`${comment.message}-${index}`}
-                      className="rounded-lg bg-muted px-3 py-2 text-xs text-foreground"
+                      className="rounded-lg bg-element px-3 py-2 text-xs text-default"
                     >
                       {comment.message || 'Empty comment'}
                     </li>
@@ -851,4 +863,3 @@ export function TopPostImageDialog({
     </Dialog>
   );
 }
-

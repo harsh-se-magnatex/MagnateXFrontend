@@ -145,9 +145,10 @@ function daysFromSuggestion(
   // Carry over dates the user already picked when the new plan has the
   // same length — keeps the calendar selections sticky across regenerate
   // / re-select for the SAME card.
-  const carried = carriedDays && carriedDays.length === suggestion.days.length
-    ? carriedDays.map((d) => d.date)
-    : [];
+  const carried =
+    carriedDays && carriedDays.length === suggestion.days.length
+      ? carriedDays.map((d) => d.date)
+      : [];
   return suggestion.days.map((plan, idx) =>
     planToDraft(plan, idx, carried[idx] ?? null)
   );
@@ -215,7 +216,9 @@ export const useCampaignState = create<CampaignState>()((set) => ({
         // When the user regenerates the card they are actively editing,
         // refresh the editor with the new plan (carry over dates when the
         // day count matches).
-        days: isActive ? daysFromSuggestion(suggestion, state.days) : state.days,
+        days: isActive
+          ? daysFromSuggestion(suggestion, state.days)
+          : state.days,
         theme: isActive ? suggestion.theme : state.theme,
         description: isActive ? suggestion.description : state.description,
       };

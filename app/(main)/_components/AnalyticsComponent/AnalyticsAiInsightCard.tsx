@@ -54,24 +54,24 @@ export function AnalyticsAiInsightCard({
   const cacheKey = useMemo(() => stableSerialize(context), [context]);
   const showPageExpand = scope === 'page' && !compact && !embed;
   const router = useRouter();
-  
+
   useEffect(() => {
     structuredReadyKeyRef.current = null;
     setStructuredPayload(null);
     setStructuredError(null);
   }, [cacheKey]);
-  
+
   useEffect(() => {
     if (!expanded || !showPageExpand) return;
     if (structuredReadyKeyRef.current === cacheKey) {
       setStructuredLoading(false);
       return;
     }
-    
+
     let cancelled = false;
     setStructuredLoading(true);
     setStructuredError(null);
-    
+
     (async () => {
       try {
         const res = await postAnalyticsRecommendations({
@@ -94,12 +94,12 @@ export function AnalyticsAiInsightCard({
         if (!cancelled) setStructuredLoading(false);
       }
     })();
-    
+
     return () => {
       cancelled = true;
     };
   }, [expanded, showPageExpand, cacheKey, platform, context]);
-  
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -126,16 +126,15 @@ export function AnalyticsAiInsightCard({
       cancelled = true;
     };
   }, [platform, scope, cacheKey, context]);
-  
-  
+
   const ring =
     platform === 'facebook'
-      ? 'ring-primary/20 bg-gradient-to-br from-primary/10 to-card'
-      : 'ring-secondary/20 bg-gradient-to-br from-secondary/10 to-card';
+      ? 'ring-strong bg-gradient-to-br from-primary/10 to-card'
+      : 'ring-brand/20 bg-gradient-to-br from-brand/10 to-card';
 
   const shell = embed
     ? `rounded-none border-0 bg-transparent shadow-none ring-0 ${className}`
-    : `rounded-xl border border-border shadow-sm ring-1 ${ring} ${className}`;
+    : `rounded-xl border border-default ring-1 ${ring} ${className}`;
 
   return (
     <div
@@ -157,35 +156,35 @@ export function AnalyticsAiInsightCard({
           'flex items-center gap-2 px-4 py-3',
           compact ? 'py-2' : '',
           embed
-            ? 'border-t border-border px-0 pt-4'
-            : 'border-b border-border/60'
+            ? 'border-t border-default px-0 pt-4'
+            : 'border-b border-default'
         )}
       >
         <Sparkles
           className={cn(
             'shrink-0',
             compact ? 'h-4 w-4' : 'h-5 w-5',
-            platform === 'facebook' ? 'text-primary' : 'text-pink-600'
+            platform === 'facebook' ? 'text-link' : 'text-preview'
           )}
           aria-hidden
         />
         <div className="min-w-0 flex-1">
           <p
             className={cn(
-              'font-semibold text-foreground',
+              'font-semibold text-default',
               compact ? 'text-xs' : 'text-sm'
             )}
           >
             Recommendations
           </p>
           {!compact && data?.source === 'fallback' ? (
-            <p className="text-[10px] font-normal text-muted-foreground">
+            <p className="text-[10px] font-normal text-secondary">
               Rule-based insights (set OpenAI key on the server for richer tips)
             </p>
           ) : null}
         </div>
         {loading ? (
-          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
+          <Loader2 className="h-4 w-4 shrink-0 animate-spin text-secondary" />
         ) : null}
       </div>
       <div
@@ -195,13 +194,13 @@ export function AnalyticsAiInsightCard({
         )}
       >
         {error ? (
-          <p className="text-sm text-center text-red-600">{error}</p>
+          <p className="text-sm text-center text-danger">{error}</p>
         ) : loading && !data ? (
           <ul className="space-y-2">
             {[1, 2, 3].map((i) => (
               <li
                 key={i}
-                className="h-3 animate-pulse rounded bg-accent"
+                className="h-3 animate-pulse rounded bg-hover"
                 style={{ width: `${78 - i * 6}%` }}
               />
             ))}
@@ -209,7 +208,7 @@ export function AnalyticsAiInsightCard({
         ) : data?.bullets?.length ? (
           <ul
             className={cn(
-              'list-disc space-y-1.5 pl-4 text-foreground/90',
+              'list-disc space-y-1.5 pl-4 text-secondary',
               compact ? 'text-xs' : 'text-sm'
             )}
           >
@@ -220,7 +219,7 @@ export function AnalyticsAiInsightCard({
             ))}
           </ul>
         ) : (
-          <p className="text-xs text-muted-foreground">No suggestions yet.</p>
+          <p className="text-xs text-secondary">No suggestions yet.</p>
         )}
       </div>
 
@@ -234,7 +233,7 @@ export function AnalyticsAiInsightCard({
             aria-hidden={!expanded}
           >
             <div className="min-h-0 overflow-hidden">
-              <div className="border-t border-border px-2 py-3 sm:px-4">
+              <div className="border-t border-default px-2 py-3 sm:px-4">
                 {expanded ? (
                   <AnalyticsStructuredInsightsPanel
                     platform={platform}
@@ -249,11 +248,10 @@ export function AnalyticsAiInsightCard({
               </div>
             </div>
           </div>
-          <div className="mt-auto flex justify-end border-t border-border/60 px-4 py-2">
+          <div className="mt-auto flex justify-end border-t border-default px-4 py-2">
             {(() => {
               // Plan IDs are `{tier}-{mode}` after the Phase 1 6-plan
-              // split; both legacy variants unlock the "View more"
-              // expansion. Non-legacy paid plans (Prime / Elite, Auto
+              // split; both legacy variants unlock the "View more"// expansion. Non-legacy paid plans (Prime / Elite, Auto
               // or Manual) keep seeing the "Upgrade" CTA instead.
               const planId = String(billing?.activePlan ?? '').toLowerCase();
               const isLegacyTier =

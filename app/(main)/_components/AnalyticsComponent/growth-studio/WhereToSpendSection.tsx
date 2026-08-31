@@ -47,7 +47,9 @@ export function WhereToSpendSection({
   // GrowthStudioBlock), so the effect runs exactly once. We hydrate
   // synchronously from the zustand cache when available; otherwise the
   // effect fetches and writes back.
-  const [state, setState] = useState<FetchState>(() => initialStateFor(platform));
+  const [state, setState] = useState<FetchState>(() =>
+    initialStateFor(platform)
+  );
 
   useEffect(() => {
     const cache = useWhereToSpendCache.getState();
@@ -79,9 +81,9 @@ export function WhereToSpendSection({
       <header className="flex flex-wrap items-center justify-between gap-2">
         <h2
           id="growth-studio-where-to-spend-heading"
-          className="flex items-center gap-2 text-sm font-semibold text-foreground"
+          className="text-section text-default flex items-center gap-2"
         >
-          <Megaphone className="h-4 w-4 text-violet-600" aria-hidden />
+          <Megaphone className="h-4 w-4 text-preview" aria-hidden />
           Where to spend
         </h2>
       </header>
@@ -90,21 +92,22 @@ export function WhereToSpendSection({
         <div
           role="status"
           aria-label="Loading boost recommendation"
-          className="h-32 animate-pulse rounded-xl border border-violet-500/25 bg-violet-500/10"
+          className="h-32 animate-pulse rounded-xl border border-preview bg-preview"
         />
       ) : state.status === 'error' ? (
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+        <p className="rounded-lg border border-warning bg-warning px-3 py-2 text-xs text-warning">
           Couldn’t load boost recommendation: {state.error}
         </p>
       ) : state.payload.card &&
-        (state.payload.mode === 'stage0' || state.payload.mode === 'amplify') ? (
+        (state.payload.mode === 'stage0' ||
+          state.payload.mode === 'amplify') ? (
         <BoostRecommendationCard
           mode={state.payload.mode}
           card={state.payload.card}
           platform={platform}
         />
       ) : (
-        <p className="rounded-lg border border-border bg-muted px-3 py-3 text-xs text-muted-foreground">
+        <p className="rounded-lg border border-default bg-element px-3 py-3 text-xs text-secondary">
           {state.payload.reason ??
             'No boost candidate this week — your next post might be the one.'}
         </p>

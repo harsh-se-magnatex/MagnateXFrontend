@@ -48,38 +48,38 @@ function AlertItem({
       type="button"
       onClick={() => onSelect(href)}
       className={cn(
-        'group flex w-full items-start gap-4 py-5 hover:bg-accent/40 px-4 -mx-4 rounded-2xl transition-colors text-left',
-        hasUnread && 'ring-1 ring-primary-purple/40'
+        'group flex w-full items-start gap-4 py-5 hover:bg-hover px-4 -mx-4 rounded-full transition-expo text-left',
+        hasUnread && 'ring-1 ring-strong'
       )}
     >
       <div
         className={cn(
-          'p-2 rounded-lg transition-colors mt-0.5',
-          'bg-primary/10 text-primary group-hover:bg-primary/15'
+          'p-2 rounded-lg transition-expo mt-0.5',
+          'bg-primary/10 text-link group-hover:bg-primary/15'
         )}
       >
         <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-semibold text-foreground">{label}</p>
+          <p className="font-semibold text-default">{label}</p>
           {badge ? (
-            <span className="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-100">
+            <span className="inline-flex items-center rounded-full bg-danger px-2 py-0.5 text-xs font-semibold text-danger ring-1 ring-[var(--border-danger)]">
               {badge}
             </span>
           ) : (
             !countsLoading && (
-              <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground ring-1 ring-border">
+              <span className="inline-flex items-center rounded-full bg-element px-2 py-0.5 text-xs font-medium text-secondary ring-1 ring-border">
                 0
               </span>
             )
           )}
         </div>
         {description && (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          <p className="mt-1 text-sm text-secondary">{description}</p>
         )}
       </div>
-      <div className="self-center text-muted-foreground group-hover:text-foreground">
+      <div className="self-center text-secondary group-hover:text-default">
         <span className="inline-block h-5 w-5">↗</span>
       </div>
     </button>
@@ -120,30 +120,28 @@ export default function NotificationsSettingsPage() {
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="mb-8">
-        <h1 className={workspacePageTitleClass}>
-          Notifications
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h1 className={workspacePageTitleClass}>Notifications</h1>
+        <p className="mt-2 text-sm text-secondary">
           Control how and when you receive alerts from SocioGenie.
         </p>
       </div>
 
       <div className="space-y-8">
         <section className="glass-card rounded-3xl p-6 sm:p-8">
-          <div className="flex flex-wrap items-center gap-3 mb-2 border-b border-border pb-4">
-            <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
+          <div className="flex flex-wrap items-center gap-3 mb-2 border-b border-default pb-4">
+            <div className="p-2 bg-primary-purple/10 rounded-lg text-preview">
               <Bell className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">Alerts</h2>
+            <h2 className="text-section text-default">Alerts</h2>
             <button
               type="button"
               onClick={handleMarkAllRead}
               disabled={markingAll || total <= 0}
               className={cn(
-                'ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors',
+                'ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-expo',
                 total > 0 && !markingAll
-                  ? 'bg-primary-purple/10 text-primary-purple hover:bg-primary-purple/15'
-                  : 'cursor-not-allowed bg-muted text-muted-foreground'
+                  ? 'bg-primary-purple/10 text-preview hover:bg-element'
+                  : 'cursor-not-allowed bg-element text-secondary'
               )}
             >
               <CheckCheck className="h-3.5 w-3.5" />

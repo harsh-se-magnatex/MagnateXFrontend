@@ -45,22 +45,25 @@ function ExamplePostDetailModal({
       aria-labelledby="example-post-detail-title"
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-card text-foreground shadow-xl"
+        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-default bg-default text-default"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border p-4">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-default p-4">
           <div>
-            <h2 id="example-post-detail-title" className="text-lg font-semibold">
+            <h2
+              id="example-post-detail-title"
+              className="text-section text-default"
+            >
               Example post
             </h2>
-            <p className="text-xs font-medium capitalize text-muted-foreground">
+            <p className="text-xs font-medium capitalize text-secondary">
               {platformLabel(post.platform)}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="rounded-full p-1.5 text-secondary hover:bg-hover hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
             aria-label="Close"
           >
             <svg
@@ -81,27 +84,23 @@ function ExamplePostDetailModal({
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-10 pt-4 overscroll-contain">
           {post.imageUrl ? (
             <div>
-              <p className="mb-1 text-xs font-medium text-muted-foreground">
-                Image
-              </p>
+              <p className="mb-1 text-xs font-medium text-secondary">Image</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={post.imageUrl}
                 alt={`${post.platform} example`}
-                className="max-h-80 w-full rounded-xl border border-border bg-muted object-contain"
+                className="max-h-80 w-full rounded-xl border border-default bg-element object-contain"
               />
             </div>
           ) : (
-            <div className="flex min-h-56 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/40 px-4 text-sm text-muted-foreground">
+            <div className="flex min-h-56 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-default bg-element px-4 text-sm text-secondary">
               <ImageOff className="h-8 w-8" />
               Preview unavailable
             </div>
           )}
           <div>
-            <p className="mb-1 text-xs font-medium text-muted-foreground">
-              Caption
-            </p>
-            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground">
+            <p className="mb-1 text-xs font-medium text-secondary">Caption</p>
+            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-default">
               {post.caption || 'No caption'}
             </p>
           </div>
@@ -201,7 +200,7 @@ export function ExamplePostsCard() {
             type="button"
             variant="outline"
             size="sm"
-            className="rounded-full border-border bg-muted px-3.5 py-1.5 text-sm font-medium text-foreground hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+            className="rounded-full border-default bg-element px-3.5 py-1.5 text-sm font-medium text-default hover:border-primary/30 hover:bg-primary/5 hover:text-link"
           >
             <Sparkles className="mr-1.5 h-3.5 w-3.5" />
             {triggerLabel}
@@ -211,24 +210,22 @@ export function ExamplePostsCard() {
         <PopoverContent
           align="start"
           sideOffset={8}
-          className="w-[min(92vw,30rem)] overflow-hidden rounded-2xl border-border p-0"
+          className="w-[min(92vw,30rem)] overflow-hidden rounded-2xl border-default p-0"
         >
-          <div className="border-b border-border px-4 py-3">
-            <p className="text-sm font-semibold text-foreground">
-              Example posts
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+          <div className="border-b border-default px-4 py-3">
+            <p className="text-sm font-semibold text-default">Example posts</p>
+            <p className="mt-0.5 text-xs text-secondary">
               Free brand previews. Nothing is scheduled.
             </p>
           </div>
 
           <div className="max-h-[26rem] overflow-y-auto p-3">
             {!onboarded ? (
-              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-sm">
-                <p className="font-medium text-foreground">
+              <div className="rounded-xl border border-dashed border-default bg-element p-4 text-sm">
+                <p className="font-medium text-default">
                   Complete Brand DNA first
                 </p>
-                <p className="mt-1 text-muted-foreground">
+                <p className="mt-1 text-secondary">
                   Example posts need your brand profile before generation.
                 </p>
                 <Button asChild size="sm" variant="outline" className="mt-3">
@@ -236,16 +233,16 @@ export function ExamplePostsCard() {
                 </Button>
               </div>
             ) : isRunning ? (
-              <div className="flex items-center gap-2 rounded-xl border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 rounded-xl border border-default bg-element p-4 text-sm text-secondary">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Generating {posts.length} of {meta?.expectedCount ?? 3}
               </div>
             ) : posts.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-sm">
-                <p className="font-medium text-foreground">
+              <div className="rounded-xl border border-dashed border-default bg-element p-4 text-sm">
+                <p className="font-medium text-default">
                   No examples generated yet
                 </p>
-                <p className="mt-1 text-muted-foreground">
+                <p className="mt-1 text-secondary">
                   Generate one free set for your connected platforms.
                 </p>
                 <Button
@@ -254,7 +251,9 @@ export function ExamplePostsCard() {
                   onClick={() => void generate()}
                   disabled={generating || meta?.used}
                 >
-                  {meta?.used ? 'Free examples already used' : 'Generate examples'}
+                  {meta?.used
+                    ? 'Free examples already used'
+                    : 'Generate examples'}
                 </Button>
               </div>
             ) : (
@@ -272,11 +271,11 @@ export function ExamplePostsCard() {
                       }
                     }}
                     className={cn(
-                      'grid cursor-pointer grid-cols-[5.5rem_1fr] gap-3 rounded-xl border border-border bg-card p-2 text-left transition-colors',
-                      'hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
+                      'grid cursor-pointer grid-cols-[5.5rem_1fr] gap-3 rounded-xl border border-default bg-default p-2 text-left transition-expo',
+                      'hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-strong'
                     )}
                   >
-                    <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+                    <div className="aspect-square overflow-hidden rounded-lg bg-element">
                       {post.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -285,19 +284,19 @@ export function ExamplePostsCard() {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-full items-center justify-center text-muted-foreground">
+                        <div className="flex h-full items-center justify-center text-secondary">
                           <ImageOff className="h-5 w-5" />
                         </div>
                       )}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-secondary">
                         {platformLabel(post.platform)}
                       </p>
-                      <p className="mt-1 max-h-28 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm leading-snug text-foreground">
+                      <p className="mt-1 max-h-28 overflow-y-auto whitespace-pre-wrap break-words pr-1 text-sm leading-snug text-default">
                         {post.caption || 'No caption'}
                       </p>
-                      <p className="mt-2 text-[11px] font-medium text-primary">
+                      <p className="mt-2 text-[11px] font-medium text-link">
                         Click for full details
                       </p>
                     </div>

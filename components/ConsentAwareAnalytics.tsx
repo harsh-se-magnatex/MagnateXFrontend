@@ -34,8 +34,10 @@ export function ConsentAwareAnalytics() {
 
   if (!enabled) return null;
 
-  return <>
-    <Analytics beforeSend={beforeSend} />
-    <SpeedInsights beforeSend={beforeSend} />
-  </>;
+  return (
+    <>
+      <Analytics beforeSend={beforeSend} />
+      <SpeedInsights beforeSend={beforeSend} />
+    </>
+  );
 }

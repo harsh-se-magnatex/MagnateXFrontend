@@ -232,7 +232,7 @@ export type LinkedInAnalyticsConnection = {
 export type audienceRanked = {
   countries: { name: string; count: number }[];
   cities: { name: string; count: number }[];
-}
+};
 
 export type InsightMetric = 'followers' | 'reach' | 'posts' | 'engagement';
 

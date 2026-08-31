@@ -73,7 +73,9 @@ export async function getAssistantUsage(): Promise<AssistantUsage> {
   return (res as { data: AssistantUsage }).data;
 }
 
-export async function listAssistantConversations(): Promise<ConversationSummary[]> {
+export async function listAssistantConversations(): Promise<
+  ConversationSummary[]
+> {
   const res = await apiGet<{ data: { conversations: ConversationSummary[] } }>(
     '/api/v1/assistant/conversations'
   );
@@ -113,8 +115,7 @@ export function streamAssistantChat(
   onEvent: AssistantStreamHandler
 ): AbortController {
   const controller = new AbortController();
-  const url =
-    (axiosClient.defaults.baseURL ?? '') + '/api/v1/assistant/chat';
+  const url = (axiosClient.defaults.baseURL ?? '') + '/api/v1/assistant/chat';
 
   (async () => {
     let response: Response;
@@ -162,9 +163,7 @@ export function streamAssistantChat(
         const blocks = buffer.split('\n\n');
         buffer = blocks.pop() ?? '';
         for (const block of blocks) {
-          const line = block
-            .split('\n')
-            .find((l) => l.startsWith('data:'));
+          const line = block.split('\n').find((l) => l.startsWith('data:'));
           if (!line) continue;
           const raw = line.slice(5).trim();
           if (!raw) continue;

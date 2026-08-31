@@ -119,33 +119,32 @@ export function CookieBanner() {
         ref={dialogRef}
         tabIndex={-1}
         className={cn(
-          'my-auto w-full max-w-lg rounded-2xl border border-border bg-card text-card-foreground shadow-2xl outline-none',
-          'dark:border-border dark:bg-card'
+          'my-auto w-full max-w-lg rounded-2xl border border-default bg-default text-default outline-none',
+          'dark:border-default dark:bg-default'
         )}
       >
         {step === 'main' ? (
           <div className="p-5 sm:p-6">
             <div className="flex items-center gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-link ring-1 ring-strong">
                 <Cookie className="size-5" aria-hidden />
               </span>
-              <h2
-                id="cookie-gate-title"
-                className="text-base font-semibold tracking-tight text-foreground sm:text-lg"
-              >
+              <h2 id="cookie-gate-title" className="text-section text-default">
                 Before you continue
               </h2>
             </div>
 
-            <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-[0.9375rem]">
+            <p className="mt-4 text-sm leading-relaxed text-secondary sm:text-[0.9375rem]">
               SocioGenie needs a small number of{' '}
-              <span className="font-medium text-foreground">essential cookies</span>{' '}
-              to sign you in and keep your session secure — the app can&apos;t run
-              without them. Analytics cookies are optional and entirely your
+              <span className="font-medium text-default">
+                essential cookies
+              </span>{' '}
+              to sign you in and keep your session secure — the app can&apos;t
+              run without them. Analytics cookies are optional and entirely your
               choice. Read our{' '}
               <Link
                 href="/legal/cookie"
-                className="font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                className="font-medium text-link underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-strong rounded-sm"
               >
                 Cookie Policy
               </Link>
@@ -182,7 +181,7 @@ export function CookieBanner() {
           </div>
         ) : (
           <div className="flex max-h-[min(85vh,32rem)] flex-col">
-            <div className="flex shrink-0 items-center gap-2 border-b border-border px-4 py-3 sm:px-5">
+            <div className="flex shrink-0 items-center gap-2 border-b border-default px-4 py-3 sm:px-5">
               <Button
                 type="button"
                 variant="ghost"
@@ -193,56 +192,84 @@ export function CookieBanner() {
               >
                 <ArrowLeft className="size-4" />
               </Button>
-              <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">
-                Cookie settings
-              </h2>
+              <h2 className="text-section text-default">Cookie settings</h2>
             </div>
             <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5 sm:py-5">
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Our website uses cookies to distinguish you from other users of our website. This helps us provide
-                you with a more personalized experience when you browse our website and also allows us to improve our
-                site. Cookies may collect information that is used to tailor ads shown to you on our website and other
-                websites. The information might be about you, your preferences or your device. The information does not
-                usually directly identify you, but it can give you a more personalized web experience. You can choose
-                not to allow some types of cookies.
+              <p className="text-sm leading-relaxed text-secondary">
+                Our website uses cookies to distinguish you from other users of
+                our website. This helps us provide you with a more personalized
+                experience when you browse our website and also allows us to
+                improve our site. Cookies may collect information that is used
+                to tailor ads shown to you on our website and other websites.
+                The information might be about you, your preferences or your
+                device. The information does not usually directly identify you,
+                but it can give you a more personalized web experience. You can
+                choose not to allow some types of cookies.
               </p>
 
               <ul className="mt-6 space-y-5">
-                <li className="rounded-xl border border-border bg-muted/30 p-4 dark:bg-muted/20">
+                <li className="rounded-xl border border-default bg-element p-4 dark:bg-element">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground">Necessary</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        Enables security, sign-in and basic functionality. Required
-                        to use SocioGenie.
+                      <p className="font-medium text-default">Necessary</p>
+                      <p className="mt-1 text-sm text-secondary">
+                        Enables security, sign-in and basic functionality.
+                        Required to use SocioGenie.
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
-                      <Switch checked disabled aria-readonly className="pointer-events-none" />
-                      <span className="text-xs font-medium text-muted-foreground">Required</span>
+                      <Switch
+                        checked
+                        disabled
+                        aria-readonly
+                        className="pointer-events-none"
+                      />
+                      <span className="text-xs font-medium text-secondary">
+                        Required
+                      </span>
                     </div>
                   </div>
                 </li>
 
-                <li className="rounded-xl border border-border bg-muted/30 p-4 dark:bg-muted/20">
+                <li className="rounded-xl border border-default bg-element p-4 dark:bg-element">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground">Analytics</p>
-                      <p className="mt-1 text-sm text-muted-foreground">Enables tracking of site performance.</p>
+                      <p className="font-medium text-default">Analytics</p>
+                      <p className="mt-1 text-sm text-secondary">
+                        Enables tracking of site performance.
+                      </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
-                      <Switch checked={analytics} onCheckedChange={setAnalytics} aria-label="Analytics cookies" />
-                      <span className="text-xs font-medium text-muted-foreground">{analytics ? 'On' : 'Off'}</span>
+                      <Switch
+                        checked={analytics}
+                        onCheckedChange={setAnalytics}
+                        aria-label="Analytics cookies"
+                      />
+                      <span className="text-xs font-medium text-secondary">
+                        {analytics ? 'On' : 'Off'}
+                      </span>
                     </div>
                   </div>
                 </li>
               </ul>
             </div>
-            <div className="flex shrink-0 flex-col gap-2 border-t border-border p-4 sm:flex-row sm:justify-end sm:px-5 sm:py-4">
-              <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => setStep('main')}>
+            <div className="flex shrink-0 flex-col gap-2 border-t border-default p-4 sm:flex-row sm:justify-end sm:px-5 sm:py-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => setStep('main')}
+              >
                 Back
               </Button>
-              <Button type="button" variant="default" size="sm" className="w-full sm:w-auto" onClick={handleSaveCustom}>
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={handleSaveCustom}
+              >
                 Accept &amp; continue
               </Button>
             </div>

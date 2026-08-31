@@ -30,7 +30,7 @@ export function AuthPasswordField({
 
   return (
     <Field>
-      <FieldLabel htmlFor={id} className="text-foreground font-medium">
+      <FieldLabel htmlFor={id} className="text-default font-medium">
         {label}
       </FieldLabel>
       <div className="relative">
@@ -44,14 +44,14 @@ export function AuthPasswordField({
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           className={cn(
-            'h-11 rounded-xl border-border bg-card py-2.5 pr-11 pl-3 text-foreground shadow-sm transition-none placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20'
+            'h-11 rounded-lg border-default bg-default py-2.5 pr-11 pl-3 text-default transition-none placeholder:text-quaternary focus-visible:border-strong focus-visible:ring-strong'
           )}
         />
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="absolute top-1/2 right-1 h-9 w-9 -translate-y-1/2 rounded-lg text-muted-foreground transition-none hover:bg-accent hover:text-foreground active:-translate-y-1/2"
+          className="absolute top-1/2 right-1 h-9 w-9 -translate-y-1/2 rounded-full text-secondary transition-expo hover:bg-element hover:text-default"
           onClick={() => setVisible((v) => !v)}
           disabled={disabled}
           aria-label={visible ? 'Hide password' : 'Show password'}

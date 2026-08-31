@@ -6,7 +6,7 @@ import { showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
 
 const defaultClassName =
-  'inline-flex items-center justify-center rounded-lg border border-primary/30 bg-card px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-60 disabled:cursor-wait';
+  'inline-flex items-center justify-center rounded-lg border border-primary/30 bg-default px-4 py-2 text-sm font-medium text-link hover:bg-primary/10 disabled:text-quaternary disabled:cursor-wait';
 
 type Props = {
   url: string;

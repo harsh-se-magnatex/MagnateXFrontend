@@ -52,10 +52,7 @@ import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import { normalizePreferredPostingTime } from '@/utils/preferredPostingTime';
 import Link from 'next/link';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
@@ -94,7 +91,7 @@ import {
 const inputBase = workspaceInputClass;
 
 const scheduleButtonClass =
-  'w-full rounded-xl bg-gradient-action px-4 py-3 text-sm font-bold text-white shadow-md shadow-primary-purple/30 transition-all mt-1 hover:brightness-105 hover:-translate-y-0.5 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:opacity-45 disabled:shadow-none disabled:hover:brightness-100';
+  'mt-1 flex h-11 w-full items-center justify-center rounded-full btn-brand-fill px-4 text-sm font-medium transition-expo disabled:cursor-not-allowed';
 
 const ACCEPTED_IMAGE_TYPES = [
   'image/jpeg',
@@ -103,11 +100,10 @@ const ACCEPTED_IMAGE_TYPES = [
   'image/webp',
 ];
 
-
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 const VIDEO_EDIT_CREDIT_COST = 4;
 // const ACCEPTED_TYPES=ACCEPTED_IMAGE_TYPES.concat(ACCEPTED_VIDEO_TYPES);
-const ACCEPTED_TYPES=ACCEPTED_IMAGE_TYPES;
+const ACCEPTED_TYPES = ACCEPTED_IMAGE_TYPES;
 type CreateMode = 'image' | 'video';
 
 function mapInstantDocsToCreatedContent(args: {
@@ -204,7 +200,7 @@ function ExpandableCaption({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-primary-purple hover:text-primary-purple hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple rounded-sm"
+          className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-preview hover:text-preview hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-strong rounded-full"
         >
           {expanded ? 'View less' : 'View more'}
         </button>
@@ -267,7 +263,8 @@ export default function AIContentPage() {
   const [productImages, setProductImages] = useState<File[]>([]);
   const imagePreview = useImagePreview();
   const selectedEditTool = useMemo(
-    () => VIDEO_EDIT_TOOLS.find((t) => t.id === editTool) ?? VIDEO_EDIT_TOOLS[0],
+    () =>
+      VIDEO_EDIT_TOOLS.find((t) => t.id === editTool) ?? VIDEO_EDIT_TOOLS[0],
     [editTool]
   );
 
@@ -287,7 +284,7 @@ export default function AIContentPage() {
     (s) => s.removeRenderedPlatform
   );
   const platform = useInstantGeneratedState((s) => s.schedulePlatform);
-  const setPlatform = useInstantGeneratedState((s) => s.setSchedulePlatform)
+  const setPlatform = useInstantGeneratedState((s) => s.setSchedulePlatform);
   const scheduled = useInstantGeneratedState((s) => s.scheduled);
   const pushScheduled = useInstantGeneratedState((s) => s.pushScheduled);
   const { billing, loading: creditsLoading } = useUserPlanCredits();
@@ -311,9 +308,10 @@ export default function AIContentPage() {
     billing != null &&
     !hasSelectablePlatforms;
 
-
   const genPlatforms = useInstantGeneratedState((state) => state.genPlatforms);
-  const setGenPlatforms = useInstantGeneratedState((state) => state.setGenPlatforms);
+  const setGenPlatforms = useInstantGeneratedState(
+    (state) => state.setGenPlatforms
+  );
   const toggleGenPlatform = useInstantGeneratedState(
     (state) => state.toggleGenPlatform
   );
@@ -450,7 +448,9 @@ export default function AIContentPage() {
 
   useEffect(() => {
     if (!generated) return;
-    const withImages = generated.renderedImages.filter((r) => r.imageUrl?.trim());
+    const withImages = generated.renderedImages.filter((r) =>
+      r.imageUrl?.trim()
+    );
     if (withImages.length > 1 && platform !== 'all_platforms') {
       setPlatform('all_platforms');
     }
@@ -475,9 +475,7 @@ export default function AIContentPage() {
   );
 
   const generationCreditCost =
-    createMode === 'video'
-      ? VIDEO_EDIT_CREDIT_COST
-      : genPlatforms.length * 2;
+    createMode === 'video' ? VIDEO_EDIT_CREDIT_COST : genPlatforms.length * 2;
   const allPlatformsSelected = areAllEnabledSelected(
     genPlatforms,
     allowedPlatforms
@@ -524,10 +522,7 @@ export default function AIContentPage() {
           platform: asset.platform as SocialPlatform,
         }));
     }
-    if (
-      activeRenderedImage &&
-      isSocialPlatform(activeRenderedImage.platform)
-    ) {
+    if (activeRenderedImage && isSocialPlatform(activeRenderedImage.platform)) {
       return [
         {
           asset: activeRenderedImage,
@@ -548,11 +543,19 @@ export default function AIContentPage() {
       if (
         !hasScheduleWindow ||
         isScheduleDateAfterPlanExpiry(slot.date, maxDate)
-      ) return false;
+      )
+        return false;
       if (isScheduleTimeInPast(slot.date, slot.time)) return false;
       return true;
     },
-    [generated, hasScheduleWindow, isScheduling, maxDate, platformSchedule, scheduleTargets]
+    [
+      generated,
+      hasScheduleWindow,
+      isScheduling,
+      maxDate,
+      platformSchedule,
+      scheduleTargets,
+    ]
   );
 
   const preferredTimeForPlatform = useCallback(
@@ -688,8 +691,7 @@ export default function AIContentPage() {
             editTool === 'replace_background' ? scenePreset : undefined,
           placementPreset:
             editTool === 'add_product' ? placementPreset : undefined,
-          productImages:
-            editTool === 'add_product' ? productImages : undefined,
+          productImages: editTool === 'add_product' ? productImages : undefined,
         });
         if (!response.accepted) {
           throw new Error('Could not generate video.');
@@ -701,7 +703,8 @@ export default function AIContentPage() {
           expectedCount: 1,
         });
         if (wait.outcome === 'generated') toast.success('Generated');
-        else showErrorToast('Content generation failed. Please try again later.');
+        else
+          showErrorToast('Content generation failed. Please try again later.');
         setIsGenerating(false);
       } catch (e: unknown) {
         showErrorToast('Content generation failed. Please try again later.');
@@ -733,7 +736,10 @@ export default function AIContentPage() {
         uid,
         collectionName: 'content',
         parentJobId: response.parentJobId,
-        expectedCount: Math.max(1, response.platforms?.length ?? genPlatforms.length),
+        expectedCount: Math.max(
+          1,
+          response.platforms?.length ?? genPlatforms.length
+        ),
       });
       if (wait.outcome === 'generated') {
         const createdContent = mapInstantDocsToCreatedContent({
@@ -865,23 +871,23 @@ export default function AIContentPage() {
           </p>
         </div>
         <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary-purple/10 text-primary-purple">
+          <div className="p-2 rounded-lg bg-primary-purple/10 text-preview">
             <CreditCard className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Credits: 
-              <span className="font-semibold text-foreground text-sm">
-              {creditsLoading ? '…' : (credits ?? '—')}{' '}
+            <p className="text-xs font-semibold uppercase tracking-widest text-secondary">
+              Credits:
+              <span className="font-semibold text-default text-sm">
+                {creditsLoading ? '…' : (credits ?? '—')}{' '}
               </span>
             </p>
 
-            <span className="text-xs font-normal text-muted-foreground">
-                Cost:
-                <span className="font-semibold">
-                  &nbsp;{generationCreditCost || 2}
-                </span>
+            <span className="text-xs font-normal text-secondary">
+              Cost:
+              <span className="font-semibold">
+                &nbsp;{generationCreditCost || 2}
               </span>
+            </span>
           </div>
         </div>
       </header>
@@ -889,22 +895,20 @@ export default function AIContentPage() {
       <div className="grid gap-8 xl:grid-cols-[minmax(0,2fr),minmax(0,1.3fr)]">
         {/* Left: Create & Generate */}
         <section className="glass-card rounded-3xl p-5 sm:p-6 space-y-5">
-          <div className="flex items-center gap-3 border-b border-border pb-3">
-            <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
+          <div className="flex items-center gap-3 border-b border-default pb-3">
+            <div className="p-2 bg-primary-purple/10 rounded-lg text-preview">
               <Sparkles className="h-4 w-4" />
             </div>
-            <h2 className="text-base font-semibold text-foreground">
-              Create Quick Content
-            </h2>
+            <h2 className="text-section text-default">Create Quick Content</h2>
           </div>
           <div className="space-y-4">
             {createMode === 'video' ? (
               <>
                 <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-foreground">
+                  <label className="mb-1.5 block text-sm font-semibold text-default">
                     What do you want to do?
                   </label>
-                  <p className="mb-2 text-xs text-muted-foreground">
+                  <p className="mb-2 text-xs text-secondary">
                     Safe tools keep your scene. Creative tools only change what
                     you explicitly choose.
                   </p>
@@ -918,29 +922,29 @@ export default function AIContentPage() {
                           disabled={isGenerating}
                           onClick={() => setEditTool(tool.id)}
                           className={cn(
-                            'rounded-xl border px-3 py-2.5 text-left transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                            'rounded-full border px-3 py-2.5 text-left transition-expo ease-[cubic-bezier(0.4,0,0.2,1)]',
                             selected
                               ? 'border-primary-purple/35 bg-primary-purple/10'
-                              : 'border-border bg-card hover:border-primary-purple/25 hover:bg-primary-purple/[0.03]',
+                              : 'border-default bg-default hover:border-strong hover:bg-primary-purple/[0.03]',
                             isGenerating && 'cursor-not-allowed opacity-60'
                           )}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-foreground">
+                            <span className="text-sm font-semibold text-default">
                               {tool.label}
                             </span>
                             <span
                               className={cn(
                                 'rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
                                 tool.tier === 'safe'
-                                  ? 'bg-emerald-500/10 text-emerald-400'
-                                  : 'bg-amber-500/10 text-amber-300'
+                                  ? 'bg-success text-success'
+                                  : 'bg-warning text-warning'
                               )}
                             >
                               {tool.tier}
                             </span>
                           </div>
-                          <p className="mt-1 text-xs text-muted-foreground">
+                          <p className="mt-1 text-xs text-secondary">
                             {tool.description}
                           </p>
                         </button>
@@ -950,10 +954,10 @@ export default function AIContentPage() {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-foreground">
+                  <label className="mb-1.5 block text-sm font-semibold text-default">
                     Editing look
                   </label>
-                  <p className="mb-2 text-xs text-muted-foreground">
+                  <p className="mb-2 text-xs text-secondary">
                     {selectedEditTool.tier === 'safe'
                       ? 'Mood and grade for the polish pass.'
                       : 'Mood for your creative transformation.'}
@@ -968,10 +972,10 @@ export default function AIContentPage() {
                           disabled={isGenerating}
                           onClick={() => setEditIntent(intent.id)}
                           className={cn(
-                            'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                            'rounded-full border px-3 py-1.5 text-xs font-semibold transition-expo ease-[cubic-bezier(0.4,0,0.2,1)]',
                             selected
-                              ? 'border-primary-purple/35 bg-primary-purple/10 text-primary-purple'
-                              : 'border-border bg-card text-muted-foreground hover:border-primary-purple/25 hover:text-foreground',
+                              ? 'border-primary-purple/35 bg-primary-purple/10 text-preview'
+                              : 'border-default bg-default text-secondary hover:border-strong hover:text-default',
                             isGenerating && 'cursor-not-allowed opacity-60'
                           )}
                         >
@@ -984,10 +988,10 @@ export default function AIContentPage() {
 
                 {editTool === 'replace_background' ? (
                   <div>
-                    <label className="mb-1.5 block text-sm font-semibold text-foreground">
+                    <label className="mb-1.5 block text-sm font-semibold text-default">
                       Background scene
                     </label>
-                    <p className="mb-2 text-xs text-muted-foreground">
+                    <p className="mb-2 text-xs text-secondary">
                       Pick a concrete setting — open text is less reliable.
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -1000,10 +1004,10 @@ export default function AIContentPage() {
                             disabled={isGenerating}
                             onClick={() => setScenePreset(preset.id)}
                             className={cn(
-                              'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
+                              'rounded-full border px-3 py-1.5 text-xs font-semibold transition-expo',
                               selected
-                                ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                                : 'border-border bg-card text-muted-foreground hover:border-amber-500/35 hover:text-foreground',
+                                ? 'border-warning bg-warning text-warning'
+                                : 'border-default bg-default text-secondary hover:border-warning hover:text-default',
                               isGenerating && 'cursor-not-allowed opacity-60'
                             )}
                           >
@@ -1018,10 +1022,10 @@ export default function AIContentPage() {
                 {editTool === 'add_product' ? (
                   <div className="space-y-3">
                     <div>
-                      <label className="mb-1.5 block text-sm font-semibold text-foreground">
+                      <label className="mb-1.5 block text-sm font-semibold text-default">
                         Product placement
                       </label>
-                      <p className="mb-2 text-xs text-muted-foreground">
+                      <p className="mb-2 text-xs text-secondary">
                         Where should the product appear in the clip?
                       </p>
                       <div className="flex flex-wrap gap-2">
@@ -1034,10 +1038,10 @@ export default function AIContentPage() {
                               disabled={isGenerating}
                               onClick={() => setPlacementPreset(preset.id)}
                               className={cn(
-                                'rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
+                                'rounded-full border px-3 py-1.5 text-xs font-semibold transition-expo',
                                 selected
-                                  ? 'border-amber-500/40 bg-amber-500/10 text-amber-300'
-                                  : 'border-border bg-card text-muted-foreground hover:border-amber-500/35 hover:text-foreground',
+                                  ? 'border-warning bg-warning text-warning'
+                                  : 'border-default bg-default text-secondary hover:border-warning hover:text-default',
                                 isGenerating && 'cursor-not-allowed opacity-60'
                               )}
                             >
@@ -1048,10 +1052,10 @@ export default function AIContentPage() {
                       </div>
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-sm font-semibold text-foreground">
+                      <label className="mb-1.5 block text-sm font-semibold text-default">
                         Product photos (1–3)
                       </label>
-                      <p className="mb-2 text-xs text-muted-foreground">
+                      <p className="mb-2 text-xs text-secondary">
                         Clear product shots work best — same product you want
                         placed in the video.
                       </p>
@@ -1062,21 +1066,19 @@ export default function AIContentPage() {
                         disabled={isGenerating}
                         onChange={(e) => {
                           const files = Array.from(e.target.files ?? [])
-                            .filter((f) =>
-                              ACCEPTED_TYPES.includes(f.type)
-                            )
+                            .filter((f) => ACCEPTED_TYPES.includes(f.type))
                             .slice(0, 3);
                           setProductImages(files);
                           e.target.value = '';
                         }}
-                        className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary-purple/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-primary-purple hover:file:bg-primary-purple/15"
+                        className="block w-full text-sm text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-primary-purple/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-preview hover:file:bg-primary-purple/15"
                       />
                       {productImages.length > 0 ? (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {productImages.map((file, idx) => (
                             <div
                               key={`${file.name}-${idx}`}
-                              className="relative h-16 w-16 overflow-hidden rounded-lg border border-border bg-muted"
+                              className="relative h-16 w-16 overflow-hidden rounded-lg border border-default bg-element"
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
@@ -1100,7 +1102,7 @@ export default function AIContentPage() {
                           ))}
                         </div>
                       ) : (
-                        <p className="mt-1 text-xs text-amber-400">
+                        <p className="mt-1 text-xs text-warning">
                           Add at least one product photo to continue.
                         </p>
                       )}
@@ -1113,7 +1115,7 @@ export default function AIContentPage() {
             <div id="tour-qc-prompt">
               <label
                 htmlFor="ai-prompt"
-                className="mb-1.5 block text-sm font-semibold text-foreground"
+                className="mb-1.5 block text-sm font-semibold text-default"
               >
                 {createMode === 'video'
                   ? 'Fine-tune (optional)'
@@ -1138,7 +1140,7 @@ export default function AIContentPage() {
                   'resize-y min-h-[80px] leading-relaxed'
                 )}
               />
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-xs text-secondary">
                 {createMode === 'video'
                   ? selectedEditTool.tier === 'safe'
                     ? `${selectedEditTool.label}: same people and place — professionally presented.`
@@ -1148,195 +1150,203 @@ export default function AIContentPage() {
             </div>
 
             {createMode === 'image' ? (
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-foreground">
-                Reference image (optional)
-              </label>
-              <div
-                onDrop={onDrop}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-                className={cn('app-dropzone', isDragging && 'app-dropzone--active')}
-              >
-                {hasImage ? (
-                  <div className="p-3 relative flex justify-center">
-                    <div className="app-media-frame relative group shadow-sm">
-                      <img
-                        src={previewUrl ?? ''}
-                        alt="Reference preview"
-                        className="max-h-[200px] object-contain bg-muted"
-                      />
-                      <div
-                        className={cn(
-                          'absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity',
-                          isGenerating
-                            ? 'pointer-events-none opacity-0'
-                            : 'opacity-0 group-hover:opacity-100'
-                        )}
-                      >
-                        <button
-                          type="button"
-                          onClick={clearImage}
-                          disabled={isGenerating}
-                          className="rounded-full bg-card/90 px-3 py-1.5 text-xs font-semibold text-destructive shadow-sm transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-default">
+                  Reference image (optional)
+                </label>
+                <div
+                  onDrop={onDrop}
+                  onDragOver={onDragOver}
+                  onDragLeave={onDragLeave}
+                  className={cn(
+                    'app-dropzone',
+                    isDragging && 'app-dropzone--active'
+                  )}
+                >
+                  {hasImage ? (
+                    <div className="p-3 relative flex justify-center">
+                      <div className="app-media-frame relative group">
+                        <img
+                          src={previewUrl ?? ''}
+                          alt="Reference preview"
+                          className="max-h-[200px] object-contain bg-element"
+                        />
+                        <div
+                          className={cn(
+                            'absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity',
+                            isGenerating
+                              ? 'pointer-events-none opacity-0'
+                              : 'opacity-0 group-hover:opacity-100'
+                          )}
                         >
-                          Remove image
-                        </button>
+                          <button
+                            type="button"
+                            onClick={clearImage}
+                            disabled={isGenerating}
+                            className="rounded-full bg-default px-3 py-1.5 text-xs font-semibold text-destructive transition-transform disabled:cursor-not-allowed disabled:text-quaternary disabled:"
+                          >
+                            Remove image
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center gap-2 py-5 px-4 cursor-pointer">
-                    <input
-                      type="file"
-                      accept={ACCEPTED_TYPES.join(',')}
-                      onChange={onFileInputChange}
-                      className="sr-only"
-                    />
-                    <div className="app-dropzone__icon flex h-10 w-10 items-center justify-center rounded-full text-primary-purple bg-card shadow-sm ring-1 ring-border">
-                      <ImageIcon className="h-5 w-5" />
-                    </div>
-                    <div className="text-center">
-                      <span className="text-sm font-medium text-foreground block">
-                        Click to upload or drag &amp; drop
-                      </span>
-                      <span className="text-xs text-muted-foreground mt-0.5 block">
-                        JPEG, PNG, GIF, WebP.
-                      </span>
-                    </div>
-                  </label>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 py-5 px-4 cursor-pointer">
+                      <input
+                        type="file"
+                        accept={ACCEPTED_TYPES.join(',')}
+                        onChange={onFileInputChange}
+                        className="sr-only"
+                      />
+                      <div className="app-dropzone__icon flex h-10 w-10 items-center justify-center rounded-full text-preview bg-default ring-1 ring-border">
+                        <ImageIcon className="h-5 w-5" />
+                      </div>
+                      <div className="text-center">
+                        <span className="text-sm font-medium text-default block">
+                          Click to upload or drag &amp; drop
+                        </span>
+                        <span className="text-xs text-secondary mt-0.5 block">
+                          JPEG, PNG, GIF, WebP.
+                        </span>
+                      </div>
+                    </label>
+                  )}
+                </div>
+                {imageError && (
+                  <p className="mt-2 text-sm text-destructive">{imageError}</p>
                 )}
               </div>
-              {imageError && (
-                <p className="mt-2 text-sm text-destructive">{imageError}</p>
-              )}
-            </div>
             ) : (
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold text-foreground">
-                Video
-              </label>
-              <p className="mb-2 text-xs text-muted-foreground">
-                Upload the clip you want to edit (MP4 or WebM).
-              </p>
-              <div
-                onDrop={onDrop}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-                className={cn('app-dropzone', isDragging && 'app-dropzone--active')}
-              >
-                {hasVideo ? (
-                  <div className="p-3 relative flex flex-col items-center gap-3">
-                    <p className="w-full truncate text-sm font-medium text-foreground">
-                      {selectedVideo?.name ?? 'Video selected'}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={clearVideo}
-                      disabled={isGenerating}
-                      className="rounded-full bg-card px-3 py-1.5 text-xs font-semibold text-destructive shadow-sm ring-1 ring-border transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      Remove video
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center gap-2 py-5 px-4 cursor-pointer">
-                    <input
-                      type="file"
-                      accept={ACCEPTED_TYPES.join(',')}
-                      onChange={onFileInputChange}
-                      className="sr-only"
-                    />
-                    <div className="app-dropzone__icon flex h-10 w-10 items-center justify-center rounded-full text-primary-purple bg-card shadow-sm ring-1 ring-border">
-                      <Video className="h-5 w-5" />
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-default">
+                  Video
+                </label>
+                <p className="mb-2 text-xs text-secondary">
+                  Upload the clip you want to edit (MP4 or WebM).
+                </p>
+                <div
+                  onDrop={onDrop}
+                  onDragOver={onDragOver}
+                  onDragLeave={onDragLeave}
+                  className={cn(
+                    'app-dropzone',
+                    isDragging && 'app-dropzone--active'
+                  )}
+                >
+                  {hasVideo ? (
+                    <div className="p-3 relative flex flex-col items-center gap-3">
+                      <p className="w-full truncate text-sm font-medium text-default">
+                        {selectedVideo?.name ?? 'Video selected'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={clearVideo}
+                        disabled={isGenerating}
+                        className="rounded-full bg-default px-3 py-1.5 text-xs font-semibold text-destructive ring-1 ring-border transition-transform disabled:cursor-not-allowed disabled:text-quaternary"
+                      >
+                        Remove video
+                      </button>
                     </div>
-                    <div className="text-center">
-                      <span className="text-sm font-medium text-foreground block">
-                        Click to upload or drag &amp; drop
-                      </span>
-                      <span className="text-xs text-muted-foreground mt-0.5 block">
-                        JPEG, PNG, GIF, WebP or MP4.
-                      </span>
-                    </div>
-                  </label>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 py-5 px-4 cursor-pointer">
+                      <input
+                        type="file"
+                        accept={ACCEPTED_TYPES.join(',')}
+                        onChange={onFileInputChange}
+                        className="sr-only"
+                      />
+                      <div className="app-dropzone__icon flex h-10 w-10 items-center justify-center rounded-full text-preview bg-default ring-1 ring-border">
+                        <Video className="h-5 w-5" />
+                      </div>
+                      <div className="text-center">
+                        <span className="text-sm font-medium text-default block">
+                          Click to upload or drag &amp; drop
+                        </span>
+                        <span className="text-xs text-secondary mt-0.5 block">
+                          JPEG, PNG, GIF, WebP or MP4.
+                        </span>
+                      </div>
+                    </label>
+                  )}
+                </div>
+                {videoError && (
+                  <p className="mt-2 text-sm text-destructive">{videoError}</p>
                 )}
               </div>
-              {videoError && (
-                <p className="mt-2 text-sm text-destructive">{videoError}</p>
-              )}
-            </div>
             )}
           </div>
           <div id="tour-qc-platforms">
-          {showSelectAccountsFirst ? (
-            <div
-              role="status"
-              className="rounded-xl border border-amber-500/30 bg-amber-500/15 px-4 py-3 text-sm text-amber-200"
-            >
-              <p className="font-medium">Select your accounts first</p>
-              <p className="mt-1 text-amber-300/90">
-                Choose which platforms you use in onboarding or social settings,
-                then come back here to generate posts.
-              </p>
-              <Link
-                href={WORKSPACE_NAV_HREFS.linkedProfiles}
-                className="mt-2 inline-block text-sm font-semibold text-amber-200 underline underline-offset-2 hover:text-amber-300"
+            {showSelectAccountsFirst ? (
+              <div
+                role="status"
+                className="rounded-xl border border-warning bg-warning px-4 py-3 text-sm text-warning"
               >
-                {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
-              </Link>
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-wrap gap-4 sm:gap-6">
-                {allowedPlatforms.map((p) => (
-                  <label
-                    key={p}
-                    htmlFor={`generate-platform-${p}`}
-                    className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
-                  >
-                    <input
-                      id={`generate-platform-${p}`}
-                      type="checkbox"
-                      checked={genPlatforms.includes(p)}
-                      onChange={() => handleToggleGenPlatform(p)}
-                      className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
-                    />
-                    <span>{platformLabel(p)}</span>
-                  </label>
-                ))}
-                {allowedPlatforms.length > 1 && (
-                  <label
-                    htmlFor="generate-platform-all"
-                    className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
-                  >
-                    <input
-                      id="generate-platform-all"
-                      type="checkbox"
-                      checked={allPlatformsSelected}
-                      onChange={handleSelectAllGenPlatforms}
-                      className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
-                    />
-                    <span>
-                      {allPlatformsSelectionLabel(allowedPlatforms.length)}
-                    </span>
-                  </label>
-                )}
-              </div>
-              {!platformSelection.ok ? (
-                <p className="mt-2 text-xs text-amber-400">{platformSelection.error}</p>
-              ) : (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {createMode === 'video'
-                    ? 'Edits one video using your first selected platform for aspect ratio and caption.'
-                    : allPlatformsSelected
-                      ? `Generates one post per connected platform (${allowedPlatforms.length}).`
-                      : genPlatforms.length > 1
-                        ? `Generates one post per selected platform (${genPlatforms.length}).`
-                        : 'Select one or more platforms for this run.'}
+                <p className="font-medium">Select your accounts first</p>
+                <p className="mt-1 text-warning">
+                  Choose which platforms you use in onboarding or social
+                  settings, then come back here to generate posts.
                 </p>
-              )}
-            </>
-          )}
+                <Link
+                  href={WORKSPACE_NAV_HREFS.linkedProfiles}
+                  className="mt-2 inline-block text-sm font-semibold text-warning underline underline-offset-2 hover:text-warning"
+                >
+                  {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-4 sm:gap-6">
+                  {allowedPlatforms.map((p) => (
+                    <label
+                      key={p}
+                      htmlFor={`generate-platform-${p}`}
+                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
+                    >
+                      <input
+                        id={`generate-platform-${p}`}
+                        type="checkbox"
+                        checked={genPlatforms.includes(p)}
+                        onChange={() => handleToggleGenPlatform(p)}
+                        className="size-4 rounded border-default text-preview focus:ring-strong"
+                      />
+                      <span>{platformLabel(p)}</span>
+                    </label>
+                  ))}
+                  {allowedPlatforms.length > 1 && (
+                    <label
+                      htmlFor="generate-platform-all"
+                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
+                    >
+                      <input
+                        id="generate-platform-all"
+                        type="checkbox"
+                        checked={allPlatformsSelected}
+                        onChange={handleSelectAllGenPlatforms}
+                        className="size-4 rounded border-default text-preview focus:ring-strong"
+                      />
+                      <span>
+                        {allPlatformsSelectionLabel(allowedPlatforms.length)}
+                      </span>
+                    </label>
+                  )}
+                </div>
+                {!platformSelection.ok ? (
+                  <p className="mt-2 text-xs text-warning">
+                    {platformSelection.error}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-xs text-secondary">
+                    {createMode === 'video'
+                      ? 'Edits one video using your first selected platform for aspect ratio and caption.'
+                      : allPlatformsSelected
+                        ? `Generates one post per connected platform (${allowedPlatforms.length}).`
+                        : genPlatforms.length > 1
+                          ? `Generates one post per selected platform (${genPlatforms.length}).`
+                          : 'Select one or more platforms for this run.'}
+                  </p>
+                )}
+              </>
+            )}
           </div>
 
           {generateError && (
@@ -1352,19 +1362,22 @@ export default function AIContentPage() {
             disabled={!canGenerate}
             aria-busy={isGenerating}
             className={cn(
-              'group relative w-full overflow-hidden rounded-xl bg-gradient-action px-4 py-3.5 text-sm font-bold text-white shadow-md shadow-primary-purple/25',
-              'transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
-              'hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-purple/35 active:translate-y-0 active:scale-[0.98]',
-              'disabled:transform-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none',
+              'group relative w-full overflow-hidden rounded-full btn-brand-fill px-4 py-3.5 text-sm font-bold ',
+              'transition-[transform,box-] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
+              '',
+              'disabled:transform-none disabled:cursor-not-allowed disabled:bg-element disabled:text-secondary disabled:shadow-none',
               'flex items-center justify-center gap-2'
             )}
           >
             <span
-              className="absolute inset-0 bg-white/0 transition-colors duration-300 group-hover:bg-white/10"
+              className="absolute inset-0 bg-default transition-expo group-hover:bg-default"
               aria-hidden
             />
             {isGenerating ? (
-              <Loader2 className="relative z-10 h-4 w-4 animate-spin" aria-hidden />
+              <Loader2
+                className="relative z-10 h-4 w-4 animate-spin"
+                aria-hidden
+              />
             ) : createMode === 'video' ? (
               <Video className="relative z-10 h-4 w-4" aria-hidden />
             ) : (
@@ -1382,13 +1395,13 @@ export default function AIContentPage() {
           </button>
 
           {credits !== undefined && credits < generationCreditCost && (
-            <p className="mt-2 text-center text-xs text-muted-foreground">
+            <p className="mt-2 text-center text-xs text-secondary">
               Needs {generationCreditCost}{' '}
               {generationCreditCost === 1 ? 'credit' : 'credits'} — you have{' '}
               {credits}.{' '}
               <Link
                 href="/settings/billings"
-                className="font-semibold text-primary-purple underline underline-offset-2"
+                className="font-semibold text-preview underline underline-offset-2"
               >
                 Top up
               </Link>
@@ -1396,13 +1409,13 @@ export default function AIContentPage() {
           )}
 
           {createMode === 'image' && generated && (
-            <div className="mt-2 rounded-2xl border border-border bg-muted/50 p-5 space-y-4">
+            <div className="mt-2 rounded-2xl border border-default bg-element p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-widest text-secondary">
                   Generated output
                 </p>
                 {generated.renderedImages.length > 1 && (
-                  <p className="text-xs text-primary-purple font-medium">
+                  <p className="text-xs text-preview font-medium">
                     {generated.renderedImages.length} platforms · schedule each
                     one separately below
                   </p>
@@ -1411,8 +1424,8 @@ export default function AIContentPage() {
 
               {typeof generated.inferredImageContext === 'string' &&
                 generated.inferredImageContext.length > 0 && (
-                  <p className="text-sm text-muted-foreground rounded-lg bg-card/80 border border-border px-3 py-2">
-                    <span className="font-medium text-foreground">
+                  <p className="text-sm text-secondary rounded-lg bg-default border border-default px-3 py-2">
+                    <span className="font-medium text-default">
                       From your image:{' '}
                     </span>
                     {generated.inferredImageContext}
@@ -1420,7 +1433,7 @@ export default function AIContentPage() {
                 )}
 
               {generated.renderedImages.length === 0 && (
-                <p className="text-sm text-amber-300 bg-amber-500/10 rounded-lg px-3 py-2">
+                <p className="text-sm text-warning bg-warning rounded-lg px-3 py-2">
                   No image was returned for this run. Try again or choose
                   another platform.
                 </p>
@@ -1432,7 +1445,7 @@ export default function AIContentPage() {
                   const asset = generated.renderedImages[0];
                   return asset.imageUrl ? (
                     <div className="space-y-2">
-                      <p className="text-xs font-semibold text-muted-foreground capitalize">
+                      <p className="text-xs font-semibold text-secondary capitalize">
                         {asset.platform} · Image + caption
                       </p>
                       <button
@@ -1443,15 +1456,15 @@ export default function AIContentPage() {
                             `${asset.platform} generated post`
                           )
                         }
-                        className="group relative block w-full cursor-pointer overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple"
+                        className="group relative block w-full cursor-pointer overflow-hidden rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
                         aria-label="Open image preview"
                       >
                         <img
                           src={asset.imageUrl}
                           alt="Generated post"
-                          className="max-h-[320px] w-full rounded-xl object-contain bg-muted border border-border transition-transform duration-200 group-hover:scale-[1.01]"
+                          className="max-h-[320px] w-full rounded-xl object-contain bg-element border border-default transition-transform duration-200"
                         />
-                        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
+                        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-expo group-hover:bg-black/30">
                           <span className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                             <Expand className="h-3.5 w-3.5" />
                             Preview
@@ -1466,7 +1479,7 @@ export default function AIContentPage() {
                               `${asset.platform} generated post`
                             )
                           }
-                          className="w-full sm:w-auto rounded-full px-6 bg-card border border-primary-purple/25 text-primary-purple hover:bg-primary-purple/10 hover:opacity-100"
+                          className="w-full sm:w-auto rounded-full px-6 bg-default border border-primary-purple/25 text-preview hover:bg-element hover:opacity-100"
                         />
                         <DownloadPngButton
                           url={asset.imageUrl}
@@ -1483,18 +1496,24 @@ export default function AIContentPage() {
                           }
                         />
                       </div>
-                       <textarea
-                         aria-label={`${asset.platform} generated caption`}
-                         value={asset.caption}
-                         onChange={(event) =>
-                           updateRenderedImageCaption(asset.platform, event.target.value)
-                         }
-                         rows={6}
-                         className={cn(inputBase, 'resize-y text-sm leading-relaxed')}
-                       />
+                      <textarea
+                        aria-label={`${asset.platform} generated caption`}
+                        value={asset.caption}
+                        onChange={(event) =>
+                          updateRenderedImageCaption(
+                            asset.platform,
+                            event.target.value
+                          )
+                        }
+                        rows={6}
+                        className={cn(
+                          inputBase,
+                          'resize-y text-sm leading-relaxed'
+                        )}
+                      />
                     </div>
                   ) : (
-                    <p className="text-sm text-amber-300 bg-amber-500/10 rounded-lg px-3 py-2">
+                    <p className="text-sm text-warning bg-warning rounded-lg px-3 py-2">
                       No image was returned for this run. Try again or choose
                       another platform.
                     </p>
@@ -1507,9 +1526,9 @@ export default function AIContentPage() {
                   {generated.renderedImages.map((asset) => (
                     <div
                       key={asset.platform}
-                      className="w-full rounded-xl border border-border bg-card/70 p-3"
+                      className="w-full rounded-xl border border-default bg-default p-3"
                     >
-                      <span className="text-xs font-bold capitalize tracking-wider text-muted-foreground block mb-2">
+                      <span className="text-xs font-bold capitalize tracking-wider text-secondary block mb-2">
                         {asset.platform}
                       </span>
                       {asset.imageUrl ? (
@@ -1521,15 +1540,15 @@ export default function AIContentPage() {
                               `${asset.platform} generated post`
                             )
                           }
-                          className="group relative block w-full cursor-pointer overflow-hidden rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-purple"
+                          className="group relative block w-full cursor-pointer overflow-hidden rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
                           aria-label="Open image preview"
                         >
                           <img
                             src={asset.imageUrl}
                             alt={`${asset.platform} generated post`}
-                            className="max-h-[240px] w-full rounded-lg object-contain bg-muted border border-border transition-transform duration-200 group-hover:scale-[1.01]"
+                            className="max-h-[240px] w-full rounded-lg object-contain bg-element border border-default transition-transform duration-200"
                           />
-                          <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-200 group-hover:bg-black/30">
+                          <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/0 transition-expo group-hover:bg-black/30">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                               <Expand className="h-3.5 w-3.5" />
                               Preview
@@ -1537,7 +1556,7 @@ export default function AIContentPage() {
                           </span>
                         </button>
                       ) : (
-                        <p className="text-xs text-amber-400 bg-amber-500/10 rounded px-2 py-1">
+                        <p className="text-xs text-warning bg-warning rounded px-2 py-1">
                           No image returned
                         </p>
                       )}
@@ -1550,7 +1569,7 @@ export default function AIContentPage() {
                                 `${asset.platform} generated post`
                               )
                             }
-                            className="w-full sm:w-auto rounded-full px-6 bg-card border border-primary-purple/25 text-primary-purple hover:bg-primary-purple/10 hover:opacity-100"
+                            className="w-full sm:w-auto rounded-full px-6 bg-default border border-primary-purple/25 text-preview hover:bg-element hover:opacity-100"
                           />
                           <DownloadPngButton
                             url={asset.imageUrl}
@@ -1568,15 +1587,21 @@ export default function AIContentPage() {
                           />
                         </div>
                       ) : null}
-                       <textarea
-                         aria-label={`${asset.platform} generated caption`}
-                         value={asset.caption}
-                         onChange={(event) =>
-                           updateRenderedImageCaption(asset.platform, event.target.value)
-                         }
-                         rows={5}
-                         className={cn(inputBase, 'mt-2 resize-y text-xs leading-relaxed')}
-                       />
+                      <textarea
+                        aria-label={`${asset.platform} generated caption`}
+                        value={asset.caption}
+                        onChange={(event) =>
+                          updateRenderedImageCaption(
+                            asset.platform,
+                            event.target.value
+                          )
+                        }
+                        rows={5}
+                        className={cn(
+                          inputBase,
+                          'mt-2 resize-y text-xs leading-relaxed'
+                        )}
+                      />
                     </div>
                   ))}
                 </div>
@@ -1588,17 +1613,17 @@ export default function AIContentPage() {
         {/* Right: Schedule & History */}
         <section className="space-y-6">
           <div className="glass-card rounded-3xl p-6 sm:p-7 space-y-5">
-            <div className="flex items-center gap-3 border-b border-border pb-4">
-              <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
+            <div className="flex items-center gap-3 border-b border-default pb-4">
+              <div className="p-2 bg-primary-purple/10 rounded-lg text-preview">
                 <Send className="h-5 w-5" />
               </div>
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-subsection text-default">
                 Schedule this content
               </h2>
             </div>
 
             {!generated ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-secondary">
                 Generate a concept first, then you&apos;ll be able to pick a
                 date, time, and platform to schedule it.
               </p>
@@ -1613,14 +1638,14 @@ export default function AIContentPage() {
                         <img
                           src={r.imageUrl}
                           alt={r.platform}
-                          className="w-full rounded-lg object-contain bg-muted border border-border aspect-square"
+                          className="w-full rounded-lg object-contain bg-element border border-default aspect-square"
                         />
                       ) : (
-                        <div className="w-full aspect-square rounded-lg bg-amber-500/10 flex items-center justify-center text-[10px] text-amber-400">
+                        <div className="w-full aspect-square rounded-lg bg-warning flex items-center justify-center text-[10px] text-warning">
                           No image
                         </div>
                       )}
-                      <p className="text-[10px] text-center text-muted-foreground capitalize">
+                      <p className="text-[10px] text-center text-secondary capitalize">
                         {r.platform}
                       </p>
                     </div>
@@ -1646,7 +1671,7 @@ export default function AIContentPage() {
                     return (
                       <div
                         key={targetPlatform}
-                        className="rounded-2xl border border-border bg-card/80 p-3 space-y-3 flex flex-col justify-between"
+                        className="rounded-2xl border border-default bg-default p-3 space-y-3 flex flex-col justify-between"
                       >
                         <div className="flex items-center gap-2">
                           <input
@@ -1654,15 +1679,15 @@ export default function AIContentPage() {
                             checked
                             readOnly
                             aria-label={`${platformLabel(targetPlatform)} selected`}
-                            className="size-4 shrink-0 rounded border-border text-primary-purple disabled:cursor-default disabled:opacity-100"
+                            className="size-4 shrink-0 rounded border-default text-preview disabled:cursor-default disabled:text-quaternary"
                           />
-                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                          <p className="text-xs font-bold uppercase tracking-wider text-secondary">
                             {platformLabel(targetPlatform)}
                           </p>
                         </div>
                         <div>
-                          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
-                            <Calendar className="h-4 w-4 text-muted-foreground" /> Date
+                          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-default">
+                            <Calendar className="h-4 w-4 text-secondary" /> Date
                           </label>
                           <input
                             type="date"
@@ -1679,8 +1704,8 @@ export default function AIContentPage() {
                           />
                         </div>
                         <div>
-                          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
-                            <Clock className="h-4 w-4 text-muted-foreground" /> Time
+                          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-default">
+                            <Clock className="h-4 w-4 text-secondary" /> Time
                           </label>
                           <input
                             type="time"
@@ -1702,10 +1727,10 @@ export default function AIContentPage() {
                               }
                               aria-label={`Use suggested time ${suggestedTime}`}
                               title="Tap to apply this suggested time"
-                              className={`group mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary-purple/50 focus:ring-offset-1 ${
+                              className={`group mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-expo focus:outline-none focus:ring-2 focus:ring-strong focus:ring-offset-1 ${
                                 slot.time === suggestedTime
-                                  ? 'cursor-default border-primary-purple/25 bg-primary-purple/15 text-primary-purple'
-                                  : 'cursor-pointer border-primary-purple/25 bg-primary-purple/10 text-primary-purple hover:border-primary-purple hover:bg-primary-purple hover:text-white hover:shadow-sm'
+                                  ? 'cursor-default border-primary-purple/25 bg-primary-purple/15 text-preview'
+                                  : 'cursor-pointer border-primary-purple/25 bg-primary-purple/10 text-preview hover:border-primary-purple hover:bg-primary-purple hover:text-white'
                               }`}
                             >
                               <Sparkles className="h-3 w-3" />
@@ -1718,7 +1743,7 @@ export default function AIContentPage() {
                           )}
                         </div>
                         {slot.date && slot.time && (
-                          <p className="text-xs font-medium text-primary-purple bg-primary-purple/10 py-2 px-3 rounded-lg">
+                          <p className="text-xs font-medium text-preview bg-primary-purple/10 py-2 px-3 rounded-lg">
                             Will schedule on: {slot.date} at {slot.time}
                           </p>
                         )}
@@ -1739,13 +1764,21 @@ export default function AIContentPage() {
                             !canSchedulePlatform(targetPlatform) || isScheduling
                           }
                           aria-busy={
-                            isScheduling && schedulingPlatform === targetPlatform
+                            isScheduling &&
+                            schedulingPlatform === targetPlatform
                           }
-                          className={cn(scheduleButtonClass, 'flex items-center justify-center gap-2')}
-                        >
-                          {isScheduling && schedulingPlatform === targetPlatform && (
-                            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                          className={cn(
+                            scheduleButtonClass,
+                            'flex items-center justify-center gap-2'
                           )}
+                        >
+                          {isScheduling &&
+                            schedulingPlatform === targetPlatform && (
+                              <Loader2
+                                className="h-4 w-4 animate-spin"
+                                aria-hidden
+                              />
+                            )}
                           {isScheduling && schedulingPlatform === targetPlatform
                             ? 'Scheduling…'
                             : `Schedule ${platformLabel(targetPlatform)}`}
@@ -1760,18 +1793,18 @@ export default function AIContentPage() {
                 )}
               </>
             ) : !activeRenderedImage ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-secondary">
                 No image was returned. Try generating again.
               </p>
             ) : (
               /* ── Single-platform schedule flow ── */
               <>
-                <div className="bg-muted/60 rounded-2xl border border-border p-4 mb-1 space-y-3">
+                <div className="bg-element rounded-2xl border border-default p-4 mb-1 space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-secondary">
                       Preview
                     </p>
-                    <span className="text-xs font-semibold text-primary-purple capitalize bg-primary-purple/10 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-semibold text-preview capitalize bg-primary-purple/10 px-2 py-0.5 rounded-full">
                       {activeRenderedImage.platform}
                     </span>
                   </div>
@@ -1779,7 +1812,7 @@ export default function AIContentPage() {
                     <img
                       src={activeRenderedImage.imageUrl}
                       alt=""
-                      className="max-h-40 w-full rounded-lg object-contain bg-card border border-border"
+                      className="max-h-40 w-full rounded-lg object-contain bg-default border border-default"
                     />
                   )}
                   {activeRenderedImage.imageUrl ? (
@@ -1803,7 +1836,7 @@ export default function AIContentPage() {
                   <ExpandableCaption
                     text={activeRenderedImage.caption}
                     clampLines={4}
-                    className="text-sm text-foreground"
+                    className="text-sm text-default"
                   />
                 </div>
 
@@ -1812,7 +1845,8 @@ export default function AIContentPage() {
                     date: '',
                     time: '',
                   };
-                  const suggestedTime = preferredTimeForPlatform(targetPlatform);
+                  const suggestedTime =
+                    preferredTimeForPlatform(targetPlatform);
                   const isPast =
                     Boolean(slot.date) &&
                     Boolean(slot.time) &&
@@ -1824,7 +1858,7 @@ export default function AIContentPage() {
                   return (
                     <div
                       key={targetPlatform}
-                      className="rounded-2xl border border-border bg-card/80 p-3 space-y-3"
+                      className="rounded-2xl border border-default bg-default p-3 space-y-3"
                     >
                       <div className="flex items-center gap-2">
                         <input
@@ -1832,16 +1866,16 @@ export default function AIContentPage() {
                           checked
                           readOnly
                           aria-label={`${platformLabel(targetPlatform)} selected`}
-                          className="size-4 shrink-0 rounded border-border text-primary-purple disabled:cursor-default disabled:opacity-100"
+                          className="size-4 shrink-0 rounded border-default text-preview disabled:cursor-default disabled:text-quaternary"
                         />
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <p className="text-xs font-bold uppercase tracking-wider text-secondary">
                           {platformLabel(targetPlatform)}
                         </p>
                       </div>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div>
-                          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
-                            <Calendar className="h-4 w-4 text-muted-foreground" /> Date
+                          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-default">
+                            <Calendar className="h-4 w-4 text-secondary" /> Date
                           </label>
                           <input
                             type="date"
@@ -1858,8 +1892,8 @@ export default function AIContentPage() {
                           />
                         </div>
                         <div>
-                          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-foreground">
-                            <Clock className="h-4 w-4 text-muted-foreground" /> Time
+                          <label className="mb-1.5 flex items-center gap-2 text-sm font-medium text-default">
+                            <Clock className="h-4 w-4 text-secondary" /> Time
                           </label>
                           <input
                             type="time"
@@ -1881,10 +1915,10 @@ export default function AIContentPage() {
                               }
                               aria-label={`Use suggested time ${suggestedTime}`}
                               title="Tap to apply this suggested time"
-                              className={`group mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary-purple/50 focus:ring-offset-1 ${
+                              className={`group mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-expo focus:outline-none focus:ring-2 focus:ring-strong focus:ring-offset-1 ${
                                 slot.time === suggestedTime
-                                  ? 'cursor-default border-primary-purple/25 bg-primary-purple/15 text-primary-purple'
-                                  : 'cursor-pointer border-primary-purple/25 bg-primary-purple/10 text-primary-purple hover:border-primary-purple hover:bg-primary-purple hover:text-white hover:shadow-sm'
+                                  ? 'cursor-default border-primary-purple/25 bg-primary-purple/15 text-preview'
+                                  : 'cursor-pointer border-primary-purple/25 bg-primary-purple/10 text-preview hover:border-primary-purple hover:bg-primary-purple hover:text-white'
                               }`}
                             >
                               <Sparkles className="h-3 w-3" />
@@ -1898,7 +1932,7 @@ export default function AIContentPage() {
                         </div>
                       </div>
                       {slot.date && slot.time && (
-                        <p className="text-xs font-medium text-primary-purple bg-primary-purple/10 py-2 px-3 rounded-lg inline-block">
+                        <p className="text-xs font-medium text-preview bg-primary-purple/10 py-2 px-3 rounded-lg inline-block">
                           Will schedule on: {slot.date} at {slot.time}
                         </p>
                       )}
@@ -1921,11 +1955,18 @@ export default function AIContentPage() {
                         aria-busy={
                           isScheduling && schedulingPlatform === targetPlatform
                         }
-                        className={cn(scheduleButtonClass, 'flex items-center justify-center gap-2')}
-                      >
-                        {isScheduling && schedulingPlatform === targetPlatform && (
-                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                        className={cn(
+                          scheduleButtonClass,
+                          'flex items-center justify-center gap-2'
                         )}
+                      >
+                        {isScheduling &&
+                          schedulingPlatform === targetPlatform && (
+                            <Loader2
+                              className="h-4 w-4 animate-spin"
+                              aria-hidden
+                            />
+                          )}
                         {isScheduling && schedulingPlatform === targetPlatform
                           ? 'Scheduling…'
                           : `Schedule ${platformLabel(targetPlatform)}`}
@@ -1943,16 +1984,14 @@ export default function AIContentPage() {
 
           <div className="glass-card rounded-3xl p-6 sm:p-7 space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">
-                Upcoming
-              </h2>
-              <span className="text-xs text-muted-foreground">
+              <h2 className="text-eyebrow">Upcoming</h2>
+              <span className="text-xs text-secondary">
                 {scheduled.length} scheduled
               </span>
             </div>
 
             {scheduled.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-secondary">
                 Anything you schedule here will appear in this list so you can
                 keep track of what&apos;s coming next.
               </p>
@@ -1961,22 +2000,22 @@ export default function AIContentPage() {
                 {scheduled.map((item) => (
                   <div
                     key={item.id}
-                    className="flex flex-col gap-1.5 rounded-2xl border border-border bg-card/80 px-4 py-3 text-sm"
+                    className="flex flex-col gap-1.5 rounded-2xl border border-default bg-default px-4 py-3 text-sm"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <span className="font-semibold text-foreground">
+                      <span className="font-semibold text-default">
                         {item.platform}
                       </span>
-                      <span className="text-xs font-medium text-muted-foreground">
+                      <span className="text-xs font-medium text-secondary">
                         {item.scheduledAt}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <p className="text-xs text-secondary line-clamp-2">
                       {item.summary}
                       {item.summary.length >= 120 && '…'}
                     </p>
                     {item.scheduledPostId && (
-                      <p className="text-[10px] text-muted-foreground font-mono">
+                      <p className="text-[10px] text-secondary font-mono">
                         {item.scheduledPostId}
                       </p>
                     )}
@@ -1988,9 +2027,7 @@ export default function AIContentPage() {
 
           {history.length > 0 && (
             <div className="glass-card rounded-3xl p-6 sm:p-7 space-y-3">
-              <h2 className="text-sm font-semibold text-foreground uppercase tracking-widest">
-                Recent generations
-              </h2>
+              <h2 className="text-eyebrow">Recent generations</h2>
               <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
                 {history.map((item) => {
                   const histCaption =
@@ -1999,27 +2036,29 @@ export default function AIContentPage() {
                   return (
                     <div
                       key={item.id}
-                      className="flex flex-col gap-1 rounded-2xl border border-border bg-card/70 px-4 py-3 text-xs"
+                      className="flex flex-col gap-1 rounded-2xl border border-default bg-default px-4 py-3 text-xs"
                     >
                       <div className="flex items-center justify-between gap-3 mb-0.5">
-                        <span className="font-semibold text-foreground line-clamp-1">
+                        <span className="font-semibold text-default line-clamp-1">
                           {item.promptSummary}
                         </span>
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {fmtTimestamp(item.createdAt, { style: 'datetime-short' })}
+                        <span className="text-[10px] uppercase tracking-wider text-secondary">
+                          {fmtTimestamp(item.createdAt, {
+                            style: 'datetime-short',
+                          })}
                         </span>
                       </div>
                       {typeof item.inferredImageContext === 'string' &&
                         item.inferredImageContext.length > 0 && (
-                          <p className="text-muted-foreground line-clamp-2">
-                            <span className="font-medium text-foreground">
+                          <p className="text-secondary line-clamp-2">
+                            <span className="font-medium text-default">
                               From your image:{' '}
                             </span>
                             {item.inferredImageContext}
                           </p>
                         )}
                       {histCaption ? (
-                        <p className="text-muted-foreground line-clamp-2">
+                        <p className="text-secondary line-clamp-2">
                           {histCaption}
                         </p>
                       ) : null}

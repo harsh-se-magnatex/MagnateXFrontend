@@ -14,10 +14,10 @@ That text is what appears under the post in the Instagram / Facebook / LinkedIn 
 Brands are registered in  
 [`backend/apps/api/src/scripts/how-it-looks-brands.ts`](../../../../backend/apps/api/src/scripts/how-it-looks-brands.ts).
 
-| id | label | default uid |
-|---|---|---|
-| `magnate-regalia` | Magnate Regalia | set in registry |
-| `sunglasses` | SunGlasses | set `exportUid` or pass `--uid=` |
+| id                | label           | default uid                      |
+| ----------------- | --------------- | -------------------------------- |
+| `magnate-regalia` | Magnate Regalia | set in registry                  |
+| `sunglasses`      | SunGlasses      | set `exportUid` or pass `--uid=` |
 
 List brands:
 

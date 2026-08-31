@@ -6,10 +6,7 @@ import { isPlanInactive } from '@/lib/plan-access';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import {
   useCallback,
   useEffect,
@@ -66,7 +63,7 @@ import {
 } from '@/components/image-preview';
 
 const inputBase =
-  'w-full rounded-xl border border-border bg-muted px-4 py-3 text-foreground placeholder-muted-foreground focus:border-primary-purple focus:outline-none focus:ring-2 focus:ring-primary-purple/20 transition-all';
+  'w-full rounded-xl border border-default bg-element px-4 py-3 text-default placeholder-muted-foreground focus:border-primary-purple focus:outline-none focus:ring-2 focus:ring-strong transition-expo';
 
 const ACCEPTED_IMAGE_TYPES = [
   'image/jpeg',
@@ -121,7 +118,6 @@ export type ScheduledPost = {
   postedAt: FirestoreTimestamp | null;
 };
 
-
 function formatPlatformLabel(platform: string): string {
   if (platform === 'instagram') return 'Instagram';
   if (platform === 'facebook') return 'Facebook';
@@ -141,12 +137,9 @@ export default function PostSchedulePage() {
   const searchParams = useSearchParams();
   const [selectedMediaFile, setSelectedMediaFile] = useState<File | null>(null);
   const imagePreview = useImagePreview();
-  const [prefilledImageUrl, setPrefilledImageUrl] = useState<string>(
-    ''
-  );
-  const [prefilledImageFilePath, setPrefilledImageFilePath] = useState<string>(
-    ''
-  );
+  const [prefilledImageUrl, setPrefilledImageUrl] = useState<string>('');
+  const [prefilledImageFilePath, setPrefilledImageFilePath] =
+    useState<string>('');
   const [prefilledPosts, setPrefilledPosts] = useState<
     Array<{
       imageUrl: string;
@@ -346,51 +339,56 @@ export default function PostSchedulePage() {
     }
   }
 
-  const handleFile = useCallback((file: File | null) => {
-    setImageError(null);
-    if (!file) {
-      setSelectedMediaFile(null);
-      return;
-    }
-    const mediaType = getUploadMediaType(file);
-    if (!mediaType) {
-      setImageError('Please use a valid image (JPEG, PNG, GIF, WebP) or MP4 video.');
-      return;
-    }
-    if (mediaType === 'video' && !acceptsVideoUpload) {
-      setImageError(
-        'MP4 video uploads are currently supported only for single-platform Facebook, Instagram, or LinkedIn posts.'
-      );
-      return;
-    }
-    if (
-      mediaType === 'video' &&
-      selectedSinglePlatform === 'linkedin' &&
-      file.size > LINKEDIN_MAX_VIDEO_BYTES
-    ) {
-      setImageError('LinkedIn video uploads must be 500MB or smaller.');
-      return;
-    }
-    if (
-      mediaType === 'video' &&
-      selectedSinglePlatform === 'facebook' &&
-      file.size > FACEBOOK_MAX_VIDEO_BYTES
-    ) {
-      setImageError('Facebook video uploads must be 190MB or smaller.');
-      return;
-    }
-    if (
-      mediaType === 'video' &&
-      selectedSinglePlatform === 'instagram' &&
-      file.size > INSTAGRAM_MAX_VIDEO_BYTES
-    ) {
-      setImageError('Instagram video uploads must be 190MB or smaller.');
-      return;
-    }
-    setPrefilledImageUrl('');
-    setPrefilledImageFilePath('');
-    setSelectedMediaFile(file);
-  }, [acceptsVideoUpload, selectedSinglePlatform]);
+  const handleFile = useCallback(
+    (file: File | null) => {
+      setImageError(null);
+      if (!file) {
+        setSelectedMediaFile(null);
+        return;
+      }
+      const mediaType = getUploadMediaType(file);
+      if (!mediaType) {
+        setImageError(
+          'Please use a valid image (JPEG, PNG, GIF, WebP) or MP4 video.'
+        );
+        return;
+      }
+      if (mediaType === 'video' && !acceptsVideoUpload) {
+        setImageError(
+          'MP4 video uploads are currently supported only for single-platform Facebook, Instagram, or LinkedIn posts.'
+        );
+        return;
+      }
+      if (
+        mediaType === 'video' &&
+        selectedSinglePlatform === 'linkedin' &&
+        file.size > LINKEDIN_MAX_VIDEO_BYTES
+      ) {
+        setImageError('LinkedIn video uploads must be 500MB or smaller.');
+        return;
+      }
+      if (
+        mediaType === 'video' &&
+        selectedSinglePlatform === 'facebook' &&
+        file.size > FACEBOOK_MAX_VIDEO_BYTES
+      ) {
+        setImageError('Facebook video uploads must be 190MB or smaller.');
+        return;
+      }
+      if (
+        mediaType === 'video' &&
+        selectedSinglePlatform === 'instagram' &&
+        file.size > INSTAGRAM_MAX_VIDEO_BYTES
+      ) {
+        setImageError('Instagram video uploads must be 190MB or smaller.');
+        return;
+      }
+      setPrefilledImageUrl('');
+      setPrefilledImageFilePath('');
+      setSelectedMediaFile(file);
+    },
+    [acceptsVideoUpload, selectedSinglePlatform]
+  );
 
   const onDrop = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
@@ -467,15 +465,19 @@ export default function PostSchedulePage() {
   // UTC ISO string sent to the backend. `new Date(naive)` interprets the
   // naive `YYYY-MM-DDTHH:mm` string as the browser's local time, then
   // `.toISOString()` converts it to UTC, preserving the user's chosen wall time.
-  const getScheduledAtIso = useCallback((platform: SchedulerPlatform) => {
-    const slot = platformSchedules[platform];
-    if (!slot?.date || !slot.time) return '';
-    const d = new Date(`${slot.date}T${slot.time}`);
-    return Number.isNaN(d.getTime()) ? '' : d.toISOString();
-  }, [platformSchedules]);
+  const getScheduledAtIso = useCallback(
+    (platform: SchedulerPlatform) => {
+      const slot = platformSchedules[platform];
+      if (!slot?.date || !slot.time) return '';
+      const d = new Date(`${slot.date}T${slot.time}`);
+      return Number.isNaN(d.getTime()) ? '' : d.toISOString();
+    },
+    [platformSchedules]
+  );
 
   const isMultiPrefilledSchedule = isPrefilledFlow && prefilledPosts.length > 1;
-  const isSinglePrefilledSchedule = isPrefilledFlow && prefilledPosts.length === 1;
+  const isSinglePrefilledSchedule =
+    isPrefilledFlow && prefilledPosts.length === 1;
   /** Gallery / product-advert prefills carry a fixed image — no clearing it. */
   const canRemoveImage = !isPrefilledFlow;
 
@@ -492,7 +494,8 @@ export default function PostSchedulePage() {
       if (
         !hasScheduleWindow ||
         isScheduleDateAfterPlanExpiry(slot?.date ?? '', maxScheduleDate)
-      ) return false;
+      )
+        return false;
       if (
         slot?.date &&
         slot?.time &&
@@ -560,9 +563,8 @@ export default function PostSchedulePage() {
     if (!shouldPrefill) return;
     // Peek (do not clear) so React Strict Mode remounts can re-apply carousel /
     // video slides. Cleared only after a successful schedule via resetSchedulerForm.
-    const payload = peekPostSchedulerPrefill() as
-      | PostSchedulerPrefillPayload
-      | null;
+    const payload =
+      peekPostSchedulerPrefill() as PostSchedulerPrefillPayload | null;
     if (!payload) return;
 
     const parsedPosts = Array.isArray(payload.posts)
@@ -584,7 +586,9 @@ export default function PostSchedulePage() {
                     imageUrl: String(slide?.imageUrl ?? '').trim(),
                     imageFilePath: String(slide?.imageFilePath ?? '').trim(),
                     headline:
-                      typeof slide?.headline === 'string' ? slide.headline : null,
+                      typeof slide?.headline === 'string'
+                        ? slide.headline
+                        : null,
                     purpose:
                       typeof slide?.purpose === 'string' ? slide.purpose : null,
                     visualType:
@@ -613,7 +617,9 @@ export default function PostSchedulePage() {
                 ? { carouselSlides }
                 : {}),
               message: String(item?.message ?? '').trim(),
-              platform: String(item?.platform ?? '').toLowerCase() as SchedulerPlatform,
+              platform: String(
+                item?.platform ?? ''
+              ).toLowerCase() as SchedulerPlatform,
               source,
             };
           })
@@ -623,8 +629,7 @@ export default function PostSchedulePage() {
                 ? (item.carouselSlides?.length ?? 0) >= 2
                 : item.mediaType === 'video'
                   ? !!item.videoUrl && !!item.videoFilePath
-                  : !!item.imageUrl) &&
-              PLATFORM_ORDER.includes(item.platform)
+                  : !!item.imageUrl) && PLATFORM_ORDER.includes(item.platform)
           )
       : [];
     if (parsedPosts.length > 0) {
@@ -650,7 +655,8 @@ export default function PostSchedulePage() {
     }
   }, [searchParams]);
 
-  if (loading || creditsLoading) return <PageLoadingState message="Loading your account..." />;
+  if (loading || creditsLoading)
+    return <PageLoadingState message="Loading your account..." />;
   if (!user) return null;
 
   const removeScheduledPlatform = (platform: SchedulerPlatform) => {
@@ -661,7 +667,9 @@ export default function PostSchedulePage() {
     });
 
     if (isPrefilledFlow) {
-      const remaining = prefilledPosts.filter((post) => post.platform !== platform);
+      const remaining = prefilledPosts.filter(
+        (post) => post.platform !== platform
+      );
       if (remaining.length === 0) {
         clearPostSchedulerPrefill();
         setPrefilledPosts([]);
@@ -855,7 +863,9 @@ export default function PostSchedulePage() {
         useProductAdvertState.getState().resetForm();
       }
 
-      const remainingPlatforms = schedulePlatforms.filter((p) => p !== platform);
+      const remainingPlatforms = schedulePlatforms.filter(
+        (p) => p !== platform
+      );
       if (remainingPlatforms.length === 0) {
         resetSchedulerForm();
       } else {
@@ -883,7 +893,7 @@ export default function PostSchedulePage() {
         <h1 className={workspacePageTitleClass}>
           {workspacePageTitle(WORKSPACE_NAV_HREFS.schedulePost)}
         </h1>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-secondary">
           Schedule your social media content perfectly timed for your audience.
         </p>
       </header>
@@ -894,17 +904,17 @@ export default function PostSchedulePage() {
           id="tour-ps-form"
           className="glass-card rounded-3xl p-6 sm:p-8 space-y-6"
         >
-          <div className="flex items-center gap-3 border-b border-border pb-4">
-            <div className="p-2 bg-primary-purple/10 rounded-lg text-primary-purple">
+          <div className="flex items-center gap-3 border-b border-default pb-4">
+            <div className="p-2 bg-primary-purple/10 rounded-lg text-preview">
               <Send className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-foreground">Compose</h2>
+            <h2 className="text-section text-default">Compose</h2>
           </div>
 
           {!isMultiPrefilledSchedule ? (
             <>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-foreground">
+                <label className="mb-2 block text-sm font-semibold text-default">
                   Media Attachment
                 </label>
                 <div
@@ -920,7 +930,7 @@ export default function PostSchedulePage() {
                 >
                   {hasMedia ? (
                     <div className="p-4 relative flex justify-center">
-                      <div className="relative group rounded-xl overflow-hidden shadow-sm">
+                      <div className="relative group rounded-xl overflow-hidden">
                         {selectedMediaType === 'video' && selectedMediaFile ? (
                           <video
                             controls
@@ -931,13 +941,16 @@ export default function PostSchedulePage() {
                           singlePrefilledPost?.videoUrl ? (
                           <video
                             controls
-                            poster={singlePrefilledPost.videoPosterUrl || prefilledImageUrl}
+                            poster={
+                              singlePrefilledPost.videoPosterUrl ||
+                              prefilledImageUrl
+                            }
                             className="max-h-[300px] object-contain bg-black"
                             src={singlePrefilledPost.videoUrl}
                           />
                         ) : prefilledMediaType === 'carousel' &&
                           (singlePrefilledPost?.carouselSlides?.length ?? 0) >=
-                          2 ? (
+                            2 ? (
                           <div className="w-full max-w-sm">
                             <CarouselSwipePreview
                               slides={(
@@ -947,7 +960,7 @@ export default function PostSchedulePage() {
                                 imageUrl: s.imageUrl,
                                 headline: s.headline,
                               }))}
-                              imageClassName="max-h-[300px] object-contain bg-muted"
+                              imageClassName="max-h-[300px] object-contain bg-element"
                               showCaptions
                             />
                           </div>
@@ -955,16 +968,19 @@ export default function PostSchedulePage() {
                           <img
                             src={previewUrl ?? ''}
                             alt="Post preview"
-                            className="max-h-[300px] object-contain bg-muted"
+                            className="max-h-[300px] object-contain bg-element"
                           />
                         )}
-                        {isSinglePrefilledSchedule && prefilledPosts[0]?.platform && (
-                          <p className="mt-3 text-center">
-                            <span className="inline-flex rounded-full bg-primary-purple/10 px-3 py-1 text-xs font-semibold text-primary-purple">
-                              {formatPlatformLabel(prefilledPosts[0].platform)}
-                            </span>
-                          </p>
-                        )}
+                        {isSinglePrefilledSchedule &&
+                          prefilledPosts[0]?.platform && (
+                            <p className="mt-3 text-center">
+                              <span className="inline-flex rounded-full bg-primary-purple/10 px-3 py-1 text-xs font-semibold text-preview">
+                                {formatPlatformLabel(
+                                  prefilledPosts[0].platform
+                                )}
+                              </span>
+                            </p>
+                          )}
                         {prefilledImageUrl && !selectedMediaFile ? (
                           <div className="absolute top-2 left-2 z-10">
                             <ImagePreviewButton
@@ -984,7 +1000,7 @@ export default function PostSchedulePage() {
                               type="button"
                               onClick={clearImage}
                               disabled={imageAreaDisabled}
-                              className="rounded-full bg-white/90 p-2 text-red-600 shadow-sm hover:scale-110 transition-transform disabled:opacity-50"
+                              className="rounded-full bg-default p-2 text-danger transition-transform disabled:text-quaternary"
                               aria-label="Remove image"
                             >
                               <svg
@@ -1009,7 +1025,9 @@ export default function PostSchedulePage() {
                     <label
                       className={cn(
                         'flex flex-col items-center justify-center gap-3 py-10 px-4',
-                        imageAreaDisabled ? 'cursor-not-allowed' : 'cursor-pointer'
+                        imageAreaDisabled
+                          ? 'cursor-not-allowed'
+                          : 'cursor-pointer'
                       )}
                     >
                       <input
@@ -1021,8 +1039,8 @@ export default function PostSchedulePage() {
                       />
                       <div
                         className={cn(
-                          'flex h-14 w-14 items-center justify-center rounded-full text-muted-foreground bg-card shadow-sm ring-1 ring-border',
-                          imageAreaDisabled ? 'opacity-50' : 'text-primary-purple'
+                          'flex h-14 w-14 items-center justify-center rounded-full text-secondary bg-default ring-1 ring-border',
+                          imageAreaDisabled ? 'opacity-50' : 'text-preview'
                         )}
                       >
                         {acceptsVideoUpload ? (
@@ -1032,19 +1050,22 @@ export default function PostSchedulePage() {
                         )}
                       </div>
                       <div className="text-center">
-                        <span className="text-sm font-medium text-foreground block">
+                        <span className="text-sm font-medium text-default block">
                           {imageAreaDisabled
                             ? 'Image disabled'
                             : 'Click to upload or drag & drop'}
                         </span>
-                        <span className="text-xs text-muted-foreground mt-1 block">
+                        <span className="text-xs text-secondary mt-1 block">
                           {imageAreaDisabled
                             ? "You're creating a text-only post"
-                            : acceptsVideoUpload && selectedSinglePlatform === 'facebook'
+                            : acceptsVideoUpload &&
+                                selectedSinglePlatform === 'facebook'
                               ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is Facebook-only here.'
-                              : acceptsVideoUpload && selectedSinglePlatform === 'instagram'
+                              : acceptsVideoUpload &&
+                                  selectedSinglePlatform === 'instagram'
                                 ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is Instagram-only here.'
-                                : acceptsVideoUpload && selectedSinglePlatform === 'linkedin'
+                                : acceptsVideoUpload &&
+                                    selectedSinglePlatform === 'linkedin'
                                   ? 'JPEG, PNG, GIF, WebP, or MP4. MP4 is LinkedIn-only here.'
                                   : 'SVG, PNG, JPG or GIF'}
                         </span>
@@ -1053,21 +1074,21 @@ export default function PostSchedulePage() {
                   )}
                 </div>
                 {imageError && (
-                  <p className="mt-2 text-sm text-red-500 flex items-center gap-1.5 font-medium">
+                  <p className="mt-2 text-sm text-danger flex items-center gap-1.5 font-medium">
                     <AlertCircle className="h-4 w-4" /> {imageError}
                   </p>
                 )}
                 {hasMessageOnly && (
-                  <p className="mt-2 text-sm text-yellow-600 flex items-center gap-1.5 font-medium">
-                    <AlertCircle className="h-4 w-4" /> Clear message box to add an
-                    image.
+                  <p className="mt-2 text-sm text-warning flex items-center gap-1.5 font-medium">
+                    <AlertCircle className="h-4 w-4" /> Clear message box to add
+                    an image.
                   </p>
                 )}
               </div>
               <div>
                 <label
                   htmlFor="schedule-message"
-                  className="mb-2 block text-sm font-semibold text-foreground"
+                  className="mb-2 block text-sm font-semibold text-default"
                 >
                   {inputLabel}
                 </label>
@@ -1081,37 +1102,40 @@ export default function PostSchedulePage() {
                       : 'What do you want to share?'
                   }
                   rows={5}
-                  className={cn(inputBase, 'resize-y min-h-[120px] leading-relaxed')}
+                  className={cn(
+                    inputBase,
+                    'resize-y min-h-[120px] leading-relaxed'
+                  )}
                 />
               </div>
             </>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold text-default">
                 Posts to schedule
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-secondary">
                 Each post will publish to the platform shown below its image.
               </p>
               <div className="grid gap-3 sm:grid-cols-3">
                 {prefilledPosts.map((post, idx) => (
                   <div
                     key={`${post.platform}-${idx}`}
-                    className="rounded-xl border border-border bg-muted p-2"
+                    className="rounded-xl border border-default bg-element p-2"
                   >
                     <div className="relative">
                       {post.mediaType === 'video' && post.videoUrl ? (
                         <video
                           controls
                           poster={post.videoPosterUrl || post.imageUrl}
-                          className="w-full rounded-lg border border-border bg-black aspect-square object-contain"
+                          className="w-full rounded-lg border border-default bg-black aspect-square object-contain"
                           src={post.videoUrl}
                         />
                       ) : (
                         <img
                           src={post.imageUrl}
                           alt={formatPlatformLabel(post.platform)}
-                          className="w-full rounded-lg object-contain bg-card border border-border aspect-square"
+                          className="w-full rounded-lg object-contain bg-default border border-default aspect-square"
                         />
                       )}
                       <div className="absolute top-1.5 right-1.5">
@@ -1127,7 +1151,7 @@ export default function PostSchedulePage() {
                       </div>
                     </div>
                     <p className="mt-2 text-center">
-                      <span className="inline-flex rounded-full bg-primary-purple/10 px-3 py-1 text-xs font-semibold text-primary-purple">
+                      <span className="inline-flex rounded-full bg-primary-purple/10 px-3 py-1 text-xs font-semibold text-preview">
                         {formatPlatformLabel(post.platform)}
                       </span>
                     </p>
@@ -1146,7 +1170,10 @@ export default function PostSchedulePage() {
                       }}
                       placeholder="Add a caption..."
                       rows={5}
-                      className={cn(inputBase, 'mt-2 min-h-[110px] resize-y text-xs leading-relaxed')}
+                      className={cn(
+                        inputBase,
+                        'mt-2 min-h-[110px] resize-y text-xs leading-relaxed'
+                      )}
                     />
                   </div>
                 ))}
@@ -1154,29 +1181,27 @@ export default function PostSchedulePage() {
             </div>
           )}
 
-          <div className="bg-muted/50 rounded-2xl border border-border p-5 space-y-5">
-            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
-              Publish Settings
-            </h3>
+          <div className="bg-element rounded-2xl border border-default p-5 space-y-5">
+            <h3 className="text-eyebrow">Publish Settings</h3>
 
             {!isPrefilledFlow && (
               <div>
-                <span className="mb-1.5 block text-sm font-medium text-foreground">
+                <span className="mb-1.5 block text-sm font-medium text-default">
                   Platforms
                 </span>
                 {showSelectAccountsFirst ? (
                   <div
                     role="status"
-                    className="rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950"
+                    className="rounded-xl border border-warning bg-warning px-4 py-3 text-sm text-warning"
                   >
                     <p className="font-medium">Select your accounts first</p>
-                    <p className="mt-1 text-amber-900/90">
+                    <p className="mt-1 text-warning">
                       Choose which platforms you use in onboarding or social
                       settings, then come back here to schedule posts.
                     </p>
                     <Link
                       href={WORKSPACE_NAV_HREFS.linkedProfiles}
-                      className="mt-2 inline-block text-sm font-semibold text-amber-950 underline underline-offset-2 hover:text-amber-900"
+                      className="mt-2 inline-block text-sm font-semibold text-warning underline underline-offset-2 hover:text-warning"
                     >
                       {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                     </Link>
@@ -1188,14 +1213,14 @@ export default function PostSchedulePage() {
                         <label
                           key={p}
                           htmlFor={`schedule-platform-${p}`}
-                          className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                          className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
                         >
                           <input
                             id={`schedule-platform-${p}`}
                             type="checkbox"
                             checked={genPlatforms.includes(p)}
                             onChange={() => handleToggleGenPlatform(p)}
-                            className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
+                            className="size-4 rounded border-default text-preview focus:ring-strong"
                           />
                           <span>{formatPlatformLabel(p)}</span>
                         </label>
@@ -1203,27 +1228,29 @@ export default function PostSchedulePage() {
                       {allowedPlatforms.length > 1 && (
                         <label
                           htmlFor="schedule-platform-all"
-                          className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                          className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
                         >
                           <input
                             id="schedule-platform-all"
                             type="checkbox"
                             checked={allPlatformsSelected}
                             onChange={handleSelectAllGenPlatforms}
-                            className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
+                            className="size-4 rounded border-default text-preview focus:ring-strong"
                           />
                           <span>
-                            {allPlatformsSelectionLabel(allowedPlatforms.length)}
+                            {allPlatformsSelectionLabel(
+                              allowedPlatforms.length
+                            )}
                           </span>
                         </label>
                       )}
                     </div>
                     {!platformSelection.ok ? (
-                      <p className="mt-2 text-xs text-amber-700">
+                      <p className="mt-2 text-xs text-warning">
                         {platformSelection.error}
                       </p>
                     ) : (
-                      <p className="mt-2 text-xs text-muted-foreground">
+                      <p className="mt-2 text-xs text-secondary">
                         {allPlatformsSelected
                           ? `Each connected platform (${allowedPlatforms.length}) gets its own schedule button below.`
                           : genPlatforms.length > 1
@@ -1251,7 +1278,7 @@ export default function PostSchedulePage() {
                   return (
                     <div
                       key={platform}
-                      className="rounded-2xl border border-border bg-card/80 p-3 space-y-3 flex flex-col justify-between"
+                      className="rounded-2xl border border-default bg-default p-3 space-y-3 flex flex-col justify-between"
                     >
                       <div className="flex items-center gap-2">
                         {isPrefilledFlow ? (
@@ -1260,16 +1287,16 @@ export default function PostSchedulePage() {
                             checked
                             readOnly
                             aria-label={`${formatPlatformLabel(platform)} selected`}
-                            className="size-4 shrink-0 rounded border-border text-primary-purple disabled:cursor-default disabled:opacity-100"
+                            className="size-4 shrink-0 rounded border-default text-preview disabled:cursor-default disabled:text-quaternary"
                           />
                         ) : null}
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <p className="text-xs font-bold uppercase tracking-wider text-secondary">
                           {formatPlatformLabel(platform)}
                         </p>
                       </div>
                       <div>
-                        <label className="mb-1.5 text-sm font-medium text-foreground flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" /> Date
+                        <label className="mb-1.5 text-sm font-medium text-default flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-secondary" /> Date
                         </label>
                         <input
                           type="date"
@@ -1286,8 +1313,8 @@ export default function PostSchedulePage() {
                         />
                       </div>
                       <div>
-                        <label className="mb-1.5 text-sm font-medium text-foreground flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" /> Time
+                        <label className="mb-1.5 text-sm font-medium text-default flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-secondary" /> Time
                         </label>
                         <input
                           type="time"
@@ -1309,10 +1336,11 @@ export default function PostSchedulePage() {
                             }
                             aria-label={`Use suggested time ${suggestedTime}`}
                             title="Tap to apply this suggested time"
-                            className={`group mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-all duration-150 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-primary-purple/40 focus:ring-offset-1 ${slot.time === suggestedTime
-                                ? 'cursor-default border-primary-purple/30 bg-primary-purple/20 text-primary-purple'
-                                : 'cursor-pointer border-primary-purple/30 bg-primary-purple/10 text-primary-purple hover:border-primary-purple hover:bg-primary-purple hover:text-white hover:shadow-sm'
-                              }`}
+                            className={`group mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold transition-expo focus:outline-none focus:ring-2 focus:ring-strong focus:ring-offset-1 ${
+                              slot.time === suggestedTime
+                                ? 'cursor-default border-primary-purple/30 bg-primary-purple/20 text-preview'
+                                : 'cursor-pointer border-primary-purple/30 bg-primary-purple/10 text-preview hover:border-primary-purple hover:bg-primary-purple hover:text-white'
+                            }`}
                           >
                             <Sparkles className="h-3 w-3" />
                             <span>
@@ -1324,7 +1352,7 @@ export default function PostSchedulePage() {
                         )}
                       </div>
                       {slot.date && slot.time && (
-                        <p className="text-xs font-medium text-primary-purple bg-primary-purple/10 py-2 px-3 rounded-lg">
+                        <p className="text-xs font-medium text-preview bg-primary-purple/10 py-2 px-3 rounded-lg">
                           Will publish on: {slot.date} at {slot.time}
                         </p>
                       )}
@@ -1337,7 +1365,7 @@ export default function PostSchedulePage() {
                         type="button"
                         onClick={() => handleSchedulePlatform(platform)}
                         disabled={!canSchedulePlatform(platform) || postLoading}
-                        className="w-full rounded-xl bg-gradient-action px-4 py-3.5 text-sm font-bold text-white shadow-md shadow-primary-purple/25 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-purple/35 active:scale-[0.98] disabled:transform-none disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                        className="flex h-11 w-full items-center justify-center rounded-full btn-brand-fill px-4 text-sm font-medium transition-expo disabled:cursor-not-allowed"
                       >
                         {postLoading && schedulingPlatform === platform
                           ? 'Scheduling...'
@@ -1348,22 +1376,21 @@ export default function PostSchedulePage() {
                 })}
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-secondary">
                 Select a platform to choose a schedule time.
               </p>
             )}
             {hasInvalidVideoPlatformSelection && (
-              <p className="text-xs text-amber-700">
-                MP4 uploads can only be scheduled as a single-platform Facebook, Instagram, or LinkedIn post.
+              <p className="text-xs text-warning">
+                MP4 uploads can only be scheduled as a single-platform Facebook,
+                Instagram, or LinkedIn post.
               </p>
             )}
           </div>
 
           {pastScheduleTimeError && (
-            <p className="text-sm text-red-600">{pastScheduleTimeError}</p>
+            <p className="text-sm text-danger">{pastScheduleTimeError}</p>
           )}
-
-
         </section>
       </div>
       <ImagePreviewOverlay

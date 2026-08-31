@@ -105,13 +105,13 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-[#0B1020] text-white px-6 py-8 md:px-10">
-      <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-[#6C5CE7] to-[#00D1FF] mb-8">
+      <h1 className="text-page-title text-default mb-8">
         Admin - User Management
       </h1>
 
       <form
         onSubmit={handleSearch}
-        className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4 md:p-5"
+        className="mb-6 rounded-2xl border border-white/10 bg-default p-4 md:p-5"
       >
         <div className="grid gap-3 md:grid-cols-[1fr_220px_140px_110px]">
           <input
@@ -119,40 +119,47 @@ export default function AdminUsersPage() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="Search by name, user ID, or subscription ID"
-            className="h-11 rounded-lg border border-white/20 bg-white/10 px-3 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
+            className="h-11 rounded-lg border border-white/20 bg-default px-3 text-white placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
           />
           <select
             value={searchField}
-            onChange={(e) => setSearchField(e.target.value as AdminUserSearchField)}
-            className="h-11 rounded-lg border border-white/20 bg-white/10 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
+            onChange={(e) =>
+              setSearchField(e.target.value as AdminUserSearchField)
+            }
+            className="h-11 rounded-lg border border-white/20 bg-default px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
           >
             {SEARCH_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value} className="text-black">
+              <option
+                key={option.value}
+                value={option.value}
+                className="text-default"
+              >
                 {option.label}
               </option>
             ))}
           </select>
           <button
             type="submit"
-            className="h-11 rounded-lg bg-[#00D1FF] px-5 font-semibold text-[#0B1020] hover:bg-[#32dbff] transition-colors"
+            className="h-11 rounded-full bg-[#00D1FF] px-5 font-semibold text-[#0B1020] hover:bg-[#32dbff] transition-expo"
           >
             Search
           </button>
           <button
             type="button"
             onClick={handleReset}
-            className="h-11 rounded-lg border border-white/30 px-4 font-semibold text-white hover:bg-white/10 transition-colors"
+            className="h-11 rounded-full border border-white/30 px-4 font-semibold text-white hover:bg-default transition-expo"
           >
             Reset
           </button>
         </div>
       </form>
 
-      <div className="mb-4 text-sm text-gray-300">
+      <div className="mb-4 text-sm text-tertiary">
         Showing {users.length} user(s)
         {activeSearchText
           ? ` for "${activeSearchText}" in ${activeSearchField}`
-          : ''}.
+          : ''}
+        .
       </div>
 
       {loading ? (
@@ -161,13 +168,13 @@ export default function AdminUsersPage() {
           message="Loading users..."
         />
       ) : users.length === 0 ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-gray-300">
+        <div className="rounded-2xl border border-white/10 bg-default p-8 text-center text-tertiary">
           No users found.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
+        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-default">
           <table className="min-w-full text-sm">
-            <thead className="bg-white/10 text-left">
+            <thead className="bg-default text-left">
               <tr>
                 <th className="px-4 py-3 font-semibold">Name</th>
                 <th className="px-4 py-3 font-semibold">User ID</th>
@@ -181,7 +188,10 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.userId} className="border-t border-white/10 align-top">
+                <tr
+                  key={user.userId}
+                  className="border-t border-white/10 align-top"
+                >
                   <td className="px-4 py-3">{user.name}</td>
                   <td className="px-4 py-3 font-mono text-xs">{user.userId}</td>
                   <td className="px-4 py-3">{user.email}</td>
@@ -191,30 +201,33 @@ export default function AdminUsersPage() {
                   <td className="px-4 py-3">{user.activePlan}</td>
                   <td className="px-4 py-3">
                     {user.isAccountFrozen ? (
-                      <span className="rounded-full bg-red-500/20 px-2.5 py-1 text-red-200">
+                      <span className="rounded-full bg-danger px-2.5 py-1 text-danger">
                         Frozen
                       </span>
                     ) : (
-                      <span className="rounded-full bg-emerald-500/20 px-2.5 py-1 text-emerald-200">
+                      <span className="rounded-full bg-success px-2.5 py-1 text-success">
                         Active
                       </span>
                     )}
                     {user.subscriptionStatus ? (
-                      <div className="mt-1 text-xs text-gray-400">
+                      <div className="mt-1 text-xs text-tertiary">
                         Sub: {user.subscriptionStatus}
                       </div>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3">{formatDate(user.createdAt as TimestampInput)}</td>
+                  <td className="px-4 py-3">
+                    {formatDate(user.createdAt as TimestampInput)}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       type="button"
                       onClick={() => handleFreezeToggle(user)}
                       disabled={actionUserId === user.userId}
-                      className={`rounded-lg px-3 py-2 font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${user.isAccountFrozen
-                        ? 'bg-emerald-500 text-white hover:bg-emerald-600'
-                        : 'bg-red-500 text-white hover:bg-red-600'
-                        }`}
+                      className={`rounded-full px-3 py-2 font-semibold transition-expo disabled:text-quaternary disabled:cursor-not-allowed ${
+                        user.isAccountFrozen
+                          ? 'bg-[var(--green-9)] text-white hover:bg-success'
+                          : 'bg-[var(--red-9)] text-white hover:bg-danger'
+                      }`}
                     >
                       {actionUserId === user.userId
                         ? 'Updating...'

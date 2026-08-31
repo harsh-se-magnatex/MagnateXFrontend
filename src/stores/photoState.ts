@@ -72,17 +72,15 @@ export const useUploadStore = create<UploadState>((setState, getState) => ({
   },
   updateImage: (id, updates) => {
     const current = getState().pendingImages;
-  
+
     const updated = current.map((image) =>
-      image.id === id
-        ? { ...image, ...updates }
-        : image
+      image.id === id ? { ...image, ...updates } : image
     );
-  
+
     setState({
       pendingImages: updated,
     });
-  
+
     void uploadStorage.set(
       updated.map(({ id, file, description }) => ({
         id,

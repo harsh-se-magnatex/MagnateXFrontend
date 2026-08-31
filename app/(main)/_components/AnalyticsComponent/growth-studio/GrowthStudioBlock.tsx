@@ -4,7 +4,10 @@ import { RepliesWaitingCard } from './RepliesWaitingCard';
 import { WhatToPostNextSection } from './WhatToPostNextSection';
 import { WhereToSpendSection } from './WhereToSpendSection';
 import { MonthlyBudgetAllocationSection } from './MonthlyBudgetAllocationSection';
-import { type GrowthStudioPlatform, type PreloadedReplySuggestions } from './_common';
+import {
+  type GrowthStudioPlatform,
+  type PreloadedReplySuggestions,
+} from './_common';
 import { ReplyQueueGroup, ReplyQueueLoadStats } from './replyQueue';
 
 /**
@@ -50,9 +53,7 @@ export function GrowthStudioBlock({
   return (
     <section
       aria-label="Growth Studio"
-      className={
-        className ? `space-y-4 ${className}` : 'space-y-4'
-      }
+      className={className ? `space-y-4 ${className}` : 'space-y-4'}
     >
       <RepliesWaitingCard
         platform={platform}

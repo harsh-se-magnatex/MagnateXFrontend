@@ -35,7 +35,9 @@ export function RedirectIfAuthenticated({
           const returnTo = getSafeAppReturnTo(
             new URLSearchParams(window.location.search).get('returnTo')
           );
-          router.replace(returnTo && !returnTo.startsWith('/sign-in') ? returnTo : '/home');
+          router.replace(
+            returnTo && !returnTo.startsWith('/sign-in') ? returnTo : '/home'
+          );
           return;
         }
       } catch {

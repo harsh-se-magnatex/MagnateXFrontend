@@ -19,7 +19,9 @@ export type LegalMarkdownMeta = {
   body: string;
 };
 
-export function loadLegalMarkdown(documentId: LegalDocumentId): LegalMarkdownMeta {
+export function loadLegalMarkdown(
+  documentId: LegalDocumentId
+): LegalMarkdownMeta {
   const raw = legalDocuments[documentId];
   if (!raw) {
     throw new Error(`Unknown legal document: ${documentId}`);
@@ -32,9 +34,7 @@ export function loadLegalMarkdown(documentId: LegalDocumentId): LegalMarkdownMet
 
   const subtitleLine = lines.find(
     (line) =>
-      line.trim() &&
-      !line.startsWith('#') &&
-      /effective date:/i.test(line),
+      line.trim() && !line.startsWith('#') && /effective date:/i.test(line)
   );
   const subtitle = subtitleLine?.trim() ?? null;
 
@@ -69,7 +69,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
       nodes.push(
         <Fragment key={`${keyPrefix}-t-${partIndex++}`}>
           {text.slice(lastIndex, match.index)}
-        </Fragment>,
+        </Fragment>
       );
     }
 
@@ -89,7 +89,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
               : {})}
           >
             {renderInline(label, `${keyPrefix}-l-${partIndex}`)}
-          </a>,
+          </a>
         );
       }
     } else if (token.startsWith('<') && token.endsWith('>')) {
@@ -97,19 +97,21 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
       nodes.push(
         <a key={`${keyPrefix}-m-${partIndex++}`} href={`mailto:${email}`}>
           {email}
-        </a>,
+        </a>
       );
     } else if (token.startsWith('**') && token.endsWith('**')) {
       nodes.push(
-        <strong key={`${keyPrefix}-s-${partIndex++}`}>{token.slice(2, -2)}</strong>,
+        <strong key={`${keyPrefix}-s-${partIndex++}`}>
+          {token.slice(2, -2)}
+        </strong>
       );
     } else if (token.startsWith('*') && token.endsWith('*')) {
       nodes.push(
-        <em key={`${keyPrefix}-e-${partIndex++}`}>{token.slice(1, -1)}</em>,
+        <em key={`${keyPrefix}-e-${partIndex++}`}>{token.slice(1, -1)}</em>
       );
     } else if (token.startsWith('`') && token.endsWith('`')) {
       nodes.push(
-        <code key={`${keyPrefix}-c-${partIndex++}`}>{token.slice(1, -1)}</code>,
+        <code key={`${keyPrefix}-c-${partIndex++}`}>{token.slice(1, -1)}</code>
       );
     }
 
@@ -120,7 +122,7 @@ function renderInline(text: string, keyPrefix: string): ReactNode[] {
     nodes.push(
       <Fragment key={`${keyPrefix}-t-${partIndex++}`}>
         {text.slice(lastIndex)}
-      </Fragment>,
+      </Fragment>
     );
   }
 
@@ -172,7 +174,10 @@ function parseBlocks(markdown: string): Block[] {
         index += 1;
       }
       const rows: string[][] = [];
-      while (index < lines.length && (lines[index] ?? '').trim().startsWith('|')) {
+      while (
+        index < lines.length &&
+        (lines[index] ?? '').trim().startsWith('|')
+      ) {
         if (!isTableSeparator(lines[index] ?? '')) {
           rows.push(parseTableRow(lines[index] ?? ''));
         }
@@ -281,7 +286,10 @@ function renderBlocks(blocks: Block[]): ReactNode {
                   <tr key={`${key}-tr-${rowIndex}`}>
                     {row.map((cell, cellIndex) => (
                       <td key={`${key}-td-${rowIndex}-${cellIndex}`}>
-                        {renderInline(cell, `${key}-td-${rowIndex}-${cellIndex}`)}
+                        {renderInline(
+                          cell,
+                          `${key}-td-${rowIndex}-${cellIndex}`
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -298,9 +306,5 @@ function renderBlocks(blocks: Block[]): ReactNode {
 
 export function LegalMarkdownContent({ body }: { body: string }) {
   const blocks = parseBlocks(body);
-  return (
-    <LegalDocument>
-      {renderBlocks(blocks)}
-    </LegalDocument>
-  );
+  return <LegalDocument>{renderBlocks(blocks)}</LegalDocument>;
 }

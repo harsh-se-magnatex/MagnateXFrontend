@@ -22,27 +22,28 @@ const TEST_PRODUCTS = [
 export default function PaymentTestingPage() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const startCheckout = useCallback(async (dodoProductId: string) => {
-    if (loadingId) return;
-    setLoadingId(dodoProductId);
-    try {
-      const res = await createTestOrder(dodoProductId);
-      window.location.href = res.data.checkoutUrl;
-    } catch (e: unknown) {
-      console.error('Test checkout failed', e);
-      showErrorToast('Failed to start checkout. Please try again later.');
-    } finally {
-      setLoadingId(null);
-    }
-  }, [loadingId]);
+  const startCheckout = useCallback(
+    async (dodoProductId: string) => {
+      if (loadingId) return;
+      setLoadingId(dodoProductId);
+      try {
+        const res = await createTestOrder(dodoProductId);
+        window.location.href = res.data.checkoutUrl;
+      } catch (e: unknown) {
+        console.error('Test checkout failed', e);
+        showErrorToast('Failed to start checkout. Please try again later.');
+      } finally {
+        setLoadingId(null);
+      }
+    },
+    [loadingId]
+  );
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Payment testing
-        </h1>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <h1 className="text-page-title text-default">Payment testing</h1>
+        <p className="text-secondary mt-1 text-sm">
           Dodo checkout for whitelisted test products (signed-in users only).
         </p>
       </div>

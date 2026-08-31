@@ -29,11 +29,11 @@ export default function OpenSourceLicensesPage() {
     >
       <LegalDocument>
         <p>
-          SocioGenie is built by <strong>MAGNATEX LLP</strong> on top of a
-          large ecosystem of open-source software. This page lists every
-          third-party package shipped with SocioGenie, together with its
-          license, in fulfilment of the attribution requirements of the MIT,
-          BSD, Apache 2.0, ISC, and similar permissive licenses.
+          SocioGenie is built by <strong>MAGNATEX LLP</strong> on top of a large
+          ecosystem of open-source software. This page lists every third-party
+          package shipped with SocioGenie, together with its license, in
+          fulfilment of the attribution requirements of the MIT, BSD, Apache
+          2.0, ISC, and similar permissive licenses.
         </p>
         <p>
           This list is generated automatically from our dependency manifest on
@@ -69,7 +69,7 @@ export default function OpenSourceLicensesPage() {
               <tbody>
                 {summary.map((row) => (
                   <tr key={row.license}>
-                    <td className="font-medium text-slate-900">{row.license}</td>
+                    <td className="font-medium text-default">{row.license}</td>
                     <td className="text-right tabular-nums">{row.count}</td>
                   </tr>
                 ))}
@@ -83,43 +83,43 @@ export default function OpenSourceLicensesPage() {
         {sections.map((section) => (
           <details key={section.license} className="legal-accordion group">
             <summary className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="font-medium text-slate-900">
-                    {section.license}
-                  </span>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-                    {section.count} package{section.count === 1 ? '' : 's'}
-                  </span>
-                </div>
-                <span className="text-xs text-slate-500 group-open:hidden">
-                  Show
+              <div className="flex items-center gap-3">
+                <span className="font-medium text-default">
+                  {section.license}
                 </span>
-                <span className="hidden text-xs text-slate-500 group-open:inline">
-                  Hide
+                <span className="rounded-full bg-element px-2 py-0.5 text-xs font-medium text-secondary">
+                  {section.count} package{section.count === 1 ? '' : 's'}
                 </span>
-              </summary>
-              <ul className="border-t border-slate-100 divide-y divide-slate-100">
-                {section.entries.map((entry) => (
-                  <li
-                    key={entry.name}
-                    className="flex flex-col gap-1 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <code className="text-sm font-mono text-slate-900">
-                      {entry.name}
-                    </code>
-                    {entry.repository && (
-                      <a
-                        href={entry.repository}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="max-w-full truncate text-xs text-indigo-600 hover:text-indigo-700 sm:max-w-[50%]"
-                      >
-                        {entry.repository}
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
+              </div>
+              <span className="text-xs text-secondary group-open:hidden">
+                Show
+              </span>
+              <span className="hidden text-xs text-secondary group-open:inline">
+                Hide
+              </span>
+            </summary>
+            <ul className="border-t border-default divide-y divide-[var(--border-default)]">
+              {section.entries.map((entry) => (
+                <li
+                  key={entry.name}
+                  className="flex flex-col gap-1 px-5 py-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <code className="text-sm font-mono text-default">
+                    {entry.name}
+                  </code>
+                  {entry.repository && (
+                    <a
+                      href={entry.repository}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="max-w-full truncate text-xs text-preview hover:text-preview sm:max-w-[50%]"
+                    >
+                      {entry.repository}
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ul>
           </details>
         ))}
       </div>

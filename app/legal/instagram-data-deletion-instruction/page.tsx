@@ -1,10 +1,7 @@
 import Link from 'next/link';
 import { Trash2 } from 'lucide-react';
 import { LegalDocument, LegalPage } from '../_components/legal-page';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 
 export default function InstagramDataDeletionInstructionPage() {
   return (
@@ -18,17 +15,17 @@ export default function InstagramDataDeletionInstructionPage() {
       <LegalDocument>
         <p>
           <strong>SocioGenie</strong> (operated by <strong>MAGNATEX LLP</strong>
-          ) lets you connect an Instagram Business account to publish content and
-          view insights. This page explains what Instagram-related data we store,
-          how you can delete it, and how we handle deletion requests initiated
-          through Meta.
+          ) lets you connect an Instagram Business account to publish content
+          and view insights. This page explains what Instagram-related data we
+          store, how you can delete it, and how we handle deletion requests
+          initiated through Meta.
         </p>
 
         <h2>1. Instagram data we store</h2>
         <p>
-          When you connect Instagram to SocioGenie, we store only the information
-          needed to publish on your behalf and show connection status in your
-          account. This may include:
+          When you connect Instagram to SocioGenie, we store only the
+          information needed to publish on your behalf and show connection
+          status in your account. This may include:
         </p>
         <ul>
           <li>Your Instagram user ID</li>
@@ -67,8 +64,8 @@ export default function InstagramDataDeletionInstructionPage() {
         </ol>
         <p>
           Disconnecting revokes our access tokens and removes Instagram
-          connection fields from your account, including tokens and your Instagram
-          user ID stored for that connection.
+          connection fields from your account, including tokens and your
+          Instagram user ID stored for that connection.
         </p>
 
         <h2>3. Delete data through Instagram / Meta</h2>

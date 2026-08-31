@@ -31,19 +31,27 @@ export type UserTransaction = {
 };
 
 export const getAvailablePlansAndCreditPacks = async () => {
-  return apiGet<ApiEnvelope<{ creditPacks: CreditPackSummary[]; plans: PlanSummary[] }>>(
-    '/api/v1/transaction/get-available-plans-and-credit-packs'
-  );
+  return apiGet<
+    ApiEnvelope<{ creditPacks: CreditPackSummary[]; plans: PlanSummary[] }>
+  >('/api/v1/transaction/get-available-plans-and-credit-packs');
 };
 
-export const handleTopUpTransaction = async ({creditPackId}: {creditPackId: string}) => {
+export const handleTopUpTransaction = async ({
+  creditPackId,
+}: {
+  creditPackId: string;
+}) => {
   return apiPost<ApiEnvelope<{ transactionId: string }>>(
     '/api/v1/transaction/handle-top-up-transaction',
     { creditPackId }
   );
 };
 
-export const handlePlanPurchaseTransaction = async ({planId}: {planId: string}) => {
+export const handlePlanPurchaseTransaction = async ({
+  planId,
+}: {
+  planId: string;
+}) => {
   return apiPost<ApiEnvelope<{ subscriptionId: string }>>(
     '/api/v1/transaction/handle-plan-purchase',
     { planId }

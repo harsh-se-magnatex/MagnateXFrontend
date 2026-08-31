@@ -178,7 +178,6 @@ export default function AnalyticsPage() {
     activePlan !== 'non-subscribed' &&
     !isPlatformSelectionComplete({ activePlan, selected });
 
-
   useEffect(() => {
     if (!selected) return;
     const available: PlatformTab[] = [];
@@ -215,18 +214,16 @@ export default function AnalyticsPage() {
             const wtnCache = useWhatToPostNextCache.getState();
             const wtsCache = useWhereToSpendCache.getState();
             const verdictCache = useWeeklyVerdictCache.getState();
-            (['facebook', 'instagram', 'linkedin'] as const).forEach(
-              (p) => {
-                const wtn = latest.whatToPostNext[p];
-                if (wtn) wtnCache.set(p, wtn);
-                const wts = latest.whereToSpend[p];
-                if (wts) wtsCache.set(p, wts);
-                const verdict = latest.weeklyVerdict?.[p];
-                if (verdict) {
-                  verdictCache.set(p, verdict.verdict, verdict.source);
-                }
+            (['facebook', 'instagram', 'linkedin'] as const).forEach((p) => {
+              const wtn = latest.whatToPostNext[p];
+              if (wtn) wtnCache.set(p, wtn);
+              const wts = latest.whereToSpend[p];
+              if (wts) wtsCache.set(p, wts);
+              const verdict = latest.weeklyVerdict?.[p];
+              if (verdict) {
+                verdictCache.set(p, verdict.verdict, verdict.source);
               }
-            );
+            });
           }
         } catch (e) {
           console.warn('[analytics] snapshot read failed', e);
@@ -245,8 +242,8 @@ export default function AnalyticsPage() {
           const paUnknown: unknown = response.data.pageAnalytics;
           const pageAnalyticsPayload: PageAnalytics | null =
             paUnknown != null &&
-              typeof paUnknown === 'object' &&
-              !Array.isArray(paUnknown)
+            typeof paUnknown === 'object' &&
+            !Array.isArray(paUnknown)
               ? (paUnknown as PageAnalytics)
               : null;
           setPageAnalytics(pageAnalyticsPayload);
@@ -262,8 +259,8 @@ export default function AnalyticsPage() {
           const igUnknown: unknown = response.data.igAnalytics;
           const igPayload: InstagramAnalytics | null =
             igUnknown != null &&
-              typeof igUnknown === 'object' &&
-              !Array.isArray(igUnknown)
+            typeof igUnknown === 'object' &&
+            !Array.isArray(igUnknown)
               ? (igUnknown as InstagramAnalytics)
               : null;
           setIgAnalytics(igPayload);
@@ -282,8 +279,8 @@ export default function AnalyticsPage() {
           const liUnknown: unknown = response.data.liAnalytics;
           const liPayload: LinkedInAnalytics | null =
             liUnknown != null &&
-              typeof liUnknown === 'object' &&
-              !Array.isArray(liUnknown)
+            typeof liUnknown === 'object' &&
+            !Array.isArray(liUnknown)
               ? (liUnknown as LinkedInAnalytics)
               : null;
           setLiAnalytics(liPayload);
@@ -677,10 +674,10 @@ export default function AnalyticsPage() {
         >
           <div className="flex items-start gap-3">
             <AlertCircle
-              className="mt-0.5 h-5 w-5 shrink-0 text-primary"
+              className="mt-0.5 h-5 w-5 shrink-0 text-link"
               aria-hidden
             />
-            <p className="text-sm text-foreground">
+            <p className="text-sm text-default">
               Your{' '}
               <span className="font-semibold capitalize">{activePlan}</span>{' '}
               plan supports{' '}
@@ -705,26 +702,31 @@ export default function AnalyticsPage() {
 
   return (
     <div className="mx-auto max-w-5xl pb-8">
-        <p className="mb-3 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
-          <span
-            aria-hidden
-            className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 text-white"
-          />
-          <span>
-            Insights refreshes and 
-            updates once every 24 hours.
-          </span>
-        </p>
+      <p className="mb-3 flex flex-wrap items-center gap-1.5 text-[11px] text-secondary">
+        <span
+          aria-hidden
+          className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--green-9)] text-white"
+        />
+        <span>Insights refreshes and updates once every 24 hours.</span>
+      </p>
       <Tabs
         value={platform}
         onValueChange={(v) => setPlatform(v as PlatformTab)}
         className="space-y-6"
       >
-        <TabsList className={`grid h-auto w-full mx-auto max-w-md gap-1 
-          ${selectedCount === 1 ? 'grid-cols-0 ' : selectedCount === 2 ? "grid-cols-2 " : 'grid-cols-3'}`}>
-          {selected?.facebook && <TabsTrigger value="facebook">Facebook</TabsTrigger>}
-          {selected?.instagram && <TabsTrigger value="instagram">Instagram</TabsTrigger>}
-          {selected?.linkedin && <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>}
+        <TabsList
+          className={`grid h-auto w-full mx-auto max-w-md gap-1 
+          ${selectedCount === 1 ? 'grid-cols-0 ' : selectedCount === 2 ? 'grid-cols-2 ' : 'grid-cols-3'}`}
+        >
+          {selected?.facebook && (
+            <TabsTrigger value="facebook">Facebook</TabsTrigger>
+          )}
+          {selected?.instagram && (
+            <TabsTrigger value="instagram">Instagram</TabsTrigger>
+          )}
+          {selected?.linkedin && (
+            <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="facebook" className="mt-0 space-y-10 outline-none">

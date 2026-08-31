@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { CreditCard, ImagePlus, Layers, Loader2, Sparkles, X } from 'lucide-react';
+import {
+  CreditCard,
+  ImagePlus,
+  Layers,
+  Loader2,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/src/hooks/useAuth';
 import { generateCarousel } from '@/src/service/api/carousel';
@@ -84,8 +91,7 @@ function mapCarouselResult(
   docs: Array<{ id: string; data: Record<string, unknown> }>
 ): CarouselResult | null {
   const first = docs.find(
-    (doc) =>
-      String(doc.data.generationStatus ?? '').toLowerCase() !== 'failed'
+    (doc) => String(doc.data.generationStatus ?? '').toLowerCase() !== 'failed'
   );
   if (!first) return null;
 
@@ -115,7 +121,11 @@ function mapCarouselResult(
   if (carouselSlides.length === 0) return null;
 
   const platform = String(first.data.platform ?? '').toLowerCase();
-  if (platform !== 'instagram' && platform !== 'facebook' && platform !== 'linkedin') {
+  if (
+    platform !== 'instagram' &&
+    platform !== 'facebook' &&
+    platform !== 'linkedin'
+  ) {
     return null;
   }
 
@@ -123,7 +133,8 @@ function mapCarouselResult(
     platform,
     caption: String(first.data.caption ?? '').trim(),
     slideCount:
-      typeof first.data.slideCount === 'number' && Number.isFinite(first.data.slideCount)
+      typeof first.data.slideCount === 'number' &&
+      Number.isFinite(first.data.slideCount)
         ? first.data.slideCount
         : carouselSlides.length,
     imageUrl: carouselSlides[0].imageUrl,
@@ -144,13 +155,16 @@ export default function CarouselGenerationPage() {
   const [platform, setPlatform] = useState<SocialPlatform>('instagram');
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedCarousel, setGeneratedCarousel] = useState<CarouselResult | null>(null);
+  const [generatedCarousel, setGeneratedCarousel] =
+    useState<CarouselResult | null>(null);
   const referenceInputRef = useRef<HTMLInputElement>(null);
 
   const credits = billing?.credits;
   const creditCost = slideCount * CREDIT_PER_SLIDE;
   const creditOk =
-    typeof credits === 'number' && Number.isFinite(credits) && credits >= creditCost;
+    typeof credits === 'number' &&
+    Number.isFinite(credits) &&
+    credits >= creditCost;
 
   const referencePreviewUrl = useMemo(() => {
     if (!referenceFile) return null;
@@ -302,27 +316,27 @@ export default function CarouselGenerationPage() {
     <div className="max-w-4xl mx-auto page-enter pb-16 space-y-8">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-primary">
+          <div className="flex items-center gap-2 text-link">
             <Layers className="h-6 w-6" />
             <h1 className={workspacePageTitleClass}>Carousel Posts</h1>
           </div>
           <p className={workspacePageDescriptionClass}>
-            A swipeable 2–7 slide post. Leave the topic blank and we&apos;ll pick
-            one that fits your brand.
+            A swipeable 2–7 slide post. Leave the topic blank and we&apos;ll
+            pick one that fits your brand.
           </p>
         </div>
         <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary-purple/10 text-primary-purple">
+          <div className="p-2 rounded-lg bg-primary-purple/10 text-preview">
             <CreditCard className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-widest text-secondary">
               Credits:{' '}
-              <span className="font-semibold text-foreground text-sm">
+              <span className="font-semibold text-default text-sm">
                 {billingLoading ? '…' : (credits ?? '—')}
               </span>
             </p>
-            <span className="text-xs font-normal text-muted-foreground">
+            <span className="text-xs font-normal text-secondary">
               Cost:
               <span className="font-semibold">&nbsp;{creditCost}</span>
             </span>
@@ -330,9 +344,11 @@ export default function CarouselGenerationPage() {
         </div>
       </header>
 
-      <section className="glass-card rounded-2xl border border-border/40 p-6 space-y-5">
+      <section className="glass-card rounded-2xl border border-default p-6 space-y-5">
         <div className="space-y-2">
-          <label className="text-sm font-medium block mb-2">Topic (optional)</label>
+          <label className="text-sm font-medium block mb-2">
+            Topic (optional)
+          </label>
           <textarea
             className={`${workspaceInputClass} min-h-[88px]`}
             placeholder="e.g. 5 mistakes buyers make when choosing running shoes"
@@ -348,16 +364,16 @@ export default function CarouselGenerationPage() {
             {showSelectAccountsFirst ? (
               <div
                 role="status"
-                className="rounded-xl border border-amber-500/30 bg-amber-500/15 px-4 py-3 text-sm text-amber-200"
+                className="rounded-xl border border-warning bg-warning px-4 py-3 text-sm text-warning"
               >
                 <p className="font-medium">Select your accounts first</p>
-                <p className="mt-1 text-amber-300/90">
+                <p className="mt-1 text-warning">
                   Choose which platforms you use in onboarding or social
                   settings, then come back here to generate carousels.
                 </p>
                 <Link
                   href={WORKSPACE_NAV_HREFS.linkedProfiles}
-                  className="mt-2 inline-block text-sm font-semibold text-amber-200 underline underline-offset-2 hover:text-amber-300"
+                  className="mt-2 inline-block text-sm font-semibold text-warning underline underline-offset-2 hover:text-warning"
                 >
                   {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
                 </Link>
@@ -369,7 +385,7 @@ export default function CarouselGenerationPage() {
                     <label
                       key={p}
                       htmlFor={`carousel-platform-${p}`}
-                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground"
+                      className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-default"
                     >
                       <input
                         id={`carousel-platform-${p}`}
@@ -377,13 +393,13 @@ export default function CarouselGenerationPage() {
                         checked={platform === p}
                         disabled={isGenerating}
                         onChange={() => setPlatform(p)}
-                        className="size-4 rounded border-border text-primary-purple focus:ring-primary-purple/30"
+                        className="size-4 rounded border-default text-preview focus:ring-strong"
                       />
                       <span>{platformLabel(p)}</span>
                     </label>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p className="mt-2 text-xs text-secondary">
                   Carousel size and caption follow this platform&apos;s format.
                 </p>
               </>
@@ -407,7 +423,9 @@ export default function CarouselGenerationPage() {
         </div>
 
         <div className="space-y-2">
-          <span className="text-sm font-medium">Reference image (optional)</span>
+          <span className="text-sm font-medium">
+            Reference image (optional)
+          </span>
           <input
             ref={referenceInputRef}
             type="file"
@@ -421,7 +439,7 @@ export default function CarouselGenerationPage() {
           />
           {referencePreviewUrl && referenceFile ? (
             <div className="flex flex-col items-center gap-2">
-              <div className="relative inline-block overflow-hidden rounded-xl border border-border/60 bg-muted/30">
+              <div className="relative inline-block overflow-hidden rounded-xl border border-default bg-element">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={referencePreviewUrl}
@@ -444,7 +462,7 @@ export default function CarouselGenerationPage() {
                 type="button"
                 disabled={isGenerating}
                 onClick={() => referenceInputRef.current?.click()}
-                className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
+                className="text-xs font-medium text-link hover:underline disabled:text-quaternary"
               >
                 Replace image
               </button>
@@ -455,16 +473,16 @@ export default function CarouselGenerationPage() {
               disabled={isGenerating}
               onClick={() => referenceInputRef.current?.click()}
               className={cn(
-                'flex w-full flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-center transition',
-                'hover:border-primary/40 hover:bg-muted/50',
-                'disabled:pointer-events-none disabled:opacity-50'
+                'flex w-full flex-col items-center justify-center gap-2 rounded-full border border-dashed border-default bg-element px-4 py-8 text-center transition',
+                'hover:border-primary/40 hover:bg-element',
+                'disabled:pointer-events-none disabled:text-quaternary'
               )}
             >
-              <ImagePlus className="h-6 w-6 text-primary" aria-hidden />
-              <span className="text-sm font-medium text-foreground">
+              <ImagePlus className="h-6 w-6 text-link" aria-hidden />
+              <span className="text-sm font-medium text-default">
                 Choose a reference image
               </span>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-secondary">
                 JPEG, PNG, or WebP · optional
               </span>
             </button>
@@ -487,12 +505,12 @@ export default function CarouselGenerationPage() {
         </Button>
 
         {!creditOk && (
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-secondary">
             Needs {creditCost} {creditCost === 1 ? 'credit' : 'credits'} — you
             have {credits ?? 0}.{' '}
             <Link
               href="/settings/billings"
-              className="font-semibold text-primary-purple underline underline-offset-2"
+              className="font-semibold text-preview underline underline-offset-2"
             >
               Top up
             </Link>
@@ -500,12 +518,12 @@ export default function CarouselGenerationPage() {
         )}
 
         {generatedCarousel ? (
-          <div className="mt-6 rounded-2xl border border-border bg-muted/50 p-5 space-y-4">
+          <div className="mt-6 rounded-2xl border border-default bg-element p-5 space-y-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+              <p className="text-xs font-semibold uppercase tracking-widest text-secondary">
                 Generated output
               </p>
-              <p className="text-xs text-primary-purple font-medium">
+              <p className="text-xs text-preview font-medium">
                 {generatedCarousel.slideCount} slides
               </p>
             </div>
@@ -519,12 +537,16 @@ export default function CarouselGenerationPage() {
             />
 
             {generatedCarousel.caption ? (
-              <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-default leading-relaxed whitespace-pre-wrap">
                 {generatedCarousel.caption}
               </p>
             ) : null}
 
-            <Button type="button" className="w-full" onClick={handleSendToScheduler}>
+            <Button
+              type="button"
+              className="w-full"
+              onClick={handleSendToScheduler}
+            >
               Continue to Schedule a Post
             </Button>
           </div>

@@ -111,8 +111,10 @@ export function LinkCredentialsSection({ user }: Props) {
 
   useEffect(() => {
     if (!recaptchaContainerRef.current) return;
-    if (!(window as unknown as { recaptchaVerifier?: RecaptchaVerifier })
-      .recaptchaVerifier) {
+    if (
+      !(window as unknown as { recaptchaVerifier?: RecaptchaVerifier })
+        .recaptchaVerifier
+    ) {
       (
         window as unknown as { recaptchaVerifier: RecaptchaVerifier }
       ).recaptchaVerifier = new RecaptchaVerifier(
@@ -122,8 +124,9 @@ export function LinkCredentialsSection({ user }: Props) {
           size: 'invisible',
           callback: () => {},
           'expired-callback': () => {
-            (window as unknown as { recaptchaVerifier?: RecaptchaVerifier })
-              .recaptchaVerifier?.clear();
+            (
+              window as unknown as { recaptchaVerifier?: RecaptchaVerifier }
+            ).recaptchaVerifier?.clear();
           },
         }
       );
@@ -226,13 +229,13 @@ export function LinkCredentialsSection({ user }: Props) {
   if (!hasEmail && !hasPhone) {
     return (
       <section className={workspaceSectionCardClass}>
-        <div className="mb-4 flex items-center gap-3 border-b border-border/60 pb-4">
+        <div className="mb-4 flex items-center gap-3 border-b border-default pb-4">
           <div className={workspaceIconBadgeClass}>
             <UserIcon className="h-5 w-5" />
           </div>
           <h2 className={workspaceSectionTitleLgClass}>Email &amp; phone</h2>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-secondary">
           No email or phone on this account. Please contact support if you need
           help.
         </p>
@@ -242,13 +245,13 @@ export function LinkCredentialsSection({ user }: Props) {
 
   return (
     <section className={workspaceSectionCardClass}>
-      <div className="mb-6 flex items-center gap-3 border-b border-border/60 pb-4">
+      <div className="mb-6 flex items-center gap-3 border-b border-default pb-4">
         <div className={workspaceIconBadgeClass}>
           <Mail className="h-5 w-5" />
         </div>
         <div>
           <h2 className={workspaceSectionTitleLgClass}>Email &amp; phone</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <p className="mt-0.5 text-sm text-secondary">
             Linked sign-in methods. Add the missing one with verification.
           </p>
         </div>
@@ -256,27 +259,27 @@ export function LinkCredentialsSection({ user }: Props) {
 
       {emailLinkSent && !hasEmail && hasPhone && (
         <div
-          className="mb-6 rounded-2xl border border-primary/35 bg-primary/10 px-4 py-3 text-sm text-foreground ring-1 ring-primary/15"
+          className="mb-6 rounded-2xl border border-primary/35 bg-primary/10 px-4 py-3 text-sm text-default ring-1 ring-strong"
           role="status"
         >
           <p className="font-medium">Check your email</p>
-          <p className="mt-1 text-muted-foreground">
-            Open the link we sent (on this device, while signed in) to verify and
-            add this email. If the link opened elsewhere, sign in on that device
-            or request a new link.
+          <p className="mt-1 text-secondary">
+            Open the link we sent (on this device, while signed in) to verify
+            and add this email. If the link opened elsewhere, sign in on that
+            device or request a new link.
           </p>
         </div>
       )}
 
       {showEmailVerified && (
         <div
-          className="mb-6 flex items-start gap-3 rounded-2xl border border-emerald-500/35 bg-emerald-950/55 px-4 py-3 text-sm text-emerald-100 ring-1 ring-emerald-500/20"
+          className="mb-6 flex items-start gap-3 rounded-2xl border border-success bg-success px-4 py-3 text-sm text-success ring-1 ring-[var(--border-success)]"
           role="status"
         >
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
           <div>
-            <p className="font-medium text-emerald-100">Email verified</p>
-            <p className="mt-1 text-emerald-200/85">
+            <p className="font-medium text-success">Email verified</p>
+            <p className="mt-1 text-success">
               Password sign-in is enabled for{' '}
               <span className="font-mono">{user.email}</span>.
             </p>
@@ -286,13 +289,14 @@ export function LinkCredentialsSection({ user }: Props) {
 
       {needsEmailVerification && (
         <div
-          className="mb-6 rounded-2xl border border-amber-500/35 bg-amber-950/55 px-4 py-3 text-sm text-amber-100 ring-1 ring-amber-500/20"
+          className="mb-6 rounded-2xl border border-warning bg-warning px-4 py-3 text-sm text-warning ring-1 ring-[var(--border-warning)]"
           role="status"
         >
           <p className="font-medium">Verify your email to finish linking</p>
-          <p className="mt-1 text-amber-200/85">
+          <p className="mt-1 text-warning">
             We sent a link to <span className="font-mono">{user.email}</span>.
-            After you open it, password sign-in is fully enabled on your account.
+            After you open it, password sign-in is fully enabled on your
+            account.
           </p>
         </div>
       )}
@@ -303,17 +307,17 @@ export function LinkCredentialsSection({ user }: Props) {
             {/* Phone + inline OTP: email users adding mobile (SMS code on this page) */}
             <div
               className={cn(
-                'space-y-4 rounded-2xl border border-primary/30 bg-card p-4 ring-1 ring-primary/15 sm:p-5',
-                phoneStep === 'otp' && 'ring-primary/25'
+                'space-y-4 rounded-2xl border border-primary/30 bg-default p-4 ring-1 ring-strong sm:p-5',
+                phoneStep === 'otp' && 'ring-strong'
               )}
             >
               <div>
-                <p className="text-sm font-semibold text-foreground">
+                <p className="text-sm font-semibold text-default">
                   Add mobile number
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  We&apos;ll text you a code. Enter it below on this page to verify
-                  and link your mobile number.
+                <p className="mt-1 text-sm text-secondary">
+                  We&apos;ll text you a code. Enter it below on this page to
+                  verify and link your mobile number.
                 </p>
               </div>
               <div className="space-y-3">
@@ -335,13 +339,19 @@ export function LinkCredentialsSection({ user }: Props) {
                   customInputClassName={inputBase}
                   numberInputClassName={inputBase}
                   nationalPlaceholder="98765 43210"
-                  className={phoneStep === 'otp' ? 'pointer-events-none opacity-80' : undefined}
+                  className={
+                    phoneStep === 'otp'
+                      ? 'pointer-events-none opacity-80'
+                      : undefined
+                  }
                 />
                 {phoneStep === 'idle' && (
                   <Button
                     type="button"
                     disabled={
-                      phoneBusy || !phoneCountryCode || phoneNationalNumber.length < 6
+                      phoneBusy ||
+                      !phoneCountryCode ||
+                      phoneNationalNumber.length < 6
                     }
                     onClick={() => void handleSendPhoneLinkSms()}
                     className="w-full bg-primary hover:opacity-95 sm:w-auto"
@@ -356,19 +366,19 @@ export function LinkCredentialsSection({ user }: Props) {
                   aria-label="SMS verification code"
                 >
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-medium text-default">
                       Verification code
                     </p>
                     {phoneStep === 'otp' && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-secondary">
                         Sent to <span className="font-mono">{e164}</span>
                       </p>
                     )}
                   </div>
                   {phoneStep === 'idle' && (
-                    <p className="text-xs text-muted-foreground">
-                      Tap “Send verification code” to receive a 6-digit SMS, then
-                      enter it here.
+                    <p className="text-xs text-secondary">
+                      Tap “Send verification code” to receive a 6-digit SMS,
+                      then enter it here.
                     </p>
                   )}
                   <InputOTP
@@ -383,7 +393,7 @@ export function LinkCredentialsSection({ user }: Props) {
                         <InputOTPSlot
                           key={i}
                           index={i}
-                          className="size-10 rounded-lg border border-border bg-muted sm:size-11"
+                          className="size-10 rounded-lg border border-default bg-element sm:size-11"
                         />
                       ))}
                     </InputOTPGroup>
@@ -394,7 +404,7 @@ export function LinkCredentialsSection({ user }: Props) {
                         type="button"
                         variant="outline"
                         onClick={resetPhoneFlow}
-                        className="bg-card"
+                        className="bg-default"
                       >
                         Change number
                       </Button>
@@ -443,8 +453,11 @@ export function LinkCredentialsSection({ user }: Props) {
                 autoComplete="email"
               />
               {!hasEmail && hasPhone && (
-                <form onSubmit={handleRequestEmailLink} className="mt-4 space-y-4">
-                  <p className="text-sm text-muted-foreground">
+                <form
+                  onSubmit={handleRequestEmailLink}
+                  className="mt-4 space-y-4"
+                >
+                  <p className="text-sm text-secondary">
                     We’ll email you a verification link. Your email is linked
                     only after you open that link while signed in. You’ll choose
                     a password on the next step.

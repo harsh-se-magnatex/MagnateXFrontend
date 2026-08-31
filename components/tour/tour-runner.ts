@@ -62,11 +62,12 @@ function currentPath(): string {
   return window.location.pathname;
 }
 
-type DriverPopoverSide = NonNullable<DriveStep['popover']> extends {
-  side?: infer S;
-}
-  ? S
-  : never;
+type DriverPopoverSide =
+  NonNullable<DriveStep['popover']> extends {
+    side?: infer S;
+  }
+    ? S
+    : never;
 
 /** driver.js no longer accepts `side: "over"`; map it to the default placement. */
 function toDriverPopoverSide(
@@ -148,26 +149,24 @@ export function startTour(opts: StartTourOptions): void {
     onFinish?.();
   };
 
-  const driveSteps: DriveStep[] = steps.slice(windowStart, windowEnd + 1).map((s, idx) => {
-    const isLast = idx === windowEnd - windowStart;
-    const final = s.finalCta;
-    return {
-      element: s.element,
-      popover: {
-        title: s.title,
-        description: buildDescriptionHtml(s),
-        side: toDrivePopoverSide(s.side),
-        align: s.align,
-        nextBtnText: final
-          ? final.label
-          : isLast
-            ? 'Got it'
-            : 'Next',
-        prevBtnText: 'Back',
-        doneBtnText: final?.label ?? 'Got it',
-      },
-    };
-  });
+  const driveSteps: DriveStep[] = steps
+    .slice(windowStart, windowEnd + 1)
+    .map((s, idx) => {
+      const isLast = idx === windowEnd - windowStart;
+      const final = s.finalCta;
+      return {
+        element: s.element,
+        popover: {
+          title: s.title,
+          description: buildDescriptionHtml(s),
+          side: toDrivePopoverSide(s.side),
+          align: s.align,
+          nextBtnText: final ? final.label : isLast ? 'Got it' : 'Next',
+          prevBtnText: 'Back',
+          doneBtnText: final?.label ?? 'Got it',
+        },
+      };
+    });
 
   let driverObj: Driver | null = null;
 
@@ -192,8 +191,7 @@ export function startTour(opts: StartTourOptions): void {
       const localIndex = ctx.state.activeIndex ?? 0;
       const globalIndex = windowStart + localIndex;
       const here = steps[globalIndex];
-      const next =
-        globalIndex < windowEnd ? steps[globalIndex + 1] : undefined;
+      const next = globalIndex < windowEnd ? steps[globalIndex + 1] : undefined;
 
       // Final CTA — route to /pricing and finish the tour.
       if (here?.finalCta) {

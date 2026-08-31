@@ -37,7 +37,7 @@ export function ShowcaseMedia({
 }: ShowcaseMediaProps) {
   if (post.mediaType === 'video' && post.videoUrl && playVideo) {
     return (
-      <div className={cn('relative h-full w-full bg-neutral-900', className)}>
+      <div className={cn('relative h-full w-full bg-[var(--pf-surface-2)]', className)}>
         <video
           src={post.videoUrl}
           poster={post.posterUrl || getPostThumbnailUrl(post)}
@@ -55,7 +55,7 @@ export function ShowcaseMedia({
       const src = getPostThumbnailUrl(post);
       return (
         <div
-          className={cn('relative h-full w-full bg-neutral-100', className)}
+          className={cn('relative h-full w-full bg-[var(--pf-surface-2)]', className)}
           onClick={onMediaClick}
           onKeyDown={
             onMediaClick
@@ -99,7 +99,7 @@ export function ShowcaseMedia({
         type="button"
         onClick={onMediaClick}
         className={cn(
-          'relative h-full w-full bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-purple',
+          'relative h-full w-full bg-[var(--pf-surface-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--pf-accent)]',
           className
         )}
         aria-label={alt}
@@ -116,7 +116,7 @@ export function ShowcaseMedia({
   }
 
   return (
-    <div className={cn('relative h-full w-full bg-neutral-100', className)}>
+    <div className={cn('relative h-full w-full bg-[var(--pf-surface-2)]', className)}>
       <Image
         src={src}
         alt={alt}
@@ -152,12 +152,12 @@ function ShowcaseCarousel({
   };
 
   return (
-    <div className={cn('relative h-full w-full bg-neutral-100', className)}>
+    <div className={cn('relative h-full w-full bg-[var(--pf-surface-2)]', className)}>
       {onMediaClick ? (
         <button
           type="button"
           onClick={onMediaClick}
-          className="absolute inset-0 z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-purple"
+          className="absolute inset-0 z-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--pf-accent)]"
           aria-label="Open post"
         >
           <Image

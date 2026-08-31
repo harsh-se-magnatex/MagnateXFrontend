@@ -86,5 +86,4 @@ export const useTourState = create<TourStore>((set) => ({
 }));
 
 /** Convenience hook for gated pages — returns just the demo flag. */
-export const useTourDemo = (): boolean =>
-  useTourState((s) => s.isDemoActive);
+export const useTourDemo = (): boolean => useTourState((s) => s.isDemoActive);

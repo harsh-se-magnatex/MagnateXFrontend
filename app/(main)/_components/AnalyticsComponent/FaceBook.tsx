@@ -21,9 +21,19 @@ import {
 import { useMemo, useRef, useState } from 'react';
 import { SyncErrorBanner } from './SyncErrorBanner';
 import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
-import { buildReplyQueueGroupsFacebook, GrowthStudioBlock } from './growth-studio';
+import {
+  buildReplyQueueGroupsFacebook,
+  GrowthStudioBlock,
+} from './growth-studio';
 import type { PreloadedReplySuggestions } from './growth-studio/_common';
-import { audienceRanked, InsightMetric, Merged, Metrics, PageAnalytics, Post } from '../types';
+import {
+  audienceRanked,
+  InsightMetric,
+  Merged,
+  Metrics,
+  PageAnalytics,
+  Post,
+} from '../types';
 import { collectPostImageUrls } from '@/lib/analytics-post-media';
 import { ChartConfig } from '@/components/ui/chart';
 import { Button } from '@/components/ui/button';
@@ -34,7 +44,8 @@ import {
 } from './utils/utils_functions';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '') ?? '';
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '') ?? '';
 
 function facebookOAuthAnalyticsHref(): string | null {
   if (!BACKEND_URL) return null;
@@ -48,7 +59,6 @@ const reachGrowthChartConfig = {
 const followersGrowthChartConfig = {
   followers: { label: 'Followers', color: '#15803d' },
 } satisfies ChartConfig;
-
 
 export default function FaceBookAnalytics({
   metrics,
@@ -147,23 +157,26 @@ export default function FaceBookAnalytics({
   if (!pageAnalytics && topPosts.length === 0) {
     const oauthHref = facebookOAuthAnalyticsHref();
     return (
-      <div className="rounded-xl border border-dashed border-border bg-muted/40 px-6 py-14 text-center">
-        <Facebook className="mx-auto h-10 w-10 text-blue-700" aria-hidden />
-        <p className="mt-3 text-sm font-medium text-foreground">
+      <div className="rounded-xl border border-dashed border-default bg-element px-6 py-14 text-center">
+        <Facebook className="mx-auto h-10 w-10 text-info" aria-hidden />
+        <p className="mt-3 text-sm font-medium text-default">
           No Facebook analytics yet
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-secondary">
           Connect Facebook, choose a Page, and sync insights to see reach,
           audience, and post performance here.
         </p>
         {oauthHref ? (
-          <Button asChild className="mt-6 bg-blue-700 text-white hover:bg-blue-800">
+          <Button
+            asChild
+            className="mt-6 bg-[var(--blue-9)] text-white hover:bg-info"
+          >
             <a href={oauthHref}>Connect Facebook</a>
           </Button>
         ) : (
-          <p className="mt-6 text-xs text-amber-200">
-            Set <span className="font-mono">NEXT_PUBLIC_BACKEND_URL</span> to enable
-            the connect button.
+          <p className="mt-6 text-xs text-warning">
+            Set <span className="font-mono">NEXT_PUBLIC_BACKEND_URL</span> to
+            enable the connect button.
           </p>
         )}
       </div>
@@ -171,7 +184,7 @@ export default function FaceBookAnalytics({
   }
 
   return (
-    <div className='space-y-6'>
+    <div className="space-y-6">
       <SyncErrorBanner
         platform="Facebook"
         status={pageAnalytics?.lastSyncStatus}
@@ -179,18 +192,18 @@ export default function FaceBookAnalytics({
         lastSyncAt={pageAnalytics?.lastSyncAt}
       />
       <header className="space-y-1">
-        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground">
-          <Facebook className="h-7 w-7 text-blue-700" />
+        <h1 className="flex items-center gap-3 text-page-title text-default">
+          <Facebook className="h-7 w-7 text-info" />
           Analytics
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-secondary">
           Page Name:{' '}
           {profileUrl && pageAnalytics?.pageName ? (
             <a
               href={profileUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 font-medium text-foreground underline decoration-border underline-offset-2 hover:decoration-foreground"
+              className="inline-flex items-center gap-1 font-medium text-default underline decoration-border underline-offset-2 hover:decoration-foreground"
             >
               <span>{pageAnalytics.pageName}</span>
               <ExternalLink className="h-3.5 w-3.5" aria-hidden />
@@ -200,7 +213,7 @@ export default function FaceBookAnalytics({
           )}
         </p>
         {metrics.updatedLabel ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-secondary">
             Last updated {metrics.updatedLabel}
           </p>
         ) : null}
@@ -274,11 +287,11 @@ export default function FaceBookAnalytics({
         >
           <h2
             id="top-three-posts-heading"
-            className="flex items-center gap-2 text-lg font-semibold text-foreground"
+            className="text-section text-default flex items-center gap-2"
           >
-            <Crown className="h-5 w-5 text-amber-500" aria-hidden />
+            <Crown className="h-5 w-5 text-warning" aria-hidden />
             Top 3 ranked posts
-            <span className="text-xs font-normal text-muted-foreground">
+            <span className="text-xs font-normal text-secondary">
               best performers in the last 3 weeks
             </span>
           </h2>
@@ -310,9 +323,9 @@ export default function FaceBookAnalytics({
       >
         <h2
           id="growth-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-foreground"
+          className="text-section text-default flex items-center gap-2"
         >
-          <TrendingUp className="h-5 w-5 text-muted-foreground" aria-hidden />
+          <TrendingUp className="h-5 w-5 text-secondary" aria-hidden />
           Growth
         </h2>
         <div className="grid gap-4 lg:grid-cols-2">
@@ -338,16 +351,16 @@ export default function FaceBookAnalytics({
       >
         <h2
           id="top-posts-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-foreground"
+          className="text-section text-default flex items-center gap-2"
         >
-          <Trophy className="h-5 w-5 text-amber-600" aria-hidden />
+          <Trophy className="h-5 w-5 text-warning" aria-hidden />
           Top posts
-          <span className="text-xs font-normal text-muted-foreground">
+          <span className="text-xs font-normal text-secondary">
             classified vs. the cohort average (1.5× cutoff)
           </span>
         </h2>
         {topPosts.length === 0 ? (
-          <p className="rounded-xl border border-border bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
+          <p className="rounded-xl border border-default bg-element px-4 py-8 text-center text-sm text-secondary">
             No post data yet. Sync insights from Facebook to populate this
             section.
           </p>
@@ -356,13 +369,13 @@ export default function FaceBookAnalytics({
             <TabsList className="grid h-auto w-full max-w-sm grid-cols-2 gap-1">
               <TabsTrigger value="nudge" className="gap-2">
                 Nudges
-                <span className="rounded-full bg-emerald-500/20 px-1.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-500/30">
+                <span className="rounded-full bg-success px-1.5 text-[10px] font-semibold text-success ring-1 ring-inset ring-[var(--border-success)]">
                   {nudgeDud.nudges.length}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="dud" className="gap-2">
                 Duds
-                <span className="rounded-full bg-accent px-1.5 text-[10px] font-semibold text-foreground ring-1 ring-inset ring-border">
+                <span className="rounded-full bg-hover px-1.5 text-[10px] font-semibold text-default ring-1 ring-inset ring-border">
                   {nudgeDud.duds.length}
                 </span>
               </TabsTrigger>
@@ -370,10 +383,10 @@ export default function FaceBookAnalytics({
 
             <TabsContent value="nudge" className="space-y-4 outline-none">
               {nudgeDud.nudges.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
-                  No nudges yet — nothing in this window scored 1.5× above
-                  your average. Recreate the framing of past winners to push
-                  one over the bar.
+                <p className="rounded-xl border border-dashed border-default bg-element px-4 py-6 text-center text-sm text-secondary">
+                  No nudges yet — nothing in this window scored 1.5× above your
+                  average. Recreate the framing of past winners to push one over
+                  the bar.
                 </p>
               ) : (
                 nudgeDud.nudges.map((post, i) => (
@@ -390,7 +403,7 @@ export default function FaceBookAnalytics({
 
             <TabsContent value="dud" className="space-y-4 outline-none">
               {nudgeDud.duds.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
+                <p className="rounded-xl border border-dashed border-default bg-element px-4 py-6 text-center text-sm text-secondary">
                   No duds — every recent post is performing at or above the
                   nudge bar. Keep the streak going.
                 </p>
@@ -413,32 +426,30 @@ export default function FaceBookAnalytics({
       <section className="space-y-4" aria-labelledby="audience-heading">
         <h2
           id="audience-heading"
-          className="flex items-center gap-2 text-lg font-semibold text-foreground"
+          className="text-section text-default flex items-center gap-2"
         >
-          <MapPin className="h-5 w-5 text-muted-foreground" aria-hidden />
+          <MapPin className="h-5 w-5 text-secondary" aria-hidden />
           Audience
-          <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+          <span className="text-xs font-normal text-secondary">(optional)</span>
         </h2>
         {audienceRanked.countries.length === 0 &&
         audienceRanked.cities.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-6 text-center text-sm text-muted-foreground">
+          <p className="rounded-xl border border-dashed border-default bg-element px-4 py-6 text-center text-sm text-secondary">
             Location breakdown will appear here when available.
           </p>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
             {audienceRanked.countries.length > 0 ? (
-              <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-foreground">
-                  Top countries
-                </h3>
-                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <div className="rounded-xl border border-default bg-default p-4">
+                <h3 className="text-subsection text-default">Top countries</h3>
+                <ul className="mt-3 space-y-2 text-sm text-secondary">
                   {audienceRanked.countries.map(({ name, count }) => (
                     <li
                       key={name}
-                      className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
+                      className="flex items-center justify-between gap-2 border-b border-default pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-foreground">{name}</span>
-                      <span className="tabular-nums text-muted-foreground">
+                      <span className="font-medium text-default">{name}</span>
+                      <span className="tabular-nums text-secondary">
                         {formatCompact(count)}
                       </span>
                     </li>
@@ -447,18 +458,16 @@ export default function FaceBookAnalytics({
               </div>
             ) : null}
             {audienceRanked.cities.length > 0 ? (
-              <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-                <h3 className="text-sm font-medium text-foreground">
-                  Top cities
-                </h3>
-                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <div className="rounded-xl border border-default bg-default p-4">
+                <h3 className="text-subsection text-default">Top cities</h3>
+                <ul className="mt-3 space-y-2 text-sm text-secondary">
                   {audienceRanked.cities.map(({ name, count }) => (
                     <li
                       key={name}
-                      className="flex items-center justify-between gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
+                      className="flex items-center justify-between gap-2 border-b border-default pb-2 last:border-0 last:pb-0"
                     >
-                      <span className="font-medium text-foreground">{name}</span>
-                      <span className="tabular-nums text-muted-foreground">
+                      <span className="font-medium text-default">{name}</span>
+                      <span className="tabular-nums text-secondary">
                         {formatCompact(count)}
                       </span>
                     </li>

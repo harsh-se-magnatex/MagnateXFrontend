@@ -23,7 +23,7 @@ import {
 import { Button } from '@/components/ui/button';
 
 const defaultClassName =
-  'inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-60 disabled:cursor-wait';
+  'inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-[var(--green-9)] px-6 py-3 text-sm font-semibold text-white hover:opacity-90 transition disabled:text-quaternary disabled:cursor-wait';
 
 type SharePostButtonProps = {
   imageUrl: string;
@@ -171,7 +171,7 @@ export function SharePostButton({
             </Button>
             <Button
               type="button"
-              className="w-full sm:flex-1 bg-gradient-primary text-white"
+              className="w-full sm:flex-1 btn-brand-fill"
               disabled={!hasImage || downloadBusy}
               onClick={() => void handleDownloadImage()}
             >

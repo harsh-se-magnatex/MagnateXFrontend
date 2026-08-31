@@ -62,10 +62,10 @@ const CHANGE_LABEL: Record<AdminSubscriptionChangeType, string> = {
 };
 
 const CHANGE_BADGE: Record<AdminSubscriptionChangeType, string> = {
-  activate: 'bg-emerald-500/20 text-emerald-200',
-  upgrade: 'bg-sky-500/20 text-sky-200',
-  downgrade: 'bg-amber-500/20 text-amber-200',
-  change: 'bg-violet-500/20 text-violet-200',
+  activate: 'bg-success text-success',
+  upgrade: 'bg-info text-info',
+  downgrade: 'bg-warning text-warning',
+  change: 'bg-preview text-preview',
 };
 
 const MIN_PLAN_DURATION_DAYS = 1;
@@ -99,7 +99,10 @@ export default function AdminSubscriptionsPage() {
 
   const changeType = useMemo(
     () =>
-      inferChangeType(selectedUser?.activePlan ?? 'non-subscribed', selectedPlan),
+      inferChangeType(
+        selectedUser?.activePlan ?? 'non-subscribed',
+        selectedPlan
+      ),
     [selectedPlan, selectedUser]
   );
 
@@ -137,7 +140,9 @@ export default function AdminSubscriptionsPage() {
         setPlans(plansRes.data.plans);
         setUsers(usersRes.data.users);
       } catch {
-        showErrorToast('Failed to load subscription admin data. Please try again later.');
+        showErrorToast(
+          'Failed to load subscription admin data. Please try again later.'
+        );
       } finally {
         setLoading(false);
       }
@@ -208,16 +213,14 @@ export default function AdminSubscriptionsPage() {
     }
   };
 
-  const confirmActionLabel = changeType
-    ? CHANGE_LABEL[changeType]
-    : 'Apply';
+  const confirmActionLabel = changeType ? CHANGE_LABEL[changeType] : 'Apply';
 
   return (
     <div className="min-h-screen bg-[#0B1020] text-white px-6 py-8 md:px-10">
-      <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-[#6C5CE7] to-[#00D1FF] mb-2">
+      <h1 className="text-page-title text-default mb-2">
         Admin - Subscription Activation
       </h1>
-      <p className="mb-8 max-w-3xl text-sm text-gray-300">
+      <p className="mb-8 max-w-3xl text-sm text-tertiary">
         Manually activate, upgrade, or downgrade a user&apos;s subscription.
         This writes directly to Firestore (same fields as payment fulfillment)
         without going through Dodo billing.
@@ -233,18 +236,18 @@ export default function AdminSubscriptionsPage() {
           onSubmit={handleSubmit}
           className="grid gap-6 lg:grid-cols-[1fr_1fr]"
         >
-          <section className="rounded-2xl border border-white/10 bg-white/5 p-5 md:p-6 space-y-5">
-            <h2 className="text-lg font-semibold text-white">1. Select user</h2>
+          <section className="rounded-2xl border border-white/10 bg-default p-5 md:p-6 space-y-5">
+            <h2 className="text-section text-default">1. Select user</h2>
             <input
               type="text"
               value={userSearch}
               onChange={(e) => setUserSearch(e.target.value)}
               placeholder="Filter by name, email, or user ID"
-              className="h-11 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
+              className="h-11 w-full rounded-lg border border-white/20 bg-default px-3 text-white placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
             />
             <div className="max-h-72 overflow-y-auto rounded-xl border border-white/10">
               {filteredUsers.length === 0 ? (
-                <div className="p-4 text-sm text-gray-400">No users found.</div>
+                <div className="p-4 text-sm text-tertiary">No users found.</div>
               ) : (
                 filteredUsers.map((u) => {
                   const isSelected = u.userId === selectedUserId;
@@ -253,17 +256,15 @@ export default function AdminSubscriptionsPage() {
                       key={u.userId}
                       type="button"
                       onClick={() => setSelectedUserId(u.userId)}
-                      className={`w-full border-b border-white/5 px-4 py-3 text-left transition-colors last:border-b-0 ${
-                        isSelected
-                          ? 'bg-[#00D1FF]/15'
-                          : 'hover:bg-white/5'
+                      className={`w-full border-b border-white/5 px-4 py-3 text-left transition-expo last:border-b-0 ${
+                        isSelected ? 'bg-[#00D1FF]/15' : 'hover:bg-default'
                       }`}
                     >
                       <div className="font-medium">{u.name}</div>
-                      <div className="text-xs text-gray-400 font-mono">
+                      <div className="text-xs text-tertiary font-mono">
                         {u.userId}
                       </div>
-                      <div className="mt-1 text-xs text-gray-300">
+                      <div className="mt-1 text-xs text-tertiary">
                         Plan: {u.activePlan}
                         {u.subscriptionStatus
                           ? ` · Sub: ${u.subscriptionStatus}`
@@ -276,26 +277,26 @@ export default function AdminSubscriptionsPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-white/10 bg-white/5 p-5 md:p-6 space-y-5">
-            <h2 className="text-lg font-semibold text-white">2. Target plan</h2>
+          <section className="rounded-2xl border border-white/10 bg-default p-5 md:p-6 space-y-5">
+            <h2 className="text-section text-default">2. Target plan</h2>
 
             {selectedUser ? (
               <div className="rounded-xl border border-white/10 bg-black/20 p-4 text-sm">
-                <div className="text-gray-400">Selected user</div>
+                <div className="text-tertiary">Selected user</div>
                 <div className="font-semibold">{selectedUser.name}</div>
-                <div className="mt-2 text-gray-300">
+                <div className="mt-2 text-tertiary">
                   Current plan:{' '}
                   <span className="text-white">{selectedUser.activePlan}</span>
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-white/20 p-4 text-sm text-gray-400">
+              <div className="rounded-xl border border-dashed border-white/20 p-4 text-sm text-tertiary">
                 Pick a user from the list.
               </div>
             )}
 
             <label className="block text-sm">
-              <span className="mb-1.5 block text-gray-300">Target plan</span>
+              <span className="mb-1.5 block text-tertiary">Target plan</span>
               <select
                 value={planId}
                 onChange={(e) => setPlanId(e.target.value)}
@@ -314,7 +315,7 @@ export default function AdminSubscriptionsPage() {
               <div className="rounded-xl border border-[#00D1FF]/30 bg-[#00D1FF]/10 p-4 text-sm">
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-400">
+                    <div className="text-xs uppercase tracking-wide text-tertiary">
                       Plan
                     </div>
                     <div className="mt-1 font-semibold text-white">
@@ -322,24 +323,24 @@ export default function AdminSubscriptionsPage() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-400">
+                    <div className="text-xs uppercase tracking-wide text-tertiary">
                       Credit allotment
                     </div>
                     <div className="mt-1 text-2xl font-bold text-[#00D1FF]">
                       {selectedPlan.credits}
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-tertiary">
                       credits / month (from plan)
                     </div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-wide text-gray-400">
+                    <div className="text-xs uppercase tracking-wide text-tertiary">
                       Price
                     </div>
                     <div className="mt-1 font-semibold text-white">
                       ${selectedPlan.price}/mo
                     </div>
-                    <div className="text-xs capitalize text-gray-400">
+                    <div className="text-xs capitalize text-tertiary">
                       {selectedPlan.mode === 'auto' ? 'AI mode' : 'Studio mode'}
                     </div>
                   </div>
@@ -349,13 +350,13 @@ export default function AdminSubscriptionsPage() {
 
             {changeType && selectedPlan ? (
               <div className="flex items-center gap-2 text-sm">
-                <span className="text-gray-400">Action:</span>
+                <span className="text-tertiary">Action:</span>
                 <span
                   className={`rounded-full px-2.5 py-1 font-semibold capitalize ${CHANGE_BADGE[changeType]}`}
                 >
                   {CHANGE_LABEL[changeType]}
                 </span>
-                <span className="text-gray-400">
+                <span className="text-tertiary">
                   → {selectedPlan.displayName}
                 </span>
               </div>
@@ -381,13 +382,13 @@ export default function AdminSubscriptionsPage() {
                       )
                     )
                   }
-                  className="h-11 w-full rounded-lg border border-white/20 bg-white/10 px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
+                  className="h-11 w-full rounded-lg border border-white/20 bg-default px-3 text-white focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
                 />
               </label>
             </div>
 
             <label className="block text-sm">
-              <span className="mb-1.5 block text-gray-300">
+              <span className="mb-1.5 block text-tertiary">
                 Admin note (optional)
               </span>
               <textarea
@@ -395,14 +396,14 @@ export default function AdminSubscriptionsPage() {
                 onChange={(e) => setNote(e.target.value)}
                 rows={3}
                 placeholder="Reason for manual activation..."
-                className="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
+                className="w-full rounded-lg border border-white/20 bg-default px-3 py-2 text-white placeholder:text-tertiary focus:outline-none focus:ring-2 focus:ring-[#00D1FF]/60"
               />
             </label>
 
             <button
               type="submit"
               disabled={submitting || !selectedUserId || !planId}
-              className="h-11 w-full rounded-lg bg-[#00D1FF] px-5 font-semibold text-[#0B1020] hover:bg-[#32dbff] transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 w-full rounded-full bg-[#00D1FF] px-5 font-semibold text-[#0B1020] hover:bg-[#32dbff] transition-expo disabled:cursor-not-allowed disabled:text-quaternary"
             >
               {submitting
                 ? 'Applying...'
@@ -427,25 +428,25 @@ export default function AdminSubscriptionsPage() {
               {confirmActionLabel} subscription?
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
-              <div className="space-y-3 text-left text-sm text-muted-foreground">
+              <div className="space-y-3 text-left text-sm text-secondary">
                 <p>
                   Apply this change for{' '}
-                  <span className="font-medium text-foreground">
+                  <span className="font-medium text-default">
                     {selectedUser?.name ?? selectedUserId}
                   </span>
                   . This writes directly to Firestore without Dodo billing.
                 </p>
-                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 rounded-lg border bg-muted/40 p-3">
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 rounded-lg border bg-element p-3">
                   <dt>Current plan</dt>
-                  <dd className="font-medium text-foreground">
+                  <dd className="font-medium text-default">
                     {selectedUser?.activePlan ?? 'non-subscribed'}
                   </dd>
                   <dt>Target plan</dt>
-                  <dd className="font-medium text-foreground">
+                  <dd className="font-medium text-default">
                     {selectedPlan?.displayName ?? planId}
                   </dd>
                   <dt>Credit allotment</dt>
-                  <dd className="font-medium text-foreground">
+                  <dd className="font-medium text-default">
                     {selectedPlan?.credits ?? 0} credits
                   </dd>
                   <dt>Duration</dt>

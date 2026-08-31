@@ -132,27 +132,27 @@ export function SignupForm({
           <FieldGroup className="gap-5">
             <header className="flex flex-col gap-3 scroll-mt-28">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                <h1 className="text-page-title text-default">
                   Create your free account
                 </h1>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-secondary">
                   Already have an account?{' '}
                   <Link
                     href="/sign-in"
-                    className="font-medium text-primary-blue underline underline-offset-2 hover:text-primary-purple"
+                    className="font-medium text-link underline underline-offset-2 hover:text-preview"
                   >
                     Log in
                   </Link>
                 </p>
               </div>
-              <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+              <p className="max-w-prose text-sm leading-relaxed text-secondary">
                 No credit card required to start · Cancel anytime
               </p>
             </header>
             <Field>
               <FieldLabel
                 htmlFor="signup-name"
-                className="text-foreground font-medium"
+                className="text-default font-medium"
               >
                 Full name
               </FieldLabel>
@@ -166,13 +166,13 @@ export function SignupForm({
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 disabled={busy}
-                className="h-11 rounded-xl border-border bg-card px-3 py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
+                className="h-11 rounded-lg border-default bg-default px-3 py-2.5 text-default placeholder:text-quaternary focus-visible:border-strong focus-visible:ring-strong"
               />
             </Field>
             <Field>
               <FieldLabel
                 htmlFor="signup-email"
-                className="text-foreground font-medium"
+                className="text-default font-medium"
               >
                 Email address
               </FieldLabel>
@@ -185,7 +185,7 @@ export function SignupForm({
                 value={email}
                 onChange={(e) => setEmail(e.target.value.toLowerCase())}
                 disabled={busy}
-                className="h-11 rounded-xl border-border bg-card px-3 py-2.5 text-foreground shadow-sm placeholder:text-muted-foreground/50 focus-visible:border-primary-blue focus-visible:ring-primary-blue/20"
+                className="h-11 rounded-lg border-default bg-default px-3 py-2.5 text-default placeholder:text-quaternary focus-visible:border-strong focus-visible:ring-strong"
               />
             </Field>
             <AuthPasswordField
@@ -209,7 +209,7 @@ export function SignupForm({
                 type="submit"
                 disabled={busy}
                 aria-busy={busy}
-                className="h-11 w-full rounded-xl bg-gradient-primary text-white shadow-md shadow-primary-blue/20 transition-all hover:shadow-lg hover:shadow-primary-blue/25 active:scale-[0.98]"
+                className="h-11 w-full rounded-full btn-brand-fill transition-expo"
               >
                 {busy ? (
                   <Spinner className="size-4.5 text-white" />
@@ -224,27 +224,27 @@ export function SignupForm({
         <div className="space-y-4">
           <header className="flex flex-col gap-3 scroll-mt-28">
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              <h1 className="text-page-title text-default">
                 Sign up with phone
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-secondary">
                 Already have an account?{' '}
                 <Link
                   href="/sign-in"
-                  className="font-medium text-primary-blue underline underline-offset-2 hover:text-primary-purple"
+                  className="font-medium text-link underline underline-offset-2 hover:text-preview"
                 >
                   Log in
                 </Link>
               </p>
             </div>
-            <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
+            <p className="max-w-prose text-sm leading-relaxed text-secondary">
               No credit card required to start · Cancel anytime
             </p>
           </header>
           <PhoneNumberLogin intent="signup" />
         </div>
       )}
-      <FieldSeparator className="**:data-[slot=field-separator-content]:bg-background **:data-[slot=field-separator-content]:text-muted-foreground">
+      <FieldSeparator className="**:data-[slot=field-separator-content]:bg-background **:data-[slot=field-separator-content]:text-secondary">
         Or
       </FieldSeparator>
       <Field className="grid gap-4 sm:grid-cols-2">
@@ -253,7 +253,7 @@ export function SignupForm({
           type="button"
           onClick={() => void handleGoogleLogin()}
           disabled={busy}
-          className="h-auto min-h-11 rounded-xl border-border bg-card px-3 py-2.5 text-center text-sm font-medium leading-snug text-foreground shadow-sm transition-all hover:border-primary-blue/40 hover:bg-primary-blue/5 hover:text-primary-blue sm:h-11 sm:text-base"
+          className="h-auto min-h-11 rounded-full border-default bg-default px-3 py-2.5 text-center text-sm font-medium leading-snug text-default transition-expo hover:border-strong hover:bg-element hover:text-link sm:h-11 sm:text-base"
         >
           <span className="inline-flex items-center justify-center gap-2">
             <svg
@@ -275,7 +275,7 @@ export function SignupForm({
           type="button"
           onClick={() => setUsePhone(!usePhone)}
           disabled={busy}
-          className="h-auto min-h-11 rounded-xl border-border bg-card px-3 py-2.5 text-center text-sm font-medium leading-snug text-foreground shadow-sm transition-all hover:border-primary-blue/40 hover:bg-primary-blue/5 hover:text-primary-blue sm:h-11 sm:text-base"
+          className="h-auto min-h-11 rounded-full border-default bg-default px-3 py-2.5 text-center text-sm font-medium leading-snug text-default transition-expo hover:border-strong hover:bg-element hover:text-link sm:h-11 sm:text-base"
         >
           {usePhone ? (
             <span className="inline-flex items-center justify-center gap-2">
@@ -290,7 +290,7 @@ export function SignupForm({
           )}
         </Button>
       </Field>
-      <FieldDescription className="px-0 text-center text-sm text-muted-foreground [&>a]:text-primary-blue [&>a]:underline [&>a]:underline-offset-2 [&>a:hover]:text-primary-purple">
+      <FieldDescription className="px-0 text-center text-sm text-secondary [&>a]:text-link [&>a]:underline [&>a]:underline-offset-2 [&>a:hover]:text-preview">
         By continuing, you agree to our{' '}
         <a href="/legal/terms">Terms of Service</a> and{' '}
         <a href="/legal/privacy">Privacy Policy</a>.

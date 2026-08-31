@@ -277,7 +277,11 @@
   .legal-callout {
     border-radius: 1.25rem;
     border: 1px solid rgb(254 240 138);
-    background: linear-gradient(135deg, rgb(255 251 235), rgb(254 249 195 / 0.45));
+    background: linear-gradient(
+      135deg,
+      rgb(255 251 235),
+      rgb(254 249 195 / 0.45)
+    );
     padding: 1.25rem 1.35rem;
     color: rgb(120 53 15);
     font-size: 0.9rem;
@@ -294,7 +298,11 @@
     gap: 0.75rem;
     border-radius: 1.25rem;
     border: 1px solid rgb(224 231 255);
-    background: linear-gradient(135deg, rgb(238 242 255 / 0.85), rgb(255 255 255));
+    background: linear-gradient(
+      135deg,
+      rgb(238 242 255 / 0.85),
+      rgb(255 255 255)
+    );
     padding: 1.25rem 1.35rem;
   }
 

@@ -5,636 +5,795 @@
  * Captions come from scheduledPosts.message on the demo user.
  * Re-run: pnpm export-how-it-looks -- --brand=magnate-regalia
  */
-export const GENERATED_SHOWCASE_BRAND_ID = "magnate-regalia" as const;
+export const GENERATED_SHOWCASE_BRAND_ID = 'magnate-regalia' as const;
 
 export const GENERATED_SHOWCASE_BRAND = {
-  "name": "Magnate Regalia",
-  "handle": "magnate_regalia",
-  "tagline": "Real Estate",
-  "followersLabel": "1.2K",
-  "followingLabel": "186"
+  name: 'Magnate Regalia',
+  handle: 'magnate_regalia',
+  tagline: 'Real Estate',
+  followersLabel: '1.2K',
+  followingLabel: '186',
 } as const;
 
 export const GENERATED_SHOWCASE_POSTS = [
   {
-    "id": "zathCDA4ZtXIoJ1rrFir",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-24T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "From day one, we've believed that true luxury isn't just about the building—it's about the sanctuary it creates. Homes where modern design breathes with greenery, where families feel they truly belong. This is where life flourishes.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/zathCDA4ZtXIoJ1rrFir/image.png"
+    id: 'zathCDA4ZtXIoJ1rrFir',
+    platform: 'facebook',
+    scheduleAt: '2026-08-24T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "From day one, we've believed that true luxury isn't just about the building—it's about the sanctuary it creates. Homes where modern design breathes with greenery, where families feel they truly belong. This is where life flourishes.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/zathCDA4ZtXIoJ1rrFir/image.png',
   },
   {
-    "id": "nEfskh1DmrMLoNPmqDl0",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-24T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Transform your balcony into a personal sanctuary. Maximize evening light, add layered greenery, and create seating zones that blur the line between indoors and out. Your urban retreat awaits. Save this for your next design refresh.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/nEfskh1DmrMLoNPmqDl0/image.png"
+    id: 'nEfskh1DmrMLoNPmqDl0',
+    platform: 'instagram',
+    scheduleAt: '2026-08-24T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Transform your balcony into a personal sanctuary. Maximize evening light, add layered greenery, and create seating zones that blur the line between indoors and out. Your urban retreat awaits. Save this for your next design refresh.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/nEfskh1DmrMLoNPmqDl0/image.png',
   },
   {
-    "id": "3RJfItBbxMDE5nCLK2eA",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-24T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Wondering how to carve out a personal escape within your new luxury home?\n\nOur spacious balconies—like the one overlooking the city at dusk—are specifically designed as your private sanctuary. A hanging chair. A quiet table. The view. The warmth of evening light.\n\nThis is where you unwind after a busy day. Where clarity returns. Where moments of true peace happen naturally—not as an afterthought, but as part of how we build every home.\n\nBalcony oasis living isn't a luxury add-on. It's foundational. It's safety and serenity designed in from the start.\n\nReady to explore a space that truly nurtures you? DM us.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/3RJfItBbxMDE5nCLK2eA/image.png"
+    id: '3RJfItBbxMDE5nCLK2eA',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-24T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Wondering how to carve out a personal escape within your new luxury home?\n\nOur spacious balconies—like the one overlooking the city at dusk—are specifically designed as your private sanctuary. A hanging chair. A quiet table. The view. The warmth of evening light.\n\nThis is where you unwind after a busy day. Where clarity returns. Where moments of true peace happen naturally—not as an afterthought, but as part of how we build every home.\n\nBalcony oasis living isn't a luxury add-on. It's foundational. It's safety and serenity designed in from the start.\n\nReady to explore a space that truly nurtures you? DM us.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/3RJfItBbxMDE5nCLK2eA/image.png',
   },
   {
-    "id": "wrsyM6X6V8BXP0ZldY2C",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-22T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Where serene greenery meets refined design. Every balcony breathes with curated plants. Every corner offers sanctuary and connection. This is family living reimagined.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/wrsyM6X6V8BXP0ZldY2C/image.png"
+    id: 'wrsyM6X6V8BXP0ZldY2C',
+    platform: 'instagram',
+    scheduleAt: '2026-08-22T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Where serene greenery meets refined design. Every balcony breathes with curated plants. Every corner offers sanctuary and connection. This is family living reimagined.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/wrsyM6X6V8BXP0ZldY2C/image.png',
   },
   {
-    "id": "H9ubDHwkKrRtncNL8scN",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-22T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "As dusk settles on Magnate Regalia, residents experience the seamless blend of smart home technology and serene living. Our meticulously designed 4 and 5 BHK apartments feature spacious balconies, premium locations, and warm interior lighting—creating an inviting sanctuary for families. Every detail—from elegant finishes to modern conveniences—reflects our commitment to luxury living that enhances your daily well-being. This is where comfort meets elegance, and home becomes more than a space; it becomes your haven. Discover the Magnate Regalia lifestyle.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/H9ubDHwkKrRtncNL8scN/image.png"
+    id: 'H9ubDHwkKrRtncNL8scN',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-22T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      'As dusk settles on Magnate Regalia, residents experience the seamless blend of smart home technology and serene living. Our meticulously designed 4 and 5 BHK apartments feature spacious balconies, premium locations, and warm interior lighting—creating an inviting sanctuary for families. Every detail—from elegant finishes to modern conveniences—reflects our commitment to luxury living that enhances your daily well-being. This is where comfort meets elegance, and home becomes more than a space; it becomes your haven. Discover the Magnate Regalia lifestyle.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/H9ubDHwkKrRtncNL8scN/image.png',
   },
   {
-    "id": "FoY34g1Zl7Px3EpxhKPN",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-22T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Modern life moves fast. But your home should feel like a refuge. Magnate Regalia's thoughtfully designed residences blend luxury with serenity—giving your family the clarity to step back, breathe, and truly belong in a sanctuary that understands your peace.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/FoY34g1Zl7Px3EpxhKPN/image.png"
+    id: 'FoY34g1Zl7Px3EpxhKPN',
+    platform: 'facebook',
+    scheduleAt: '2026-08-22T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Modern life moves fast. But your home should feel like a refuge. Magnate Regalia's thoughtfully designed residences blend luxury with serenity—giving your family the clarity to step back, breathe, and truly belong in a sanctuary that understands your peace.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/FoY34g1Zl7Px3EpxhKPN/image.png',
   },
   {
-    "id": "zw7aRdmGoG7WQN0l2Yv5",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-19T14:30:00.000Z",
-    "mediaType": "video",
-    "caption": "Magnate Regalia's curated residential collections showcase timeless design meets contemporary living. Each space tells a story of precision craftsmanship and elevated comfort. Experience luxury reimagined for the modern home—where every detail counts.",
-    "videoUrl": "/landing/how-it-looks/magnate-regalia/instagram/zw7aRdmGoG7WQN0l2Yv5/video.mp4",
-    "posterUrl": "/landing/how-it-looks/magnate-regalia/instagram/zw7aRdmGoG7WQN0l2Yv5/poster.png"
+    id: 'zw7aRdmGoG7WQN0l2Yv5',
+    platform: 'instagram',
+    scheduleAt: '2026-08-19T14:30:00.000Z',
+    mediaType: 'video',
+    caption:
+      "Magnate Regalia's curated residential collections showcase timeless design meets contemporary living. Each space tells a story of precision craftsmanship and elevated comfort. Experience luxury reimagined for the modern home—where every detail counts.",
+    videoUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/zw7aRdmGoG7WQN0l2Yv5/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/zw7aRdmGoG7WQN0l2Yv5/poster.png',
   },
   {
-    "id": "w3R1UVUVpa5qaJY13Av1",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-19T14:30:00.000Z",
-    "mediaType": "video",
-    "caption": "Every detail matters when crafting spaces where life unfolds beautifully. Our architectural vision transforms luxury living into everyday reality—where design meets genuine comfort.",
-    "videoUrl": "/landing/how-it-looks/magnate-regalia/facebook/w3R1UVUVpa5qaJY13Av1/video.mp4",
-    "posterUrl": "/landing/how-it-looks/magnate-regalia/facebook/w3R1UVUVpa5qaJY13Av1/poster.png"
+    id: 'w3R1UVUVpa5qaJY13Av1',
+    platform: 'facebook',
+    scheduleAt: '2026-08-19T14:30:00.000Z',
+    mediaType: 'video',
+    caption:
+      'Every detail matters when crafting spaces where life unfolds beautifully. Our architectural vision transforms luxury living into everyday reality—where design meets genuine comfort.',
+    videoUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/w3R1UVUVpa5qaJY13Av1/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/w3R1UVUVpa5qaJY13Av1/poster.png',
   },
   {
-    "id": "xmhuB5SCzbiQTAULB3hO",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-18T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Which feels more like home to you—sleek minimalism or layered warmth?\n\nAt Magnate Regalia, we believe your ideal life is built on spaces that *reflect who you are*. Whether you're drawn to clean contemporary lines or rich textured comfort, our meticulously designed residences blend elegance with genuine livability.\n\nEvery detail—from light to finish—is chosen to help you belong in a community that honors both beauty and real life.\n\nWhich one would you choose?",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/xmhuB5SCzbiQTAULB3hO/image.png"
+    id: 'xmhuB5SCzbiQTAULB3hO',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-18T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Which feels more like home to you—sleek minimalism or layered warmth?\n\nAt Magnate Regalia, we believe your ideal life is built on spaces that *reflect who you are*. Whether you're drawn to clean contemporary lines or rich textured comfort, our meticulously designed residences blend elegance with genuine livability.\n\nEvery detail—from light to finish—is chosen to help you belong in a community that honors both beauty and real life.\n\nWhich one would you choose?",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/xmhuB5SCzbiQTAULB3hO/image.png',
   },
   {
-    "id": "lUWvk5eLnYX7d9K7d0Ir",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-18T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Discover how intentional design transforms everyday moments. Our luxurious residences blend seamless light and space to elevate your lifestyle. Explore the possibilities—visit our site for more.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/lUWvk5eLnYX7d9K7d0Ir/image.png"
+    id: 'lUWvk5eLnYX7d9K7d0Ir',
+    platform: 'instagram',
+    scheduleAt: '2026-08-18T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Discover how intentional design transforms everyday moments. Our luxurious residences blend seamless light and space to elevate your lifestyle. Explore the possibilities—visit our site for more.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/lUWvk5eLnYX7d9K7d0Ir/image.png',
   },
   {
-    "id": "tDTauSOravzbocaQqdVt",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-18T11:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Modern luxury isn't just about materials—it's the thoughtfulness behind every space. At Magnate Regalia, we design homes where elegance and function live together. Discover how refined living could feel like home. Explore available homes now.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/tDTauSOravzbocaQqdVt/image.png"
+    id: 'tDTauSOravzbocaQqdVt',
+    platform: 'facebook',
+    scheduleAt: '2026-08-18T11:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Modern luxury isn't just about materials—it's the thoughtfulness behind every space. At Magnate Regalia, we design homes where elegance and function live together. Discover how refined living could feel like home. Explore available homes now.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/tDTauSOravzbocaQqdVt/image.png',
   },
   {
-    "id": "sNVr5NUtq6fRbGGKCszO",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-17T14:30:00.000Z",
-    "mediaType": "video",
-    "caption": "Every frame tells your story. When your brand lives in auto-mode, video production becomes effortless — products shine without the overhead of manual editing, and your identity stays consistent across every piece of content. Real estate demands visual credibility. This is how you scale it. What's your biggest production bottleneck right now?",
-    "videoUrl": "/landing/how-it-looks/magnate-regalia/linkedin/sNVr5NUtq6fRbGGKCszO/video.mp4",
-    "posterUrl": "/landing/how-it-looks/magnate-regalia/linkedin/sNVr5NUtq6fRbGGKCszO/poster.png"
+    id: 'sNVr5NUtq6fRbGGKCszO',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-17T14:30:00.000Z',
+    mediaType: 'video',
+    caption:
+      "Every frame tells your story. When your brand lives in auto-mode, video production becomes effortless — products shine without the overhead of manual editing, and your identity stays consistent across every piece of content. Real estate demands visual credibility. This is how you scale it. What's your biggest production bottleneck right now?",
+    videoUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/sNVr5NUtq6fRbGGKCszO/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/sNVr5NUtq6fRbGGKCszO/poster.png',
   },
   {
-    "id": "2Qi6dgKUXcRyVfTSLqHp",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-17T14:30:00.000Z",
-    "mediaType": "video",
-    "caption": "Magnate Regalia transforms luxury living into an art form. Every detail—from premium materials to meticulous craftsmanship—reflects our commitment to elegance. This is where sophistication meets home. What draws you to elevated design? Drop your thoughts below.",
-    "videoUrl": "/landing/how-it-looks/magnate-regalia/instagram/2Qi6dgKUXcRyVfTSLqHp/video.mp4",
-    "posterUrl": "/landing/how-it-looks/magnate-regalia/instagram/2Qi6dgKUXcRyVfTSLqHp/poster.png"
+    id: '2Qi6dgKUXcRyVfTSLqHp',
+    platform: 'instagram',
+    scheduleAt: '2026-08-17T14:30:00.000Z',
+    mediaType: 'video',
+    caption:
+      'Magnate Regalia transforms luxury living into an art form. Every detail—from premium materials to meticulous craftsmanship—reflects our commitment to elegance. This is where sophistication meets home. What draws you to elevated design? Drop your thoughts below.',
+    videoUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/2Qi6dgKUXcRyVfTSLqHp/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/2Qi6dgKUXcRyVfTSLqHp/poster.png',
   },
   {
-    "id": "SU2RVCV9YcrW1wG7l6Et",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-17T05:30:00.000Z",
-    "mediaType": "video",
-    "caption": "Every detail matters. Magnate Regalia curates luxury residential spaces where architecture meets lifestyle—refined, purposeful, timeless. Experience the difference that true craftsmanship brings home.",
-    "videoUrl": "/landing/how-it-looks/magnate-regalia/facebook/SU2RVCV9YcrW1wG7l6Et/video.mp4",
-    "posterUrl": "/landing/how-it-looks/magnate-regalia/facebook/SU2RVCV9YcrW1wG7l6Et/poster.png"
+    id: 'SU2RVCV9YcrW1wG7l6Et',
+    platform: 'facebook',
+    scheduleAt: '2026-08-17T05:30:00.000Z',
+    mediaType: 'video',
+    caption:
+      'Every detail matters. Magnate Regalia curates luxury residential spaces where architecture meets lifestyle—refined, purposeful, timeless. Experience the difference that true craftsmanship brings home.',
+    videoUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/SU2RVCV9YcrW1wG7l6Et/video.mp4',
+    posterUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/SU2RVCV9YcrW1wG7l6Et/poster.png',
   },
   {
-    "id": "rLbvZU4yEgQrRbPDZXpB",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-16T14:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "Luxury doesn't just look beautiful—it feels transformative. At Magnate Regalia, we've designed residences where every detail enhances your lifestyle. Lush landscapes, thoughtfully curated spaces, and a thriving community await. Welcome home to living reimagined. Discover what sets us apart—explore our new launch today.",
-    "carouselSlides": [
+    id: 'rLbvZU4yEgQrRbPDZXpB',
+    platform: 'facebook',
+    scheduleAt: '2026-08-16T14:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "Luxury doesn't just look beautiful—it feels transformative. At Magnate Regalia, we've designed residences where every detail enhances your lifestyle. Lush landscapes, thoughtfully curated spaces, and a thriving community await. Welcome home to living reimagined. Discover what sets us apart—explore our new launch today.",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/rLbvZU4yEgQrRbPDZXpB/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "iamRCUNPZlAPUaPkVqDg",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-16T14:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "What we wish we knew when we started designing luxury apartments: it's never just about the space. True premium living integrates wellness into your daily routine, anticipates your needs through intelligent design, curates meaningful experiences within your community, commits to sustainability without compromise, and anchors everything in a location that simply cannot be replicated. At Magnate Group, we've built spaces that understand this. Your home should do more than look beautiful—it should elevate how you live. Discover what elevated really means.",
-    "carouselSlides": [
+    id: 'iamRCUNPZlAPUaPkVqDg',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-16T14:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "What we wish we knew when we started designing luxury apartments: it's never just about the space. True premium living integrates wellness into your daily routine, anticipates your needs through intelligent design, curates meaningful experiences within your community, commits to sustainability without compromise, and anchors everything in a location that simply cannot be replicated. At Magnate Group, we've built spaces that understand this. Your home should do more than look beautiful—it should elevate how you live. Discover what elevated really means.",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/iamRCUNPZlAPUaPkVqDg/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "FqSNVo0LwSWDe7ROdvzV",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-16T14:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "Your home isn't just where you live—it's where you thrive. At Magnate Regalia, we design luxury residential spaces that celebrate the best of both worlds: sophisticated aesthetics and practical living. Whether you're seeking a sanctuary from the city or a vibrant community to call home, our meticulously crafted apartments blend timeless elegance with modern comfort. Discover spaces designed for the way you actually live. Explore our collection today.",
-    "carouselSlides": [
+    id: 'FqSNVo0LwSWDe7ROdvzV',
+    platform: 'instagram',
+    scheduleAt: '2026-08-16T14:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "Your home isn't just where you live—it's where you thrive. At Magnate Regalia, we design luxury residential spaces that celebrate the best of both worlds: sophisticated aesthetics and practical living. Whether you're seeking a sanctuary from the city or a vibrant community to call home, our meticulously crafted apartments blend timeless elegance with modern comfort. Discover spaces designed for the way you actually live. Explore our collection today.",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/FqSNVo0LwSWDe7ROdvzV/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "bmZIB0TixNEcSF7EseS5",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-15T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "On this momentous Independence Day, Magnate Regalia celebrates the spirit of freedom, sacrifice, and national pride that defines our great nation. As we honor the courage of those who fought for our liberty, we're reminded of the values that unite us—community, excellence, and shared prosperity. Just as India was built on the foundation of collective dreams, our luxury residential communities are crafted to foster vibrant, connected living spaces where families thrive together. Here's to the pride in our heritage and the promise of our future. Jai Hind! 🇮🇳 #IndependenceDay #LuxuryLiving #RealEstate #ResidentialLuxury #NationalPride",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/bmZIB0TixNEcSF7EseS5/image.png"
+    id: 'bmZIB0TixNEcSF7EseS5',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-15T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "On this momentous Independence Day, Magnate Regalia celebrates the spirit of freedom, sacrifice, and national pride that defines our great nation. As we honor the courage of those who fought for our liberty, we're reminded of the values that unite us—community, excellence, and shared prosperity. Just as India was built on the foundation of collective dreams, our luxury residential communities are crafted to foster vibrant, connected living spaces where families thrive together. Here's to the pride in our heritage and the promise of our future. Jai Hind! 🇮🇳 #IndependenceDay #LuxuryLiving #RealEstate #ResidentialLuxury #NationalPride",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/bmZIB0TixNEcSF7EseS5/image.png',
   },
   {
-    "id": "Cwdl3scRPiRhWOhwcLpk",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-15T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Magnate Regalia celebrates Independence Day—honoring the spirit of freedom, sacrifice, and national pride that built our nation. Here's to the legacy of courage and the promise of tomorrow. 🇮🇳 #IndependenceDay #JaiHind #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/Cwdl3scRPiRhWOhwcLpk/image.png"
+    id: 'Cwdl3scRPiRhWOhwcLpk',
+    platform: 'instagram',
+    scheduleAt: '2026-08-15T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Magnate Regalia celebrates Independence Day—honoring the spirit of freedom, sacrifice, and national pride that built our nation. Here's to the legacy of courage and the promise of tomorrow. 🇮🇳 #IndependenceDay #JaiHind #LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/Cwdl3scRPiRhWOhwcLpk/image.png',
   },
   {
-    "id": "mYGh7iIaoxNNrWEUyJ1y",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-15T05:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Magnate Regalia celebrates Independence Day with pride and patriotism. Honoring the spirit of freedom and unity that defines our nation. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/mYGh7iIaoxNNrWEUyJ1y/image.png"
+    id: 'mYGh7iIaoxNNrWEUyJ1y',
+    platform: 'facebook',
+    scheduleAt: '2026-08-15T05:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Magnate Regalia celebrates Independence Day with pride and patriotism. Honoring the spirit of freedom and unity that defines our nation. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/mYGh7iIaoxNNrWEUyJ1y/image.png',
   },
   {
-    "id": "nbCYisbjpIBpDSF5nfXd",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-14T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Light reshapes everything. This is how intentional design transforms the everyday into the extraordinary. Discover your ideal space.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/nbCYisbjpIBpDSF5nfXd/image.png"
+    id: 'nbCYisbjpIBpDSF5nfXd',
+    platform: 'instagram',
+    scheduleAt: '2026-08-14T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Light reshapes everything. This is how intentional design transforms the everyday into the extraordinary. Discover your ideal space.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/nbCYisbjpIBpDSF5nfXd/image.png',
   },
   {
-    "id": "j29oIHW6qmDg3mUdkKiz",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-14T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Stop imagining your ideal home. Start living in it.\n\nLuxury living isn't about maximalist excess—it's about thoughtful design that breathes with you. At Magnate Regalia, every space balances elegance with comfort, curated materials with welcoming warmth, and premium finishes with genuine livability.\n\nWe design spaces where you actually *want* to spend time. Where morning light feels intentional. Where every detail—from millwork to fabric—elevates without overwhelming.\n\nYour sanctuary awaits.\n\n**Save this and start envisioning your next chapter.**",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/j29oIHW6qmDg3mUdkKiz/image.png"
+    id: 'j29oIHW6qmDg3mUdkKiz',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-14T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Stop imagining your ideal home. Start living in it.\n\nLuxury living isn't about maximalist excess—it's about thoughtful design that breathes with you. At Magnate Regalia, every space balances elegance with comfort, curated materials with welcoming warmth, and premium finishes with genuine livability.\n\nWe design spaces where you actually *want* to spend time. Where morning light feels intentional. Where every detail—from millwork to fabric—elevates without overwhelming.\n\nYour sanctuary awaits.\n\n**Save this and start envisioning your next chapter.**",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/j29oIHW6qmDg3mUdkKiz/image.png',
   },
   {
-    "id": "bQ3uIzuJJr3iVUngSBB6",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-14T05:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Layering light transforms your space. Mix warm diffused window light with soft accent pieces — candles, ceramics, natural materials. The result? A warm, inviting room that feels intentional and elevated. Save this for your next refresh.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/bQ3uIzuJJr3iVUngSBB6/image.png"
+    id: 'bQ3uIzuJJr3iVUngSBB6',
+    platform: 'facebook',
+    scheduleAt: '2026-08-14T05:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Layering light transforms your space. Mix warm diffused window light with soft accent pieces — candles, ceramics, natural materials. The result? A warm, inviting room that feels intentional and elevated. Save this for your next refresh.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/bQ3uIzuJJr3iVUngSBB6/image.png',
   },
   {
-    "id": "ZwzpVVf5qIv30YOS4Epz",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-13T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Hot take: luxury living isn't about the square footage—it's about belonging to a community that gets you. Shared gardens, curated lounges, real neighbors who become friends. That's where the real lifestyle happens. Ready to find your place?",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/ZwzpVVf5qIv30YOS4Epz/image.png"
+    id: 'ZwzpVVf5qIv30YOS4Epz',
+    platform: 'instagram',
+    scheduleAt: '2026-08-13T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Hot take: luxury living isn't about the square footage—it's about belonging to a community that gets you. Shared gardens, curated lounges, real neighbors who become friends. That's where the real lifestyle happens. Ready to find your place?",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/ZwzpVVf5qIv30YOS4Epz/image.png',
   },
   {
-    "id": "GaVmkgg2SwGOpKwvYMjS",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-13T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Light doesn't just illuminate a room—it reveals its bones.\n\nToo many design conversations fixate on the *color palette* first. But material choice and spatial flow matter equally. A space with poor light bounce and cramped flow feels expensive and flat, no matter the price tag. A modest room with generous natural light, tactile materials (linen, wood, plaster), and intentional negative space breathes.\n\nThe best residential designs balance three things: how light moves through the space, how the eye *flows* from one zone to another, and whether materials feel genuine. Get those right, and your home works—every room feels larger, warmer, more alive.\n\nWhat drives the biggest design wins in your own space? Drop your take below.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/GaVmkgg2SwGOpKwvYMjS/image.png"
+    id: 'GaVmkgg2SwGOpKwvYMjS',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-13T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Light doesn't just illuminate a room—it reveals its bones.\n\nToo many design conversations fixate on the *color palette* first. But material choice and spatial flow matter equally. A space with poor light bounce and cramped flow feels expensive and flat, no matter the price tag. A modest room with generous natural light, tactile materials (linen, wood, plaster), and intentional negative space breathes.\n\nThe best residential designs balance three things: how light moves through the space, how the eye *flows* from one zone to another, and whether materials feel genuine. Get those right, and your home works—every room feels larger, warmer, more alive.\n\nWhat drives the biggest design wins in your own space? Drop your take below.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/GaVmkgg2SwGOpKwvYMjS/image.png',
   },
   {
-    "id": "O7fjA1DRzr20rtIPuXyc",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-13T05:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Layering light transforms your space. Mix warm diffused window light with soft accent pieces — candles, ceramics, natural materials. The result? A warm, inviting room that feels intentional and elevated. Save this for your next refresh.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/O7fjA1DRzr20rtIPuXyc/image.png"
+    id: 'O7fjA1DRzr20rtIPuXyc',
+    platform: 'facebook',
+    scheduleAt: '2026-08-13T05:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Layering light transforms your space. Mix warm diffused window light with soft accent pieces — candles, ceramics, natural materials. The result? A warm, inviting room that feels intentional and elevated. Save this for your next refresh.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/O7fjA1DRzr20rtIPuXyc/image.png',
   },
   {
-    "id": "qLSBn9bNveiulPI7kPYT",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-12T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Magnate Regalia celebrates International Youth Day—honoring the voices, leadership, and boundless potential of young people shaping our world. Here's to empowered futures. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/qLSBn9bNveiulPI7kPYT/image.png"
+    id: 'qLSBn9bNveiulPI7kPYT',
+    platform: 'instagram',
+    scheduleAt: '2026-08-12T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Magnate Regalia celebrates International Youth Day—honoring the voices, leadership, and boundless potential of young people shaping our world. Here's to empowered futures. #LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/qLSBn9bNveiulPI7kPYT/image.png',
   },
   {
-    "id": "L77dz1fdMzf8kgsw7vmn",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-12T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "At Magnate Regalia, we celebrate International Youth Day—a day dedicated to honoring the voices, leadership, and boundless potential of young people shaping our world. Today, we recognize the innovators, dreamers, and changemakers building tomorrow's communities. From vibrant residential spaces designed for modern living to the opportunities we create for emerging talent, we're committed to empowering the next generation. Here's to youth—your energy, vision, and determination inspire us all. #InternationalYouthDay #YouthLeadership #LuxuryLiving #RealEstate #ResidentialLuxury #CommunityBuilding",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/L77dz1fdMzf8kgsw7vmn/image.png"
+    id: 'L77dz1fdMzf8kgsw7vmn',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-12T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "At Magnate Regalia, we celebrate International Youth Day—a day dedicated to honoring the voices, leadership, and boundless potential of young people shaping our world. Today, we recognize the innovators, dreamers, and changemakers building tomorrow's communities. From vibrant residential spaces designed for modern living to the opportunities we create for emerging talent, we're committed to empowering the next generation. Here's to youth—your energy, vision, and determination inspire us all. #InternationalYouthDay #YouthLeadership #LuxuryLiving #RealEstate #ResidentialLuxury #CommunityBuilding",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/L77dz1fdMzf8kgsw7vmn/image.png',
   },
   {
-    "id": "EQzq8H6Yx1zKUoiPkiAo",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-12T05:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Magnate Regalia celebrates International Youth Day—honoring the voices, leadership, and boundless potential of young people shaping our future. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/EQzq8H6Yx1zKUoiPkiAo/image.png"
+    id: 'EQzq8H6Yx1zKUoiPkiAo',
+    platform: 'facebook',
+    scheduleAt: '2026-08-12T05:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Magnate Regalia celebrates International Youth Day—honoring the voices, leadership, and boundless potential of young people shaping our future. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/EQzq8H6Yx1zKUoiPkiAo/image.png',
   },
   {
-    "id": "fUwl6J8tK8KlGa7RlZTJ",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-11T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Every family discovers it eventually: outdoor spaces aren't a luxury—they're the hub where memories happen. Sunsets, conversations, quiet mornings with coffee. These thoughtfully designed gardens and water features transform apartments into homes. Save this if your family's craving that peaceful sanctuary.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/fUwl6J8tK8KlGa7RlZTJ/image.png"
+    id: 'fUwl6J8tK8KlGa7RlZTJ',
+    platform: 'instagram',
+    scheduleAt: '2026-08-11T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Every family discovers it eventually: outdoor spaces aren't a luxury—they're the hub where memories happen. Sunsets, conversations, quiet mornings with coffee. These thoughtfully designed gardens and water features transform apartments into homes. Save this if your family's craving that peaceful sanctuary.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/fUwl6J8tK8KlGa7RlZTJ/image.png',
   },
   {
-    "id": "SsXD1P7rrM93IeUovCYf",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-11T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Myth: Luxury living means cramped dining. Fact: Our 4–5 BHK residences create spaces designed for togetherness—where every meal becomes a memory, and architecture meets family connection. Save this for your next design visit.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/SsXD1P7rrM93IeUovCYf/image.png"
+    id: 'SsXD1P7rrM93IeUovCYf',
+    platform: 'facebook',
+    scheduleAt: '2026-08-11T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Myth: Luxury living means cramped dining. Fact: Our 4–5 BHK residences create spaces designed for togetherness—where every meal becomes a memory, and architecture meets family connection. Save this for your next design visit.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/SsXD1P7rrM93IeUovCYf/image.png',
   },
   {
-    "id": "SIeW4UA1YG9jHbOsvr5Z",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-11T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "For families seeking refuge from modern chaos, peace often feels out of reach. Magnate Regalia designed these 4-5 BHK residences as sanctuaries—thoughtfully spaced homes wrapped in meticulously landscaped grounds where serenity isn't a luxury, it's the foundation. Premium location, elegant architecture, lush surroundings. A home built for your family's well-being, not just occupancy. Save this if you're ready to trade noise for tranquility.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/SIeW4UA1YG9jHbOsvr5Z/image.png"
+    id: 'SIeW4UA1YG9jHbOsvr5Z',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-11T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "For families seeking refuge from modern chaos, peace often feels out of reach. Magnate Regalia designed these 4-5 BHK residences as sanctuaries—thoughtfully spaced homes wrapped in meticulously landscaped grounds where serenity isn't a luxury, it's the foundation. Premium location, elegant architecture, lush surroundings. A home built for your family's well-being, not just occupancy. Save this if you're ready to trade noise for tranquility.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/SIeW4UA1YG9jHbOsvr5Z/image.png',
   },
   {
-    "id": "npW3Jc29eEfNLSqeMdzZ",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-10T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Step into luxury. Join us for an exclusive virtual tour of our newest featured property and experience the elegance of Magnate Regalia living. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/npW3Jc29eEfNLSqeMdzZ/image.png"
+    id: 'npW3Jc29eEfNLSqeMdzZ',
+    platform: 'instagram',
+    scheduleAt: '2026-08-10T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Step into luxury. Join us for an exclusive virtual tour of our newest featured property and experience the elegance of Magnate Regalia living. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/npW3Jc29eEfNLSqeMdzZ/image.png',
   },
   {
-    "id": "lpOV80Hsym5g4gVB6Leo",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-10T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Join us for an exclusive virtual tour of one of our most stunning residences.\n\nStep inside and experience the meticulous design, premium finishes, and thoughtful spatial flow that define Magnate Regalia's commitment to luxurious living. From soaring ceilings to curated material palettes, every detail has been crafted to elevate your lifestyle.\n\nReady to explore? Register now for your personalized virtual walkthrough.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/lpOV80Hsym5g4gVB6Leo/image.png"
+    id: 'lpOV80Hsym5g4gVB6Leo',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-10T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Join us for an exclusive virtual tour of one of our most stunning residences.\n\nStep inside and experience the meticulous design, premium finishes, and thoughtful spatial flow that define Magnate Regalia's commitment to luxurious living. From soaring ceilings to curated material palettes, every detail has been crafted to elevate your lifestyle.\n\nReady to explore? Register now for your personalized virtual walkthrough.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/lpOV80Hsym5g4gVB6Leo/image.png',
   },
   {
-    "id": "LAJZAB2CjZZ3JRFFqagX",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-10T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Join us for an exclusive virtual tour of luxury living. Experience sophisticated design and modern elegance from home. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/LAJZAB2CjZZ3JRFFqagX/image.png"
+    id: 'LAJZAB2CjZZ3JRFFqagX',
+    platform: 'facebook',
+    scheduleAt: '2026-08-10T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Join us for an exclusive virtual tour of luxury living. Experience sophisticated design and modern elegance from home. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/LAJZAB2CjZZ3JRFFqagX/image.png',
   },
   {
-    "id": "rZncKfeeda0pe8vQazzE",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-09T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Master the art of luxury living. Expert tips on color palettes, furniture arrangement, and personal touches to elevate your space. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/rZncKfeeda0pe8vQazzE/image.png"
+    id: 'rZncKfeeda0pe8vQazzE',
+    platform: 'facebook',
+    scheduleAt: '2026-08-09T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Master the art of luxury living. Expert tips on color palettes, furniture arrangement, and personal touches to elevate your space. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/rZncKfeeda0pe8vQazzE/image.png',
   },
   {
-    "id": "aQG2mB4cei0nI3Mxf5AW",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-09T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Your living space tells a story. At Magnate Regalia, we believe luxury is built on thoughtful design choices—not just price tags.\n\nHere's how to elevate any room:\n\n✦ Color Palettes: Anchor neutrals with one bold accent tone\n✦ Furniture Flow: Arrange for conversation, not just aesthetics\n✦ Personal Touches: Layer textures, plants, and curated objects\n\nThe difference between a room and a sanctuary? Intentionality. Start with one corner, build from there.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/aQG2mB4cei0nI3Mxf5AW/image.png"
+    id: 'aQG2mB4cei0nI3Mxf5AW',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-09T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Your living space tells a story. At Magnate Regalia, we believe luxury is built on thoughtful design choices—not just price tags.\n\nHere's how to elevate any room:\n\n✦ Color Palettes: Anchor neutrals with one bold accent tone\n✦ Furniture Flow: Arrange for conversation, not just aesthetics\n✦ Personal Touches: Layer textures, plants, and curated objects\n\nThe difference between a room and a sanctuary? Intentionality. Start with one corner, build from there.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/aQG2mB4cei0nI3Mxf5AW/image.png',
   },
   {
-    "id": "EtS8tbHQ13bOS7xaTQxJ",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-09T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Master the art of luxury living. Balance color, furniture placement, and personal touches to create a space that reflects your refined taste. Discover timeless design principles that elevate every room. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/EtS8tbHQ13bOS7xaTQxJ/image.png"
+    id: 'EtS8tbHQ13bOS7xaTQxJ',
+    platform: 'instagram',
+    scheduleAt: '2026-08-09T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Master the art of luxury living. Balance color, furniture placement, and personal touches to create a space that reflects your refined taste. Discover timeless design principles that elevate every room. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/EtS8tbHQ13bOS7xaTQxJ/image.png',
   },
   {
-    "id": "ym15Guf485Dsu1noA2qC",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-08T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "There's something special about a home that truly feels like yours.\n\nOur residents at Magnate Regalia don't just live in beautifully designed spaces—they thrive in them. From morning coffee by the window to evening gatherings with loved ones, every moment becomes richer.\n\nToday, we're celebrating the stories of those who've made Magnate Regalia their sanctuary. Their joy, their peace, their sense of belonging—that's what drives us.\n\nDiscover what luxury living truly means.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/ym15Guf485Dsu1noA2qC/image.png"
+    id: 'ym15Guf485Dsu1noA2qC',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-08T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "There's something special about a home that truly feels like yours.\n\nOur residents at Magnate Regalia don't just live in beautifully designed spaces—they thrive in them. From morning coffee by the window to evening gatherings with loved ones, every moment becomes richer.\n\nToday, we're celebrating the stories of those who've made Magnate Regalia their sanctuary. Their joy, their peace, their sense of belonging—that's what drives us.\n\nDiscover what luxury living truly means.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/ym15Guf485Dsu1noA2qC/image.png',
   },
   {
-    "id": "wtmaSFvc16bh14dKXhAw",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-08T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Discover how Magnate Regalia residents transformed their lives. Real stories, real homes, real joy. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/wtmaSFvc16bh14dKXhAw/image.png"
+    id: 'wtmaSFvc16bh14dKXhAw',
+    platform: 'facebook',
+    scheduleAt: '2026-08-08T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Discover how Magnate Regalia residents transformed their lives. Real stories, real homes, real joy. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/wtmaSFvc16bh14dKXhAw/image.png',
   },
   {
-    "id": "voaCDnJsVT05YAfqoFdH",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-08T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Real homes. Real stories. Hear from the residents who've discovered how Magnate Regalia transforms daily living into something extraordinary. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/voaCDnJsVT05YAfqoFdH/image.png"
+    id: 'voaCDnJsVT05YAfqoFdH',
+    platform: 'instagram',
+    scheduleAt: '2026-08-08T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Real homes. Real stories. Hear from the residents who've discovered how Magnate Regalia transforms daily living into something extraordinary. #LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/voaCDnJsVT05YAfqoFdH/image.png',
   },
   {
-    "id": "wQMhrk7xGs0JYQ10EcxM",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-07T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Meet the visionary architects and designers crafting Magnate Regalia's most luxurious spaces. Discover the creative minds behind your dream home. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/wQMhrk7xGs0JYQ10EcxM/image.png"
+    id: 'wQMhrk7xGs0JYQ10EcxM',
+    platform: 'facebook',
+    scheduleAt: '2026-08-07T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Meet the visionary architects and designers crafting Magnate Regalia's most luxurious spaces. Discover the creative minds behind your dream home. #LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/wQMhrk7xGs0JYQ10EcxM/image.png',
   },
   {
-    "id": "irRx7bNkF56XEF4NC5IE",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-07T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Meet the visionary architects and designers crafting Magnate Regalia's most luxurious spaces. Their passion for elegant design and modern living shapes every detail of your dream home. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/irRx7bNkF56XEF4NC5IE/image.png"
+    id: 'irRx7bNkF56XEF4NC5IE',
+    platform: 'instagram',
+    scheduleAt: '2026-08-07T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Meet the visionary architects and designers crafting Magnate Regalia's most luxurious spaces. Their passion for elegant design and modern living shapes every detail of your dream home. #LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/irRx7bNkF56XEF4NC5IE/image.png',
   },
   {
-    "id": "GekbW6xdcdyLlp4kxYI8",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-07T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Meet the creative minds shaping the future of luxury living at Magnate Regalia.\n\nOur architects and designers are passionate about crafting spaces that transcend the ordinary—blending timeless elegance with cutting-edge innovation. From concept to completion, their vision transforms dreams into meticulously designed homes that elevate every moment.\n\nDiscover the people behind the spaces you love.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/GekbW6xdcdyLlp4kxYI8/image.png"
+    id: 'GekbW6xdcdyLlp4kxYI8',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-07T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Meet the creative minds shaping the future of luxury living at Magnate Regalia.\n\nOur architects and designers are passionate about crafting spaces that transcend the ordinary—blending timeless elegance with cutting-edge innovation. From concept to completion, their vision transforms dreams into meticulously designed homes that elevate every moment.\n\nDiscover the people behind the spaces you love.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/GekbW6xdcdyLlp4kxYI8/image.png',
   },
   {
-    "id": "qKikvJ9KbxOy6ai4cWhC",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-06T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Discover vibrant community spaces designed to elevate your everyday. From resort-style pools to curated gardens, Magnate Regalia creates neighborhoods where luxury living thrives. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/qKikvJ9KbxOy6ai4cWhC/image.png"
+    id: 'qKikvJ9KbxOy6ai4cWhC',
+    platform: 'facebook',
+    scheduleAt: '2026-08-06T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Discover vibrant community spaces designed to elevate your everyday. From resort-style pools to curated gardens, Magnate Regalia creates neighborhoods where luxury living thrives. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/qKikvJ9KbxOy6ai4cWhC/image.png',
   },
   {
-    "id": "oaTb2FaktBkEI2zVhm0b",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-06T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Your home is more than four walls—it's a gateway to a vibrant lifestyle. At Magnate Regalia, we've designed community spaces that bring residents together: resort-style pools, state-of-the-art fitness centers, lush gardens, and thoughtfully curated gathering areas.\n\nImagine starting your morning with a swim, hosting friends by the poolside, or finding quiet moments in our landscaped gardens. These aren't just amenities—they're the heart of a connected, thriving community.\n\nDiscover where luxury living meets genuine connection.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury #CommunityFirst",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/oaTb2FaktBkEI2zVhm0b/image.png"
+    id: 'oaTb2FaktBkEI2zVhm0b',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-06T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Your home is more than four walls—it's a gateway to a vibrant lifestyle. At Magnate Regalia, we've designed community spaces that bring residents together: resort-style pools, state-of-the-art fitness centers, lush gardens, and thoughtfully curated gathering areas.\n\nImagine starting your morning with a swim, hosting friends by the poolside, or finding quiet moments in our landscaped gardens. These aren't just amenities—they're the heart of a connected, thriving community.\n\nDiscover where luxury living meets genuine connection.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury #CommunityFirst",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/oaTb2FaktBkEI2zVhm0b/image.png',
   },
   {
-    "id": "Lr5Z9XLdrkSmUOE7VOxh",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-06T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Join a community that enhances your lifestyle. Discover vibrant spaces designed for connection—from resort-style pools to curated gardens. At Magnate Regalia, luxury living means living together. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/Lr5Z9XLdrkSmUOE7VOxh/image.png"
+    id: 'Lr5Z9XLdrkSmUOE7VOxh',
+    platform: 'instagram',
+    scheduleAt: '2026-08-06T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Join a community that enhances your lifestyle. Discover vibrant spaces designed for connection—from resort-style pools to curated gardens. At Magnate Regalia, luxury living means living together. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/Lr5Z9XLdrkSmUOE7VOxh/image.png',
   },
   {
-    "id": "SLJLy09Ypv6vEg5PVRFl",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-05T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Experience modern living at its finest.\n\nAt Magnate Regalia, we've reimagined residential luxury through thoughtfully integrated technology and timeless design. From intelligent climate control and energy-efficient systems to spa-inspired bathrooms and premium finishes, every detail elevates your everyday.\n\nOur properties blend smart home innovation with architectural elegance—creating spaces where comfort, sustainability, and sophistication converge.\n\nDiscover how modern amenities transform the way you live.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury #ModernAmenities",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/SLJLy09Ypv6vEg5PVRFl/image.png"
+    id: 'SLJLy09Ypv6vEg5PVRFl',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-05T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Experience modern living at its finest.\n\nAt Magnate Regalia, we've reimagined residential luxury through thoughtfully integrated technology and timeless design. From intelligent climate control and energy-efficient systems to spa-inspired bathrooms and premium finishes, every detail elevates your everyday.\n\nOur properties blend smart home innovation with architectural elegance—creating spaces where comfort, sustainability, and sophistication converge.\n\nDiscover how modern amenities transform the way you live.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury #ModernAmenities",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/SLJLy09Ypv6vEg5PVRFl/image.png',
   },
   {
-    "id": "CEZEjObTKpVazkBWqCbB",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-05T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Experience modern living at its finest. Discover smart home technology, energy-efficient design, and luxurious finishes that elevate everyday comfort. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/CEZEjObTKpVazkBWqCbB/image.png"
+    id: 'CEZEjObTKpVazkBWqCbB',
+    platform: 'instagram',
+    scheduleAt: '2026-08-05T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Experience modern living at its finest. Discover smart home technology, energy-efficient design, and luxurious finishes that elevate everyday comfort. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/CEZEjObTKpVazkBWqCbB/image.png',
   },
   {
-    "id": "4nNzoOnzTXI7kprsM5Pv",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-05T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Experience modern living at its finest. Discover smart home technology, energy-efficient design, and luxurious spaces crafted for elevated everyday living. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/4nNzoOnzTXI7kprsM5Pv/image.png"
+    id: '4nNzoOnzTXI7kprsM5Pv',
+    platform: 'facebook',
+    scheduleAt: '2026-08-05T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Experience modern living at its finest. Discover smart home technology, energy-efficient design, and luxurious spaces crafted for elevated everyday living. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/4nNzoOnzTXI7kprsM5Pv/image.png',
   },
   {
-    "id": "scM4S97BB3C0CrwSjrO4",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-04T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Step into elegance with Magnate Regalia's meticulously designed living spaces. Where refined materials, intentional lighting, and sculptural furniture converge to create timeless luxury. Discover your sanctuary. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/scM4S97BB3C0CrwSjrO4/image.png"
+    id: 'scM4S97BB3C0CrwSjrO4',
+    platform: 'instagram',
+    scheduleAt: '2026-08-04T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Step into elegance with Magnate Regalia's meticulously designed living spaces. Where refined materials, intentional lighting, and sculptural furniture converge to create timeless luxury. Discover your sanctuary. #LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/scM4S97BB3C0CrwSjrO4/image.png',
   },
   {
-    "id": "q9oKaXltyeQmBs3IWe7p",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-04T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Elegance is in the details. Every surface, every texture, every carefully placed element in a Magnate Regalia residence tells a story of intentional design and refined living.\n\nOur meticulously crafted spaces blend timeless architectural principles with modern comfort—rich materials, considered lighting, and layouts that breathe. This is where luxury meets livability.\n\nDiscover how thoughtful design transforms a house into a home.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury #InteriorDesign",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/q9oKaXltyeQmBs3IWe7p/image.png"
+    id: 'q9oKaXltyeQmBs3IWe7p',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-04T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Elegance is in the details. Every surface, every texture, every carefully placed element in a Magnate Regalia residence tells a story of intentional design and refined living.\n\nOur meticulously crafted spaces blend timeless architectural principles with modern comfort—rich materials, considered lighting, and layouts that breathe. This is where luxury meets livability.\n\nDiscover how thoughtful design transforms a house into a home.\n\n#LuxuryLiving #RealEstate #ResidentialLuxury #InteriorDesign',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/q9oKaXltyeQmBs3IWe7p/image.png',
   },
   {
-    "id": "H4TJ6XjIHk1dK7btdkhF",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-04T03:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Step into elegance with Magnate Regalia's meticulously designed living spaces. Where modern amenities meet timeless sophistication. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/H4TJ6XjIHk1dK7btdkhF/image.png"
+    id: 'H4TJ6XjIHk1dK7btdkhF',
+    platform: 'facebook',
+    scheduleAt: '2026-08-04T03:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Step into elegance with Magnate Regalia's meticulously designed living spaces. Where modern amenities meet timeless sophistication. #LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/H4TJ6XjIHk1dK7btdkhF/image.png',
   },
   {
-    "id": "ugamFgdqmZyQTI6VZgBH",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-03T14:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "Choosing a luxury home for your family is a big decision—and getting it wrong can cost you comfort, convenience, and peace of mind. At Magnate Regalia, we've designed our residences to sidestep the mistakes families make most: cramped work-from-home setups, isolated living without community, outdated tech, dark spaces, and beauty without function. Our apartments blend timeless elegance with smart living, natural light, vibrant communities, and layouts that work as hard as you do. Discover the difference thoughtful design makes. Let's find your family's perfect home.",
-    "carouselSlides": [
+    id: 'ugamFgdqmZyQTI6VZgBH',
+    platform: 'facebook',
+    scheduleAt: '2026-08-03T14:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "Choosing a luxury home for your family is a big decision—and getting it wrong can cost you comfort, convenience, and peace of mind. At Magnate Regalia, we've designed our residences to sidestep the mistakes families make most: cramped work-from-home setups, isolated living without community, outdated tech, dark spaces, and beauty without function. Our apartments blend timeless elegance with smart living, natural light, vibrant communities, and layouts that work as hard as you do. Discover the difference thoughtful design makes. Let's find your family's perfect home.",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/facebook/ugamFgdqmZyQTI6VZgBH/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "esTMbqruW1bI3Zxv4Eia",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-03T14:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "Building homes, not just buildings. At Magnate Regalia, we've reimagined what luxury living means—thoughtfully designed spaces that breathe, smart homes that adapt to your life, and communities where you actually want to spend time. From the foundation to the finish, every detail serves one purpose: elevating how you live. Discover what modern luxury feels like. Tap the link in bio to explore your next sanctuary.",
-    "carouselSlides": [
+    id: 'esTMbqruW1bI3Zxv4Eia',
+    platform: 'instagram',
+    scheduleAt: '2026-08-03T14:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "Building homes, not just buildings. At Magnate Regalia, we've reimagined what luxury living means—thoughtfully designed spaces that breathe, smart homes that adapt to your life, and communities where you actually want to spend time. From the foundation to the finish, every detail serves one purpose: elevating how you live. Discover what modern luxury feels like. Tap the link in bio to explore your next sanctuary.",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/instagram/esTMbqruW1bI3Zxv4Eia/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "1deZRapT9fHQcb8T6ENC",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-03T14:30:00.000Z",
-    "mediaType": "carousel",
-    "caption": "The modern luxury apartment isn't just a place to live—it's where your best life unfolds. From seamless work-from-home sanctuaries and wellness-forward design to smart home integration and vibrant communities, Magnate Group redefines residential living for families who refuse to compromise. Discover how thoughtful architecture, premium amenities, and intentional space design create the perfect balance between productivity, well-being, and connection. Ready to experience the difference?",
-    "carouselSlides": [
+    id: '1deZRapT9fHQcb8T6ENC',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-03T14:30:00.000Z',
+    mediaType: 'carousel',
+    caption:
+      "The modern luxury apartment isn't just a place to live—it's where your best life unfolds. From seamless work-from-home sanctuaries and wellness-forward design to smart home integration and vibrant communities, Magnate Group redefines residential living for families who refuse to compromise. Discover how thoughtful architecture, premium amenities, and intentional space design create the perfect balance between productivity, well-being, and connection. Ready to experience the difference?",
+    carouselSlides: [
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-0.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-0.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-1.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-1.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-2.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-2.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-3.jpg"
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-3.jpg',
       },
       {
-        "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-4.jpg"
-      }
-    ]
+        imageUrl:
+          '/landing/how-it-looks/magnate-regalia/linkedin/1deZRapT9fHQcb8T6ENC/slide-4.jpg',
+      },
+    ],
   },
   {
-    "id": "oyABSKRqepNdmQcJScjr",
-    "platform": "instagram",
-    "scheduleAt": "2026-08-02T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Magnate Regalia celebrates Friendship Day—honoring the bonds that build lasting communities. Here's to trust, support, and the connections that make life richer. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/oyABSKRqepNdmQcJScjr/image.png"
+    id: 'oyABSKRqepNdmQcJScjr',
+    platform: 'instagram',
+    scheduleAt: '2026-08-02T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Magnate Regalia celebrates Friendship Day—honoring the bonds that build lasting communities. Here's to trust, support, and the connections that make life richer. #LuxuryLiving #RealEstate #ResidentialLuxury",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/oyABSKRqepNdmQcJScjr/image.png',
   },
   {
-    "id": "MqvE0jFyCXDJ117LSVbL",
-    "platform": "linkedin",
-    "scheduleAt": "2026-08-02T14:30:00.000Z",
-    "mediaType": "image",
-    "caption": "At Magnate Regalia, we believe the strongest communities are built on genuine friendships and trust. This Friendship Day, we celebrate the bonds that connect our residents—the shared moments, mutual support, and lasting companionship that transform houses into homes.\n\nHere's to the friendships that enrich our lives and the communities we build together.\n\nHappy Friendship Day! 🤝\n\n#LuxuryLiving #RealEstate #ResidentialLuxury #FriendshipDay #CommunityFirst",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/MqvE0jFyCXDJ117LSVbL/image.png"
+    id: 'MqvE0jFyCXDJ117LSVbL',
+    platform: 'linkedin',
+    scheduleAt: '2026-08-02T14:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      "At Magnate Regalia, we believe the strongest communities are built on genuine friendships and trust. This Friendship Day, we celebrate the bonds that connect our residents—the shared moments, mutual support, and lasting companionship that transform houses into homes.\n\nHere's to the friendships that enrich our lives and the communities we build together.\n\nHappy Friendship Day! 🤝\n\n#LuxuryLiving #RealEstate #ResidentialLuxury #FriendshipDay #CommunityFirst",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/MqvE0jFyCXDJ117LSVbL/image.png',
   },
   {
-    "id": "ZqBIRhAB8TgTR06dEhiy",
-    "platform": "facebook",
-    "scheduleAt": "2026-08-02T05:30:00.000Z",
-    "mediaType": "image",
-    "caption": "Magnate Regalia celebrates Friendship Day—honoring the bonds that build lasting communities. Cherish every moment with those who matter most. #LuxuryLiving #RealEstate #ResidentialLuxury",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/ZqBIRhAB8TgTR06dEhiy/image.png"
+    id: 'ZqBIRhAB8TgTR06dEhiy',
+    platform: 'facebook',
+    scheduleAt: '2026-08-02T05:30:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Magnate Regalia celebrates Friendship Day—honoring the bonds that build lasting communities. Cherish every moment with those who matter most. #LuxuryLiving #RealEstate #ResidentialLuxury',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/ZqBIRhAB8TgTR06dEhiy/image.png',
   },
   {
-    "id": "aaZ2sfKKTEgX8ngN6Xl5",
-    "platform": "facebook",
-    "scheduleAt": "2026-07-31T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Where green meets comfort. Our outdoor lounges transform late summer into the perfect gathering space for families craving both peace and togetherness.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/aaZ2sfKKTEgX8ngN6Xl5/image.png"
+    id: 'aaZ2sfKKTEgX8ngN6Xl5',
+    platform: 'facebook',
+    scheduleAt: '2026-07-31T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Where green meets comfort. Our outdoor lounges transform late summer into the perfect gathering space for families craving both peace and togetherness.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/aaZ2sfKKTEgX8ngN6Xl5/image.png',
   },
   {
-    "id": "RTSWDgXNWuXvLLtnq8Q0",
-    "platform": "linkedin",
-    "scheduleAt": "2026-07-31T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Community over transaction. In luxury residential today, the shift is unmistakable: families seek spaces that deliver belonging, not just bedrooms. The café lounge—a \"third place\" between home and work—signals a fundamental change in what premium living means. Connection matters. Well-being matters. Spaces designed for residents to gather, work, and belong matter far more than another listing's square footage. Magnate Regalia builds for this future: homes embedded in vibrant communities where lifestyle thrives. Focus here.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/RTSWDgXNWuXvLLtnq8Q0/image.png"
+    id: 'RTSWDgXNWuXvLLtnq8Q0',
+    platform: 'linkedin',
+    scheduleAt: '2026-07-31T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Community over transaction. In luxury residential today, the shift is unmistakable: families seek spaces that deliver belonging, not just bedrooms. The café lounge—a "third place" between home and work—signals a fundamental change in what premium living means. Connection matters. Well-being matters. Spaces designed for residents to gather, work, and belong matter far more than another listing\'s square footage. Magnate Regalia builds for this future: homes embedded in vibrant communities where lifestyle thrives. Focus here.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/RTSWDgXNWuXvLLtnq8Q0/image.png',
   },
   {
-    "id": "0KAMX83IjXQ2tr0PE5rz",
-    "platform": "instagram",
-    "scheduleAt": "2026-07-31T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Overwhelmed by endless demands? Your daily escape awaits. Magnate Regalia's luxury apartments feature beautifully landscaped outdoor sanctuaries—pathways, integrated lighting, lush seating areas—designed for genuine relaxation and connection. Resort-style living, right at home. Save this for your next chapter.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/0KAMX83IjXQ2tr0PE5rz/image.png"
+    id: '0KAMX83IjXQ2tr0PE5rz',
+    platform: 'instagram',
+    scheduleAt: '2026-07-31T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Overwhelmed by endless demands? Your daily escape awaits. Magnate Regalia's luxury apartments feature beautifully landscaped outdoor sanctuaries—pathways, integrated lighting, lush seating areas—designed for genuine relaxation and connection. Resort-style living, right at home. Save this for your next chapter.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/0KAMX83IjXQ2tr0PE5rz/image.png',
   },
   {
-    "id": "uNrTk980jRjciT3sLfRt",
-    "platform": "instagram",
-    "scheduleAt": "2026-07-28T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Nature + modern living in perfect harmony. Our landscaped exteriors create serene escapes where families truly connect and thrive. Every pathway, every green vista, every shared moment is designed for you to experience life at its finest. This is community reimagined.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/instagram/uNrTk980jRjciT3sLfRt/image.png"
+    id: 'uNrTk980jRjciT3sLfRt',
+    platform: 'instagram',
+    scheduleAt: '2026-07-28T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      'Nature + modern living in perfect harmony. Our landscaped exteriors create serene escapes where families truly connect and thrive. Every pathway, every green vista, every shared moment is designed for you to experience life at its finest. This is community reimagined.',
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/instagram/uNrTk980jRjciT3sLfRt/image.png',
   },
   {
-    "id": "RiSFYMKmwPYjlydnC2LT",
-    "platform": "linkedin",
-    "scheduleAt": "2026-07-28T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Wellness doesn't require a passport. Inside Magnate Regalia, your private resort-style pool—surrounded by ambient warmth and living greenery—becomes your year-round retreat. Families escape into the essence of staycation: crystal-clear waters, lounge comfort, and the simple authority of a home that prioritizes your well-being. Premium amenities designed to enhance daily life. Share this with those planning a lifestyle upgrade.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/linkedin/RiSFYMKmwPYjlydnC2LT/image.png"
+    id: 'RiSFYMKmwPYjlydnC2LT',
+    platform: 'linkedin',
+    scheduleAt: '2026-07-28T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Wellness doesn't require a passport. Inside Magnate Regalia, your private resort-style pool—surrounded by ambient warmth and living greenery—becomes your year-round retreat. Families escape into the essence of staycation: crystal-clear waters, lounge comfort, and the simple authority of a home that prioritizes your well-being. Premium amenities designed to enhance daily life. Share this with those planning a lifestyle upgrade.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/linkedin/RiSFYMKmwPYjlydnC2LT/image.png',
   },
   {
-    "id": "0Ixc0VgymZcxHUpb9sYi",
-    "platform": "facebook",
-    "scheduleAt": "2026-07-28T20:00:00.000Z",
-    "mediaType": "image",
-    "caption": "Escape the ordinary. Your balcony awaits as the perfect sanctuary—warm lighting, premium views, and peaceful surroundings designed for moments of pure tranquility. Discover luxury living that celebrates life's quiet joys.",
-    "imageUrl": "/landing/how-it-looks/magnate-regalia/facebook/0Ixc0VgymZcxHUpb9sYi/image.png"
-  }
+    id: '0Ixc0VgymZcxHUpb9sYi',
+    platform: 'facebook',
+    scheduleAt: '2026-07-28T20:00:00.000Z',
+    mediaType: 'image',
+    caption:
+      "Escape the ordinary. Your balcony awaits as the perfect sanctuary—warm lighting, premium views, and peaceful surroundings designed for moments of pure tranquility. Discover luxury living that celebrates life's quiet joys.",
+    imageUrl:
+      '/landing/how-it-looks/magnate-regalia/facebook/0Ixc0VgymZcxHUpb9sYi/image.png',
+  },
 ] as const;

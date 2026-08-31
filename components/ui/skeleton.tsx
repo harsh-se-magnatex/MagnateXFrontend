@@ -1,16 +1,16 @@
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils';
 
-function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
+function Skeleton({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="skeleton"
       // The travelling highlight comes from `[data-slot="skeleton"]::after`
       // in globals.css. `animate-pulse` is deliberately gone — running both
       // reads as two unrelated things breathing at different rates.
-      className={cn("rounded-md bg-muted", className)}
+      className={cn('rounded-md bg-element', className)}
       {...props}
     />
-  )
+  );
 }
 
-export { Skeleton }
+export { Skeleton };

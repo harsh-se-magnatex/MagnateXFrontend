@@ -6,12 +6,12 @@ import { cn } from '@/lib/utils';
 export type IconTone = 'indigo' | 'blue' | 'pink' | 'emerald' | 'amber' | 'sky';
 
 const iconToneClasses: Record<IconTone, string> = {
-  indigo: 'bg-indigo-500/10 text-indigo-600 ring-indigo-500/15',
-  blue: 'bg-blue-500/10 text-blue-600 ring-blue-500/15',
-  pink: 'bg-pink-500/10 text-pink-600 ring-pink-500/15',
-  emerald: 'bg-emerald-500/10 text-emerald-600 ring-emerald-500/15',
-  amber: 'bg-amber-500/10 text-amber-600 ring-amber-500/15',
-  sky: 'bg-sky-500/10 text-sky-600 ring-sky-500/15',
+  indigo: 'bg-preview text-preview ring-[var(--border-preview)]',
+  blue: 'bg-info text-info ring-[var(--border-info)]',
+  pink: 'bg-preview text-preview ring-[var(--border-preview)]',
+  emerald: 'bg-success text-success ring-[var(--border-success)]',
+  amber: 'bg-warning text-warning ring-[var(--border-warning)]',
+  sky: 'bg-info text-info ring-[var(--border-info)]',
 };
 
 type LegalPageProps = {
@@ -44,26 +44,26 @@ export function LegalPage({
     <article
       className={cn(
         'legal-page mx-auto px-4 pb-24 pt-6 sm:px-6',
-        maxWidthClasses[maxWidth],
+        maxWidthClasses[maxWidth]
       )}
     >
       <header className="legal-page-header mb-10">
         <div
           className={cn(
             'legal-page-icon ring-1 ring-inset',
-            iconToneClasses[iconTone],
+            iconToneClasses[iconTone]
           )}
         >
           <Icon className="h-8 w-8" aria-hidden />
         </div>
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-tertiary">
           {badge}
         </p>
-        <h1 className="mt-3 font-[family-name:var(--font-sora)] text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="text-page-title text-black mt-3 font-[family-name:var(--font-sora)]">
           {title}
         </h1>
         {subtitle ? (
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-500">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-secondary">
             {subtitle}
           </p>
         ) : null}
@@ -74,10 +74,10 @@ export function LegalPage({
       {showContact ? (
         <div className="legal-contact-strip mt-8">
           <div>
-            <p className="text-sm font-semibold text-slate-900">
+            <p className="text-sm font-semibold text-default">
               Questions about this document?
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-secondary">
               Our team can help with privacy, legal, or compliance requests.
             </p>
           </div>

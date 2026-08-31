@@ -73,9 +73,9 @@ export function ChatSheet() {
         showCloseButton
         className="flex h-full w-full flex-col gap-0 p-0 sm:max-w-md"
       >
-        <SheetHeader className="border-b border-border p-3">
+        <SheetHeader className="border-b border-default p-3">
           <div className="flex items-center gap-2 pr-8">
-            <Sparkles className="size-4 text-primary" />
+            <Sparkles className="size-4 text-link" />
             <SheetTitle className="text-sm font-semibold">
               SocioGenie Assistant
             </SheetTitle>
@@ -105,8 +105,9 @@ export function ChatSheet() {
               </Button>
             </div>
           </div>
-          <SheetDescription className="text-[11px] text-muted-foreground">
-            Brand-aware drafts and product help. Nothing here gets posted automatically.
+          <SheetDescription className="text-[11px] text-secondary">
+            Brand-aware drafts and product help. Nothing here gets posted
+            automatically.
           </SheetDescription>
         </SheetHeader>
 
@@ -114,13 +115,14 @@ export function ChatSheet() {
           <ChatThreadList onClose={() => setShowThreads(false)} />
         ) : (
           <>
-            <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto py-3">
+            <div
+              ref={scrollRef}
+              className="flex-1 space-y-3 overflow-y-auto py-3"
+            >
               {messages.length === 0 ? (
                 <EmptyState />
               ) : (
-                messages.map((m) => (
-                  <ChatMessageItem key={m.id} message={m} />
-                ))
+                messages.map((m) => <ChatMessageItem key={m.id} message={m} />)
               )}
               {streamError && (
                 <div className="mx-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
@@ -144,16 +146,18 @@ export function ChatSheet() {
 
 function EmptyState() {
   return (
-    <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-      <div className="mx-auto mb-2 inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+    <div className="px-4 py-8 text-center text-sm text-secondary">
+      <div className="mx-auto mb-2 inline-flex size-9 items-center justify-center rounded-full bg-primary/10 text-link">
         <Sparkles className="size-4" />
       </div>
-      <p className="text-foreground">Hi! I&apos;m the SocioGenie assistant.</p>
+      <p className="text-default">Hi! I&apos;m the SocioGenie assistant.</p>
       <p className="mt-1 text-[12px]">
-        Ask me anything about your brand, your analytics, or a SocioGenie feature.
+        Ask me anything about your brand, your analytics, or a SocioGenie
+        feature.
       </p>
       <p className="mt-1 text-[11px]">
-        I can also draft posts, campaigns, festive ideas, or product ads — you decide when to run them.
+        I can also draft posts, campaigns, festive ideas, or product ads — you
+        decide when to run them.
       </p>
     </div>
   );

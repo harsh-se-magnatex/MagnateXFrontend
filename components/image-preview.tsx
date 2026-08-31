@@ -116,7 +116,7 @@ export function ImagePreviewOverlay({
       <img
         src={src}
         alt={alt}
-        className="relative z-10 max-h-[90vh] max-w-[95vw] rounded-lg object-contain shadow-2xl"
+        className="relative z-10 max-h-[90vh] max-w-[95vw] rounded-lg object-contain"
         onClick={keepOpen}
       />
 
@@ -124,7 +124,7 @@ export function ImagePreviewOverlay({
         type="button"
         aria-label="Close image preview"
         onClick={dismiss}
-        className="absolute right-2 top-2 z-20 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-0 bg-white/10 text-white ring-1 ring-white/30 transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-4 sm:top-4"
+        className="absolute right-2 top-2 z-20 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full border-0 bg-default text-white ring-1 ring-white/30 transition hover:bg-default focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:right-4 sm:top-4"
       >
         <X className="h-5 w-5 pointer-events-none" />
       </button>
@@ -148,10 +148,10 @@ type ImagePreviewButtonProps = {
 };
 
 const baseDefault =
-  'inline-flex items-center justify-center gap-1.5 rounded-full bg-indigo-600 text-white font-semibold hover:opacity-90 transition disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 px-4 py-3 text-sm';
+  'inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--purple-9)] text-white font-semibold hover:opacity-90 transition disabled:text-quaternary focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--border-preview)] px-4 py-3 text-sm';
 
 const baseOverlay =
-  'inline-flex items-center justify-center rounded-full bg-black/55 text-white shadow-md ring-1 ring-white/30 backdrop-blur-sm hover:bg-black/75 transition h-8 w-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-white';
+  'inline-flex items-center justify-center rounded-full bg-black/55 text-white ring-1 ring-white/30 backdrop-blur-sm hover:bg-black/75 transition h-8 w-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-white';
 
 export function ImagePreviewButton({
   onClick,

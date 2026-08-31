@@ -8,10 +8,7 @@ import {
   type ScheduledPostsPageCursor,
   type ScheduledPostsTab,
 } from '@/src/service/api/social.servce';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import {
   hasSchedulableMediaPreview,
   resolveSchedulableMediaPreview,
@@ -179,8 +176,8 @@ function ScheduledPostActionButtons({
   };
   const isCard = size === 'card';
   const btn = isCard
-    ? 'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:pointer-events-none'
-    : 'rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
+    ? 'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-expo focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:text-quaternary disabled:pointer-events-none'
+    : 'rounded-lg px-4 py-2.5 text-sm font-medium transition-expo focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:text-quaternary disabled:pointer-events-none';
   return (
     <div className={`flex items-center gap-3 ${!isCard ? 'flex-wrap' : ''}`}>
       {showRegenerate ? (
@@ -193,15 +190,15 @@ function ScheduledPostActionButtons({
               ? `Next regeneration will deduct ${SCHEDULED_POST_REGENERATE_CREDIT} credit`
               : undefined
           }
-          className={`${btn} bg-amber-200 text-neutral-900 cursor-pointer hover:bg-amber-200 focus:ring-amber-500 ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
+          className={`${btn} bg-warning text-default cursor-pointer hover:bg-warning focus:ring-[var(--border-warning)] ${regenChargesCredits ? 'inline-flex flex-col items-center justify-center gap-0.5 text-center' : ''}`}
         >
           <span>Regenerate {!regenChargesCredits && 'Free'}</span>
           {regenChargesCredits ? (
             <span
               className={
                 isCard
-                  ? 'max-w-44 text-[9px] font-normal leading-snug text-neutral-900 '
-                  : 'max-w-56 text-[11px] font-normal leading-snug text-neutral-900 '
+                  ? 'max-w-44 text-[9px] font-normal leading-snug text-default '
+                  : 'max-w-56 text-[11px] font-normal leading-snug text-default '
               }
             >
               {`${SCHEDULED_POST_REGENERATE_CREDIT} credit will be deducted`}
@@ -213,7 +210,7 @@ function ScheduledPostActionButtons({
         type="button"
         disabled={disabled}
         onClick={(e) => handle(onRemove, e)}
-        className={`${btn} bg-red-300 text-red-900 cursor-pointer hover:bg-red-200 focus:ring-red-500`}
+        className={`${btn} bg-[var(--red-9)] text-danger cursor-pointer hover:bg-danger focus:ring-[var(--border-danger)]`}
       >
         Remove
       </button>
@@ -323,17 +320,17 @@ function DetailModal({
       aria-busy={isRegenerating || undefined}
     >
       <div
-        className="relative z-10 rounded-2xl border border-border bg-card text-foreground shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
+        className="relative z-10 rounded-2xl border border-default bg-default text-default max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 p-4 border-b border-border flex items-center justify-between gap-3">
-          <h2 id="detail-modal-title" className="text-lg font-semibold">
+        <div className="shrink-0 p-4 border-b border-default flex items-center justify-between gap-3">
+          <h2 id="detail-modal-title" className="text-section text-default">
             Scheduled post details
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="rounded-full p-1.5 text-secondary hover:bg-hover hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
             aria-label="Close"
           >
             <svg
@@ -354,7 +351,7 @@ function DetailModal({
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-10 space-y-4 overscroll-contain">
           {isCarousel && carouselSlides.length > 0 ? (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">
+              <p className="text-xs font-medium text-secondary mb-1">
                 Carousel
                 {post.slideCount
                   ? ` · ${post.slideCount} slides`
@@ -364,9 +361,7 @@ function DetailModal({
                 <CarouselSwipePreview
                   slides={carouselSlides}
                   showCaptions
-                  onImageClick={
-                    isRegenerating ? undefined : onPreviewImage
-                  }
+                  onImageClick={isRegenerating ? undefined : onPreviewImage}
                 />
                 {isRegenerating ? (
                   <div
@@ -374,10 +369,10 @@ function DetailModal({
                     aria-live="polite"
                   >
                     <Loader2
-                      className="h-8 w-8 animate-spin text-primary"
+                      className="h-8 w-8 animate-spin text-link"
                       aria-hidden
                     />
-                    <span className="text-sm font-semibold uppercase tracking-wide text-foreground">
+                    <span className="text-sm font-semibold uppercase tracking-wide text-default">
                       Regenerating…
                     </span>
                   </div>
@@ -386,7 +381,7 @@ function DetailModal({
             </div>
           ) : hasMedia ? (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">
+              <p className="text-xs font-medium text-secondary mb-1">
                 {mediaPreview.isVideo ? 'Video' : 'Image'}
               </p>
               <div className="relative overflow-hidden rounded-xl">
@@ -395,7 +390,7 @@ function DetailModal({
                     preview={mediaPreview}
                     controls
                     muted={false}
-                    videoClassName="w-full max-h-64 object-contain rounded-xl bg-black border border-border"
+                    videoClassName="w-full max-h-64 object-contain rounded-xl bg-black border border-default"
                   />
                 ) : (
                   <button
@@ -407,12 +402,12 @@ function DetailModal({
                         'Scheduled post image'
                       )
                     }
-                    className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed"
+                    className="group relative block w-full overflow-hidden rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-strong disabled:cursor-not-allowed"
                     aria-label="Open image preview"
                   >
                     <PostMediaPreview
                       preview={mediaPreview}
-                      imageClassName="w-full max-h-64 object-contain rounded-xl bg-muted border border-border transition-transform duration-200 group-hover:scale-[1.01]"
+                      imageClassName="w-full max-h-64 object-contain rounded-xl bg-element border border-default transition-transform duration-200"
                     />
                   </button>
                 )}
@@ -422,10 +417,10 @@ function DetailModal({
                     aria-live="polite"
                   >
                     <Loader2
-                      className="h-8 w-8 animate-spin text-primary"
+                      className="h-8 w-8 animate-spin text-link"
                       aria-hidden
                     />
-                    <span className="text-sm font-semibold uppercase tracking-wide text-foreground">
+                    <span className="text-sm font-semibold uppercase tracking-wide text-default">
                       Regenerating…
                     </span>
                   </div>
@@ -442,7 +437,7 @@ function DetailModal({
                             'Scheduled post image'
                           )
                         }
-                        className="rounded-lg border border-primary/30 bg-card text-primary hover:bg-primary/10 hover:opacity-100 px-4 py-2"
+                        className="rounded-lg border border-primary/30 bg-default text-link hover:bg-primary/10 hover:opacity-100 px-4 py-2"
                       />
                     ) : null}
                     {mediaPreview.isVideo && mediaPreview.videoUrl ? (
@@ -468,7 +463,7 @@ function DetailModal({
                             getFilename={() =>
                               `scheduled-${post.platform ?? 'post'}-${Date.now()}.png`
                             }
-                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-60"
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--green-9)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition disabled:text-quaternary"
                           />
                         ) : null}
                       </>
@@ -483,7 +478,7 @@ function DetailModal({
                       }
                       target="_blank"
                       rel="noreferrer"
-                      className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-primary/20"
+                      className="mt-2 inline-flex items-center gap-2 rounded-full btn-brand-fill px-3 py-2 text-sm font-medium"
                     >
                       Open in new tab
                       <ExternalLink className="h-4 w-4" />
@@ -491,25 +486,32 @@ function DetailModal({
                   </div>
                 </>
               ) : (
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Regeneration in progress — new media and caption will appear when
-                  ready.
+                <p className="mt-3 text-xs text-secondary">
+                  Regeneration in progress — new media and caption will appear
+                  when ready.
                 </p>
               )}
             </div>
           ) : null}
-          <DetailRow label="Caption / Message" value={post.message || '—'} long />
+          <DetailRow
+            label="Caption / Message"
+            value={post.message || '—'}
+            long
+          />
           <DetailRow label="Schedule at" value={scheduleAt} />
           <DetailRow label="Created at" value={createdAt} />
           <div>
-            <p className="text-xs font-medium text-muted-foreground mb-1">Status</p>
+            <p className="text-xs font-medium text-secondary mb-1">Status</p>
             <span
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-semibold',
                 statusBadgeClasses(status.variant)
               )}
             >
-              <StatusBadgeIcon variant={status.variant} className="h-3.5 w-3.5" />
+              <StatusBadgeIcon
+                variant={status.variant}
+                className="h-3.5 w-3.5"
+              />
               {status.label}
             </span>
             {status.variant === 'failed' ? (
@@ -525,13 +527,13 @@ function DetailModal({
           ) : null}
           {showResearch ? (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">
+              <p className="text-xs font-medium text-secondary mb-2">
                 Research
               </p>
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-lg border-primary/30 text-primary hover:bg-primary/10"
+                className="rounded-full border-primary/30 text-link hover:bg-primary/10"
                 onClick={() => setResearchOpen(true)}
               >
                 <Search className="mr-2 h-4 w-4" />
@@ -540,10 +542,8 @@ function DetailModal({
             </div>
           ) : null}
           {showPostActions ? (
-            <div className="pt-4 border-t border-border">
-              <p className="text-xs font-medium text-muted-foreground mb-3">
-                Actions
-              </p>
+            <div className="pt-4 border-t border-default">
+              <p className="text-xs font-medium text-secondary mb-3">Actions</p>
               <ScheduledPostActionButtons
                 size="modal"
                 showRegenerate={showRegenerate}
@@ -577,12 +577,12 @@ function DetailRow({
 }) {
   return (
     <div className={long ? 'min-w-0' : undefined}>
-      <p className="text-xs font-medium text-muted-foreground mb-0.5">{label}</p>
+      <p className="text-xs font-medium text-secondary mb-0.5">{label}</p>
       <p
         className={
           long
-            ? 'text-sm text-foreground min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
-            : 'text-sm text-foreground'
+            ? 'text-sm text-default min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
+            : 'text-sm text-default'
         }
       >
         {value}
@@ -625,8 +625,10 @@ function ScheduledPostCard({
   const hasMedia = hasSchedulableMediaPreview(mediaPreview);
   const slideCount =
     post.mediaType === 'carousel'
-      ? post.slideCount ??
-        (Array.isArray(post.carouselSlides) ? post.carouselSlides.length : null)
+      ? (post.slideCount ??
+        (Array.isArray(post.carouselSlides)
+          ? post.carouselSlides.length
+          : null))
       : null;
   return (
     <div
@@ -644,28 +646,28 @@ function ScheduledPostCard({
         }
       }}
       className={cn(
-        'group relative flex min-w-0 flex-col rounded-2xl border border-border bg-card p-4 shadow-sm',
-        'transition-all duration-300',
+        'group relative flex min-w-0 flex-col rounded-2xl border border-default bg-default p-4',
+        'transition-expo',
         isRegenerating
           ? 'cursor-not-allowed'
-          : 'hover:border-primary-blue/35 hover:bg-muted/50/80 hover:shadow-md hover:shadow-black/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-blue/30'
+          : 'hover:border-strong hover:bg-element/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-strong'
       )}
     >
-      <div className="relative mb-3 overflow-hidden rounded-xl border border-border bg-muted aspect-4/3">
+      <div className="relative mb-3 overflow-hidden rounded-xl border border-default bg-element aspect-4/3">
         {hasMedia ? (
           <PostMediaPreview
             preview={mediaPreview}
             videoClassName="h-full w-full object-cover bg-black"
-            imageClassName="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            imageClassName="h-full w-full object-cover transition-transform duration-300"
           />
         ) : (
-          <div className="flex h-full min-h-[140px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-full min-h-[140px] items-center justify-center text-sm text-secondary">
             No media
           </div>
         )}
         {slideCount && slideCount > 1 ? (
           <div className="absolute left-2 bottom-2">
-            <span className="inline-flex items-center rounded-md border border-border bg-card/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm backdrop-blur">
+            <span className="inline-flex items-center rounded-md border border-default bg-default px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-default backdrop-blur">
               {slideCount} slides
             </span>
           </div>
@@ -699,49 +701,49 @@ function ScheduledPostCard({
         {generatedBy ? (
           <div className="absolute right-2 top-2 max-w-[60%]">
             <span
-              className="inline-flex items-center gap-1 rounded-md border border-border bg-card/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm backdrop-blur"
+              className="inline-flex items-center gap-1 rounded-md border border-default bg-default px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-default backdrop-blur"
               title={`Generated by: ${generatedBy}`}
             >
-              <Sparkles className="h-3 w-3 text-primary-blue" />
+              <Sparkles className="h-3 w-3 text-link" />
               <span className="truncate">{generatedBy}</span>
             </span>
           </div>
         ) : null}
         {isRegenerating ? (
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-card/75 backdrop-blur-sm"
+            className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-default backdrop-blur-sm"
             aria-live="polite"
           >
-            <Loader2 className="h-6 w-6 animate-spin text-primary-blue" aria-hidden />
-            <span className="text-xs font-semibold uppercase tracking-wide text-foreground">
+            <Loader2 className="h-6 w-6 animate-spin text-link" aria-hidden />
+            <span className="text-xs font-semibold uppercase tracking-wide text-default">
               Regenerating…
             </span>
           </div>
         ) : null}
       </div>
 
-      <p className="line-clamp-3 text-sm font-medium leading-snug text-foreground">
+      <p className="line-clamp-3 text-sm font-medium leading-snug text-default">
         {post.message || (
-          <span className="text-muted-foreground italic">No caption</span>
+          <span className="text-secondary italic">No caption</span>
         )}
       </p>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+      <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-secondary">
         <span className="inline-flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5 text-primary-blue" />
+          <Calendar className="h-3.5 w-3.5 text-link" />
           <span className="truncate">{scheduleAt}</span>
         </span>
         {post.platform ? (
           <>
-            <span className="text-muted-foreground">·</span>
-            <span className="text-muted-foreground">{post.platform}</span>
+            <span className="text-secondary">·</span>
+            <span className="text-secondary">{post.platform}</span>
           </>
         ) : null}
       </div>
 
       {status.reason ? (
         <p
-          className="mt-2 line-clamp-2 rounded-md border border-red-100 bg-red-500/20 px-2 py-1 text-[11px] leading-snug text-red-700"
+          className="mt-2 line-clamp-2 rounded-md border border-danger bg-danger px-2 py-1 text-[11px] leading-snug text-danger"
           title={status.reason}
         >
           <span className="font-semibold">Reason: </span>
@@ -761,7 +763,7 @@ function ScheduledPostCard({
             disabled={actionDisabled || isRegenerating}
           />
         ) : null}
-        <p className="text-[11px] text-muted-foreground group-hover:text-muted-foreground">
+        <p className="text-[11px] text-secondary group-hover:text-secondary">
           {isRegenerating
             ? 'Regeneration in progress'
             : 'Click for full details'}
@@ -857,7 +859,7 @@ function CalendarEventChip({
       }
       aria-busy={isRegenerating || undefined}
       className={cn(
-        'group relative flex w-full items-center gap-1.5 rounded-md border text-left transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 hover:bg-accent/40',
+        'group relative flex w-full items-center gap-1.5 rounded-full border text-left transition-expo focus:outline-none focus:ring-2 focus:ring-strong hover:bg-hover',
         isMd ? 'px-1.5 py-1.5 text-xs' : 'px-1 py-1 text-[11px]',
         statusBadgeClasses(status.variant)
       )}
@@ -875,10 +877,10 @@ function CalendarEventChip({
             imageClassName="h-full w-full object-cover"
           />
           {isRegenerating ? (
-            <span className="absolute inset-0 flex items-center justify-center bg-card/75 backdrop-blur-[1px]">
+            <span className="absolute inset-0 flex items-center justify-center bg-default backdrop-blur-[1px]">
               <Loader2
                 className={cn(
-                  'animate-spin text-primary-blue',
+                  'animate-spin text-link',
                   isMd ? 'h-4 w-4' : 'h-3 w-3'
                 )}
                 aria-hidden
@@ -889,16 +891,16 @@ function CalendarEventChip({
       ) : (
         <span
           className={cn(
-            'relative flex shrink-0 items-center justify-center rounded bg-muted font-semibold text-muted-foreground ring-1 ring-border/60',
+            'relative flex shrink-0 items-center justify-center rounded bg-element font-semibold text-secondary ring-1 ring-border/60',
             isMd ? 'h-10 w-10 text-[11px]' : 'h-7 w-7 text-[10px]'
           )}
         >
           {(post.platform ?? '?').slice(0, 2).toUpperCase()}
           {isRegenerating ? (
-            <span className="absolute inset-0 flex items-center justify-center bg-card/75">
+            <span className="absolute inset-0 flex items-center justify-center bg-default">
               <Loader2
                 className={cn(
-                  'animate-spin text-primary-blue',
+                  'animate-spin text-link',
                   isMd ? 'h-4 w-4' : 'h-3 w-3'
                 )}
                 aria-hidden
@@ -912,7 +914,10 @@ function CalendarEventChip({
           {isRegenerating ? 'Regenerating…' : time}
         </span>
         <span
-          className={cn('truncate opacity-90', isMd && 'line-clamp-2 whitespace-normal')}
+          className={cn(
+            'truncate opacity-90',
+            isMd && 'line-clamp-2 whitespace-normal'
+          )}
         >
           {isRegenerating ? 'New image in progress' : caption}
         </span>
@@ -954,7 +959,7 @@ function CalendarMonthBody({
 
   return (
     <>
-      <div className="grid grid-cols-7 border-b border-border bg-muted text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="grid grid-cols-7 border-b border-default bg-element text-[11px] font-semibold uppercase tracking-wider text-secondary">
         {WEEKDAY_LABELS.map((label) => (
           <div key={label} className="px-2 py-2 text-center">
             {label}
@@ -967,8 +972,7 @@ function CalendarMonthBody({
           const dayKey = formatDate(day, 'yyyy-MM-dd');
           const inMonth = isSameMonth(day, cursor);
           const isToday = isSameDay(day, today);
-          const isSelectedDay =
-            !!selectedDateKey && selectedDateKey === dayKey;
+          const isSelectedDay = !!selectedDateKey && selectedDateKey === dayKey;
           const dayPosts = postsByDate.get(dayKey) ?? [];
           const visiblePosts = dayPosts.slice(0, 3);
           const moreCount = dayPosts.length - visiblePosts.length;
@@ -978,10 +982,10 @@ function CalendarMonthBody({
             <div
               key={dayKey}
               className={cn(
-                'flex min-h-[112px] flex-col gap-1 border-border p-1.5 transition-colors',
+                'flex min-h-[112px] flex-col gap-1 border-default p-1.5 transition-expo',
                 !isLastColumn && 'border-r',
                 !isLastRow && 'border-b',
-                inMonth ? 'bg-card' : 'bg-muted/30',
+                inMonth ? 'bg-default' : 'bg-element',
                 isSelectedDay && 'bg-primary/5'
               )}
             >
@@ -990,16 +994,16 @@ function CalendarMonthBody({
                   className={cn(
                     'inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold',
                     isToday
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-primary text-link-foreground'
                       : inMonth
-                        ? 'text-foreground'
-                        : 'text-muted-foreground'
+                        ? 'text-default'
+                        : 'text-secondary'
                   )}
                 >
                   {formatDate(day, 'd')}
                 </span>
                 {dayPosts.length > 0 ? (
-                  <span className="text-[10px] font-medium text-muted-foreground">
+                  <span className="text-[10px] font-medium text-secondary">
                     {dayPosts.length}
                   </span>
                 ) : null}
@@ -1026,7 +1030,7 @@ function CalendarMonthBody({
                   <button
                     type="button"
                     onClick={() => onJumpToWeek(day)}
-                    className="self-start rounded px-1 text-[10px] font-semibold text-primary hover:underline"
+                    className="self-start rounded px-1 text-[10px] font-semibold text-link hover:underline"
                   >
                     +{moreCount} more
                   </button>
@@ -1067,34 +1071,33 @@ function CalendarWeekBody({
       {days.map((day, idx) => {
         const dayKey = formatDate(day, 'yyyy-MM-dd');
         const isToday = isSameDay(day, today);
-        const isSelectedDay =
-          !!selectedDateKey && selectedDateKey === dayKey;
+        const isSelectedDay = !!selectedDateKey && selectedDateKey === dayKey;
         const dayPosts = postsByDate.get(dayKey) ?? [];
         const isLastColumn = idx === 6;
         return (
           <div
             key={dayKey}
             className={cn(
-              'flex min-h-[440px] flex-col border-border bg-card transition-colors',
+              'flex min-h-[440px] flex-col border-default bg-default transition-expo',
               !isLastColumn && 'border-r',
               isSelectedDay && 'bg-primary/5'
             )}
           >
-            <div className="border-b border-border px-2 py-2 text-center">
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div className="border-b border-default px-2 py-2 text-center">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-secondary">
                 {formatDate(day, 'EEE')}
               </div>
               <div className="mt-1 flex items-center justify-center gap-1.5">
                 <span
                   className={cn(
                     'inline-flex h-7 min-w-7 items-center justify-center rounded-full px-1.5 text-sm font-semibold',
-                    isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'
+                    isToday ? 'bg-primary text-link-foreground' : 'text-default'
                   )}
                 >
                   {formatDate(day, 'd')}
                 </span>
                 {dayPosts.length > 0 ? (
-                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                  <span className="rounded-full bg-element px-1.5 py-0.5 text-[10px] font-semibold text-secondary">
                     {dayPosts.length}
                   </span>
                 ) : null}
@@ -1102,7 +1105,7 @@ function CalendarWeekBody({
             </div>
             <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto p-2">
               {dayPosts.length === 0 ? (
-                <p className="mt-6 text-center text-[11px] text-muted-foreground">
+                <p className="mt-6 text-center text-[11px] text-secondary">
                   No posts
                 </p>
               ) : (
@@ -1184,13 +1187,13 @@ function CalendarView({
   }, [mode, cursor]);
 
   return (
-    <div className="rounded-2xl border border-border bg-card">
-      <div className="flex flex-col gap-3 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="rounded-2xl border border-default bg-default">
+      <div className="flex flex-col gap-3 border-b border-default px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="rounded-full p-2 text-secondary transition-expo hover:bg-hover hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
             aria-label={mode === 'month' ? 'Previous month' : 'Previous week'}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -1198,31 +1201,29 @@ function CalendarView({
           <button
             type="button"
             onClick={() => navigate(1)}
-            className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="rounded-full p-2 text-secondary transition-expo hover:bg-hover hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
             aria-label={mode === 'month' ? 'Next month' : 'Next week'}
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-          <h2 className="ml-1 text-base font-semibold text-foreground sm:text-lg">
-            {rangeLabel}
-          </h2>
+          <h2 className="text-section text-default ml-1">{rangeLabel}</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           {rangeStatus.isLoading ? (
             <span
-              className="inline-flex items-center gap-1.5 rounded-lg border border-primary-purple/20 bg-primary-purple/10 px-2.5 py-1 text-[11px] font-semibold text-primary-purple"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-primary-purple/20 bg-primary-purple/10 px-2.5 py-1 text-[11px] font-semibold text-preview"
               aria-live="polite"
               aria-busy="true"
             >
               <span
-                className="size-3 shrink-0 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600"
+                className="size-3 shrink-0 animate-spin rounded-full border-2 border-preview border-t-indigo-600"
                 aria-hidden
               />
               Loading {mode === 'month' ? 'this month' : 'this week'}…
             </span>
           ) : (
             <span
-              className="rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+              className="rounded-lg border border-default bg-element px-2.5 py-1 text-[11px] font-medium text-secondary"
               title={
                 mode === 'month'
                   ? 'Only posts inside this month are fetched.'
@@ -1236,14 +1237,14 @@ function CalendarView({
           <button
             type="button"
             onClick={() => onSelectCursor(today)}
-            className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-primary-blue/40 hover:text-foreground"
+            className="rounded-full border border-default bg-default px-3 py-1.5 text-xs font-semibold text-default transition-expo hover:border-strong hover:text-default"
           >
             Today
           </button>
           <div
             role="group"
             aria-label="Calendar range"
-            className="inline-flex rounded-lg border border-border bg-muted p-0.5"
+            className="inline-flex rounded-lg border border-default bg-element p-0.5"
           >
             {(['week', 'month'] as const).map((option) => {
               const active = mode === option;
@@ -1254,10 +1255,10 @@ function CalendarView({
                   onClick={() => onSelectMode(option)}
                   aria-pressed={active}
                   className={cn(
-                    'rounded-md px-3 py-1.5 text-xs font-semibold transition-colors',
+                    'rounded-full px-3 py-1.5 text-xs font-semibold transition-expo',
                     active
-                      ? 'bg-card text-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground'
+                      ? 'bg-default text-default'
+                      : 'text-secondary hover:text-default'
                   )}
                 >
                   {option === 'week' ? 'Week' : 'Month'}
@@ -1345,7 +1346,7 @@ export default function SchedulePostPage() {
   // previous tab would land in the new tab's list, e.g. rejected posts
   // briefly appearing in Upcoming after a fast All → Upcoming click.
   const fetchTokenRef = useRef(0);
-  const fetchScheduledPostsRef = useRef<() => Promise<void>>(async () => { });
+  const fetchScheduledPostsRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     cursorRef.current = cursor;
@@ -1409,8 +1410,7 @@ export default function SchedulePostPage() {
       if (isFirstPage) setScheduledPosts([]);
       showErrorToast('Failed to load scheduled posts');
       // Stop driving the intersection-observer pagination into the same
-      // failing query. The tab-change effect resets this back to `true`
-      // synchronously, so switching tabs still triggers a fresh fetch.
+      // failing query. The tab-change effect resets this back to `true`// synchronously, so switching tabs still triggers a fresh fetch.
       hasMoreRef.current = false;
       setHasMore(false);
     } finally {
@@ -1443,8 +1443,7 @@ export default function SchedulePostPage() {
     fetchingRef.current = false;
     cursorRef.current = null;
     setCursor(null);
-    // Sync the ref BEFORE the fetch so the guard inside `fetchScheduledPosts`
-    // sees the reset immediately. `setHasMore(true)` alone wouldn't help —
+    // Sync the ref BEFORE the fetch so the guard inside `fetchScheduledPosts`// sees the reset immediately. `setHasMore(true)` alone wouldn't help —
     // its closure value lags one render behind the call below.
     hasMoreRef.current = true;
     setHasMore(true);
@@ -1489,12 +1488,15 @@ export default function SchedulePostPage() {
         console.error('[silentRefreshScheduledPosts] failed', error);
       }
     },
-    [],
+    []
   );
 
   const silentRefreshCalendarRange = useCallback(
     async (options?: { keepSelectionForPostId?: string }) => {
-      const { fromMs, toMs } = calendarVisibleRange(calendarMode, calendarCursor);
+      const { fromMs, toMs } = calendarVisibleRange(
+        calendarMode,
+        calendarCursor
+      );
       const currentKey = `${fromMs}_${toMs}`;
       try {
         const response = await getScheduledPostsInRange({
@@ -1536,8 +1538,7 @@ export default function SchedulePostPage() {
   const [regeneratingPostIds, setRegeneratingPostIds] = useState<Set<string>>(
     () => new Set()
   );
-  // Synchronous lock — React state updaters run async, so reading `accepted`
-  // from inside setState always returned false and skipped the API call.
+  // Synchronous lock — React state updaters run async, so reading `accepted`// from inside setState always returned false and skipped the API call.
   const regeneratingPostIdsRef = useRef<Set<string>>(new Set());
 
   const markRegenerating = useCallback((postId: string) => {
@@ -1560,7 +1561,9 @@ export default function SchedulePostPage() {
   const handlePostAction = useCallback(
     async (post: ScheduledPost, action: 'regenerate' | 'remove') => {
       if (!planActionsAllowed) {
-        showErrorToast('Your plan has expired. Renew to manage scheduled posts.');
+        showErrorToast(
+          'Your plan has expired. Renew to manage scheduled posts.'
+        );
         return;
       }
       const postId = post.postId;
@@ -1590,7 +1593,15 @@ export default function SchedulePostPage() {
         setScheduledPosts((prev) =>
           prev.map((p) =>
             p.postId === postId
-              ? { ...p, lifecycle: 'removed', approval: { status: 'rejected', stage: 'complete', actor: 'user' } }
+              ? {
+                  ...p,
+                  lifecycle: 'removed',
+                  approval: {
+                    status: 'rejected',
+                    stage: 'complete',
+                    actor: 'user',
+                  },
+                }
               : p
           )
         );
@@ -1604,7 +1615,15 @@ export default function SchedulePostPage() {
             const updated = posts.map((p) => {
               if (p.postId === postId && p.lifecycle !== 'removed') {
                 touched = true;
-                return { ...p, lifecycle: 'removed', approval: { status: 'rejected', stage: 'complete', actor: 'user' } };
+                return {
+                  ...p,
+                  lifecycle: 'removed',
+                  approval: {
+                    status: 'rejected',
+                    stage: 'complete',
+                    actor: 'user',
+                  },
+                };
               }
               return p;
             });
@@ -1648,7 +1667,9 @@ export default function SchedulePostPage() {
           }
         }
       } catch {
-        showErrorToast('Failed to perform action on scheduled post. Please try again later.');
+        showErrorToast(
+          'Failed to perform action on scheduled post. Please try again later.'
+        );
         if (action === 'regenerate') {
           cancelRegeneration(postId);
         } else {
@@ -1676,19 +1697,22 @@ export default function SchedulePostPage() {
     ]
   );
 
-  const lastPostRef = useCallback((node: HTMLDivElement | null) => {
-    if (scheduledPostsLoading || morePostsLoading) return;
+  const lastPostRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (scheduledPostsLoading || morePostsLoading) return;
 
-    if (obserVerRef.current) obserVerRef.current.disconnect();
+      if (obserVerRef.current) obserVerRef.current.disconnect();
 
-    obserVerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) {
-        void fetchScheduledPostsRef.current();
-      }
-    });
+      obserVerRef.current = new IntersectionObserver((entries) => {
+        if (entries[0]?.isIntersecting) {
+          void fetchScheduledPostsRef.current();
+        }
+      });
 
-    if (node) obserVerRef.current.observe(node);
-  }, [scheduledPostsLoading, morePostsLoading, scheduledPosts.length]);
+      if (node) obserVerRef.current.observe(node);
+    },
+    [scheduledPostsLoading, morePostsLoading, scheduledPosts.length]
+  );
 
   // Visible window for the calendar. Drives both the range-fetch effect below
   // and the per-range cache lookup that feeds `filteredAndSortedPosts` when in
@@ -1731,12 +1755,7 @@ export default function SchedulePostPage() {
         // date floor catches them client-side too.
         const todayMs = startOfToday().getTime();
         posts = source.filter((p) => {
-          if (
-            isPosted(p) ||
-            isRemoved(p) ||
-            isRejected(p) ||
-            isFailed(p)
-          ) {
+          if (isPosted(p) || isRemoved(p) || isRejected(p) || isFailed(p)) {
             return false;
           }
           const ms = (p.schedule?.at?._seconds ?? 0) * 1000;
@@ -1778,8 +1797,7 @@ export default function SchedulePostPage() {
     if (!updated) return;
     const prevCount =
       selectedPost.regenratedCount ?? selectedPost.regeneratedCount ?? 0;
-    const nextCount =
-      updated.regenratedCount ?? updated.regeneratedCount ?? 0;
+    const nextCount = updated.regenratedCount ?? updated.regeneratedCount ?? 0;
     if (
       updated.imageUrl !== selectedPost.imageUrl ||
       updated.videoUrl !== selectedPost.videoUrl ||
@@ -1866,7 +1884,6 @@ export default function SchedulePostPage() {
     calendarRangeCache,
   ]);
 
-
   if (loading) return <PageLoadingState />;
   if (!user) return null;
 
@@ -1877,43 +1894,46 @@ export default function SchedulePostPage() {
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
       <div
         id="tour-pq-list"
-        className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm"
+        className="overflow-hidden rounded-3xl border border-default bg-default"
       >
         <div className="px-6 pb-8 pt-8 sm:px-10 sm:pt-10">
-          <header className="mb-8 ">
-            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
-              <span className="text-black">
+          <header className="mb-8">
+            <h1 className="text-page-title text-default">
+              <span className="text-default">
                 {workspacePageTitle(WORKSPACE_NAV_HREFS.postQueue)}
               </span>
             </h1>
             <div className="flex sm:flex-row flex-col w-full justify-between gap-2">
-            <p className="mt-3 text-base text-muted-foreground">
-              Plan and track what goes out — upcoming and published in one place.
-            </p>
-            <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="whitespace-nowrap font-medium">Schedule date</span>
-                  <input
-                    type="date"
-                    value={selectedScheduleDate}
-                    onChange={(e) => setSelectedScheduleDate(e.target.value)}
-                    className="date-input-light h-10 rounded-lg border border-border bg-card px-3 text-sm text-foreground outline-none transition-colors focus:border-primary-blue focus:ring-2 focus:ring-primary-blue/20"
-                  />
-                  {selectedScheduleDate ? (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedScheduleDate('')}
-                      className="rounded-lg px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                    >
-                      Clear
-                    </button>
-                  ) : null}
-                </label>
+              <p className="mt-3 text-base text-secondary">
+                Plan and track what goes out — upcoming and published in one
+                place.
+              </p>
+              <label className="flex items-center gap-2 text-sm text-secondary">
+                <span className="whitespace-nowrap font-medium">
+                  Schedule date
+                </span>
+                <input
+                  type="date"
+                  value={selectedScheduleDate}
+                  onChange={(e) => setSelectedScheduleDate(e.target.value)}
+                  className="date-input-light h-10 rounded-lg border border-default bg-default px-3 text-sm text-default outline-none transition-expo focus:border-primary-blue focus:ring-2 focus:ring-strong"
+                />
+                {selectedScheduleDate ? (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedScheduleDate('')}
+                    className="rounded-full px-3 py-2 text-xs font-semibold text-secondary transition-expo hover:bg-element hover:text-default"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </label>
             </div>
           </header>
 
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div
-              className="flex flex-wrap gap-1 rounded-xl border border-border bg-muted p-1"
+              className="flex flex-wrap gap-1 rounded-xl border border-default bg-element p-1"
               role="tablist"
               aria-label="Filter scheduled posts"
             >
@@ -1936,10 +1956,10 @@ export default function SchedulePostPage() {
                     aria-selected={active}
                     onClick={() => setActiveTab(tab.id)}
                     className={cn(
-                      'rounded-lg px-4 py-2 text-xs font-semibold transition-all',
+                      'rounded-full px-4 py-2 text-xs font-semibold transition-expo',
                       active
-                        ? 'bg-card text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
+                        ? 'bg-default text-default'
+                        : 'text-secondary hover:text-default'
                     )}
                   >
                     {tab.label}
@@ -1966,22 +1986,22 @@ export default function SchedulePostPage() {
                       ? 'Switch to calendar view'
                       : 'Switch to list view'
                   }
-                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-semibold text-foreground transition-colors hover:border-primary-blue/40 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary-blue/30"
+                  className="inline-flex h-10 items-center gap-2 rounded-full border border-default bg-default px-3 text-sm font-semibold text-default transition-expo hover:border-strong hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
                 >
                   {viewMode === 'list' ? (
                     <>
-                      <CalendarDays className="h-4 w-4 text-primary-blue" />
+                      <CalendarDays className="h-4 w-4 text-link" />
                       Calendar view
                     </>
                   ) : (
                     <>
-                      <LayoutGrid className="h-4 w-4 text-primary-blue" />
+                      <LayoutGrid className="h-4 w-4 text-link" />
                       List view
                     </>
                   )}
                 </button>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-secondary">
                 {filteredAndSortedPosts.length} in view
               </p>
             </div>
@@ -1990,7 +2010,7 @@ export default function SchedulePostPage() {
           {scheduledPostsLoading ? (
             viewMode === 'calendar' ? (
               <div
-                className="h-[520px] animate-pulse rounded-2xl border border-border bg-muted"
+                className="h-[520px] animate-pulse rounded-2xl border border-default bg-element"
                 aria-busy="true"
               />
             ) : (
@@ -2001,11 +2021,11 @@ export default function SchedulePostPage() {
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div
                     key={i}
-                    className="flex flex-col rounded-2xl border border-border bg-card p-4 shadow-sm"
+                    className="flex flex-col rounded-2xl border border-default bg-default p-4"
                   >
-                    <div className="mb-3 aspect-4/3 animate-pulse rounded-xl bg-muted" />
-                    <div className="h-3 w-4/5 animate-pulse rounded bg-muted" />
-                    <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-muted" />
+                    <div className="mb-3 aspect-4/3 animate-pulse rounded-xl bg-element" />
+                    <div className="h-3 w-4/5 animate-pulse rounded bg-element" />
+                    <div className="mt-2 h-3 w-3/5 animate-pulse rounded bg-element" />
                   </div>
                 ))}
               </div>
@@ -2027,9 +2047,9 @@ export default function SchedulePostPage() {
               }}
             />
           ) : filteredAndSortedPosts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-muted/50 px-6 py-16 text-center">
-              <Calendar className="mx-auto mb-3 h-10 w-10 text-primary-blue/60" />
-              <p className="text-sm font-medium text-foreground">
+            <div className="rounded-2xl border border-dashed border-default bg-element px-6 py-16 text-center">
+              <Calendar className="mx-auto mb-3 h-10 w-10 text-link/60" />
+              <p className="text-sm font-medium text-default">
                 {activeTab === 'removed'
                   ? 'No posts removed by you yet'
                   : activeTab === 'rejected'
@@ -2044,7 +2064,7 @@ export default function SchedulePostPage() {
                             ? 'No posts scheduled for this date'
                             : 'No posts in this queue yet'}
               </p>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p className="mt-1 text-sm text-secondary">
                 {activeTab === 'removed'
                   ? 'When you remove a scheduled post, it will appear here.'
                   : activeTab === 'rejected'
@@ -2094,7 +2114,7 @@ export default function SchedulePostPage() {
             !scheduledPostsLoading &&
             (hasMore || morePostsLoading) && (
               <div
-                className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-border bg-muted/50 px-4 py-4 text-sm text-muted-foreground"
+                className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-default bg-element px-4 py-4 text-sm text-secondary"
                 aria-live="polite"
               >
                 {morePostsLoading ? (
@@ -2104,21 +2124,21 @@ export default function SchedulePostPage() {
                     aria-label="Loading more posts"
                   >
                     <span
-                      className="size-4 shrink-0 animate-spin rounded-full border-2 border-border border-t-primary-blue"
+                      className="size-4 shrink-0 animate-spin rounded-full border-2 border-default border-t-primary-blue"
                       aria-hidden
                     />
                     Loading more posts…
                   </div>
                 ) : (
                   <>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-secondary">
                       {scheduledPosts.length} post
                       {scheduledPosts.length === 1 ? '' : 's'} loaded
                     </p>
                     <button
                       type="button"
                       onClick={() => void fetchScheduledPosts()}
-                      className="rounded-lg border border-border bg-card px-4 py-2 text-xs font-semibold text-foreground transition-colors hover:border-primary-blue/40 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary-blue/30"
+                      className="rounded-full border border-default bg-default px-4 py-2 text-xs font-semibold text-default transition-expo hover:border-strong hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
                     >
                       Load more posts
                     </button>

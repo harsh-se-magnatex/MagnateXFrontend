@@ -32,7 +32,7 @@ export function ShowcaseProfileGrid({
 
   if (orderedPosts.length === 0) {
     return (
-      <div className="flex items-center justify-center bg-neutral-50 px-4 py-12 text-sm text-neutral-500">
+      <div className="flex items-center justify-center bg-[var(--pf-surface)] px-4 py-12 text-sm text-[var(--pf-text-muted)]">
         No posts yet for this platform.
       </div>
     );
@@ -41,7 +41,7 @@ export function ShowcaseProfileGrid({
   return (
     <div
       className={cn(
-        'grid bg-neutral-100',
+        'grid bg-[var(--pf-border)]',
         columns === 4 ? 'grid-cols-4' : 'grid-cols-3',
         gapClassName,
         className
@@ -67,7 +67,7 @@ function ShowcaseGridCell({
     <button
       type="button"
       onClick={() => onSelect(post.id)}
-      className="group relative aspect-square overflow-hidden bg-neutral-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-purple"
+      className="group relative aspect-square overflow-hidden bg-[var(--pf-surface-2)] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--pf-accent)]"
       aria-label={`Open post: ${post.caption.slice(0, 60)}`}
     >
       <Image
@@ -90,7 +90,10 @@ function ShowcaseGridCell({
       )}
       {post.mediaType === 'video' && (
         <span className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition group-hover:opacity-100">
-          <Clapperboard className="h-7 w-7 text-white drop-shadow" aria-hidden />
+          <Clapperboard
+            className="h-7 w-7 text-white drop-shadow"
+            aria-hidden
+          />
         </span>
       )}
     </button>

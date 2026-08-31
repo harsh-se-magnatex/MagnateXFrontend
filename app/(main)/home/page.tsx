@@ -1,6 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter } from 'next/navigation';
@@ -57,10 +63,7 @@ import {
   type ScheduledPostStatusInput,
 } from '@/lib/scheduled-post-status';
 import { weeklyDeltaFromTrend } from '../_components/AnalyticsComponent/utils/utils_functions';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 
 const SOCIAL_INTEGRATION_PATH = WORKSPACE_NAV_HREFS.linkedProfiles;
 const ANALYTICS_PATH = WORKSPACE_NAV_HREFS.analytics;
@@ -166,9 +169,7 @@ function getActivityDescription(
     case 'removedByAdmin':
       return `${feature} · Removed by admin`;
     default:
-      return time && time !== '—'
-        ? `${feature} · ${time}`
-        : feature;
+      return time && time !== '—' ? `${feature} · ${time}` : feature;
   }
 }
 
@@ -198,7 +199,10 @@ function isPostScheduledToday(
 function formatActivityScheduleLabel(
   scheduleAt: FirestoreTimestamp | undefined,
   isToday: boolean,
-  fmtTimestamp: (input: TimestampInput, options?: { style?: 'time' | 'date' }) => string
+  fmtTimestamp: (
+    input: TimestampInput,
+    options?: { style?: 'time' | 'date' }
+  ) => string
 ): string | null {
   if (!scheduleAt) return null;
   const time = fmtTimestamp(scheduleAt, { style: 'time' });
@@ -247,10 +251,15 @@ function platformGrowthPct(
   primaryKey: string,
   fallbackKey?: string
 ): number | null {
-  const primary = weeklyDeltaFromTrend(analyticsTrendSeries(analytics, primaryKey));
+  const primary = weeklyDeltaFromTrend(
+    analyticsTrendSeries(analytics, primaryKey)
+  );
   if (primary) return primary.pct;
   if (fallbackKey) {
-    return weeklyDeltaFromTrend(analyticsTrendSeries(analytics, fallbackKey))?.pct ?? null;
+    return (
+      weeklyDeltaFromTrend(analyticsTrendSeries(analytics, fallbackKey))?.pct ??
+      null
+    );
   }
   return null;
 }
@@ -264,10 +273,15 @@ function averageGrowthOverviewPct(
     platformGrowthPct(fbAnalytics, 'reachTrend', 'engagementsTrend'),
     platformGrowthPct(igAnalytics, 'reachTrend', 'interactionsTrend'),
     platformGrowthPct(liAnalytics, 'pageViewsTrend', 'engagementsTrend'),
-  ].filter((value): value is number => value !== null && Number.isFinite(value));
+  ].filter(
+    (value): value is number => value !== null && Number.isFinite(value)
+  );
 
   if (deltas.length === 0) return null;
-  return Math.round((deltas.reduce((sum, n) => sum + n, 0) / deltas.length) * 10) / 10;
+  return (
+    Math.round((deltas.reduce((sum, n) => sum + n, 0) / deltas.length) * 10) /
+    10
+  );
 }
 
 function formatGrowthValue(pct: number | null): ReactNode {
@@ -276,9 +290,9 @@ function formatGrowthValue(pct: number | null): ReactNode {
   return (
     <span
       className={cn(
-        pct > 0 && 'text-emerald-400',
-        pct < 0 && 'text-rose-400',
-        Math.abs(pct) < 0.05 && 'text-muted-foreground'
+        pct > 0 && 'text-success',
+        pct < 0 && 'text-danger',
+        Math.abs(pct) < 0.05 && 'text-secondary'
       )}
     >
       {sign}
@@ -296,10 +310,16 @@ export default function Home() {
   const [activityLoading, setActivityLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [userDetail, setUserDetail] = useState<HomePageData | null>(null);
-  const [upcomingRangePosts, setUpcomingRangePosts] = useState<DashboardPost[]>([]);
-  const [todaysActivityPosts, setTodaysActivityPosts] = useState<DashboardPost[]>([]);
+  const [upcomingRangePosts, setUpcomingRangePosts] = useState<DashboardPost[]>(
+    []
+  );
+  const [todaysActivityPosts, setTodaysActivityPosts] = useState<
+    DashboardPost[]
+  >([]);
   const [connectedPlatformCount, setConnectedPlatformCount] = useState(0);
-  const [growthOverviewPct, setGrowthOverviewPct] = useState<number | null>(null);
+  const [growthOverviewPct, setGrowthOverviewPct] = useState<number | null>(
+    null
+  );
   const [command, setCommand] = useState('');
   const router = useRouter();
   const isNewUser = localStorage.getItem('isNewUser');
@@ -361,7 +381,10 @@ export default function Home() {
         | undefined;
       setUserDetail(homePayload?.data ?? null);
     } else {
-      console.error('[home] getUserDetailForHomePage failed', homeOutcome.reason);
+      console.error(
+        '[home] getUserDetailForHomePage failed',
+        homeOutcome.reason
+      );
       setUserDetail(null);
     }
 
@@ -378,10 +401,14 @@ export default function Home() {
     }
 
     if (rangeOutcome.status === 'fulfilled') {
-      const rangePosts = (rangeOutcome.value?.data?.posts ?? []) as DashboardPost[];
+      const rangePosts = (rangeOutcome.value?.data?.posts ??
+        []) as DashboardPost[];
       setUpcomingRangePosts(rangePosts);
     } else {
-      console.error('[home] getScheduledPostsInRange failed', rangeOutcome.reason);
+      console.error(
+        '[home] getScheduledPostsInRange failed',
+        rangeOutcome.reason
+      );
       setUpcomingRangePosts([]);
     }
 
@@ -445,14 +472,16 @@ export default function Home() {
     const byKey = new Map<string, DashboardPost>();
     for (const post of todaysActivityPosts) {
       if (post.lifecycle === 'removed') continue;
-      const key = post.postId ?? `${post.platform}-${post.schedule?.at?._seconds}`;
+      const key =
+        post.postId ?? `${post.platform}-${post.schedule?.at?._seconds}`;
       byKey.set(key, post);
     }
     for (const post of upcomingRangePosts) {
       if (post.lifecycle === 'removed') continue;
       if (isPostScheduledToday(post, startMs, todayEndMs)) continue;
       if (!isUpcomingPost(post)) continue;
-      const key = post.postId ?? `${post.platform}-${post.schedule?.at?._seconds}`;
+      const key =
+        post.postId ?? `${post.platform}-${post.schedule?.at?._seconds}`;
       byKey.set(key, post);
     }
 
@@ -538,13 +567,13 @@ export default function Home() {
       <EmailVerificationPurchaseAlert user={user} />
 
       {userDetail?.warnings && userDetail.warnings.length > 0 ? (
-        <Card className="rounded-2xl border-amber-500/30 bg-amber-500/5 p-1 overflow-hidden">
+        <Card className="rounded-2xl border-warning bg-warning p-1 overflow-hidden">
           <Alert
             variant="default"
             className="rounded-xl border-0 bg-transparent px-4 py-4 sm:px-5 sm:py-5"
           >
-            <AlertTriangle className="size-5 text-amber-500" />
-            <AlertTitle className="text-foreground">
+            <AlertTriangle className="size-5 text-warning" />
+            <AlertTitle className="text-default">
               Social accounts need attention
             </AlertTitle>
             <AlertDescription className="mt-2 space-y-3">
@@ -552,7 +581,7 @@ export default function Home() {
                 A connection is expiring or has expired. Reconnect in social
                 settings so scheduling and posting keep working.
               </p>
-              <ul className="list-none space-y-2 text-foreground/90">
+              <ul className="list-none space-y-2 text-secondary">
                 {userDetail.warnings.map((w, i) => (
                   <li
                     key={`${w.platform}-${w.type}-${i}`}
@@ -561,7 +590,7 @@ export default function Home() {
                     <span className="font-semibold">
                       {formatPlatformLabel(w.platform)}
                     </span>
-                    <span className="text-muted-foreground">
+                    <span className="text-secondary">
                       — {warningMessage(w)}
                     </span>
                   </li>
@@ -570,7 +599,7 @@ export default function Home() {
               <Button
                 asChild
                 size="sm"
-                className="mt-1 rounded-lg bg-amber-600 text-white hover:bg-amber-500"
+                className="mt-1 rounded-full bg-[var(--amber-9)] text-white hover:bg-warning"
               >
                 <Link href={SOCIAL_INTEGRATION_PATH}>
                   {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
@@ -585,7 +614,9 @@ export default function Home() {
       <section className="space-y-6" aria-label="Create">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-1">
-            <span className="text-muted-foreground">{timeGreeting()}, {displayName}</span>
+            <span className="text-secondary">
+              {timeGreeting()}, {displayName}
+            </span>
             <h1 className={cn(workspacePageTitleClass, 'text-balance')}>
               What do you want to create today?
             </h1>
@@ -594,7 +625,7 @@ export default function Home() {
 
         <div
           id="tour-home-command"
-          className="rounded-2xl border border-border bg-card shadow-sm p-1.5 sm:p-2 flex flex-col sm:flex-row gap-2 sm:items-center"
+          className="rounded-2xl border border-default bg-default p-1.5 sm:p-2 flex flex-col sm:flex-row gap-2 sm:items-center"
         >
           <Input
             value={command}
@@ -606,13 +637,13 @@ export default function Home() {
               }
             }}
             placeholder="Describe a post, campaign, or idea…"
-            className="h-11 flex-1 rounded-xl border border-border/50 bg-muted shadow-none focus-visible:ring-2 focus-visible:ring-primary/25 text-base px-4"
+            className="h-11 flex-1 rounded-lg border border-default bg-element focus-visible:ring-2 focus-visible:ring-strong text-base px-4"
             aria-label="What do you want to create?"
           />
           <Button
             type="button"
             onClick={submitCommand}
-            className="h-11 rounded-xl shrink-0 px-5 gap-2"
+            className="h-11 rounded-full shrink-0 px-5 gap-2"
             disabled={!command.trim()}
           >
             <Sparkles className="size-4" />
@@ -654,7 +685,7 @@ export default function Home() {
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-wider text-secondary">
             Quick suggestions
           </p>
           <div className="flex flex-wrap gap-2">
@@ -663,8 +694,8 @@ export default function Home() {
                 key={s.label}
                 href={s.href}
                 className={cn(
-                  'inline-flex items-center rounded-full border border-border bg-muted px-3.5 py-1.5 text-sm font-medium text-foreground transition-all',
-                  'hover:border-primary/30 hover:bg-primary/5 hover:text-primary'
+                  'inline-flex items-center rounded-full border border-default bg-element px-3.5 py-1.5 text-sm font-medium text-default transition-expo',
+                  'hover:border-primary/30 hover:bg-primary/5 hover:text-link'
                 )}
               >
                 {s.label}
@@ -678,9 +709,9 @@ export default function Home() {
       {/* Activity */}
       <section className="space-y-3" aria-label="Activity">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-foreground">Activity</h2>
+          <h2 className="text-subsection text-default">Activity</h2>
         </div>
-        <Card className="rounded-2xl border-border overflow-hidden">
+        <Card className="rounded-2xl border-default overflow-hidden">
           {activityLoading ? (
             <div
               className={cn(
@@ -688,19 +719,24 @@ export default function Home() {
                 'overflow-y-auto custom-scrollbar p-5 space-y-3'
               )}
             >
-              {Array.from({ length: ACTIVITY_VISIBLE_ROWS }, (_, i) => i).map((i) => (
-                <div key={i} className="flex items-center gap-3 animate-pulse">
-                  <div className="h-9 w-9 rounded-full bg-muted" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3.5 w-3/4 rounded bg-muted" />
-                    <div className="h-3 w-1/2 rounded bg-muted" />
+              {Array.from({ length: ACTIVITY_VISIBLE_ROWS }, (_, i) => i).map(
+                (i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 animate-pulse"
+                  >
+                    <div className="h-9 w-9 rounded-full bg-element" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3.5 w-3/4 rounded bg-element" />
+                      <div className="h-3 w-1/2 rounded bg-element" />
+                    </div>
+                    <div className="h-5 w-5 rounded-full bg-element" />
                   </div>
-                  <div className="h-5 w-5 rounded-full bg-muted" />
-                </div>
-              ))}
+                )
+              )}
             </div>
           ) : activityItems.length === 0 ? (
-            <div className="p-5 text-sm text-muted-foreground">
+            <div className="p-5 text-sm text-secondary">
               No activity to show.{' '}
             </div>
           ) : (
@@ -714,31 +750,27 @@ export default function Home() {
             >
               {activityItems.map(
                 ({ key, post, description, scheduleState, scheduleLabel }) => {
-                return (
-                  <div
-                    key={key}
-                    role="listitem"
-                    className="flex items-center cursor-default gap-3 p-4 sm:px-5 transition-colors hover:bg-accent/40"
-                  >
-                    <PlatformIcon platform={post.platform} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground text-pretty leading-snug">
-                        {description}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatPlatformLabel(post.platform)}
-                        {scheduleLabel ? (
-                          <>
-                            {' '}
-                            · {scheduleLabel}
-                          </>
-                        ) : null}
-                      </p>
+                  return (
+                    <div
+                      key={key}
+                      role="listitem"
+                      className="flex items-center cursor-default gap-3 p-4 sm:px-5 transition-expo hover:bg-hover"
+                    >
+                      <PlatformIcon platform={post.platform} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-default text-pretty leading-snug">
+                          {description}
+                        </p>
+                        <p className="text-xs text-secondary mt-0.5">
+                          {formatPlatformLabel(post.platform)}
+                          {scheduleLabel ? <> · {scheduleLabel}</> : null}
+                        </p>
+                      </div>
+                      <ActivityStatusIcon state={scheduleState} />
                     </div>
-                    <ActivityStatusIcon state={scheduleState} />
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </div>
           )}
         </Card>
@@ -746,49 +778,49 @@ export default function Home() {
 
       {/* Brand voice health */}
       <section className="space-y-3" aria-label="Brand voice health">
-        <h2 className="text-lg font-semibold text-foreground">
+        <h2 className="text-subsection text-default">
           Brand voice & consistency
         </h2>
-        <Card className="rounded-2xl border-border p-5 space-y-4">
+        <Card className="rounded-2xl border-default p-5 space-y-4">
           <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-linear-to-br from-emerald-500 to-teal-400 p-2.5 text-white shadow-sm shrink-0">
+            <div className="rounded-xl bg-linear-to-br from-[var(--green-9)] to-[var(--green-9)] p-2.5 text-white shrink-0">
               <Fingerprint className="size-5" />
             </div>
             <div className="min-w-0 flex-1 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-default">
                   {brandVoiceHealth.label}
                 </span>
                 <span
                   className={cn(
                     'text-xs font-medium rounded-full px-2 py-0.5',
                     brandVoiceHealth.tone === 'positive' &&
-                    'bg-emerald-500/15 text-emerald-400',
+                      'bg-success text-success',
                     brandVoiceHealth.tone === 'warning' &&
-                    'bg-amber-500/15 text-amber-400',
+                      'bg-warning text-warning',
                     brandVoiceHealth.tone === 'muted' &&
-                    'bg-muted text-muted-foreground'
+                      'bg-element text-secondary'
                   )}
                 >
                   {brandVoiceHealth.percent}% profile
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-sm text-secondary leading-relaxed">
                 {brandVoiceHealth.hint}
               </p>
               <div
-                className="h-2 rounded-full bg-muted overflow-hidden"
+                className="h-2 rounded-full bg-element overflow-hidden"
                 role="presentation"
               >
                 <div
                   className={cn(
-                    'h-full rounded-full transition-all',
+                    'h-full rounded-full transition-expo',
                     brandVoiceHealth.tone === 'positive' &&
-                    'bg-linear-to-r from-emerald-500 to-teal-400',
+                      'bg-linear-to-r from-[var(--green-9)] to-[var(--green-9)]',
                     brandVoiceHealth.tone === 'warning' &&
-                    'bg-linear-to-r from-amber-500 to-orange-400',
+                      'bg-linear-to-r from-[var(--amber-9)] to-[var(--amber-9)]',
                     brandVoiceHealth.tone === 'muted' &&
-                    'bg-muted-foreground/30'
+                      'bg-element-foreground/30'
                   )}
                   style={{ width: `${brandVoiceHealth.percent}%` }}
                 />
@@ -796,17 +828,15 @@ export default function Home() {
               <ul className="text-sm space-y-1.5 pt-1">
                 <li className="flex items-center gap-2">
                   {userDetail?.brandProfileComplete ? (
-                    <span className="text-emerald-400">
-                      ✓
-                    </span>
+                    <span className="text-success">✓</span>
                   ) : (
-                    <span className="text-muted-foreground">○</span>
+                    <span className="text-secondary">○</span>
                   )}
                   <span
                     className={
                       userDetail?.brandProfileComplete
-                        ? 'text-foreground'
-                        : 'text-muted-foreground'
+                        ? 'text-default'
+                        : 'text-secondary'
                     }
                   >
                     Brand profile{' '}
@@ -817,7 +847,7 @@ export default function Home() {
                   {!userDetail?.brandProfileComplete ? (
                     <Link
                       href="/brand-dna"
-                      className="text-primary text-xs font-medium hover:underline ml-auto"
+                      className="text-link text-xs font-medium hover:underline ml-auto"
                     >
                       Set up
                     </Link>
@@ -825,17 +855,15 @@ export default function Home() {
                 </li>
                 <li className="flex items-center gap-2">
                   {userDetail?.reviewPreferencesComplete ? (
-                    <span className="text-emerald-400">
-                      ✓
-                    </span>
+                    <span className="text-success">✓</span>
                   ) : (
-                    <span className="text-muted-foreground">○</span>
+                    <span className="text-secondary">○</span>
                   )}
                   <span
                     className={
                       userDetail?.reviewPreferencesComplete
-                        ? 'text-foreground'
-                        : 'text-muted-foreground'
+                        ? 'text-default'
+                        : 'text-secondary'
                     }
                   >
                     Review preferences{' '}
@@ -846,7 +874,7 @@ export default function Home() {
                   {!userDetail?.reviewPreferencesComplete ? (
                     <Link
                       href="/settings/autopilot-preference"
-                      className="text-primary text-xs font-medium hover:underline ml-auto"
+                      className="text-link text-xs font-medium hover:underline ml-auto"
                     >
                       Complete
                     </Link>

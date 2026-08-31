@@ -4,15 +4,15 @@ import type { ApiEnvelope } from '@/lib/api-types';
 import type { GenerationResearch } from '@/lib/generation-research';
 
 export type GeneratedMediaSource =
-| 'instant-generation'
-| 'batchGeneratedPosts'
-| 'productadvert'
-| 'videoGeneration'
-| 'eventPosts'
-| 'aiEnginePosts'
-| 'campaignDrafts'
-| 'carouselGeneratedPosts'
-| 'all';
+  | 'instant-generation'
+  | 'batchGeneratedPosts'
+  | 'productadvert'
+  | 'videoGeneration'
+  | 'eventPosts'
+  | 'aiEnginePosts'
+  | 'campaignDrafts'
+  | 'carouselGeneratedPosts'
+  | 'all';
 
 /** Firestore subcollection name for each source (matches backend `MediaLibraryItem.collection`). */
 export type MediaSource =
@@ -83,7 +83,11 @@ export async function getGeneratedMediaLibraryApi(params?: {
   cursor?: string;
 }) {
   const res = await apiGet<
-    ApiEnvelope<{ items: GeneratedMediaLibraryItem[]; nextCursor: string | null; hasMore: boolean }>
+    ApiEnvelope<{
+      items: GeneratedMediaLibraryItem[];
+      nextCursor: string | null;
+      hasMore: boolean;
+    }>
   >('/api/v1/user/generated-media-library', {
     params: {
       source: params?.source ?? 'all',

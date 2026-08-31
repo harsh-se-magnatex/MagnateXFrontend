@@ -77,7 +77,7 @@ export function DeleteAccountModal({
               e.preventDefault();
               handleDeleteAccount();
             }}
-            className="bg-red-600 hover:bg-red-700 hover:text-white text-white"
+            className="bg-[var(--red-9)] hover:bg-danger hover:text-white text-white"
           >
             {isDeleting ? 'Deleting...' : 'Delete Account'}
           </AlertDialogAction>
@@ -104,7 +104,6 @@ export default function AccountSettingsPage() {
   useEffect(() => {
     if (!loading && !user) router.replace('/sign-in');
   }, [loading, user, router]);
-
 
   useEffect(() => {
     if (user) {
@@ -236,7 +235,7 @@ export default function AccountSettingsPage() {
       <div className="space-y-8">
         {/* Profile Section */}
         <section className={workspaceSectionCardClass}>
-          <div className="mb-6 flex items-center gap-3 border-b border-border/60 pb-4">
+          <div className="mb-6 flex items-center gap-3 border-b border-default pb-4">
             <div className={workspaceIconBadgeClass}>
               <User className="h-5 w-5" />
             </div>
@@ -260,7 +259,7 @@ export default function AccountSettingsPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-emerald-400 hover:bg-emerald-500/15 hover:text-emerald-300"
+                      className="h-8 w-8 text-success hover:bg-success hover:text-success"
                       disabled={nameSaving || !name.trim()}
                       aria-label="Save name"
                       onClick={handleConfirmName}
@@ -271,7 +270,7 @@ export default function AccountSettingsPage() {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground"
+                      className="h-8 w-8 text-secondary hover:bg-hover hover:text-default"
                       disabled={nameSaving}
                       aria-label="Discard name changes"
                       onClick={handleCancelName}
@@ -299,7 +298,7 @@ export default function AccountSettingsPage() {
           (provider) => provider.providerId === 'password'
         ) && (
           <section className={workspaceSectionCardClass}>
-            <div className="mb-6 flex items-center gap-3 border-b border-border/60 pb-4">
+            <div className="mb-6 flex items-center gap-3 border-b border-default pb-4">
               <div className={workspaceIconBadgeClass}>
                 <Lock className="h-5 w-5" />
               </div>
@@ -310,7 +309,7 @@ export default function AccountSettingsPage() {
               onSubmit={handleSendResetEmail}
               className="flex max-w-xl flex-col gap-5"
             >
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-secondary">
                 We’ll email you a password reset link. For security, we don’t
                 show or change your password directly here.
               </p>
@@ -336,8 +335,8 @@ export default function AccountSettingsPage() {
                   className={cn(
                     'p-3 rounded-xl text-sm flex items-start gap-2 border',
                     passwordMessageTone === 'success'
-                      ? 'border-emerald-500/30 bg-emerald-950/50 text-emerald-200'
-                      : 'border-primary/30 bg-primary/10 text-foreground'
+                      ? 'border-success bg-success text-success'
+                      : 'border-primary/30 bg-primary/10 text-default'
                   )}
                 >
                   <ShieldAlert className="h-4 w-4 shrink-0 mt-0.5" />
@@ -348,7 +347,7 @@ export default function AccountSettingsPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="mt-2 w-fit rounded-xl bg-gradient-action px-6 py-2.5 text-sm font-semibold text-white transition-all shadow-md shadow-primary-purple/30 hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:hover:brightness-100"
+                className="mt-2 w-fit rounded-full btn-brand-fill px-6 py-2.5 text-sm font-semibold transition-expo disabled:text-quaternary disabled:"
               >
                 {saving ? 'Sending email...' : 'Send reset link'}
               </button>
@@ -357,38 +356,38 @@ export default function AccountSettingsPage() {
         )}
         {/* Sessions Section */}
         <section className={workspaceSectionCardClass}>
-          <div className="mb-6 flex items-center gap-3 border-b border-border/60 pb-4">
-            <div className="rounded-lg bg-muted p-2 text-muted-foreground">
+          <div className="mb-6 flex items-center gap-3 border-b border-default pb-4">
+            <div className="rounded-lg bg-element p-2 text-secondary">
               <MonitorSmartphone className="h-5 w-5" />
             </div>
             <h2 className={workspaceSectionTitleLgClass}>Active Sessions</h2>
           </div>
 
-          <p className="mb-6 text-sm text-muted-foreground">
+          <p className="mb-6 text-sm text-secondary">
             Sign out on this device and invalidate all other active sessions
             across your devices. You will need to sign in again immediately.
           </p>
           <button
             type="button"
             onClick={handleLogoutAllDevices}
-            className="rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-accent transition-all shadow-sm active:scale-95"
+            className="rounded-full border border-default bg-default px-5 py-2.5 text-sm font-semibold text-default hover:bg-hover transition-expo"
           >
             Log out everywhere
           </button>
         </section>
 
         {/* Danger Zone */}
-        <section className="relative overflow-hidden rounded-3xl border border-red-500/40 bg-red-950/70 p-6 shadow-sm ring-1 ring-red-500/20 sm:p-8">
-          <div className="pointer-events-none absolute top-0 right-0 h-32 w-32 translate-x-1/2 -translate-y-1/2 rounded-full bg-red-500/15 blur-2xl" />
+        <section className="relative overflow-hidden rounded-3xl border border-danger bg-danger p-6 ring-1 ring-[var(--border-danger)] sm:p-8">
+          <div className="pointer-events-none absolute top-0 right-0 h-32 w-32 translate-x-1/2/2 rounded-full bg-danger blur-2xl" />
 
-          <div className="mb-6 flex items-center gap-3 border-b border-red-500/30 pb-4">
-            <div className="rounded-lg bg-red-500/20 p-2 text-red-300">
+          <div className="mb-6 flex items-center gap-3 border-b border-danger pb-4">
+            <div className="rounded-lg bg-danger p-2 text-danger">
               <Trash2 className="h-5 w-5" />
             </div>
-            <h2 className="text-xl font-semibold text-red-300">Danger Zone</h2>
+            <h2 className="text-section text-default">Danger Zone</h2>
           </div>
 
-          <p className="mb-6 max-w-2xl text-sm text-red-200/90">
+          <p className="mb-6 max-w-2xl text-sm text-danger">
             Permanently delete your account and all associated data including
             social integrations, templates, and generated content. This action
             is irreversible.
@@ -396,13 +395,13 @@ export default function AccountSettingsPage() {
           <button
             type="button"
             onClick={() => setDeleteAccountModalOpen(true)}
-            className="rounded-xl bg-red-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-all shadow-md shadow-red-600/20 active:scale-95"
+            className="rounded-full bg-[var(--red-9)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-danger transition-expo"
           >
             Delete account permanently
           </button>
         </section>
       </div>
-      
+
       <DeleteAccountModal
         handleDeleteAccount={handleDeleteAccount}
         open={deleteAccountModalOpen}

@@ -122,11 +122,11 @@ export function OnboardingAiLogoSection({
         type="button"
         onClick={() => onOpenChange(true)}
         className={cn(
-          'flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary-purple/35 bg-primary-purple/5 px-4 py-3.5 text-sm font-semibold text-foreground transition-colors',
-          'hover:border-primary-purple/55 hover:bg-primary-purple/10'
+          'flex w-full items-center justify-center gap-2 rounded-full border border-dashed border-primary-purple/35 bg-primary-purple/5 px-4 py-3.5 text-sm font-semibold text-default transition-expo',
+          'hover:border-strong hover:bg-element'
         )}
       >
-        <WandSparkles className="size-4 text-primary-purple" />
+        <WandSparkles className="size-4 text-preview" />
         {hasExistingLogo
           ? 'Generate another logo with AI'
           : 'No logo? Generate one with AI'}
@@ -135,22 +135,22 @@ export function OnboardingAiLogoSection({
   }
 
   return (
-    <div className="space-y-3 rounded-2xl border border-border/70 bg-card/70 p-4 shadow-sm">
+    <div className="space-y-3 rounded-2xl border border-default bg-default p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-0.5">
-          <p className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-            <WandSparkles className="size-4 text-primary-purple" />
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-default">
+            <WandSparkles className="size-4 text-preview" />
             AI logo
           </p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-secondary">
             Up to {MAX_ONBOARDING_AI_LOGOS} free generations for{' '}
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-default">
               {businessName.trim() || 'your brand'}
             </span>
             .
           </p>
         </div>
-        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+        <span className="shrink-0 rounded-full bg-element px-2 py-0.5 text-[11px] font-semibold text-secondary">
           {generationUsed}/{MAX_ONBOARDING_AI_LOGOS}
         </span>
       </div>
@@ -161,14 +161,14 @@ export function OnboardingAiLogoSection({
         rows={2}
         maxLength={400}
         placeholder="Optional style notes — e.g. minimal icon, deep blue, geometric"
-        className="resize-none rounded-xl text-sm"
+        className="resize-none rounded-lg text-sm"
       />
 
       <Button
         type="button"
         onClick={() => void runGeneration()}
         disabled={!canGenerate}
-        className="h-10 w-full rounded-xl bg-gradient-primary font-semibold text-white hover:opacity-95"
+        className="h-10 w-full rounded-full bg-gradient-primary font-semibold text-white hover:opacity-95"
       >
         {generating ? (
           <>
@@ -190,7 +190,7 @@ export function OnboardingAiLogoSection({
       {(picks.length > 0 || generating) && (
         <div className="grid grid-cols-2 gap-2.5">
           {generating && (
-            <div className="aspect-square animate-pulse rounded-xl border border-border bg-muted/60" />
+            <div className="aspect-square animate-pulse rounded-xl border border-default bg-element" />
           )}
           {picks.map((pick, idx) => {
             const active = selectedUrl === pick.url;
@@ -207,10 +207,10 @@ export function OnboardingAiLogoSection({
                     backgroundSize: '16px 16px',
                   }}
                   className={cn(
-                    'group relative aspect-square w-full overflow-hidden rounded-xl border p-2 transition',
+                    'group relative aspect-square w-full overflow-hidden rounded-full border p-2 transition',
                     active
-                      ? 'border-primary-purple ring-2 ring-primary-purple/25'
-                      : 'border-border hover:border-primary-purple/40'
+                      ? 'border-primary-purple ring-2 ring-strong'
+                      : 'border-default hover:border-strong'
                   )}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -221,17 +221,17 @@ export function OnboardingAiLogoSection({
                     style={{ mixBlendMode: 'multiply' }}
                   />
                   {active && (
-                    <span className="absolute right-1.5 top-1.5 inline-flex size-6 items-center justify-center rounded-full bg-gradient-primary text-white shadow">
+                    <span className="absolute right-1.5 top-1.5 inline-flex size-6 items-center justify-center rounded-full bg-gradient-primary text-white">
                       <Check className="size-3.5" />
                     </span>
                   )}
                 </button>
                 {pick.designStory && (
                   <div className="space-y-0.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-secondary">
                       Design story
                     </p>
-                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    <p className="text-[11px] leading-relaxed text-secondary">
                       {pick.designStory}
                     </p>
                   </div>
@@ -243,7 +243,7 @@ export function OnboardingAiLogoSection({
       )}
 
       {picks.length > 0 && (
-        <p className="text-center text-[11px] text-muted-foreground">
+        <p className="text-center text-[11px] text-secondary">
           Tap a logo to use it — you can still upload a file instead.
         </p>
       )}

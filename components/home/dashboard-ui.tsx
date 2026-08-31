@@ -46,7 +46,10 @@ export const PLATFORM_META: Record<
 export function formatPlatformLabel(platform: string) {
   if (!platform) return 'Account';
   const key = platform.toLowerCase() as PlatformId;
-  return PLATFORM_META[key]?.label ?? platform.charAt(0).toUpperCase() + platform.slice(1).toLowerCase();
+  return (
+    PLATFORM_META[key]?.label ??
+    platform.charAt(0).toUpperCase() + platform.slice(1).toLowerCase()
+  );
 }
 
 function normalizePlatformId(platform: string): PlatformId | null {
@@ -69,8 +72,8 @@ export function PlatformIcon({
   return (
     <div
       className={cn(
-        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm',
-        meta?.color ?? 'bg-muted-foreground/70',
+        'flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white',
+        meta?.color ?? 'bg-element-foreground/70',
         className
       )}
       aria-hidden
@@ -96,7 +99,7 @@ export function ActivityStatusIcon({
   if (state === 'posted') {
     return (
       <CheckCircle2
-        className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400"
+        className="h-5 w-5 shrink-0 text-success dark:text-success"
         aria-label="Posted"
       />
     );
@@ -104,7 +107,7 @@ export function ActivityStatusIcon({
   if (state === 'failed') {
     return (
       <AlertCircle
-        className="h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400"
+        className="h-5 w-5 shrink-0 text-danger dark:text-danger"
         aria-label="Failed"
       />
     );
@@ -112,7 +115,7 @@ export function ActivityStatusIcon({
   if (state === 'approved') {
     return (
       <Calendar
-        className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400"
+        className="h-5 w-5 shrink-0 text-success dark:text-success"
         aria-label="Scheduled"
       />
     );
@@ -120,7 +123,7 @@ export function ActivityStatusIcon({
   if (state === 'pending') {
     return (
       <Clock
-        className="h-5 w-5 shrink-0 text-amber-500 dark:text-amber-400"
+        className="h-5 w-5 shrink-0 text-warning dark:text-warning"
         aria-label="Pending"
       />
     );
@@ -142,22 +145,22 @@ export function HomeStatBox({
   href?: string;
 }) {
   const className = cn(
-    'rounded-2xl border border-border bg-card p-4 shadow-sm text-left transition-all h-full',
+    'rounded-2xl border border-default bg-default p-4 text-left transition-expo h-full',
     href
-      ? 'hover:border-primary/40 hover:bg-accent/50 cursor-pointer'
+      ? 'hover:border-primary/40 hover:bg-hover cursor-pointer'
       : 'cursor-default'
   );
   const content = (
     <>
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-link">
         <Icon className="size-4 shrink-0" aria-hidden />
       </div>
-      <p className="mt-3 text-2xl font-bold tabular-nums leading-none text-foreground">
+      <p className="mt-3 text-2xl font-bold tabular-nums leading-none text-default">
         {value}
       </p>
-      <p className="mt-2 text-xs font-semibold text-foreground">{label}</p>
+      <p className="mt-2 text-xs font-semibold text-default">{label}</p>
       {sublabel ? (
-        <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
+        <p className="mt-0.5 text-[11px] leading-snug text-secondary">
           {sublabel}
         </p>
       ) : null}

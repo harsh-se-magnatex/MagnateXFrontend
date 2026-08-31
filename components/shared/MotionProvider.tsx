@@ -7,8 +7,8 @@ import type { ReactNode } from 'react';
  * Makes every Framer Motion animation in the app honour the OS
  * "reduce motion" setting.
  *
- * The `prefers-reduced-motion` blocks in `globals.css` / `landing-3d.css`
- * only reach CSS-driven animation (aurora, shimmer, the conic border).
+ * The `prefers-reduced-motion` blocks in `globals.css` only reach
+ * CSS-driven animation — the entrance stagger and the transform utilities.
  * Framer Motion animates through inline styles, so a media query can't
  * switch it off — without this, a user who has asked their OS to reduce
  * motion still gets every hero stagger, scroll reveal and page transition.

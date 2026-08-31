@@ -12,10 +12,7 @@ import {
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  WORKSPACE_NAV_HREFS,
-  workspacePageTitle,
-} from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 import {
   useTimestampFormatter,
   type TimestampInput,
@@ -198,12 +195,12 @@ function DetailRow({
 }) {
   return (
     <div className={long ? 'min-w-0' : undefined}>
-      <p className="text-xs font-medium text-muted-foreground mb-0.5">{label}</p>
+      <p className="text-xs font-medium text-secondary mb-0.5">{label}</p>
       <p
         className={
           long
-            ? 'text-sm text-foreground min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
-            : 'text-sm text-foreground'
+            ? 'text-sm text-default min-w-0 whitespace-pre-wrap wrap-break-word break-words [overflow-wrap:anywhere]'
+            : 'text-sm text-default'
         }
       >
         {value}
@@ -270,17 +267,20 @@ function MediaDetailModal({
       aria-labelledby="media-detail-modal-title"
     >
       <div
-        className="rounded-2xl border border-border bg-card text-foreground shadow-xl max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
+        className="rounded-2xl border border-default bg-default text-default max-w-lg w-full max-h-[90vh] flex flex-col min-h-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 p-4 border-b border-border flex items-center justify-between gap-3">
-          <h2 id="media-detail-modal-title" className="text-lg font-semibold">
+        <div className="shrink-0 p-4 border-b border-default flex items-center justify-between gap-3">
+          <h2
+            id="media-detail-modal-title"
+            className="text-section text-default"
+          >
             Media details
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="rounded-full p-1.5 text-secondary hover:bg-hover hover:text-default focus:outline-none focus:ring-2 focus:ring-strong"
             aria-label="Close"
           >
             <svg
@@ -301,7 +301,7 @@ function MediaDetailModal({
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-4 pt-4 pb-10 space-y-4 overscroll-contain">
           {isCarousel && carouselSlides.length > 0 ? (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">
+              <p className="text-xs font-medium text-secondary mb-1">
                 Carousel
                 {item.slideCount
                   ? ` · ${item.slideCount} slides`
@@ -316,7 +316,7 @@ function MediaDetailModal({
                 {canSchedule ? (
                   <Button
                     type="button"
-                    className="rounded-lg bg-gradient-primary text-white shadow-lg shadow-primary/20"
+                    className="rounded-full btn-brand-fill"
                     onClick={onSchedule}
                   >
                     <Calendar className="mr-2 h-4 w-4" />
@@ -327,12 +327,12 @@ function MediaDetailModal({
             </div>
           ) : mediaPreview.isVideo && mediaPreview.videoUrl ? (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Video</p>
+              <p className="text-xs font-medium text-secondary mb-1">Video</p>
               <PostMediaPreview
                 preview={mediaPreview}
                 controls
                 muted={false}
-                videoClassName="w-full max-h-64 rounded-xl bg-black border border-border"
+                videoClassName="w-full max-h-64 rounded-xl bg-black border border-default"
               />
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
                 <DownloadVideoButton
@@ -344,7 +344,7 @@ function MediaDetailModal({
                 {canSchedule ? (
                   <Button
                     type="button"
-                    className="rounded-lg bg-gradient-primary text-white shadow-lg shadow-primary/20"
+                    className="rounded-full btn-brand-fill"
                     onClick={onSchedule}
                   >
                     <Calendar className="mr-2 h-4 w-4" />
@@ -355,18 +355,21 @@ function MediaDetailModal({
             </div>
           ) : mediaPreview.imageUrl ? (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Image</p>
+              <p className="text-xs font-medium text-secondary mb-1">Image</p>
               <button
                 type="button"
                 onClick={() =>
-                  onPreviewImage(mediaPreview.imageUrl as string, 'Gallery image')
+                  onPreviewImage(
+                    mediaPreview.imageUrl as string,
+                    'Gallery image'
+                  )
                 }
-                className="group relative block w-full overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="group relative block w-full overflow-hidden rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
                 aria-label="Open image preview"
               >
                 <PostMediaPreview
                   preview={mediaPreview}
-                  imageClassName="w-full max-h-64 object-contain rounded-xl bg-muted border border-border transition-transform duration-200 group-hover:scale-[1.01]"
+                  imageClassName="w-full max-h-64 object-contain rounded-xl bg-element border border-default transition-transform duration-200"
                 />
               </button>
               <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-4">
@@ -377,7 +380,7 @@ function MediaDetailModal({
                       'Gallery image'
                     )
                   }
-                  className="rounded-lg border border-primary/30 bg-card text-primary hover:bg-primary/10 hover:opacity-100 px-4 py-2"
+                  className="rounded-lg border border-primary/30 bg-default text-link hover:bg-primary/10 hover:opacity-100 px-4 py-2"
                 />
                 <DownloadPngButton
                   url={mediaPreview.imageUrl as string}
@@ -392,12 +395,12 @@ function MediaDetailModal({
                   getFilename={() =>
                     `media-library-${item.collection}-${item.id}-${Date.now()}.png`
                   }
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition disabled:opacity-60"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--green-9)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90 transition disabled:text-quaternary"
                 />
                 {canSchedule ? (
                   <Button
                     type="button"
-                    className="rounded-lg bg-gradient-primary text-white shadow-lg shadow-primary/20"
+                    className="rounded-full btn-brand-fill"
                     onClick={onSchedule}
                   >
                     <Calendar className="mr-2 h-4 w-4" />
@@ -410,7 +413,7 @@ function MediaDetailModal({
                   href={mediaPreview.imageUrl ?? '#'}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gradient-primary px-3 py-2 text-sm font-medium text-white shadow-lg shadow-primary/20"
+                  className="mt-2 inline-flex items-center gap-2 rounded-full btn-brand-fill px-3 py-2 text-sm font-medium"
                 >
                   Open in new tab
                   <ExternalLink className="h-4 w-4" />
@@ -418,7 +421,7 @@ function MediaDetailModal({
               </div>
             </div>
           ) : (
-            <div className="rounded-xl border border-dashed border-border bg-muted/40 px-4 py-8 text-center text-sm text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-default bg-element px-4 py-8 text-center text-sm text-secondary">
               Preview unavailable. Refresh the library or regenerate if the file
               was removed.
             </div>
@@ -429,29 +432,28 @@ function MediaDetailModal({
             long
           />
           {item.scheduleAt ? (
-            <DetailRow label="Schedule at" value={formatWhen(item.scheduleAt)} />
+            <DetailRow
+              label="Schedule at"
+              value={formatWhen(item.scheduleAt)}
+            />
           ) : null}
           <DetailRow label="Created at" value={formatWhen(item.createdAt)} />
           <DetailRow
             label="Platform"
-            value={
-              item.platform
-                ? item.platform.replace(/_/g, ' ')
-                : '—'
-            }
+            value={item.platform ? item.platform.replace(/_/g, ' ') : '—'}
           />
           {generatedBy ? (
             <DetailRow label="Generated by" value={generatedBy} />
           ) : null}
           {showResearch ? (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-2">
+              <p className="text-xs font-medium text-secondary mb-2">
                 Research
               </p>
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-lg border-primary/30 text-primary hover:bg-primary/10"
+                className="rounded-full border-primary/30 text-link hover:bg-primary/10"
                 onClick={() => setResearchOpen(true)}
               >
                 <Search className="mr-2 h-4 w-4" />
@@ -460,10 +462,7 @@ function MediaDetailModal({
             </div>
           ) : null}
           {!item.scheduleAt && item.targetCalendarDate ? (
-            <DetailRow
-              label="Scheduled date"
-              value={item.targetCalendarDate}
-            />
+            <DetailRow label="Scheduled date" value={item.targetCalendarDate} />
           ) : null}
           {item.scheduledPostId && !canSchedule ? (
             <DetailRow label="Status" value="Scheduled" />
@@ -576,39 +575,40 @@ function CampaignDraftScheduleModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-2xl"
+        className="w-full max-w-sm rounded-2xl border border-default bg-default p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <h3
           id="campaign-draft-schedule-title"
-          className="text-base font-semibold text-foreground"
+          className="text-subsection text-default"
         >
           Schedule campaign draft
         </h3>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-xs text-secondary">
           The date was locked when you created the campaign. Pick a time of day
           and we&apos;ll queue it for publishing.
         </p>
 
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Date <span className="ml-1 normal-case text-muted-foreground/70">(locked)</span>
+          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-secondary">
+            Date{' '}
+            <span className="ml-1 normal-case text-secondary/70">(locked)</span>
             <input
               type="date"
               value={targetDate}
               disabled
               readOnly
               aria-readonly="true"
-              className="mt-1 rounded-lg border border-border bg-muted px-2 py-1.5 text-xs font-medium text-muted-foreground cursor-not-allowed"
+              className="mt-1 rounded-lg border border-default bg-element px-2 py-1.5 text-xs font-medium text-secondary cursor-not-allowed"
             />
           </label>
-          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <label className="flex flex-col text-[10px] font-semibold uppercase tracking-wider text-secondary">
             Time
             <input
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="mt-1 rounded-lg border border-border bg-card px-2 py-1.5 text-xs font-medium text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+              className="mt-1 rounded-lg border border-default bg-default px-2 py-1.5 text-xs font-medium text-default focus:border-primary focus:ring-1 focus:ring-primary outline-none"
             />
           </label>
         </div>
@@ -618,7 +618,7 @@ function CampaignDraftScheduleModal({
             type="button"
             onClick={onClose}
             disabled={scheduling}
-            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-60"
+            className="rounded-full px-3 py-1.5 text-xs font-semibold text-secondary hover:bg-hover hover:text-default disabled:text-quaternary"
           >
             Cancel
           </button>
@@ -626,7 +626,7 @@ function CampaignDraftScheduleModal({
             type="button"
             onClick={handleSchedule}
             disabled={scheduling}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-action px-3 py-1.5 text-xs font-bold text-white hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-full btn-brand-fill px-3 py-1.5 text-xs font-bold disabled:cursor-not-allowed disabled:text-quaternary"
           >
             {scheduling ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -853,18 +853,15 @@ export default function MediaLibraryPage() {
   }, [source]);
 
   return (
-    <div
-      id="tour-gl-grid"
-      className="mx-auto max-w-6xl space-y-8 pb-12"
-    >
+    <div id="tour-gl-grid" className="mx-auto max-w-6xl space-y-8 pb-12">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-page-title text-default">
           {workspacePageTitle(WORKSPACE_NAV_HREFS.gallery)}
         </h1>
-        <p className="text-sm text-muted-foreground max-w-2xl">
-          A single place for images produced across SocioGenie. Each Create Post or Product Posts image can be
-          scheduled once from the media library. Links expire after about an hour—refresh
-          if an image stops loading.
+        <p className="text-sm text-secondary max-w-2xl">
+          A single place for images produced across SocioGenie. Each Create Post
+          or Product Posts image can be scheduled once from the media library.
+          Links expire after about an hour—refresh if an image stops loading.
         </p>
       </header>
 
@@ -878,7 +875,7 @@ export default function MediaLibraryPage() {
                 type="button"
                 variant={active ? 'default' : 'outline'}
                 size="sm"
-                className={cn('rounded-full', active && 'shadow-sm')}
+                className={cn('rounded-full', active && '')}
                 onClick={() => {
                   if (opt.value === source) return;
                   loadGenerationRef.current += 1;
@@ -931,13 +928,13 @@ export default function MediaLibraryPage() {
       ) : null}
 
       {!loading && items.length === 0 ? (
-        <div className="flex min-h-[36vh] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border/80 bg-muted/20 px-6 py-16 text-center">
-          <div className="rounded-full bg-muted p-4">
-            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+        <div className="flex min-h-[36vh] flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-default bg-element px-6 py-16 text-center">
+          <div className="rounded-full bg-element p-4">
+            <ImageIcon className="h-8 w-8 text-secondary" />
           </div>
           <div className="space-y-2 max-w-md">
-            <p className="font-medium text-foreground">No images yet</p>
-            <p className="text-sm text-muted-foreground">{emptyCopy}</p>
+            <p className="font-medium text-default">No images yet</p>
+            <p className="text-sm text-secondary">{emptyCopy}</p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
             <Button asChild variant="secondary" size="sm">
@@ -986,10 +983,10 @@ export default function MediaLibraryPage() {
             const slideCount =
               item.mediaType === 'carousel' ||
               item.collection === 'carouselGeneratedPosts'
-                ? item.slideCount ??
+                ? (item.slideCount ??
                   (Array.isArray(item.carouselSlides)
                     ? item.carouselSlides.length
-                    : null)
+                    : null))
                 : null;
             return (
               <li
@@ -1004,23 +1001,23 @@ export default function MediaLibraryPage() {
                   }
                 }}
                 className={cn(
-                  'app-tile group relative flex min-w-0 flex-col rounded-2xl border border-border bg-card p-4 shadow-sm',
-                  'transition-all duration-300 cursor-pointer',
-                  'hover:bg-accent/40',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
+                  'app-tile group relative flex min-w-0 flex-col rounded-2xl border border-default bg-default p-4',
+                  'transition-expo cursor-pointer',
+                  'hover:bg-hover',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-strong'
                 )}
               >
-                <div className="app-media-frame relative mb-3 border border-border bg-muted aspect-4/3">
+                <div className="app-media-frame relative mb-3 border border-default bg-element aspect-4/3">
                   {hasMedia ? (
                     <PostMediaPreview
                       preview={mediaPreview}
                       videoClassName="h-full w-full object-cover bg-black"
-                      imageClassName="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      imageClassName="h-full w-full object-cover transition-transform duration-300"
                     />
                   ) : (
-                    <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground">
+                    <div className="flex h-full min-h-[140px] flex-col items-center justify-center gap-2 px-4 text-center text-sm text-secondary">
                       <ImageOff
-                        className="h-8 w-8 text-muted-foreground/70"
+                        className="h-8 w-8 text-secondary/70"
                         aria-hidden
                       />
                       <span>Preview unavailable</span>
@@ -1028,7 +1025,7 @@ export default function MediaLibraryPage() {
                   )}
                   {slideCount && slideCount > 1 ? (
                     <div className="absolute left-2 bottom-2">
-                      <span className="inline-flex items-center rounded-md border border-border bg-card/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm backdrop-blur">
+                      <span className="inline-flex items-center rounded-md border border-default bg-default px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-default backdrop-blur">
                         {slideCount} slides
                       </span>
                     </div>
@@ -1050,10 +1047,10 @@ export default function MediaLibraryPage() {
                   {generatedBy ? (
                     <div className="absolute right-2 top-2 max-w-[60%]">
                       <span
-                        className="inline-flex items-center gap-1 rounded-md border border-border bg-card/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground shadow-sm backdrop-blur"
+                        className="inline-flex items-center gap-1 rounded-md border border-default bg-default px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-default backdrop-blur"
                         title={`Generated by: ${generatedBy}`}
                       >
-                        <Sparkles className="h-3 w-3 text-primary" />
+                        <Sparkles className="h-3 w-3 text-link" />
                         <span className="truncate">{generatedBy}</span>
                       </span>
                     </div>
@@ -1080,32 +1077,32 @@ export default function MediaLibraryPage() {
                   ) : null}
                 </div>
 
-                <p className="line-clamp-3 text-sm font-medium leading-snug text-foreground">
+                <p className="line-clamp-3 text-sm font-medium leading-snug text-default">
                   {captionLabel ? (
                     captionLabel
                   ) : (
-                    <span className="text-muted-foreground italic">No caption</span>
+                    <span className="text-secondary italic">No caption</span>
                   )}
                 </p>
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-secondary">
                   <span className="inline-flex items-center gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-primary" />
+                    <Calendar className="h-3.5 w-3.5 text-link" />
                     <span className="truncate">{whenLabel}</span>
                   </span>
                   {item.platform ? (
                     <>
-                      <span className="text-muted-foreground/60">·</span>
-                      <span className="capitalize text-muted-foreground">
+                      <span className="text-secondary/60">·</span>
+                      <span className="capitalize text-secondary">
                         {item.platform.replace(/_/g, ' ')}
                       </span>
                     </>
                   ) : null}
                   {item.creditsCharged != null && item.creditsCharged > 0 ? (
                     <>
-                      <span className="text-muted-foreground/60">·</span>
+                      <span className="text-secondary/60">·</span>
                       <span
-                        className="tabular-nums text-muted-foreground"
+                        className="tabular-nums text-secondary"
                         title="Credits charged for this generation"
                       >
                         {item.creditsCharged}{' '}
@@ -1117,15 +1114,15 @@ export default function MediaLibraryPage() {
 
                 <div className="mt-2 space-y-1">
                   {canSchedule ? (
-                    <p className="text-[11px] font-medium text-primary">
+                    <p className="text-[11px] font-medium text-link">
                       Ready to schedule
                     </p>
                   ) : item.earlierScheduled ? (
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-[11px] text-secondary">
                       Already scheduled
                     </p>
                   ) : null}
-                  <p className="text-[11px] text-muted-foreground/70 group-hover:text-muted-foreground">
+                  <p className="text-[11px] text-secondary/70 group-hover:text-secondary">
                     Click for full details
                   </p>
                 </div>

@@ -75,8 +75,14 @@ export type PaymentSummaryPayload = {
   subscription?: PaymentSubscriptionSummary | null;
 };
 
-export const createOrder = async ({planId, creditPackId}: {planId: string, creditPackId: string}) => {
-  return apiPost<ApiEnvelope<{ checkoutUrl: string, orderId: string }>>(
+export const createOrder = async ({
+  planId,
+  creditPackId,
+}: {
+  planId: string;
+  creditPackId: string;
+}) => {
+  return apiPost<ApiEnvelope<{ checkoutUrl: string; orderId: string }>>(
     '/api/v1/payment/create-order',
     { planId, creditPackId }
   );
@@ -85,7 +91,7 @@ export const createOrder = async ({planId, creditPackId}: {planId: string, credi
 export const createTestOrder = async (dodoProductId: string) => {
   return apiPost<ApiEnvelope<{ checkoutUrl: string; orderId: string }>>(
     '/api/v1/payment/create-test-order',
-    { dodoProductId },
+    { dodoProductId }
   );
 };
 
@@ -113,7 +119,7 @@ export const cancelSubscription = async () => {
 
 export const revokeSubscription = async () => {
   return apiPost<ApiEnvelope<{ success: boolean }>>(
-    '/api/v1/payment/revoke-subscription',
+    '/api/v1/payment/revoke-subscription'
   );
 };
 export const deletePaymentMethod = async (paymentMethodId: string) => {

@@ -50,7 +50,7 @@ export function ChatRateLimitChip({ usage }: ChatRateLimitChipProps) {
         'rounded-full px-2 py-0.5 text-[11px] font-medium leading-none',
         atCap
           ? 'bg-destructive/10 text-destructive'
-          : 'bg-muted text-muted-foreground'
+          : 'bg-element text-secondary'
       )}
       title="Resets daily at midnight"
     >

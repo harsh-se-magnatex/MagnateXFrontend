@@ -8,9 +8,7 @@ import { useUploadStore } from '@/src/stores/photoState';
 export function ClearPendingOnNavigation() {
   const pathname = usePathname();
 
-  const clearImages = useUploadStore(
-    (state) => state.clearImages
-  );
+  const clearImages = useUploadStore((state) => state.clearImages);
 
   const previousPathname = useRef(pathname);
 

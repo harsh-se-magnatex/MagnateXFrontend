@@ -943,7 +943,7 @@ export default function OnboardingMenu() {
     <div className="space-y-2">
       <Label
         htmlFor="hashtags"
-        className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+        className="text-xs font-semibold uppercase tracking-wider text-secondary"
       >
         Your hashtags
       </Label>
@@ -954,10 +954,10 @@ export default function OnboardingMenu() {
         value={String(formData.hashtags ?? '')}
         onChange={handleChange}
         placeholder="e.g. coffee, mornings, yourbrand"
-        className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+        className="h-11 rounded-lg bg-default px-3 text-base"
       />
       {parseHashtagTokens(formData.hashtags).length > 0 && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-secondary">
           {parseHashtagTokens(formData.hashtags).length} hashtag
           {parseHashtagTokens(formData.hashtags).length === 1 ? '' : 's'}{' '}
           selected
@@ -970,7 +970,7 @@ export default function OnboardingMenu() {
     <div className="space-y-2">
       <Label
         htmlFor="brandSlogan"
-        className="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+        className="text-xs font-semibold uppercase tracking-wider text-secondary"
       >
         Your slogan
       </Label>
@@ -981,7 +981,7 @@ export default function OnboardingMenu() {
         value={String(formData.brandSlogan ?? '')}
         onChange={handleChange}
         placeholder="Your brand slogan or tagline"
-        className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+        className="h-11 rounded-lg bg-default px-3 text-base"
       />
     </div>
   );
@@ -1005,15 +1005,15 @@ export default function OnboardingMenu() {
     if (current.name === 'website') {
       return (
         <div className="space-y-4">
-          <div className="flex rounded-xl border border-border bg-muted/40 p-1">
+          <div className="flex rounded-xl border border-default bg-element p-1">
             <button
               type="button"
               onClick={() => setSourceMode('website')}
               className={cn(
-                'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-expo',
                 sourceMode === 'website'
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-default text-default'
+                  : 'text-secondary hover:text-default'
               )}
             >
               <Globe className="size-4" />
@@ -1023,10 +1023,10 @@ export default function OnboardingMenu() {
               type="button"
               onClick={() => setSourceMode('catalog')}
               className={cn(
-                'flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'flex flex-1 items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium transition-expo',
                 sourceMode === 'catalog'
-                  ? 'bg-card text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-default text-default'
+                  : 'text-secondary hover:text-default'
               )}
             >
               <FileText className="size-4" />
@@ -1043,7 +1043,7 @@ export default function OnboardingMenu() {
               onChange={handleChange}
               onBlur={handleWebsiteBlur}
               placeholder={current.placeholder}
-              className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+              className="h-11 rounded-lg bg-default px-3 text-base"
             />
           ) : (
             <div className="space-y-3">
@@ -1055,25 +1055,25 @@ export default function OnboardingMenu() {
               >
                 {catalogFile ? (
                   <div className="flex flex-col items-center gap-2">
-                    <FileText className="size-10 text-primary-blue" />
-                    <p className="text-sm font-medium text-foreground">
+                    <FileText className="size-10 text-link" />
+                    <p className="text-sm font-medium text-default">
                       {catalogFile.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-secondary">
                       {(catalogFile.size / (1024 * 1024)).toFixed(1)} MB · Click
                       to replace
                     </p>
                   </div>
                 ) : (
                   <>
-                    <span className="flex size-12 items-center justify-center rounded-full bg-gradient-primary text-white shadow-sm transition-transform group-hover:scale-105">
+                    <span className="flex size-12 items-center justify-center rounded-full bg-gradient-primary text-white transition-expo-transform">
                       <Upload className="size-5" />
                     </span>
                     <div className="space-y-1">
-                      <p className="text-sm font-medium text-foreground">
+                      <p className="text-sm font-medium text-default">
                         Upload your catalog or brochure PDF
                       </p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-secondary">
                         PDF only · up to 50 MB
                       </p>
                     </div>
@@ -1104,7 +1104,7 @@ export default function OnboardingMenu() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground"
+                  className="text-secondary"
                   onClick={() => setCatalogFile(null)}
                 >
                   Remove file
@@ -1125,7 +1125,7 @@ export default function OnboardingMenu() {
           onChange={handleChange}
           rows={5}
           placeholder={current.placeholder}
-          className="min-h-[140px] rounded-xl bg-card px-3 py-3 text-base shadow-sm"
+          className="min-h-[140px] rounded-lg bg-default px-3 py-3 text-base"
         />
       );
     }
@@ -1137,9 +1137,9 @@ export default function OnboardingMenu() {
           countryCode={phoneCountryCode}
           nationalNumber={phoneNationalNumber}
           onChange={updatePhone}
-          selectClassName="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
-          customInputClassName="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
-          numberInputClassName="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+          selectClassName="h-11 rounded-xl bg-default px-3 text-base"
+          customInputClassName="h-11 rounded-xl bg-default px-3 text-base"
+          numberInputClassName="h-11 rounded-xl bg-default px-3 text-base"
           nationalPlaceholder="98765 43210"
         />
       );
@@ -1154,8 +1154,8 @@ export default function OnboardingMenu() {
             value={String(formData[current.name] ?? '')}
             onChange={handleChange}
             className={cn(
-              'h-11 w-full appearance-none rounded-xl border border-input bg-card px-3 pr-10 text-base text-foreground shadow-sm transition-colors outline-none',
-              'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+              'h-11 w-full appearance-none rounded-xl border border-default bg-default px-3 pr-10 text-base text-default transition-expo outline-none',
+              'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-strong'
             )}
           >
             <option value="" disabled>
@@ -1169,7 +1169,7 @@ export default function OnboardingMenu() {
           </select>
           <svg
             aria-hidden
-            className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 icon-tertiary"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -1208,22 +1208,22 @@ export default function OnboardingMenu() {
                 <img
                   src={logoSrc}
                   alt="Logo preview"
-                  className="h-24 max-w-[180px] rounded-xl border border-border bg-background object-contain p-2 shadow-sm"
+                  className="h-24 max-w-[180px] rounded-xl border border-default bg-background object-contain p-2"
                 />
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-secondary">
                   Click to replace
                 </span>
               </div>
             ) : (
               <>
-                <span className="flex size-12 items-center justify-center rounded-full bg-gradient-primary text-white shadow-sm transition-transform group-hover:scale-105">
+                <span className="flex size-12 items-center justify-center rounded-full bg-gradient-primary text-white transition-expo-transform">
                   <Upload className="size-5" />
                 </span>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">
+                  <p className="text-sm font-medium text-default">
                     Click to upload your logo
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-secondary">
                     PNG or JPG · transparent background recommended
                   </p>
                 </div>
@@ -1267,19 +1267,19 @@ export default function OnboardingMenu() {
         : '#6366F1';
 
       return (
-        <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-3 shadow-sm">
+        <div className="flex items-center gap-4 rounded-xl border border-default bg-default p-3">
           <label
             htmlFor={current.name}
             className={cn(
-              'relative size-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border shadow-inner',
+              'relative size-14 shrink-0 cursor-pointer overflow-hidden rounded-lg border',
               hasColor
-                ? 'border-border'
-                : 'border-dashed border-muted-foreground/35 bg-muted/40'
+                ? 'border-default'
+                : 'border-dashed border-muted-foreground/35 bg-element'
             )}
             style={hasColor ? { backgroundColor: colorValue } : undefined}
           >
             {!hasColor && (
-              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-muted-foreground">
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-medium text-secondary">
                 Pick
               </span>
             )}
@@ -1293,7 +1293,7 @@ export default function OnboardingMenu() {
             />
           </label>
           <div className="flex-1 space-y-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wider text-secondary">
               Hex value
             </p>
             <Input
@@ -1317,7 +1317,7 @@ export default function OnboardingMenu() {
         value={String(formData[current.name] ?? '')}
         onChange={handleChange}
         placeholder={current.placeholder}
-        className="h-11 rounded-xl bg-card px-3 text-base shadow-sm"
+        className="h-11 rounded-lg bg-default px-3 text-base"
       />
     );
   };
@@ -1339,8 +1339,8 @@ export default function OnboardingMenu() {
 
       {fetchingBusinessData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/70 backdrop-blur-md">
-          <Card className="w-[min(360px,calc(100vw-2rem))] items-center gap-3 px-6 py-8 text-center shadow-lg">
-            <span className="inline-flex size-12 items-center justify-center rounded-full bg-gradient-primary text-white shadow-md">
+          <Card className="w-[min(360px,calc(100vw-2rem))] items-center gap-3 px-6 py-8 text-center">
+            <span className="inline-flex size-12 items-center justify-center rounded-full bg-gradient-primary text-white">
               <Sparkles className="size-5" />
             </span>
             <p className="bg-gradient-primary-text text-xl font-bold">
@@ -1348,11 +1348,11 @@ export default function OnboardingMenu() {
                 ? 'Reading your catalog…'
                 : 'Reading your website…'}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-secondary">
               We&apos;re extracting brand details so you can review and edit
               them in the next steps.
             </p>
-            <Spinner className="size-5 text-primary" />
+            <Spinner className="size-5 text-link" />
           </Card>
         </div>
       )}
@@ -1371,12 +1371,8 @@ export default function OnboardingMenu() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo.png" alt="SocioGenie" className="size-9" />
               <div className="leading-tight">
-                <p className="text-sm font-semibold text-foreground">
-                  SocioGenie
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Brand onboarding
-                </p>
+                <p className="text-sm font-semibold text-default">SocioGenie</p>
+                <p className="text-xs text-secondary">Brand onboarding</p>
               </div>
             </div>
             <Button
@@ -1384,7 +1380,7 @@ export default function OnboardingMenu() {
               variant="ghost"
               size="sm"
               onClick={skipEntirely}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-secondary hover:text-default"
             >
               <X className="size-4" />
               Skip entirely
@@ -1399,9 +1395,9 @@ export default function OnboardingMenu() {
           >
             <div className="flex min-w-0 flex-1 flex-col gap-6">
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+                <div className="flex items-center justify-between text-xs font-medium text-secondary">
                   <span>
-                    Step <span className="text-foreground">{step + 1}</span> of{' '}
+                    Step <span className="text-default">{step + 1}</span> of{' '}
                     {totalSteps}
                   </span>
                   <span>{Math.round(progressValue)}%</span>
@@ -1411,7 +1407,7 @@ export default function OnboardingMenu() {
 
               <Card
                 id="tour-onb-card"
-                className="overflow-visible rounded-3xl border-border/60 bg-card/90 p-6 shadow-lg backdrop-blur-sm sm:p-8"
+                className="overflow-visible rounded-3xl border-default bg-default p-6 backdrop-blur-sm sm:p-8"
               >
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -1423,15 +1419,15 @@ export default function OnboardingMenu() {
                     className="space-y-6"
                   >
                     <div className="flex items-start gap-4">
-                      <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-sm">
+                      <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-primary text-white">
                         <Icon className="size-5" />
                       </span>
                       <div className="space-y-1.5">
-                        <h2 className="bg-gradient-primary-text text-2xl font-bold leading-tight tracking-tight sm:text-[28px]">
+                        <h2 className="text-section text-default bg-gradient-primary-text sm:text-[28px]">
                           {current.label}
                         </h2>
                         {current.description && (
-                          <p className="text-sm leading-relaxed text-muted-foreground">
+                          <p className="text-sm leading-relaxed text-secondary">
                             {current.description}
                           </p>
                         )}
@@ -1451,7 +1447,7 @@ export default function OnboardingMenu() {
                     variant="outline"
                     onClick={() => setStep((prev) => Math.max(prev - 1, 0))}
                     disabled={step === 0 || loading || fetchingBusinessData}
-                    className="h-11 flex-1 rounded-xl"
+                    className="h-11 flex-1 rounded-full"
                   >
                     <ArrowLeft className="size-4" />
                     Previous
@@ -1461,7 +1457,7 @@ export default function OnboardingMenu() {
                     onClick={() => void handleStepNext()}
                     disabled={stepNextDisabled}
                     aria-busy={loading || fetchingBusinessData}
-                    className="h-11 flex-1 rounded-xl bg-gradient-primary text-white shadow-md shadow-primary-blue/20 transition-all hover:shadow-lg hover:shadow-primary-blue/25"
+                    className="h-11 flex-1 rounded-full bg-gradient-primary text-white transition-expo"
                   >
                     {fetchingBusinessData ? (
                       <>
@@ -1489,20 +1485,17 @@ export default function OnboardingMenu() {
 
                 <div
                   id="tour-onb-progress"
-                  className="mt-5 flex items-center justify-between border-t border-border/50 pt-4"
+                  className="mt-5 flex items-center justify-between border-t border-default pt-4"
                 >
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-secondary">
                     You can edit any of this later in{' '}
-                    <span className="font-medium text-foreground">
-                      Brand DNA
-                    </span>
-                    .
+                    <span className="font-medium text-default">Brand DNA</span>.
                   </p>
                   <button
                     type="button"
                     onClick={skipCurrentStep}
                     disabled={loading || fetchingBusinessData}
-                    className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary-blue disabled:cursor-not-allowed disabled:opacity-50"
+                    className="text-sm font-medium text-secondary transition-expo hover:text-link disabled:cursor-not-allowed disabled:text-quaternary"
                   >
                     Skip this step
                   </button>
@@ -1531,7 +1524,7 @@ export default function OnboardingMenu() {
             )}
           </div>
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-secondary">
             Your answers power every AI post we generate for you.
           </p>
         </div>

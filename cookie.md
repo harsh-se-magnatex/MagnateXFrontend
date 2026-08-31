@@ -40,6 +40,15 @@ These make the Services work. They cannot be switched off, and no consent is req
 
 These remember choices you have made, such as your selected time zone, language, and interface theme. They store your settings only and are not used to profile you.
 
+| Purpose | Set by | Type |
+| --- | --- | --- |
+| Approximate country, used only to choose which currency prices are displayed in | SocioGenie | First-party, persistent (180 days) |
+| Your chosen display currency, when you set one yourself | SocioGenie | First-party, persistent (180 days) |
+
+**How we work out an approximate country.** We use whichever of these is available, in this order: a country code supplied by our hosting provider from your IP address, or the time zone your browser already reports (for example `Asia/Kolkata`). We do not use your device's precise location, we never ask for location permission, and we do not store your IP address or your country on our servers for this purpose — the value is kept in the cookie on your device and can be changed at any time using the currency selector on our pricing page.
+
+**What it is used for.** Displaying prices in a familiar currency, and nothing else. It is not used to profile you, to vary what you are charged, or to decide what content you see. Prices shown in a local currency are an approximate conversion from our US Dollar list prices; the amount and currency you are actually charged are determined at checkout by Dodo Payments, our Merchant of Record. See our [Privacy Policy](https://www.sociogenie.ai/legal/privacy) §17.
+
 ### 3.3 Analytics — consent required
 
 These help us understand how the product is used so we can improve it.
