@@ -19,6 +19,7 @@ export type ContentPlanGeneratedItem = {
     | 'draft'
     | 'scheduled'
     | 'queued'
+    | 'failed'
     | 'removed'
     | 'rejected'
     | 'rejected-by-user'

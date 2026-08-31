@@ -108,6 +108,8 @@ function statusLabel(status: AdminContentPlanGeneratedItem['status']): string {
       return 'Draft';
     case 'queued':
       return 'Generating';
+    case 'failed':
+      return 'Failed';
     case 'scheduled':
       return 'Scheduled';
     case 'removed':

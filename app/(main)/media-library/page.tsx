@@ -364,7 +364,7 @@ function MediaDetailModal({
                     'Gallery image'
                   )
                 }
-                className="group relative block w-full overflow-hidden rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
+                className="group relative block w-full overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
                 aria-label="Open image preview"
               >
                 <PostMediaPreview

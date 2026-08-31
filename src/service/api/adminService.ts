@@ -154,6 +154,7 @@ export type AdminContentPlanGeneratedItem = {
     | 'draft'
     | 'scheduled'
     | 'queued'
+    | 'failed'
     | 'removed'
     | 'rejected'
     | 'rejected-by-user'
