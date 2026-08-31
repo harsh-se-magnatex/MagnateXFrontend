@@ -1,5 +1,8 @@
 import axiosClient from '@/lib/axios';
-import { prepareGenerationImage } from '@/lib/prepare-generation-image';
+import {
+  prepareGenerationImage,
+  prepareGenerationImages,
+} from '@/lib/prepare-generation-image';
 
 export type ProductGenerationMode = 'advert_asset' | 'social_full';
 
@@ -72,7 +75,7 @@ export const generateProductAdvertApi = async ({
 
 export const generateProductAdvertVideoApi = async (args: {
   referencePrompt?: string;
-  referenceImage?: File;
+  referenceImages?: Array<{ file: File; source: 'upload' | 'gallery' }>;
   logoFramePosition: 'first' | 'last';
 }): Promise<ProductAdvertVideoGenerateResponse> => {
   const form = new FormData();
@@ -80,10 +83,17 @@ export const generateProductAdvertVideoApi = async (args: {
   if (args.referencePrompt?.trim()) {
     form.append('referencePrompt', args.referencePrompt.trim());
   }
-  if (args.referenceImage) {
+  const referenceInputs = args.referenceImages ?? [];
+  const references = await prepareGenerationImages(referenceInputs.map((item) => item.file), {
+    maxBytes: 4 * 1024 * 1024,
+  });
+  for (const image of references) {
+    form.append('referenceImages', image);
+  }
+  if (referenceInputs.length) {
     form.append(
-      'referenceImage',
-      await prepareGenerationImage(args.referenceImage)
+      'referenceImageSources',
+      JSON.stringify(referenceInputs.map((item) => item.source))
     );
   }
   const response = await axiosClient.post<{

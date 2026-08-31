@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ImagePlus, Images, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImagePlus, Images, Trash2 } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import {
   fetchVideoGeneratorProfile,
@@ -27,10 +27,7 @@ import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeat
 import { isPlanInactive } from '@/lib/plan-access';
 import { cn } from '@/lib/utils';
 import { MediaLibraryImagePickerDialog } from '@/components/shared/MediaLibraryImagePickerDialog';
-import {
-  detectVideoFramePreviewMode,
-  type VideoFramePreviewMode,
-} from '@/lib/video-frame-preview';
+import { type VideoFramePreviewMode } from '@/lib/video-frame-preview';
 import { DownloadVideoButton } from '@/components/download-video-button';
 import { toast } from 'sonner';
 
@@ -71,7 +68,9 @@ const EMPTY_FRAME: FrameSlot = {
 };
 
 function frameUsesLogoCardPreview(frame: FrameSlot): boolean {
-  return frame.kind === 'logo' || frame.previewMode === 'logo-card';
+  // Manual references are always full visual story frames. A logo upload is
+  // still a reference image here, not the separate generated logo end card.
+  return frame.kind === 'logo';
 }
 
 function frameSlotSubtitle(frame: FrameSlot): string {
@@ -100,6 +99,8 @@ function FrameCard({
   previewAspectClass,
   isPortraitPreview,
   onUpload,
+  onFilesSelected,
+  multiple,
   onRemove,
   onPickFromGallery,
 }: {
@@ -110,6 +111,8 @@ function FrameCard({
   previewAspectClass: string;
   isPortraitPreview?: boolean;
   onUpload: (file: File) => void;
+  onFilesSelected?: (files: File[]) => void;
+  multiple?: boolean;
   onRemove: () => void;
   onPickFromGallery?: () => void;
 }) {
@@ -176,7 +179,9 @@ function FrameCard({
             )}
           >
             <ImagePlus className="h-7 w-7 text-primary-purple" />
-            <span className="text-xs font-medium">Upload image</span>
+            <span className="text-xs font-medium">
+              {multiple ? 'Upload images' : 'Upload image'}
+            </span>
           </button>
           {onPickFromGallery ? (
             <button
@@ -196,11 +201,15 @@ function FrameCard({
         ref={inputRef}
         type="file"
         accept="image/png,image/jpeg,image/webp"
+        multiple={multiple}
         className="hidden"
         disabled={disabled}
         onChange={(e) => {
-          const next = e.target.files?.[0];
-          if (next) onUpload(next);
+          const files = Array.from(e.target.files ?? []);
+          if (files.length) {
+            if (multiple && onFilesSelected) onFilesSelected(files);
+            else onUpload(files[0]);
+          }
           e.target.value = '';
         }}
       />
@@ -233,7 +242,7 @@ function FrameCard({
 
 export default function VideoGenerationPage() {
   const router = useRouter();
-  const [referenceImage, setReferenceImage] = useState<FrameSlot>(EMPTY_FRAME);
+  const [referenceImages, setReferenceImages] = useState<FrameSlot[]>([]);
   const [profileLoading, setProfileLoading] = useState(true);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoFramePosition, setLogoFramePosition] =
@@ -243,6 +252,8 @@ export default function VideoGenerationPage() {
   const [result, setResult] = useState<VideoGenerationResult | null>(null);
   const [captionCopied, setCaptionCopied] = useState(false);
   const [galleryPickerOpen, setGalleryPickerOpen] = useState(false);
+  const [galleryTargetIndex, setGalleryTargetIndex] = useState<number | null>(null);
+  const dragIndexRef = useRef<number | null>(null);
 
   const { billing, loading: creditsLoading } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
@@ -292,16 +303,8 @@ export default function VideoGenerationPage() {
     setResult(null);
   }, []);
 
-  const applyDetectedPreviewMode = useCallback(async (previewUrl: string) => {
-    const previewMode = await detectVideoFramePreviewMode(previewUrl);
-    setReferenceImage((prev): FrameSlot => {
-      if (prev.previewUrl !== previewUrl) return prev;
-      return { ...prev, previewMode };
-    });
-  }, []);
-
   const setGalleryReference = useCallback(
-    (imageUrl: string) => {
+    (imageUrl: string, targetIndex: number | null) => {
       const url = imageUrl.trim();
       if (!url) return;
       const next: FrameSlot = {
@@ -311,18 +314,22 @@ export default function VideoGenerationPage() {
         isLogoFromDb: false,
         previewMode: 'hero-photo',
       };
-      setReferenceImage((prev) => {
-        revokeIfBlob(prev.previewUrl);
-        return next;
+      setReferenceImages((prev) => {
+        if (targetIndex !== null && prev[targetIndex]) {
+          revokeIfBlob(prev[targetIndex].previewUrl);
+          const updated = [...prev];
+          updated[targetIndex] = next;
+          return updated;
+        }
+        return prev.length < 10 ? [...prev, next] : prev;
       });
       resetRun();
-      void applyDetectedPreviewMode(url);
     },
-    [applyDetectedPreviewMode, resetRun]
+    [resetRun]
   );
 
   const setUploadReference = useCallback(
-    (file: File) => {
+    (file: File, targetIndex: number | null) => {
       const previewUrl = URL.createObjectURL(file);
       const next: FrameSlot = {
         previewUrl,
@@ -331,20 +338,60 @@ export default function VideoGenerationPage() {
         isLogoFromDb: false,
         previewMode: 'hero-photo',
       };
-      setReferenceImage((prev) => {
-        revokeIfBlob(prev.previewUrl);
-        return next;
+      setReferenceImages((prev) => {
+        if (targetIndex !== null && prev[targetIndex]) {
+          revokeIfBlob(prev[targetIndex].previewUrl);
+          const updated = [...prev];
+          updated[targetIndex] = next;
+          return updated;
+        }
+        return prev.length < 10 ? [...prev, next] : prev;
       });
       resetRun();
-      void applyDetectedPreviewMode(previewUrl);
     },
-    [applyDetectedPreviewMode, resetRun]
+    [resetRun]
   );
 
-  const clearReference = useCallback(() => {
-    setReferenceImage((prev) => {
-      revokeIfBlob(prev.previewUrl);
-      return EMPTY_FRAME;
+  /** Add a file-picker selection in its original picker order, up to ten slots. */
+  const addUploadReferences = useCallback(
+    (files: File[]) => {
+      const available = Math.max(0, 10 - referenceImages.length);
+      const accepted = files.slice(0, available);
+      if (!accepted.length) return;
+      if (accepted.length < files.length) {
+        toast.error('You can add up to 10 reference images.');
+      }
+      const next = accepted.map((file): FrameSlot => ({
+        previewUrl: URL.createObjectURL(file),
+        file,
+        kind: 'upload',
+        isLogoFromDb: false,
+        previewMode: 'hero-photo',
+      }));
+      setReferenceImages((prev) => [...prev, ...next].slice(0, 10));
+      resetRun();
+    },
+    [referenceImages.length, resetRun]
+  );
+
+  const clearReference = useCallback((index: number) => {
+    setReferenceImages((prev) => {
+      const removed = prev[index];
+      revokeIfBlob(removed?.previewUrl ?? null);
+      return prev.filter((_, itemIndex) => itemIndex !== index);
+    });
+    resetRun();
+  }, [resetRun]);
+
+  const moveReference = useCallback((from: number, to: number) => {
+    setReferenceImages((prev) => {
+      if (from === to || from < 0 || to < 0 || from >= prev.length || to >= prev.length) {
+        return prev;
+      }
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
     });
     resetRun();
   }, [resetRun]);
@@ -354,22 +401,25 @@ export default function VideoGenerationPage() {
       const user = auth.currentUser;
       if (!user) throw new Error('You must be signed in to generate videos.');
 
-      const referenceImageFile = referenceImage.previewUrl
-        ? await resolveFrameFile(referenceImage, 'reference')
-        : undefined;
+      const referenceImageFiles = await Promise.all(
+        referenceImages.map(async (reference, index) => ({
+          file: await resolveFrameFile(reference, `reference image ${index + 1}`),
+          source: reference.kind === 'gallery' ? 'gallery' as const : 'upload' as const,
+        }))
+      );
 
       resetRun();
       setPipelinePhase('generating');
 
       const response = await startVideoGeneration({
         referencePrompt: referencePrompt.trim() || undefined,
-        referenceImage: referenceImageFile,
+        referenceImages: referenceImageFiles,
         logoFramePosition,
       });
       setResult({
         platform: 'all_platforms',
         videoGenerationDocId: response.videoGenerationDocId,
-        posterUrl: referenceImage.previewUrl ?? '',
+        posterUrl: referenceImages[0]?.previewUrl ?? '',
         posterFilePath: undefined,
         videoUrl: null,
         videoFilePath: null,
@@ -391,7 +441,7 @@ export default function VideoGenerationPage() {
         videoGenerationDocId: response.videoGenerationDocId,
         posterUrl:
           String(data.videoPosterUrl ?? '').trim() ||
-          referenceImage.previewUrl ||
+          referenceImages[0]?.previewUrl ||
           '',
         posterFilePath: String(data.videoPosterPath ?? '').trim() || undefined,
         videoUrl: String(data.videoUrl ?? '').trim() || null,
@@ -465,7 +515,7 @@ export default function VideoGenerationPage() {
           {workspacePageTitle(WORKSPACE_NAV_HREFS.videoGeneration)}
         </h1>
         <p className="text-sm text-slate-600 mb-6">
-          Describe the advert you want and optionally add one reference image.
+          Describe the advert you want and optionally add up to ten reference images.
           Your direction and business profile guide the complete 20-second
           video.
         </p>
@@ -534,29 +584,88 @@ export default function VideoGenerationPage() {
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-slate-700">
-                  Reference image{' '}
+                  Reference images{' '}
                   <span className="font-normal text-slate-400">(optional)</span>
                 </p>
                 <p className="text-xs text-slate-500">
-                  Add at most one product, property, place, or visual reference.
-                  The generated video will preserve its visible identity and
-                  structure.
+                  Add up to 10 product, property, place, or visual references.
+                  Their order is chronological: Image 1 opens the advert and each
+                  following image advances the story. Drag cards to reorder them.
                 </p>
               </div>
             </div>
 
-            <div className="flex justify-center">
-              <FrameCard
-                title="Visual reference"
-                subtitle={frameSlotSubtitle(referenceImage)}
-                frame={referenceImage}
-                previewAspectClass={framePreviewAspect}
-                isPortraitPreview={isPortraitPreview}
-                disabled={isBusy}
-                onUpload={setUploadReference}
-                onRemove={clearReference}
-                onPickFromGallery={() => setGalleryPickerOpen(true)}
-              />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {referenceImages.map((reference, index) => (
+                <div
+                  key={`${reference.previewUrl}-${index}`}
+                  draggable={!isBusy}
+                  onDragStart={() => {
+                    dragIndexRef.current = index;
+                  }}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    const from = dragIndexRef.current;
+                    dragIndexRef.current = null;
+                    if (from !== null) moveReference(from, index);
+                  }}
+                  className="relative"
+                >
+                  <FrameCard
+                    title={`Image ${index + 1}`}
+                    subtitle={frameSlotSubtitle(reference)}
+                    frame={reference}
+                    previewAspectClass={framePreviewAspect}
+                    isPortraitPreview={isPortraitPreview}
+                    disabled={isBusy}
+                    onUpload={(file) => setUploadReference(file, index)}
+                    onRemove={() => clearReference(index)}
+                    onPickFromGallery={() => {
+                      setGalleryTargetIndex(index);
+                      setGalleryPickerOpen(true);
+                    }}
+                  />
+                  <div className="mt-2 flex justify-center gap-2">
+                    <button
+                      type="button"
+                      disabled={isBusy || index === 0}
+                      onClick={() => moveReference(index, index - 1)}
+                      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium disabled:opacity-40"
+                      aria-label={`Move Image ${index + 1} earlier`}
+                    >
+                      <ChevronLeft className="h-3.5 w-3.5" aria-hidden /> Earlier
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isBusy || index === referenceImages.length - 1}
+                      onClick={() => moveReference(index, index + 1)}
+                      className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs font-medium disabled:opacity-40"
+                      aria-label={`Move Image ${index + 1} later`}
+                    >
+                      Later <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {referenceImages.length < 10 ? (
+                <FrameCard
+                  title={`Add reference ${referenceImages.length + 1}`}
+                  subtitle="Upload or choose from Media Library"
+                  frame={EMPTY_FRAME}
+                  previewAspectClass={framePreviewAspect}
+                  isPortraitPreview={isPortraitPreview}
+                  disabled={isBusy}
+                  onUpload={(file) => setUploadReference(file, null)}
+                  onFilesSelected={addUploadReferences}
+                  multiple
+                  onRemove={() => undefined}
+                  onPickFromGallery={() => {
+                    setGalleryTargetIndex(null);
+                    setGalleryPickerOpen(true);
+                  }}
+                />
+              ) : null}
             </div>
           </div>
 
@@ -679,10 +788,11 @@ export default function VideoGenerationPage() {
         onOpenChange={(open) => {
           setGalleryPickerOpen(open);
         }}
-        title="Choose one reference image"
+        title="Choose a reference image"
         onSelect={(url) => {
-          setGalleryReference(url);
+          setGalleryReference(url, galleryTargetIndex);
           setGalleryPickerOpen(false);
+          setGalleryTargetIndex(null);
         }}
       />
     </div>

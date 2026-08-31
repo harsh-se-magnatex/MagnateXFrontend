@@ -169,9 +169,6 @@ export default function Home() {
             className="landing-scroll-hint absolute bottom-12 left-1/2 -translate-x-1/2"
             aria-hidden
           >
-            <span className="landing-body text-[11px] font-medium uppercase tracking-[0.28em] text-white/40">
-              Scroll to explore
-            </span>
             <span className="landing-scroll-hint__line" />
           </motion.div>
         </section>

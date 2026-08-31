@@ -24,7 +24,7 @@ export async function fetchVideoGeneratorProfile(): Promise<{
 /** Starts standalone video generation. */
 export async function startVideoGeneration(args: {
   referencePrompt?: string;
-  referenceImage?: File;
+  referenceImages?: Array<{ file: File; source: 'upload' | 'gallery' }>;
   logoFramePosition: 'first' | 'last';
 }): Promise<ProductAdvertVideoGenerateResponse> {
   return generateProductAdvertVideoApi(args);
@@ -33,7 +33,7 @@ export async function startVideoGeneration(args: {
 /** Resolves a frame slot to a File (fetches DB logo URLs when needed). */
 export async function resolveFrameFile(
   slot: { previewUrl: string | null; file: File | null; isLogoFromDb: boolean },
-  label: 'reference'
+  label: string
 ): Promise<File> {
   if (slot.file) return slot.file;
   const previewUrl = String(slot.previewUrl ?? '').trim();
