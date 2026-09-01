@@ -25,39 +25,6 @@ const stagger = {
   visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
-/**
- * Counts come from `getShowcaseStats()`, which derives them from the exported
- * fixtures — so these numbers cannot drift out of sync with what the page
- * actually renders, and every one of them is a real count of real output.
- */
-function ShowcaseStatBand() {
-  const stats = getShowcaseStats();
-  const cells = [
-    { value: String(stats.posts), label: 'posts generated' },
-    { value: String(stats.brands), label: 'brand profiles' },
-    { value: String(stats.platforms), label: 'platforms' },
-    { value: String(stats.carousels), label: 'carousels' },
-    { value: String(stats.videos), label: 'videos' },
-  ];
-
-  return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-      {cells.map((cell) => (
-        <div
-          key={cell.label}
-          className="rounded-2xl border border-default bg-element px-4 py-5 text-center"
-        >
-          <p className="font-mono text-3xl font-semibold tabular-nums tracking-[-1px] text-default">
-            {cell.value}
-          </p>
-          <p className="mt-1 text-xs leading-snug text-tertiary">
-            {cell.label}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 export function SocialPreviewPage() {
   return (
@@ -94,10 +61,6 @@ export function SocialPreviewPage() {
               Pick an example brand below and browse about a month of its
               output, exactly as it went out.
             </p>
-          </motion.div>
-
-          <motion.div variants={fadeIn} className="mt-12">
-            <ShowcaseStatBand />
           </motion.div>
 
           <motion.div variants={fadeIn} className="mt-12">

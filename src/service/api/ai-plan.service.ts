@@ -43,7 +43,16 @@ export type AIPlanCell = {
 export type AIPlanGeneratedItem = {
   kind: AIPlanGeneratedKind;
   origin: 'auto' | 'manual';
-  status: 'draft' | 'scheduled' | 'queued' | 'failed' | 'removed' | 'rejected' | 'rejected-by-user' | 'rejected-by-admin';
+  status:
+    | 'draft'
+    | 'scheduled'
+    | 'pending-approval'
+    | 'queued'
+    | 'failed'
+    | 'removed'
+    | 'rejected'
+    | 'rejected-by-user'
+    | 'rejected-by-admin';
   title?: string;
   captionPreview?: string;
   scheduledPostId?: string;
@@ -145,15 +154,17 @@ export type AIPlanResponse = {
   nextCycle: RawAIPlan['aiPlan']['nextCycle'];
 };
 
-function generatedStatus(value: string): AIPlanGeneratedItem['status'] {
+export function generatedStatus(value: string): AIPlanGeneratedItem['status'] {
+  const lifecycle = String(value ?? '').trim().toLowerCase();
+  if (lifecycle === 'review_pending') return 'pending-approval';
   if (
-    value === 'scheduled' ||
-    value === 'draft' ||
-    value === 'failed' ||
-    value === 'removed' ||
-    value === 'rejected'
+    lifecycle === 'scheduled' ||
+    lifecycle === 'draft' ||
+    lifecycle === 'failed' ||
+    lifecycle === 'removed' ||
+    lifecycle === 'rejected'
   )
-    return value;
+    return lifecycle;
   return 'queued';
 }
 

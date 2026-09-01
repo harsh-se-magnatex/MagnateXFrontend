@@ -30,6 +30,7 @@ import {
   FolderOpen,
   Share2,
   MessageCircle,
+  UserRound,
 } from 'lucide-react';
 import NavBar from '@/app/(main)/_components/NavBar';
 import { FeatureCard } from '@/components/landing/feature-card';
@@ -58,6 +59,12 @@ const PRODUCT_FEATURES = [
     icon: Video,
     description:
       '20-second videos from a text prompt, with your logo set as the opening or closing frame.',
+  },
+  {
+    title: 'AI Avatar',
+    icon: UserRound,
+    description:
+      'Upload a portrait to create an animated AI avatar and bring a human presence to your generated videos.',
   },
   {
     title: 'Occasion Posts',

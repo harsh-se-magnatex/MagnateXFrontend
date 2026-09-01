@@ -79,6 +79,8 @@ function statusLabel(status: AIPlanGeneratedItem['status']): string {
       return 'Draft';
     case 'queued':
       return 'Generating';
+    case 'pending-approval':
+      return 'Pending approval';
     case 'failed':
       return 'Failed';
     case 'scheduled':

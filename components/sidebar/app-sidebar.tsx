@@ -210,7 +210,11 @@ export function AppSidebar({
                 const isActive = item.match(pathname);
                 return (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={isActive}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      className="hover:bg-transparent active:bg-transparent data-open:hover:bg-transparent data-active:bg-transparent"
+                    >
                       <UpgradeGate
                         gated={
                           item.href === WORKSPACE_NAV_HREFS.contentPlan &&

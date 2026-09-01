@@ -40,6 +40,11 @@ import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
 import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
 import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
 import {
+  ImagePreviewButton,
+  ImagePreviewOverlay,
+  useImagePreview,
+} from '@/components/image-preview';
+import {
   joinPhone,
   normalizeBusinessContactValue,
   splitStoredPhone,
@@ -186,6 +191,7 @@ export default function BusinessProfilePage() {
   const [useVideoAvatar, setUseVideoAvatar] = useState(false);
   const [avatarSaving, setAvatarSaving] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const avatarPreview = useImagePreview();
 
   const activePlan = billing?.activePlan;
 
@@ -1238,13 +1244,27 @@ export default function BusinessProfilePage() {
                     <div className="rounded-2xl border border-default bg-default p-4">
                       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-preview bg-default">
+                          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-preview bg-default">
                             {avatarUrl ? (
-                              <img
-                                src={avatarUrl}
-                                alt="Saved AI avatar"
-                                className="h-full w-full object-cover"
-                              />
+                              <>
+                                <img
+                                  src={avatarUrl}
+                                  alt="Saved AI avatar"
+                                  className="h-full w-full object-cover"
+                                />
+                                <ImagePreviewButton
+                                  variant="overlay-icon"
+                                  label="Preview AI avatar"
+                                  ariaLabel="Preview AI avatar"
+                                  className="absolute inset-0 h-full w-full rounded-full bg-black/0 opacity-0 ring-0 hover:bg-black/45 hover:opacity-100 focus-visible:bg-black/45 focus-visible:opacity-100"
+                                  onClick={() =>
+                                    avatarPreview.open(
+                                      avatarUrl,
+                                      'AI avatar preview'
+                                    )
+                                  }
+                                />
+                              </>
                             ) : (
                               <UserRound
                                 className="h-7 w-7 text-tertiary"
@@ -1382,6 +1402,11 @@ export default function BusinessProfilePage() {
           </section>
         </div>
       </div>
+      <ImagePreviewOverlay
+        src={avatarPreview.previewUrl}
+        alt={avatarPreview.previewAlt}
+        onClose={avatarPreview.close}
+      />
     </div>
   );
 }
