@@ -206,9 +206,9 @@ export function generatedByLabel(value: string | undefined): string | null {
   if (!trimmed) return null;
   switch (trimmed.toLowerCase()) {
     case 'ai-engine':
-      return 'Autopilot';
+      return 'AI Manager';
     case 'batch-generation':
-      return 'Legacy bulk';
+      return 'Create Post';
     case 'events-post':
       return 'Occasion Posts';
     case 'product-advert':
@@ -220,7 +220,7 @@ export function generatedByLabel(value: string | undefined): string | null {
     case 'instant-generation':
       return 'Create Post';
     case 'bulk-create':
-      return 'Legacy bulk';
+      return 'Create Post';
     case 'quick-create':
       return 'Create Post';
     case 'campaign':

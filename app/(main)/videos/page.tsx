@@ -52,8 +52,6 @@ type VideoGenerationResult = {
   videoFilePath?: string | null;
   videoCaption?: string | null;
   videoAspectRatio?: string | null;
-  promptTitle?: string | null;
-  videoPrompt?: string | null;
 };
 
 const EMPTY_FRAME: FrameSlot = {
@@ -260,7 +258,7 @@ export default function VideoGenerationPage() {
     : '—';
   const userCredits = billing?.credits;
 
-  const perPlatformCost = 15;
+  const perPlatformCost = 100;
   const creditOk = userCredits !== undefined && userCredits >= perPlatformCost;
   const insufficientCredits =
     userCredits !== undefined && userCredits < perPlatformCost;
@@ -441,8 +439,6 @@ export default function VideoGenerationPage() {
         videoFilePath: String(data.videoFilePath ?? '').trim() || null,
         videoCaption: String(data.caption ?? '').trim() || null,
         videoAspectRatio: String(data.videoAspectRatio ?? '').trim() || null,
-        promptTitle: String(data.videoPromptTitle ?? '').trim() || null,
-        videoPrompt: String(data.videoPrompt ?? '').trim() || null,
       });
       setPipelinePhase('ready');
       toast.success(
@@ -583,6 +579,9 @@ export default function VideoGenerationPage() {
                   Add up to 10 product, property, place, or visual references.
                   Their order is chronological: Image 1 opens the advert and each
                   following image advances the story. Drag cards to reorder them.
+                </p>
+                <p className="mt-1 text-xs font-medium text-amber-700">
+                  Make sure the reference images do not contain any humans.
                 </p>
               </div>
             </div>
@@ -753,21 +752,6 @@ export default function VideoGenerationPage() {
             </div>
           ) : null}
 
-          {pipelinePhase === 'ready' && result?.videoPrompt ? (
-            <div className="space-y-3 rounded-xl border border-preview bg-preview p-4">
-              <div>
-                <h2 className="text-section text-default">
-                  {result.promptTitle || 'Claude video prompt'}
-                </h2>
-                <p className="text-xs text-preview">
-                  Prompt-only test completed. No video request was sent.
-                </p>
-              </div>
-              <pre className="max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-lg border border-preview bg-default p-4 text-xs leading-relaxed text-default">
-                {result.videoPrompt}
-              </pre>
-            </div>
-          ) : null}
         </div>
       </div>
 

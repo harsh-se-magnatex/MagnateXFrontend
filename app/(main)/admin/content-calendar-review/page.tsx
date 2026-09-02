@@ -1083,7 +1083,7 @@ function GeneratedCard({
       type="button"
       onClick={onOpen}
       className={cn(
-        'relative w-full rounded-full border border-default bg-default p-2 text-left transition hover:ring-1 hover:ring-strong',
+        'relative w-full rounded-sm border border-default bg-default p-2 text-left transition hover:ring-1 hover:ring-strong',
         cellToneClass(item.kind),
         isRegenerating && 'ring-1 ring-[var(--border-warning)]'
       )}

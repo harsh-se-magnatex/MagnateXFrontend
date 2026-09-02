@@ -91,10 +91,10 @@ const PRODUCT_FEATURES = [
       'Choose the exact date and time for any piece of content you have created.',
   },
   {
-    title: 'AI Plan',
+    title: 'AI Manager',
     icon: LayoutGrid,
     description:
-      "Your whole month at a glance — every day, every platform, what's planned or already posted. AI plan only.",
+      "Your whole month at a glance: every day, every platform, what's planned and what has already published. AI Manager plans your month, writes and designs each post, clears it through review, and publishes at your best hour. Prime, Elite and Legacy only.",
   },
   {
     title: 'Upcoming Posts',
@@ -130,19 +130,19 @@ const PRODUCT_FEATURES = [
 
 const LANDING_FAQ_ITEMS = [
   {
-    question: 'How is Sociogenie different from other Scheduling Tools?',
+    question: 'How is SocioGenie different from other scheduling tools?',
     answer:
-      "They schedule content you've already written. Sociogenie creates the content, has it reviewed by a human, and publishes it for you. It handles the creation and strategy layer, not just the scheduling step.",
+      "They schedule content you've already written. SocioGenie creates the content and publishes it for you. It handles the creation and strategy layer, not just the scheduling step.",
   },
   {
     question: "Who reviews my content before it's published?",
     answer:
-      "On Studio, you're creating each post yourself, so you're already reviewing it before it goes live. On an AI Plan, you choose: Manual Review, where you approve every generated post yourself — the default and safer setting — or Auto Approve, where SocioGenie's own in-house team checks brand fit, caption quality and technical readiness before it publishes automatically. Either way, review covers quality and brand consistency, not fact-checking — see our AI Disclosure page for the full scope.",
+      'On Prime, Elite and Legacy you choose: Manual Review, where you clear every post yourself, or Auto Approve, where our in-house team clears it. On Studio you create each post and see it before it publishes.',
   },
   {
-    question: "What's the difference between the Studio and AI plans?",
+    question: "What's the difference between Studio and AI Manager?",
     answer:
-      'Studio gives you every creative tool, run on your own schedule — you decide what to make and when to post it. AI adds the AI Plan: SocioGenie plans, generates and schedules a full month for you, against a fixed monthly quota of campaigns, AI posts, carousels, videos and event posts.',
+      'Studio gives you every creative tool, run on your own schedule — you decide what to make and when to post it. AI Manager plans, generates and schedules a full month for you on Prime, Elite and Legacy.',
   },
   {
     question: 'Is the content specific to my business, or is it generic?',
@@ -150,7 +150,7 @@ const LANDING_FAQ_ITEMS = [
       "It's built from your brand profile — your industry, tone of voice, and business context. What gets generated for your account is specific to your setup, not pulled from a shared template bank.",
   },
   {
-    question: 'What platforms does Sociogenie support?',
+    question: 'What platforms does SocioGenie support?',
     answer:
       'Instagram, Facebook, and LinkedIn. Additional platforms are on the roadmap.',
   },
@@ -176,9 +176,9 @@ const LANDING_FAQ_ITEMS = [
   },
   {
     question:
-      'Is Sociogenie suitable for a business with no social media presence yet?',
+      'Is SocioGenie suitable for a business with no social media presence yet?',
     answer:
-      "Yes — Sociogenie handles the strategy, so you don't need to know what to post or when. It's well-suited to businesses that want to build a consistent presence without hiring someone to manage it.",
+      "Yes — SocioGenie handles the strategy, so you don't need to know what to post or when. It's well-suited to businesses that want to build a consistent presence without hiring someone to manage it.",
   },
 ] as const;
 
@@ -296,14 +296,20 @@ export function ProductPageContent() {
               variants={fadeIn}
               className="text-display-1 text-default"
             >
-              Everything <span className="text-gradient-brand">Sociogenie</span>
+              Everything <span className="text-gradient-brand">SocioGenie</span>
               <br className="hidden sm:block" /> does for your business
             </motion.h1>
             <motion.p
               variants={fadeIn}
+              className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-secondary sm:text-lg"
+            >
+              SocioGenie&apos;s AI Manager builds and runs a monthly social media calendar without being asked. It researches angles for your industry, generates each post two days before it runs, routes it through human review, and publishes at the account&apos;s best hour on Instagram, Facebook or LinkedIn.
+            </motion.p>
+            <motion.p
+              variants={fadeIn}
               className="mx-auto mt-7 max-w-2xl text-lg font-light leading-relaxed text-secondary sm:text-xl"
             >
-              From a five-minute brand setup to a fully scheduled month — see
+              From a brand setup under 10 minutes to a fully scheduled month — see
               exactly how SocioGenie researches, creates, reviews and publishes
               for Instagram, Facebook and LinkedIn.
             </motion.p>
@@ -313,35 +319,34 @@ export function ProductPageContent() {
             >
               SocioGenie is AI social media management software for small
               businesses: it researches your industry, generates on-brand
-              posts, routes them through human review, and publishes to
-              Instagram, Facebook and LinkedIn — automated on an AI Plan (from{' '}
+              posts and publishes them to Instagram, Facebook and LinkedIn — automated by AI Manager from{' '}
               <InlinePrice usd={49.99} />
-              /month) or on demand with Studio (from{' '}
+              /month, where our in-house team reviews before publishing, or on demand with Studio from{' '}
               <InlinePrice usd={14.99} />
-              /month).
+              /month.
             </motion.p>
             <motion.div
               variants={fadeIn}
               className="mt-8 flex flex-wrap justify-center gap-3"
             >
-              <GuestAuthLink
-                href="/sign-up"
+              <Link
+                href="/try-it"
                 className="group relative inline-flex items-center overflow-hidden rounded-full bg-gradient-primary px-8 py-4 text-base font-bold text-white transition-expo ease-[cubic-bezier(0.4,0,0.2,1)]"
               >
                 <span className="relative z-10 flex items-center">
-                  Get Started Free
+                  See a post for your brand
                   <Rocket className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                 </span>
                 <span
                   className="absolute inset-0 bg-default transition-expo group-hover:bg-default"
                   aria-hidden
                 />
-              </GuestAuthLink>
+              </Link>
               <Link
-                href="/"
+                href="/pricing"
                 className="group inline-flex items-center rounded-full border border-default bg-transparent px-7 py-3.5 text-sm font-semibold text-default transition-expo ease-[cubic-bezier(0.4,0,0.2,1)] hover:border-strong hover:bg-hover"
               >
-                Back to experience
+                See pricing
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
               </Link>
             </motion.div>
@@ -479,7 +484,7 @@ export function ProductPageContent() {
               </h2>
               <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-base leading-relaxed text-secondary">
                 Switch between Instagram, Facebook, and LinkedIn, browse the
-                profile grid, and open any post to see how Sociogenie-generated
+                profile grid, and open any post to see how SocioGenie-generated
                 content could appear once published.
               </p>
             </motion.div>
@@ -587,7 +592,7 @@ export function ProductPageContent() {
                 className="group relative inline-flex items-center overflow-hidden rounded-full bg-gradient-primary px-12 py-5 text-lg font-bold text-white transition-expo ease-[cubic-bezier(0.4,0,0.2,1)]"
               >
                 <span className="relative z-10 flex items-center">
-                  Get Started Free
+                  See a post for your brand
                   <Rocket className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-0.5" />
                 </span>
                 <span

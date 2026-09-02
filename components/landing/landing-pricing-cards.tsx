@@ -15,7 +15,7 @@ import { Dot } from 'lucide-react';
 import { useState } from 'react';
 
 export function LandingPricingCards() {
-  const [planMode, setPlanMode] = useState<PlanMode>('AutoPilot');
+  const [planMode, setPlanMode] = useState<PlanMode>('AIManager');
   const visiblePlans = pricingPlansForMode(planMode);
 
   return (
@@ -25,9 +25,9 @@ export function LandingPricingCards() {
         aria-label="Plan mode"
         className="mx-auto mb-8 flex w-full max-w-md items-center justify-center gap-1 rounded-full border border-default bg-element p-1 backdrop-blur-sm"
       >
-        {(['AutoPilot', 'Studio'] as const).map((mode) => {
+        {(['AIManager', 'Studio'] as const).map((mode) => {
           const selected = planMode === mode;
-          const label = mode === 'Studio' ? 'Studio' : 'AutoPilot';
+          const label = mode === 'Studio' ? 'Studio' : 'AI Manager';
           const sublabel =
             mode === 'Studio' ? 'You create every post' : 'Personalized AI';
           return (

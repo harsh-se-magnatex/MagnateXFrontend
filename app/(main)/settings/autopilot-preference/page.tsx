@@ -493,7 +493,7 @@ export default function AutomationPreferencePage() {
   return (
     <div className="max-w-4xl mx-auto animate-in fade-in duration-500">
       <div className="mb-8">
-        <h1 className={workspacePageTitleClass}>AutoPilot Preferences</h1>
+        <h1 className={workspacePageTitleClass}>AI Manager Preferences</h1>
         <p className="mt-2 text-sm text-secondary">
           Configure how SocioGenie generated content behaves, default languages,
           and auto-posting rules.
@@ -1062,7 +1062,7 @@ export default function AutomationPreferencePage() {
               </div>
               {selectedPlatforms.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-default bg-element px-4 py-6 text-center text-sm text-secondary">
-                  Select at least one social platform on the Autopilot page to
+                  Select at least one social platform on the AI Manager page to
                   see per-platform optimal posting times here.
                 </div>
               ) : (

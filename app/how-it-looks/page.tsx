@@ -2,16 +2,16 @@ import type { Metadata } from 'next';
 import { SocialPreviewPage } from '@/components/landing/social-preview/social-preview-page';
 
 export const metadata: Metadata = {
-  title: 'How It Looks — Sociogenie | Social Media Preview',
+  title: 'See AI-Generated Social Posts for 5 Real Brands | SocioGenie',
   description:
-    'Preview how your brand could look on Instagram, Facebook, and LinkedIn with Sociogenie-generated content.',
+    'Every post here was generated, scheduled and published automatically — five brands, three platforms, seven visual styles. No person wrote or designed any of it.',
   alternates: {
     canonical: 'https://www.sociogenie.ai/how-it-looks',
   },
   openGraph: {
-    title: 'How It Looks — Sociogenie | Social Media Preview',
+  title: 'See AI-Generated Social Posts for 5 Real Brands | SocioGenie',
     description:
-      'Preview how your brand could look on Instagram, Facebook, and LinkedIn with Sociogenie-generated content.',
+    'Every post here was generated, scheduled and published automatically — five brands, three platforms, seven visual styles. No person wrote or designed any of it.',
     siteName: 'SocioGenie',
     url: 'https://www.sociogenie.ai/how-it-looks',
     images: ['/logo.png'],

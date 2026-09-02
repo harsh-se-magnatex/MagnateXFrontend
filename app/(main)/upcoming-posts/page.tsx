@@ -407,7 +407,7 @@ function DetailModal({
                   >
                     <PostMediaPreview
                       preview={mediaPreview}
-                      imageClassName="w-full max-h-64 object-contain rounded-xl bg-element border border-default transition-transform duration-200"
+                      imageClassName="w-full max-h-64 object-contain transition-transform duration-200"
                     />
                   </button>
                 )}
@@ -1573,7 +1573,7 @@ export default function SchedulePostPage() {
         return;
       }
       if (action === 'regenerate' && post.generatedByAiEngine !== true) {
-        showErrorToast('Only Autopilot posts can be regenerated.');
+        showErrorToast('Only AI Manager posts can be regenerated.');
         return;
       }
       if (action === 'regenerate' && !platform) {

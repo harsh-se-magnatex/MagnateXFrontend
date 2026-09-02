@@ -10,6 +10,7 @@ import {
   LandingClose,
 } from '@/components/landing/landing-agents';
 import '@/components/landing/landing.css';
+import { HOMEPAGE_ANSWER, JsonLd, SOFTWARE_APPLICATION_JSON_LD } from '@/lib/seo';
 
 /** The three platforms, said out loud. A social product should show which
  *  networks it posts to above the fold, not three sections down. */
@@ -22,14 +23,14 @@ const PLATFORMS = [
 /** Explicit and self-referencing, rather than relying on inheriting the
  *  root layout's defaults — keeps this page correct even if those change. */
 export const metadata: Metadata = {
-  title: 'Sociogenie – AI Social Media Management for Small Businesses',
+  title: 'AI Social Media Manager for Small Business | SocioGenie',
   description:
-    'Sociogenie helps small businesses automate social media with AI-generated, human-reviewed content for Instagram, Facebook, and LinkedIn. Setup in under 10 minutes.',
+    'SocioGenie plans, writes, designs and publishes your Instagram, Facebook and LinkedIn posts. Automated from $49.99/month, or six AI tools you run yourself from $14.99.',
   alternates: {
     canonical: 'https://www.sociogenie.ai/',
   },
   openGraph: {
-    title: 'Sociogenie – AI Social Media Management for Small Businesses',
+    title: 'AI Social Media Manager for Small Business | SocioGenie',
     description:
       'AI-generated content, human-reviewed before publishing, posted automatically across Instagram, Facebook & LinkedIn.',
     siteName: 'SocioGenie',
@@ -57,6 +58,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="min-h-screen bg-screen">
+      <JsonLd data={SOFTWARE_APPLICATION_JSON_LD} />
       <NavBar />
 
       <main>
@@ -64,7 +66,7 @@ export default function Home() {
           <div className="expo-container text-center">
             <p className="brand-pill">
               <Sparkles className="size-3.5" aria-hidden />
-              AI Social Growth Engine
+              AI social media management software
             </p>
 
             <h1 className="mx-auto mt-8 max-w-4xl text-display-1 text-default">
@@ -75,19 +77,15 @@ export default function Home() {
               </span>
             </h1>
 
-            <p className="mx-auto mt-7 max-w-xl text-lg leading-relaxed text-secondary">
-              Posts written, designed, reviewed and published for you — every
-              day, in your brand voice, on the networks your customers actually
-              use.
-            </p>
+            <p className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-secondary">{HOMEPAGE_ANSWER}</p>
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-              <GuestAuthLink href="/sign-up" className="btn-brand group">
-                Get started
+              <Link href="/try-it" className="btn-brand group">
+                See a post for your brand
                 <ArrowRight className="size-4 transition-expo-transform group-hover:translate-x-0.5" />
-              </GuestAuthLink>
-              <Link href="/product" className="landing-btn-secondary">
-                See how it works
+              </Link>
+              <Link href="/pricing" className="landing-btn-secondary">
+                See pricing
               </Link>
             </div>
 
@@ -111,16 +109,7 @@ export default function Home() {
             </ul>
 
             <p className="mt-10 text-sm text-tertiary">
-              Setup in under 10 minutes · Human-reviewed before publishing ·
-              Cancel anytime
-            </p>
-            <p className="mt-3 text-sm">
-              <Link
-                href="/try-it"
-                className="font-medium text-[var(--brand-violet-text)] underline-offset-4 transition-expo hover:underline"
-              >
-                Or try a free post for your website
-              </Link>
+              One free sample post · No account needed · Setup in under 10 minutes
             </p>
           </div>
         </section>

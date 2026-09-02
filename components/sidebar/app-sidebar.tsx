@@ -220,7 +220,7 @@ export function AppSidebar({
                           item.href === WORKSPACE_NAV_HREFS.contentPlan &&
                           billing?.mode === 'manual'
                         }
-                        tooltip="Upgrade your plan to unlock AI Plan."
+                        tooltip="Upgrade your plan to unlock AI Manager."
                         side="right"
                         className="w-full"
                       >
@@ -401,7 +401,7 @@ export function AppSidebar({
                       }`}
                     >
                       <CalendarDays className="h-4 w-4 shrink-0" />
-                      <span>AI Plan Review</span>
+                      <span>AI Manager Review</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

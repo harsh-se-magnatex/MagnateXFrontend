@@ -122,6 +122,7 @@ export function galleryItemToPrefillPost(
     if (!carouselSlides) return null;
     const cover = carouselSlides[0];
     return {
+      existingPostId: item.id,
       imageUrl: cover.imageUrl,
       imageFilePath: cover.imageFilePath,
       mediaType: 'carousel',
@@ -141,6 +142,7 @@ export function galleryItemToPrefillPost(
       item.posterFilePath?.trim() || item.imageFilePath?.trim() || '';
     if (!videoUrl || !videoFilePath) return null;
     return {
+      existingPostId: item.id,
       imageUrl: posterUrl,
       imageFilePath: '',
       mediaType: 'video',
@@ -159,6 +161,7 @@ export function galleryItemToPrefillPost(
   if (!imageUrl || !imageFilePath) return null;
   if (isLikelyVideoUrl(imageUrl)) return null;
   return {
+    existingPostId: item.id,
     imageUrl,
     imageFilePath,
     message: caption,

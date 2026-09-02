@@ -49,7 +49,7 @@ function kindLabel(kind: AIPlanGeneratedKind | string): string {
     case 'campaign':
       return workspacePageTitle(WORKSPACE_NAV_HREFS.createCampaign);
     case 'ai-engine':
-      return 'AutoPilot';
+      return workspacePageTitle(WORKSPACE_NAV_HREFS.contentPlan);
     case 'bulk-create':
       return workspacePageTitle(WORKSPACE_NAV_HREFS.quickCreate);
     case 'quick-create':
@@ -840,7 +840,7 @@ export default function AIPlanPage() {
             )
           : err instanceof Error
             ? err.message
-            : 'Failed to load AI Plan';
+            : 'Failed to load AI Manager';
       if (!silent) {
         setError(message);
         setDays([]);
@@ -862,18 +862,18 @@ export default function AIPlanPage() {
     setSavingPlatforms(true);
     try {
       await selectAIPlanPlatformsApi(platformChoice);
-      toast.success('Platforms locked and your monthly AI Plan was created');
+      toast.success('Platforms locked and your monthly AI Manager was created');
       await load();
     } catch (err) {
       const message =
         err && typeof err === 'object' && 'response' in err
           ? String(
               (err as { response?: { data?: { message?: string } } }).response
-                ?.data?.message ?? 'Could not save AI Plan platforms'
+                ?.data?.message ?? 'Could not save AI Manager platforms'
             )
           : err instanceof Error
             ? err.message
-            : 'Could not save AI Plan platforms';
+            : 'Could not save AI Manager platforms';
       toast.error(message);
     } finally {
       setSavingPlatforms(false);
@@ -884,7 +884,7 @@ export default function AIPlanPage() {
     setGeneratingCalendar(true);
     try {
       await generateAIPlanApi();
-      toast.success('Your AI Plan is ready');
+      toast.success('Your AI Manager is ready');
       await load({ silent: true });
     } catch (err) {
       const message =
@@ -899,7 +899,7 @@ export default function AIPlanPage() {
             )
           : err instanceof Error
             ? err.message
-            : 'Failed to generate AI Plan';
+            : 'Failed to generate AI Manager';
       toast.error(message);
     } finally {
       setGeneratingCalendar(false);
@@ -1010,7 +1010,7 @@ export default function AIPlanPage() {
     const targets = globalForceRunTargets({ days, platforms, todayIso });
     if (targets.length === 0) {
       toast.error(
-        'There is no remaining AI Plan content available to Force Run'
+        'There is no remaining AI Manager content available to Force Run'
       );
       return;
     }
@@ -1082,7 +1082,7 @@ export default function AIPlanPage() {
       return;
     }
     if (globalForceRunProgress.failed === 0) {
-      toast.success('All remaining AI Plan content has finished generating');
+      toast.success('All remaining AI Manager content has finished generating');
     }
     setGlobalForceRunProgress(null);
   }, [days, globalForceRunProgress]);
@@ -1121,10 +1121,10 @@ export default function AIPlanPage() {
       <div className="mx-auto flex max-w-lg flex-col items-center justify-center gap-4 px-6 py-24 text-center">
         <CalendarRange className="h-10 w-10 text-secondary" />
         <h1 className="text-page-title text-default">
-          Upgrade to unlock AI Plan
+          Upgrade to unlock AI Manager
         </h1>
         <p className="text-sm text-secondary">
-          AI Plan automation is available on Prime AI, Elite AI, and Legacy AI
+          AI Manager automation is available on Prime AI, Elite AI, and Legacy AI
           plans.
         </p>
         <Link
@@ -1144,7 +1144,7 @@ export default function AIPlanPage() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-background/85 px-6 backdrop-blur-sm"
           role="alertdialog"
           aria-modal="true"
-          aria-label="Generating all AI Plan content"
+          aria-label="Generating all AI Manager content"
         >
           <div className="w-full max-w-md rounded-xl border border-default bg-default p-6 text-center">
             <Loader2
@@ -1179,9 +1179,9 @@ export default function AIPlanPage() {
             Auto mode
           </span>
         </div>
-        <h1 className="text-page-title text-default">AI Plan</h1>
+        <h1 className="text-page-title text-default">AI Manager</h1>
         <p className="max-w-2xl text-sm text-secondary">
-          Your AI Plan calendar from start to end — rows are days, columns are
+          Your AI Manager calendar from start to end — rows are days, columns are
           the platforms locked for this billing cycle.
         </p>
         {range?.from && range?.to ? (
@@ -1202,7 +1202,7 @@ export default function AIPlanPage() {
         >
           <Share2 className="mx-auto mb-3 h-8 w-8 text-secondary" />
           <p className="text-sm font-medium text-default">
-            Select platforms for this AI Plan cycle
+            Select platforms for this AI Manager cycle
           </p>
           <p className="mt-1 text-xs text-secondary">
             Select exactly the number included with your tier. Accounts can be
@@ -1254,8 +1254,8 @@ export default function AIPlanPage() {
             className="mt-4 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-semibold text-link-foreground hover:opacity-90 disabled:cursor-not-allowed disabled:text-quaternary"
           >
             {savingPlatforms
-              ? 'Creating AI Plan…'
-              : 'Lock selection and create AI Plan'}
+              ? 'Creating AI Manager…'
+              : 'Lock selection and create AI Manager'}
           </button>
         </div>
       ) : null}
@@ -1263,7 +1263,7 @@ export default function AIPlanPage() {
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-16 text-sm text-secondary">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading your AI Plan…
+          Loading your AI Manager…
         </div>
       ) : null}
 
@@ -1288,7 +1288,7 @@ export default function AIPlanPage() {
         <div className="flex min-h-[360px] flex-col items-center justify-center border border-default bg-default px-6 text-center">
           <CalendarRange className="mb-4 h-10 w-10 text-link" />
           <h2 className="text-section text-default">
-            Generate your AI Plan calendar
+            Generate your AI Manager calendar
           </h2>
           <p className="mt-2 max-w-md text-sm text-secondary">
             We’ll allocate Create Post, Videos, Carousel Posts, Occasion Posts,
@@ -1303,7 +1303,7 @@ export default function AIPlanPage() {
             {generatingCalendar ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : null}
-            {generatingCalendar ? 'Generating AI Plan…' : 'Generate AI Plan'}
+            {generatingCalendar ? 'Generating AI Manager…' : 'Generate AI Manager'}
           </button>
           {!canGenerateCalendar ? (
             <p className="mt-3 text-xs text-secondary">

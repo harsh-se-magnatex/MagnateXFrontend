@@ -36,7 +36,7 @@ const topNav = [
   { name: 'Home', href: '/home', icon: Home },
   { name: 'Contact Us', href: '/settings/support-legal', icon: MessageSquare },
   {
-    name: 'AutoPilot Preferences',
+    name: 'AI Manager Preferences',
     href: '/settings/autopilot-preference',
     icon: Rocket,
   },

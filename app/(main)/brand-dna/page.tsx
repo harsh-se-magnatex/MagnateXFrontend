@@ -1103,7 +1103,7 @@ export default function BusinessProfilePage() {
                     </p>
                     <p className="mb-3 text-xs text-secondary">
                       Choose how your social page should feel — used for Content
-                      Studio, carousels, Occasion Posts, and Autopilot
+                      Studio, carousels, Occasion Posts, and AI Manager
                       generations.
                     </p>
                     <PageLookSelector
@@ -1330,12 +1330,6 @@ export default function BusinessProfilePage() {
                           event.target.value = '';
                         }}
                       />
-                      {useVideoAvatar ? (
-                        <p className="mt-3 rounded-lg border border-warning bg-warning px-3 py-2 text-xs text-warning">
-                          A real-person avatar photo may require portrait
-                          authorization from the video service.
-                        </p>
-                      ) : null}
                     </div>
                   </div>
 

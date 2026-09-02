@@ -177,6 +177,8 @@ export type ScheduleUserPostCarouselSlide = {
 
 /** Library / generated media: server already has Firebase path + preview URL. */
 export type ScheduleUserPostFromLibrary = {
+  /** Existing generated content doc to update instead of creating a duplicate. */
+  existingPostId?: string;
   message: string;
   time: string;
   platform: string;
@@ -213,9 +215,18 @@ export type ScheduleUserPostFromFile = {
   platform: string;
 };
 
+export type ScheduleUserPostFromFiles = {
+  files: File[];
+  mediaType: 'carousel';
+  message: string;
+  time: string;
+  platform: string;
+};
+
 export type ScheduleUserPostInput =
   | ScheduleUserPostFromLibrary
-  | ScheduleUserPostFromFile;
+  | ScheduleUserPostFromFile
+  | ScheduleUserPostFromFiles;
 
 export const scheduleUserPost = async (params: ScheduleUserPostInput) => {
   if ('file' in params) {
@@ -230,7 +241,17 @@ export const scheduleUserPost = async (params: ScheduleUserPostInput) => {
     formData.append('platform', platform);
     return apiPost<ApiEnvelope>('/api/v1/user/schedule-user-post', formData);
   }
-  const { message, time, platform, source, ...media } = params;
+  if ('files' in params) {
+    const { files, mediaType, message, time, platform } = params;
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+    formData.append('mediaType', mediaType);
+    formData.append('message', message);
+    formData.append('time', time);
+    formData.append('platform', platform);
+    return apiPost<ApiEnvelope>('/api/v1/user/schedule-user-post', formData);
+  }
+  const { message, time, platform, source, existingPostId, ...media } = params;
   const body =
     media.mediaType === 'carousel'
       ? {
@@ -266,8 +287,19 @@ export const scheduleUserPost = async (params: ScheduleUserPostInput) => {
     message,
     time,
     platform,
+    ...(existingPostId ? { existingPostId } : {}),
     ...(source ? { source } : {}),
   });
+};
+
+export const generateScheduleCaption = async (files: File[]) => {
+  const formData = new FormData();
+  files.forEach((file) => formData.append('files', file));
+  const response = await apiPost<ApiEnvelope<{ caption: string }>>(
+    '/api/v1/user/generate-schedule-caption',
+    formData,
+  );
+  return response.data.caption;
 };
 
 export const editUserPreferences = async (

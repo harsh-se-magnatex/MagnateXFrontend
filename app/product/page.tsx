@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
 import { ProductPageContent } from '@/components/landing/product-page-content';
+import { JsonLd, SOFTWARE_APPLICATION_JSON_LD } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Product — Sociogenie | How It Works, Features, Pricing & FAQ',
+  title: 'AI Social Media Management Software: All Features | SocioGenie',
   description:
-    'Learn how Sociogenie generates AI content, human-reviews every post, and publishes automatically across Instagram, Facebook, and LinkedIn.',
+    'See how SocioGenie researches, writes, designs and publishes to Instagram, Facebook and LinkedIn — 14 tools, an automated monthly calendar, and human review on every AI Manager plan.',
   alternates: {
     canonical: 'https://www.sociogenie.ai/product',
   },
   openGraph: {
-    title: 'Product — Sociogenie | How It Works, Features, Pricing & FAQ',
+  title: 'AI Social Media Management Software: All Features | SocioGenie',
     description:
-      'Learn how Sociogenie generates AI content, human-reviews every post, and publishes automatically across Instagram, Facebook, and LinkedIn.',
+    'See how SocioGenie researches, writes, designs and publishes to Instagram, Facebook and LinkedIn — 14 tools, an automated monthly calendar, and human review on every AI Manager plan.',
     siteName: 'SocioGenie',
     url: 'https://www.sociogenie.ai/product',
     images: ['/logo.png'],
@@ -20,5 +21,5 @@ export const metadata: Metadata = {
 };
 
 export default function ProductPage() {
-  return <ProductPageContent />;
+  return <><JsonLd data={SOFTWARE_APPLICATION_JSON_LD} /><ProductPageContent /></>;
 }

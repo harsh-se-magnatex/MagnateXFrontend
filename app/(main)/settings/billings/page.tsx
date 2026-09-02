@@ -92,7 +92,7 @@ import {
 } from '@/lib/email-verification-for-purchase';
 import { isPlanInactive } from '@/lib/plan-access';
 
-type PlanModeDisplay = 'AutoPilot' | 'Studio';
+type PlanModeDisplay = 'AIManager' | 'Studio';
 type PlanMode = 'auto' | 'manual';
 const TOP_UP_PACK_LABELS = ['Starter', 'Basic', 'Growth', 'Business'] as const;
 
@@ -115,16 +115,16 @@ const PLAN_MODE_TAB: Record<
   PlanModeDisplay,
   { label: string; sublabel: string }
 > = {
-  AutoPilot: { label: 'AutoPilot', sublabel: 'Personalized AI' },
+  AIManager: { label: 'AI Manager', sublabel: 'Personalized AI' },
   Studio: { label: 'Studio', sublabel: 'You create every post' },
 };
 
 function planModeToDisplay(mode: PlanMode): PlanModeDisplay {
-  return mode === 'auto' ? 'AutoPilot' : 'Studio';
+  return mode === 'auto' ? 'AIManager' : 'Studio';
 }
 
 function displayModeToPlan(mode: PlanModeDisplay): PlanMode {
-  return mode === 'AutoPilot' ? 'auto' : 'manual';
+  return mode === 'AIManager' ? 'auto' : 'manual';
 }
 
 const PLAN_KEY_ALIASES: Record<string, PlanId> = {
@@ -1392,7 +1392,7 @@ export default function BillingsPage() {
             <li>· Create Post: 2 credits</li>
             <li>· Occasion Posts: 2 credits</li>
             <li>· Carousel: 3 credits per slide</li>
-            <li>· Video Generation: 15 credits</li>
+            <li>· Video Generation: 100 credits</li>
             <li>· Regeneration: 1 credit (First regen free)</li>
           </ul>
         </section>
@@ -1510,7 +1510,7 @@ export default function BillingsPage() {
                 </span>
               )}
               <span>
-                AI plans differ by how many selected platforms their AI Plan can
+                AI Manager tiers differ by how many selected platforms their AI Manager can
                 automate.
               </span>
             </DialogDescription>
@@ -1522,7 +1522,7 @@ export default function BillingsPage() {
             aria-label="Plan mode"
             className="flex rounded-xl w-full justify-center p-1 border border-default self-center"
           >
-            {(['AutoPilot', 'Studio'] as const).map((mode) => {
+            {(['AIManager', 'Studio'] as const).map((mode) => {
               const selected = planModeToDisplay(upgradeMode) === mode;
               const { label, sublabel } = PLAN_MODE_TAB[mode];
               return (
@@ -1589,8 +1589,8 @@ export default function BillingsPage() {
                       {landingPlan.name}
                     </h3>
                     <p className="text-sm text-secondary text-center mt-1 leading-snug">
-                      {landingPlan.mode === 'AutoPilot'
-                        ? 'Auto Plan'
+                      {landingPlan.mode === 'AIManager'
+                        ? 'AI Manager'
                         : 'Manual Plan'}
                     </p>
                     <div className="mt-1 mb-4 text-center">

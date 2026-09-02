@@ -21,6 +21,8 @@ export type PostSchedulerPrefillCarouselSlide = {
 };
 
 export type PostSchedulerPrefillPost = {
+  /** Existing generated-media content doc to update when scheduling from the gallery. */
+  existingPostId?: string;
   imageUrl: string;
   imageFilePath: string;
   mediaType?: 'image' | 'video' | 'carousel';

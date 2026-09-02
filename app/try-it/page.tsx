@@ -2,16 +2,17 @@ import type { Metadata } from 'next';
 import NavBar from '../(main)/_components/NavBar';
 import { LeadMagnetSection } from '@/components/landing/lead-magnet-section';
 import '@/components/landing/landing.css';
+import { JsonLd, SOFTWARE_APPLICATION_JSON_LD } from '@/lib/seo';
 
 export const metadata: Metadata = {
-  title: 'Try it — Sociogenie | Free sample post',
+  title: 'Free AI Social Media Post Generator — No Signup | SocioGenie',
   description:
-    'Enter your website and email, pick a platform, and get one free sample social post crafted from your brand — no signup required.',
+    'Enter your website and get one finished social post for your brand in about a minute — caption and image. No account, no card. Instagram, Facebook or LinkedIn.',
   alternates: {
     canonical: 'https://www.sociogenie.ai/try-it',
   },
   openGraph: {
-    title: 'Try it — Sociogenie | Free sample post',
+  title: 'Free AI Social Media Post Generator — No Signup | SocioGenie',
     description:
       'Enter your website and email, pick a platform, and get one free sample social post crafted from your brand — no signup required.',
     siteName: 'SocioGenie',
@@ -24,7 +25,9 @@ export const metadata: Metadata = {
 export default function TryItPage() {
   return (
     <div className="min-h-screen bg-screen">
+      <JsonLd data={SOFTWARE_APPLICATION_JSON_LD} />
       <NavBar />
+      <p className="mx-auto max-w-3xl px-6 pt-28 text-center text-secondary">SocioGenie&apos;s free sample writes and designs one finished social media post from your website address, with no account and no card. Enter your URL, confirm the brand details it reads back, pick Instagram, Facebook or LinkedIn, and judge the output before you subscribe. It takes about a minute.</p>
       <LeadMagnetSection />
     </div>
   );

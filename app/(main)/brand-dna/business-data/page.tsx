@@ -1234,7 +1234,7 @@ export default function TemplateDnaMemoryLayerPage() {
                         product images are shared with generation so Auto-mode
                         video can run product-advert scenes and captions/visuals
                         can match your products. Turn it off anytime to use
-                        Autopilot image generation without product photos.
+                        AI Manager image generation without product photos.
                       </p>
                     </div>
                   </div>

@@ -41,9 +41,9 @@ const appUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
-  title: 'Sociogenie – AI Social Media Management for Small Businesses',
+  title: 'SocioGenie — AI Social Media Management for Small Business',
   description:
-    'Sociogenie helps small businesses automate social media with AI-generated, human-reviewed content for Instagram, Facebook, and LinkedIn. Setup in under 10 minutes.',
+    'SocioGenie plans, writes, designs and publishes your Instagram, Facebook and LinkedIn posts. Automated from $49.99/month, or six AI tools you run yourself from $14.99.',
   keywords: [
     'social media management',
     'AI social media',
@@ -88,18 +88,38 @@ export const metadata: Metadata = {
  */
 const ORGANIZATION_JSON_LD = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'SocioGenie',
-  legalName: 'MAGNATEX LLP',
-  url: 'https://www.sociogenie.ai',
-  logo: 'https://www.sociogenie.ai/logo.png',
-};
-
-const WEBSITE_JSON_LD = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'SocioGenie',
-  url: 'https://www.sociogenie.ai',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://www.sociogenie.ai/#organization',
+      name: 'SocioGenie',
+      legalName: 'MAGNATEX LLP',
+      url: 'https://www.sociogenie.ai/',
+      logo: 'https://www.sociogenie.ai/logo.png',
+      foundingDate: '2026',
+      description:
+        'AI social media management software for small businesses. Plans, writes, designs and publishes posts to Instagram, Facebook and LinkedIn via official platform APIs.',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'Ahmedabad',
+        addressRegion: 'Gujarat',
+        addressCountry: 'IN',
+      },
+      sameAs: [
+        'https://www.instagram.com/sociogenie/',
+        'https://www.facebook.com/sociogenie/',
+        'https://x.com/sociogenie',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://www.sociogenie.ai/#website',
+      url: 'https://www.sociogenie.ai/',
+      name: 'SocioGenie',
+      inLanguage: 'en',
+      publisher: { '@id': 'https://www.sociogenie.ai/#organization' },
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -118,10 +138,6 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(WEBSITE_JSON_LD) }}
         />
       </head>
       <body className="antialiased text-default min-h-screen relative">

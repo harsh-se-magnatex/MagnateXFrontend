@@ -104,7 +104,7 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
                 onClick={closeMobileNav}
               >
                 <span className="relative z-10 flex items-center">
-                  Get Started Free
+                  Try it free
                   <ArrowRight className="ml-2 h-4 w-4 transition-expo-transform group-hover:translate-x-0.5" />
                 </span>
               </GuestAuthLink>
@@ -198,7 +198,7 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
                     onClick={closeMobileNav}
                   >
                     <span className="relative z-10 flex items-center">
-                      Sign up free
+                      Try it free
                       <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </span>
                   </GuestAuthLink>

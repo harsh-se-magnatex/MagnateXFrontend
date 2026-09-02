@@ -55,9 +55,9 @@ const BILLING_FAQ_ITEMS = [
       "Plan credits reset to your plan's monthly allowance at the start of each billing cycle — unused plan credits don't roll over. Credit packs you buy separately stay valid for 30 days from purchase.",
   },
   {
-    question: "Does the AI Plan's automated posting use my credits?",
+    question: "Does AI Manager's automated posting use my credits?",
     answer:
-      "No. Your AI Plan calendar runs on your subscription and never touches your credit balance. Credits are only spent when you manually trigger something — Create Post, Product Posts, Campaigns, Occasion Posts, Carousel Posts, or Videos — outside the automated calendar.",
+      "No. Your AI Manager calendar runs on your subscription and never touches your credit balance. Credits are only spent when you manually trigger something — Create Post, Product Posts, Campaigns, Occasion Posts, Carousel Posts, or Videos — outside the automated calendar.",
   },
   {
     question: 'In what order are my credits spent?',
@@ -76,20 +76,19 @@ const CREDIT_ACTIONS = [
   { label: 'Create Post', credits: '2 credits' },
   { label: 'Occasion Posts', credits: '2 credits' },
   { label: 'Carousel Posts', credits: '3 credits / slide' },
-  { label: 'Videos', credits: '15 credits' },
+  { label: 'Videos', credits: '100 credits' },
   { label: 'Regeneration', credits: '1 credit (First regen free)' },
 ] as const;
 
 /** All four active plans, for `Offer` JSON-LD — matches `PRICING_PLANS_BY_ID`. */
 const PRICING_JSON_LD = {
   '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'SocioGenie',
-  applicationCategory: 'BusinessApplication',
-  operatingSystem: 'Web',
+  '@type': 'Product',
+  name: 'SocioGenie Plans',
   description:
-    'AI social media management for small businesses — automated and on-demand content for Instagram, Facebook and LinkedIn.',
+    'Subscription plans for SocioGenie. Every plan includes the six AI creation tools and publishes to Instagram, Facebook and LinkedIn. The difference is who decides what gets made and when: on Studio you do, and on Prime, Elite and Legacy AI Manager plans and runs the month for you.',
   url: 'https://www.sociogenie.ai/pricing',
+  brand: { '@id': 'https://www.sociogenie.ai/#organization' },
   // Always USD, never the localised display figure: schema states the price
   // actually settled, and this is what AI assistants and search engines quote.
   offers: Object.values(PRICING_PLANS_BY_ID).map((plan) => ({
@@ -98,6 +97,8 @@ const PRICING_JSON_LD = {
     price: plan.priceUsd.toFixed(2),
     priceCurrency: 'USD',
     url: 'https://www.sociogenie.ai/pricing',
+    priceValidUntil: '2027-01-01',
+    availability: 'https://schema.org/InStock',
   })),
 } as const;
 
@@ -142,8 +143,9 @@ export default function PricingPage() {
   /** "Studio" = manual mode (you curate every post). "AI" = auto mode
    *  (daily orchestrator generates posts automatically). Pricing + credit
    *  counts differ between the two within the same tier. */
-  const [planMode, setPlanMode] = useState<PlanMode>('AutoPilot');
+  const [planMode, setPlanMode] = useState<PlanMode>('AIManager');
   const visiblePlans = pricingPlansForMode(planMode);
+  const allPlans = Object.values(PRICING_PLANS_BY_ID);
   const signedIn = useServerSession() === true;
 
   useEffect(() => {
@@ -234,7 +236,7 @@ export default function PricingPage() {
                   className="btn-brand-fill group inline-flex h-9 items-center justify-center rounded-full px-4 text-sm font-medium"
                 >
                   <span className="relative z-10 flex items-center">
-                    Get Started Free
+                    Try it free
                     <ArrowRight className="ml-2 h-4 w-4 transition-expo-transform group-hover:translate-x-0.5" />
                   </span>
                 </GuestAuthLink>
@@ -323,7 +325,7 @@ export default function PricingPage() {
                     onClick={closeMobileNav}
                   >
                     <span className="relative z-10 flex items-center">
-                      Get Started Free
+                      Try it free
                       <ArrowRight className="ml-2 h-4 w-4 transition-expo-transform group-hover:translate-x-0.5" />
                     </span>
                   </GuestAuthLink>
@@ -346,24 +348,19 @@ export default function PricingPage() {
               variants={fadeIn}
               className="text-display-2 text-default mb-4 text-center text-balance"
             >
-              Pricing
+              How much does SocioGenie cost?
             </motion.h1>
             <motion.p
               variants={fadeIn}
               className="mx-auto mb-6 max-w-2xl text-center text-sm text-secondary sm:text-base font-(--font-dm-sans) text-pretty"
             >
-              Pricing for our plans and credit packs. No contracts — cancel
-              anytime.
+              Every feature is on every plan. The difference is who decides what gets made and when — you, or the AI. No contracts · Cancel anytime.
             </motion.p>
             <motion.p
               variants={fadeIn}
               className="mx-auto mb-6 max-w-2xl text-center text-sm text-tertiary font-(--font-dm-sans) text-pretty"
             >
-              Studio starts at <InlinePrice usd={14.99} />/month with 100
-              credits for manual content. AI Plans start at{' '}
-              <InlinePrice usd={49.99} />/month and add a fully automated
-              monthly calendar — every plan includes human review before
-              publishing.
+              SocioGenie pricing starts at <InlinePrice usd={14.99} /> a month for Studio, which includes 100 credits and six AI creation tools. AI Manager tiers, where the AI runs your calendar, are <InlinePrice usd={49.99} /> for one platform, <InlinePrice usd={69.99} /> for two and <InlinePrice usd={84.99} /> for three. Credit packs start at <InlinePrice usd={6.99} />.
             </motion.p>
 
             <motion.div
@@ -379,9 +376,9 @@ export default function PricingPage() {
               aria-label="Plan mode"
               className="mx-auto mb-8 flex w-full max-w-fit items-center justify-center gap-1 rounded-full border border-default bg-element p-1 backdrop-blur-sm"
             >
-              {(['AutoPilot', 'Studio'] as const).map((mode) => {
+              {(['AIManager', 'Studio'] as const).map((mode) => {
                 const selected = planMode === mode;
-                const label = mode === 'Studio' ? 'Studio' : 'AI';
+                const label = mode === 'Studio' ? 'Studio' : 'AI Manager';
                 const sublabel =
                   mode === 'Studio'
                     ? 'You create every post'
@@ -417,10 +414,11 @@ export default function PricingPage() {
                   : 'max-w-6xl md:grid-cols-3'
               )}
             >
-              {visiblePlans.map((p) => (
+              {allPlans.map((p) => (
                 <motion.div
                   variants={scaleIn}
                   key={p.name}
+                  hidden={p.mode !== planMode}
                   className={cn(
                     'group relative flex h-full min-h-0 flex-col rounded-3xl p-8 border transition-expo overflow-visible',
                     p.highlighted
@@ -557,7 +555,7 @@ export default function PricingPage() {
             >
               Credits pay for content you generate on demand — product posts,
               quick creates, campaigns, occasion posts, carousels, and videos.
-              If you&apos;re on an AI Plan, your automated monthly calendar (19
+              If you&apos;re on Prime, Elite or Legacy, your automated monthly calendar (19
               pieces of content per cycle, plus seasonal posts) runs on your
               subscription and never touches this balance.
             </motion.p>
@@ -589,8 +587,7 @@ export default function PricingPage() {
               variants={fadeIn}
               className="text-secondary font-(--font-dm-sans) mb-4 leading-relaxed max-w-xl"
             >
-              Add credits on top of your plan allowance. Purchased pack credits
-              are valid for 30 days from purchase.
+              Credit packs are one-time top-ups, not subscriptions. They don&apos;t renew and they expire 30 days after purchase.
             </motion.p>
             <motion.h4
               variants={fadeIn}

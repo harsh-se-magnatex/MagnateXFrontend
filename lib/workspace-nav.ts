@@ -101,7 +101,7 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.schedulePost),
   },
   {
-    name: 'AI Plan',
+    name: 'AI Manager',
   href: WORKSPACE_NAV_HREFS.contentPlan,
   match: (pathname) =>
     !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.contentPlan),

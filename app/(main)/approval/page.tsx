@@ -83,7 +83,7 @@ export type PendingScheduledPost = {
   createdAt: FirestoreTimestamp;
   updatedAt?: FirestoreTimestamp;
   GeneratedBy?: string;
-  /** Only Autopilot posts support regenerate (matches scheduled-posts page). */
+  /** Only AI Manager posts support regenerate (matches scheduled-posts page). */
   generatedByAiEngine?: boolean;
   generationProof?: unknown;
   /**
@@ -791,7 +791,7 @@ export default function ApprovalPage() {
       }
       const target = pendingPosts.find((p) => p.postId === postId);
       if (action === 'regenerate' && target?.generatedByAiEngine !== true) {
-        showErrorToast('Only Autopilot posts can be regenerated.');
+        showErrorToast('Only AI Manager posts can be regenerated.');
         return;
       }
 

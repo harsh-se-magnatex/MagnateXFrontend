@@ -86,7 +86,7 @@ const AGENTS: Agent[] = [
     tag: 'Human Reviewer',
     title: 'Quality, checked by a human',
     description:
-      'Your call: review every post yourself, or let our in-house team clear it for you. Either way, nothing goes out unchecked.',
+      'On Prime, Elite and Legacy: choose Manual Review and clear every post yourself, or Auto Approve and let our in-house team clear it for you. On Studio you create each post and see it before it publishes.',
     icon: ShieldCheck,
     accent: 'var(--brand-orchid)',
   },
@@ -231,7 +231,7 @@ const AI_PLAN_STATS: { qty: string; label: string }[] = [
 
 /**
  * The moat section, described through the product's real vocabulary —
- * "AI Plan," not an invented "AI Engine" brand, since that name isn't
+ * "AI Manager," the customer-facing automation feature.
  * customer-facing anywhere in the app. States the real 19-item/cycle
  * breakdown; the full table lives on /product#plans, this just teases it.
  */
@@ -242,14 +242,14 @@ export function LandingAutomation() {
         <div className="max-w-2xl">
           <p className="brand-pill">
             <Sparkles className="size-3.5" aria-hidden />
-            Inside the AI Plan
+            AI Manager
           </p>
           <h2 className="mt-6 text-display-2 text-default">
             A full month,{' '}
             <span className="text-gradient-brand">planned before you ask.</span>
           </h2>
           <p className="mt-5 text-base leading-relaxed text-secondary">
-            On an AI Plan, SocioGenie researches your industry and
+            AI Manager builds your month, writes and designs each post, clears it through review, and publishes at your best hour. On Prime, Elite and Legacy, SocioGenie researches your industry and
             competitors, plans content two days ahead of every post, writes
             and designs it in your brand voice, routes it through the review
             mode you choose, and publishes at the time your own analytics say

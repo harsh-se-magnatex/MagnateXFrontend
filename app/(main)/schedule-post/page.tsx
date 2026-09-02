@@ -23,6 +23,8 @@ import {
   Send,
   AlertCircle,
   Sparkles,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { workspacePageTitleClass } from '@/lib/workspace-ui';
@@ -34,7 +36,10 @@ import {
   validateGenerationPlatformSelection,
   type SocialPlatform,
 } from '@/lib/platform-selection';
-import { scheduleUserPost } from '@/src/service/api/userService';
+import {
+  generateScheduleCaption,
+  scheduleUserPost,
+} from '@/src/service/api/userService';
 import { getTodatDate } from '@/utils/getTodayDate';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
@@ -76,6 +81,7 @@ const VIDEO_UPLOAD_PLATFORMS = ['facebook', 'instagram', 'linkedin'] as const;
 const LINKEDIN_MAX_VIDEO_BYTES = 500 * 1024 * 1024;
 const FACEBOOK_MAX_VIDEO_BYTES = 190 * 1024 * 1024;
 const INSTAGRAM_MAX_VIDEO_BYTES = 190 * 1024 * 1024;
+const MAX_CAPTION_VIDEO_SECONDS = 2 * 60;
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 type SchedulerPlatform = SocialPlatform;
@@ -136,12 +142,15 @@ export default function PostSchedulePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedMediaFile, setSelectedMediaFile] = useState<File | null>(null);
+  const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
+  const [captionGenerating, setCaptionGenerating] = useState(false);
   const imagePreview = useImagePreview();
   const [prefilledImageUrl, setPrefilledImageUrl] = useState<string>('');
   const [prefilledImageFilePath, setPrefilledImageFilePath] =
     useState<string>('');
   const [prefilledPosts, setPrefilledPosts] = useState<
     Array<{
+      existingPostId?: string;
       imageUrl: string;
       imageFilePath: string;
       mediaType?: 'image' | 'video' | 'carousel';
@@ -184,6 +193,7 @@ export default function PostSchedulePage() {
   const prefilledMediaType = singlePrefilledPost?.mediaType;
   const hasMedia =
     selectedMediaFile !== null ||
+    selectedImageFiles.length > 0 ||
     Boolean(prefilledImageUrl) ||
     Boolean(singlePrefilledPost?.videoUrl) ||
     (singlePrefilledPost?.mediaType === 'carousel' &&
@@ -244,19 +254,16 @@ export default function PostSchedulePage() {
     !isPrefilledFlow && genPlatforms.length === 1 ? genPlatforms[0] : null;
   const supportsVideoUploadSelection =
     !isPrefilledFlow &&
-    selectedSinglePlatform !== null &&
-    VIDEO_UPLOAD_PLATFORMS.includes(
-      selectedSinglePlatform as (typeof VIDEO_UPLOAD_PLATFORMS)[number]
+    genPlatforms.every((platform) =>
+      VIDEO_UPLOAD_PLATFORMS.includes(
+        platform as (typeof VIDEO_UPLOAD_PLATFORMS)[number]
+      )
     );
   const acceptsVideoUpload =
     supportsVideoUploadSelection || genPlatforms.length === 0;
   const fileInputAccept = acceptsVideoUpload
     ? [...ACCEPTED_IMAGE_TYPES, ...ACCEPTED_VIDEO_TYPES].join(',')
     : ACCEPTED_IMAGE_TYPES.join(',');
-  const hasInvalidVideoPlatformSelection =
-    selectedMediaType === 'video' &&
-    (!supportsVideoUploadSelection || isPrefilledFlow);
-
   const schedulePlatforms = useMemo(() => {
     const platforms = isPrefilledFlow
       ? prefilledPosts.map((post) => post.platform)
@@ -339,25 +346,51 @@ export default function PostSchedulePage() {
     }
   }
 
-  const handleFile = useCallback(
-    (file: File | null) => {
+  const handleFiles = useCallback(
+    async (files: File[]) => {
       setImageError(null);
-      if (!file) {
+      if (files.length === 0) {
         setSelectedMediaFile(null);
+        setSelectedImageFiles([]);
         return;
       }
-      const mediaType = getUploadMediaType(file);
-      if (!mediaType) {
+      if (files.length > 10) {
+        setImageError('You can upload a maximum of 10 images for a carousel.');
+        return;
+      }
+      const mediaTypes = files.map(getUploadMediaType);
+      if (mediaTypes.some((type) => type === null)) {
         setImageError(
           'Please use a valid image (JPEG, PNG, GIF, WebP) or MP4 video.'
         );
         return;
       }
-      if (mediaType === 'video' && !acceptsVideoUpload) {
-        setImageError(
-          'MP4 video uploads are currently supported only for single-platform Facebook, Instagram, or LinkedIn posts.'
-        );
+      if (files.length > 1 && mediaTypes.some((type) => type !== 'image')) {
+        setImageError('A carousel can contain only images. Upload one MP4 video by itself.');
         return;
+      }
+      const file = files[0];
+      const mediaType = mediaTypes[0];
+      if (mediaType === 'video') {
+        const objectUrl = URL.createObjectURL(file);
+        try {
+          const duration = await new Promise<number>((resolve, reject) => {
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            video.onloadedmetadata = () => resolve(video.duration);
+            video.onerror = () => reject(new Error('Could not read video duration'));
+            video.src = objectUrl;
+          });
+          if (!Number.isFinite(duration) || duration > MAX_CAPTION_VIDEO_SECONDS) {
+            setImageError('Videos for AI captions must be 2 minutes or shorter.');
+            return;
+          }
+        } catch {
+          setImageError('Could not read the video duration. Please choose another MP4.');
+          return;
+        } finally {
+          URL.revokeObjectURL(objectUrl);
+        }
       }
       if (
         mediaType === 'video' &&
@@ -385,9 +418,16 @@ export default function PostSchedulePage() {
       }
       setPrefilledImageUrl('');
       setPrefilledImageFilePath('');
-      setSelectedMediaFile(file);
+      setSelectedMediaFile(files.length === 1 ? file : null);
+      setSelectedImageFiles(mediaType === 'image' ? files : []);
+      setMessage('');
     },
     [acceptsVideoUpload, selectedSinglePlatform]
+  );
+
+  const handleFile = useCallback(
+    (file: File | null) => handleFiles(file ? [file] : []),
+    [handleFiles]
   );
 
   const onDrop = useCallback(
@@ -395,10 +435,9 @@ export default function PostSchedulePage() {
       e.preventDefault();
       setIsDragging(false);
       if (imageAreaDisabled) return;
-      const file = e.dataTransfer.files?.[0];
-      if (file) handleFile(file);
+      handleFiles(Array.from(e.dataTransfer.files ?? []));
     },
-    [imageAreaDisabled, handleFile]
+    [imageAreaDisabled, handleFiles]
   );
 
   const onDragOver = useCallback(
@@ -418,18 +457,28 @@ export default function PostSchedulePage() {
   }, []);
 
   const onFileInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
+    handleFiles(Array.from(e.target.files ?? []));
     e.target.value = '';
   };
 
   const clearImage = () => {
     setSelectedMediaFile(null);
+    setSelectedImageFiles([]);
     setPrefilledImageUrl('');
     setPrefilledImageFilePath('');
     setPrefilledPosts([]);
     setIsPrefilledFlow(false);
     setImageError(null);
+  };
+
+  const moveSelectedImage = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= selectedImageFiles.length) return;
+    setSelectedImageFiles((current) => {
+      const next = [...current];
+      const [moved] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, moved);
+      return next;
+    });
   };
 
   // Wipes every input on the scheduler form. Called after a successful
@@ -439,6 +488,7 @@ export default function PostSchedulePage() {
   const resetSchedulerForm = () => {
     clearPostSchedulerPrefill();
     setSelectedMediaFile(null);
+    setSelectedImageFiles([]);
     setPrefilledImageUrl('');
     setPrefilledImageFilePath('');
     setPrefilledPosts([]);
@@ -485,7 +535,6 @@ export default function PostSchedulePage() {
     (platform: SchedulerPlatform) => {
       if (isTourDemo) return false;
       if (!hasSelectablePlatforms || showSelectAccountsFirst) return false;
-      if (hasInvalidVideoPlatformSelection) return false;
       if (!selectedAccounts?.[platform]) return false;
 
       const scheduledAtIso = getScheduledAtIso(platform);
@@ -526,7 +575,6 @@ export default function PostSchedulePage() {
     [
       genPlatforms,
       getScheduledAtIso,
-      hasInvalidVideoPlatformSelection,
       hasScheduleWindow,
       hasMedia,
       hasSelectablePlatforms,
@@ -549,6 +597,28 @@ export default function PostSchedulePage() {
   })
     ? PAST_SCHEDULE_TIME_MESSAGE
     : null;
+
+  const handleGenerateCaption = async () => {
+    const filesToAnalyze = selectedImageFiles.length > 0
+      ? selectedImageFiles
+      : selectedMediaFile
+        ? [selectedMediaFile]
+        : [];
+    if (isPrefilledFlow || filesToAnalyze.length === 0) return;
+    try {
+      setCaptionGenerating(true);
+      setImageError(null);
+      const caption = await generateScheduleCaption(filesToAnalyze);
+      setMessage(caption);
+      toast.success('Caption generated with AI');
+    } catch (error) {
+      showErrorToast(
+        error instanceof Error ? error.message : 'Failed to generate caption'
+      );
+    } finally {
+      setCaptionGenerating(false);
+    }
+  };
 
   useEffect(() => {
     if (!loading && !user) router.replace('/sign-in');
@@ -599,6 +669,10 @@ export default function PostSchedulePage() {
                   .filter((s) => s.imageUrl && s.imageFilePath)
               : undefined;
             return {
+              existingPostId:
+                typeof item?.existingPostId === 'string'
+                  ? item.existingPostId.trim()
+                  : undefined,
               imageUrl: String(item?.imageUrl ?? '').trim(),
               imageFilePath: String(item?.imageFilePath ?? '').trim(),
               mediaType:
@@ -779,6 +853,9 @@ export default function PostSchedulePage() {
         }
 
         await scheduleUserPost({
+          ...(post.existingPostId
+            ? { existingPostId: post.existingPostId }
+            : {}),
           ...(isCarouselPost
             ? {
                 mediaType: 'carousel' as const,
@@ -827,6 +904,14 @@ export default function PostSchedulePage() {
           await scheduleUserPost({
             file: selectedMediaFile,
             mediaType: selectedMediaType ?? 'image',
+            message,
+            time: scheduledAtIso,
+            platform,
+          });
+        } else if (selectedImageFiles.length > 1) {
+          await scheduleUserPost({
+            files: selectedImageFiles,
+            mediaType: 'carousel',
             message,
             time: scheduledAtIso,
             platform,
@@ -931,7 +1016,45 @@ export default function PostSchedulePage() {
                   {hasMedia ? (
                     <div className="p-4 relative flex justify-center">
                       <div className="relative group rounded-xl overflow-hidden">
-                        {selectedMediaType === 'video' && selectedMediaFile ? (
+                        {selectedImageFiles.length > 1 ? (
+                          <div className="grid max-w-2xl grid-cols-2 gap-2 p-2 sm:grid-cols-3">
+                            {selectedImageFiles.map((file, index) => (
+                              <div
+                                key={`${file.name}-${file.lastModified}`}
+                                className="relative rounded-lg border border-default bg-element p-1"
+                              >
+                                <img
+                                  src={URL.createObjectURL(file)}
+                                  alt={`Carousel slide ${index + 1}`}
+                                  className="aspect-square w-full rounded-md object-cover"
+                                />
+                                <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-0.5 text-xs font-semibold text-white">
+                                  {index + 1}
+                                </span>
+                                <div className="absolute bottom-2 right-2 flex gap-1 rounded-md bg-black/70 p-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => moveSelectedImage(index, index - 1)}
+                                    disabled={index === 0}
+                                    className="rounded p-1 text-white hover:bg-white/20 disabled:opacity-30"
+                                    aria-label={`Move slide ${index + 1} up`}
+                                  >
+                                    <ChevronUp className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveSelectedImage(index, index + 1)}
+                                    disabled={index === selectedImageFiles.length - 1}
+                                    className="rounded p-1 text-white hover:bg-white/20 disabled:opacity-30"
+                                    aria-label={`Move slide ${index + 1} down`}
+                                  >
+                                    <ChevronDown className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : selectedMediaType === 'video' && selectedMediaFile ? (
                           <video
                             controls
                             className="max-h-[300px] object-contain bg-black"
@@ -995,13 +1118,12 @@ export default function PostSchedulePage() {
                           </div>
                         ) : null}
                         {canRemoveImage ? (
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <button
                               type="button"
                               onClick={clearImage}
                               disabled={imageAreaDisabled}
-                              className="rounded-full bg-default p-2 text-danger transition-transform disabled:text-quaternary"
-                              aria-label="Remove image"
+                              className="absolute right-2 top-2 z-20 rounded-full bg-default p-2 text-danger shadow-lg disabled:text-quaternary"
+                              aria-label="Remove uploaded media"
                             >
                               <svg
                                 className="h-5 w-5"
@@ -1017,7 +1139,6 @@ export default function PostSchedulePage() {
                                 />
                               </svg>
                             </button>
-                          </div>
                         ) : null}
                       </div>
                     </div>
@@ -1033,6 +1154,7 @@ export default function PostSchedulePage() {
                       <input
                         type="file"
                         accept={fileInputAccept}
+                        multiple
                         onChange={onFileInputChange}
                         disabled={imageAreaDisabled}
                         className="sr-only"
@@ -1107,6 +1229,17 @@ export default function PostSchedulePage() {
                     'resize-y min-h-[120px] leading-relaxed'
                   )}
                 />
+                {!isPrefilledFlow && (selectedImageFiles.length > 0 || selectedMediaFile) && (
+                  <button
+                    type="button"
+                    onClick={handleGenerateCaption}
+                    disabled={captionGenerating}
+                    className="mt-3 inline-flex items-center gap-2 rounded-xl border border-primary-purple/40 px-4 py-2 text-sm font-semibold text-preview transition hover:bg-primary-purple/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    {captionGenerating ? 'Generating caption…' : 'Generate caption with AI'}
+                  </button>
+                )}
               </div>
             </>
           ) : (
@@ -1378,12 +1511,6 @@ export default function PostSchedulePage() {
             ) : (
               <p className="text-xs text-secondary">
                 Select a platform to choose a schedule time.
-              </p>
-            )}
-            {hasInvalidVideoPlatformSelection && (
-              <p className="text-xs text-warning">
-                MP4 uploads can only be scheduled as a single-platform Facebook,
-                Instagram, or LinkedIn post.
               </p>
             )}
           </div>

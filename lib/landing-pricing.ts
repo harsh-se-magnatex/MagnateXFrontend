@@ -1,7 +1,7 @@
 export type PricingLine = { text: string; sub?: boolean };
 
 export type PlanTier = 'studio' | 'prime' | 'elite' | 'legacy';
-export type PlanMode = 'AutoPilot' | 'Studio';
+export type PlanMode = 'AIManager' | 'Studio';
 export type PlanId =
   | 'studio'
   | 'prime-AI'
@@ -65,9 +65,9 @@ const CREDITS_BY_PLAN_ID: Record<PlanId, number> = {
 };
 
 const AI_PLAN_PLATFORMS_BY_TIER: Record<Exclude<PlanTier, 'studio'>, string> = {
-  prime: 'AutoPilot for 1 selected platform',
-  elite: 'AutoPilot for up to 2 selected platforms',
-  legacy: 'AutoPilot for up to 3 selected platforms',
+  prime: 'AI Manager on 1 platform of your choice',
+  elite: 'AI Manager on up to 2 platforms of your choice',
+  legacy: 'AI Manager on all 3 platforms',
 };
 
 const DISPLAY_NAME_BY_PLAN_ID: Record<PlanId, string> = {
@@ -88,29 +88,26 @@ const DISPLAY_NAME_BY_PLAN_ID: Record<PlanId, string> = {
  */
 function buildFeatureLines(id: PlanId): PricingLine[] {
   const tier = (id === 'studio' ? 'studio' : id.split('-')[0]) as PlanTier;
-  const mode: PlanMode = id === 'studio' ? 'Studio' : 'AutoPilot';
+  const mode: PlanMode = id === 'studio' ? 'Studio' : 'AIManager';
   const credits = CREDITS_BY_PLAN_ID[id];
   const lines: PricingLine[] = [];
 
-  if (mode === 'Studio') {
-  lines.push({ text: 'Manual creation and scheduling across Facebook, Instagram & LinkedIn' });
-  }
-  if (mode === 'Studio') lines.push({ text: 'Create and schedule your own content' });
-  if (mode === 'AutoPilot') {
+  if (mode === 'Studio') lines.push({ text: 'Create and publish to Facebook, Instagram & LinkedIn whenever you want' });
+  if (mode === 'Studio') lines.push({ text: 'You decide what gets made and when' });
+  if (mode === 'AIManager') {
     lines.push({ text: AI_PLAN_PLATFORMS_BY_TIER[tier as Exclude<PlanTier, 'studio'>] });
-    lines.push({ text: 'Your personalized AI manages content for your selected Plan platforms' });
+    lines.push({ text: 'Your personalized AI manages content for your selected platforms' });
+    lines.push({ text: 'Human review before publishing' });
   }
-  if (mode === 'AutoPilot') lines.push({ text: 'Human-reviewed content' });
-  lines.push({ text: `${credits} credits per month for manual creation tools` });
+  lines.push({ text: `${credits} credits a month for content you create on demand` });
   lines.push({ text: 'AI-powered analytics & recommendations' });
-  if(mode==="AutoPilot"){lines.push({ text: 'Manual creation and scheduling across Facebook, Instagram & LinkedIn' });
-}
+  if (mode === 'AIManager') lines.push({ text: 'Create and publish to Facebook, Instagram & LinkedIn whenever you want' });
   return lines;
 }
 
 function buildPlan(id: PlanId): PricingPlan {
   const tier = (id === 'studio' ? 'studio' : id.split('-')[0]) as PlanTier;
-  const mode: PlanMode = id === 'studio' ? 'Studio' : 'AutoPilot';
+  const mode: PlanMode = id === 'studio' ? 'Studio' : 'AIManager';
   return {
     id,
     tier,
@@ -154,7 +151,7 @@ export const PRICING_PLANS_AUTO: PricingPlan[] = [
 export const PRICING_PLANS: PricingPlan[] = PRICING_PLANS_MANUAL;
 
 export function pricingPlansForMode(mode: PlanMode): PricingPlan[] {
-  return mode === 'AutoPilot' ? PRICING_PLANS_AUTO : PRICING_PLANS_MANUAL;
+  return mode === 'AIManager' ? PRICING_PLANS_AUTO : PRICING_PLANS_MANUAL;
 }
 /**
  * Plan card metadata for the billing upgrade modal, keyed by full plan

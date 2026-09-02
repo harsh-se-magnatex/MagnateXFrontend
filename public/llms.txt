@@ -1,6 +1,11 @@
 # SocioGenie
 
-> AI social media management for small businesses. Researches, writes, designs, reviews and publishes posts to Instagram, Facebook and LinkedIn via official platform APIs — either fully automated (AI Plan) or on-demand (Studio).
+> SocioGenie is AI social media management software for small businesses. It plans your month, writes and designs each post, and publishes to Instagram, Facebook and LinkedIn through the official platform APIs. Studio starts at $14.99 a month; AI Manager, which runs the calendar for you, starts at $49.99.
+
+## Disambiguation
+- SocioGenie is the software product at **sociogenie.ai**, operated by MAGNATEX LLP (Ahmedabad, India). Launched 28 July 2026.
+- It is **not** sociogenie.com, an unrelated lifestyle blog based in Kolkata.
+- It is **not** SOCi, Social Genie, Sociamonials or SocioBranding.
 
 ## Core pages
 - [Homepage](https://www.sociogenie.ai/): what SocioGenie is and how it works
@@ -10,12 +15,16 @@
 - [How it looks](https://www.sociogenie.ai/how-it-looks): example posts across Instagram, Facebook and LinkedIn
 
 ## Facts
-- Two plan types: **Studio** (manual — you trigger every post) and **AI Plan** (automated — a monthly content calendar runs itself).
+- Subscription plans (USD, monthly): **Studio $14.99** (six AI creation tools, 100 credits, you decide what gets made) · **Prime AI $49.99** (AI Manager on 1 platform, 50 credits) · **Elite AI $69.99** (2 platforms, 100 credits) · **Legacy AI $84.99** (3 platforms, 150 credits).
+- Every plan generates content with AI and publishes to connected accounts. The difference between plans is who decides what gets posted — the user, or the AI.
+- **Human review before publishing applies to Prime, Elite and Legacy only.** On Studio the user creates each post and sees it before it publishes.
+- The **Studio plan** ($14.99/month, recurring, 100 credits per month) is a different product from the **Basic credit pack** ($14.99 one-time, 100 credits, expires after 30 days).
 - Pricing (USD, monthly): Studio $14.99 (100 credits) · Prime AI $49.99 (50 credits) · Elite AI $69.99 (100 credits) · Legacy AI $84.99 (150 credits).
 - Credit packs (one-time, valid 30 days): Starter $6.99/40 credits · Basic $14.99/100 credits · Growth $28.99/200 credits · Business $41.99/300 credits.
 - Credit cost per manually-triggered action: Create Post 2 · Occasion Post 2 · Campaign 3/day · Product Post 4 (asset) or 6 (full social) · Carousel 3/slide · Video 15.
 - AI Plan automation never charges credits — it runs on the subscription itself, generating 19 pieces of content per cycle (5 campaigns, 7 automated posts, 3 quick-create, 2 videos, 2 carousels) plus a variable number of seasonal/occasion posts, at no additional credit cost.
-- Every post goes through a review step before publishing: Manual Review (you approve each post yourself) is the default; Auto Approve routes it through SocioGenie's own in-house team for brand, caption and technical checks — not a fact-check or legal/compliance review.
+- On Prime, Elite and Legacy, Manual Review (you approve each post yourself) is the default; Auto Approve routes it through SocioGenie's own in-house team for brand, caption and technical checks — not a fact-check or legal/compliance review.
 - Publishes via official Instagram, Facebook and LinkedIn platform APIs, not unofficial or scraper-based methods.
 - Operated by MAGNATEX LLP (LLPIN ACU-5689), Ahmedabad, Gujarat, India. Commercially launched 28 July 2026.
 - Payments processed by Dodo Payments Inc. (Merchant of Record), billed in USD.
+- Last reviewed: 2026-09-02.
