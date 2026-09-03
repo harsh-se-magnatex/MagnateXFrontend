@@ -150,7 +150,7 @@ export function AnalyticsWeeklyVerdict({
     <section
       aria-label="AI weekly verdict"
       className={cn(
-        'overflow-hidden rounded-xl border border-default bg-gradient-to-br ring-1',
+        'overflow-hidden rounded-xl border border-default',
         PLATFORM_ACCENT[platform],
         className
       )}

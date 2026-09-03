@@ -136,7 +136,7 @@ export function StatCard({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-full border bg-default p-4 text-left transition-expo',
+        'rounded-xl border bg-default p-4 text-left transition-expo',
         'hover:border-default hover:bg-element',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-border focus-visible:ring-offset-2',
         selected ? 'border-primary ring-2 ring-strong' : 'border-default',
@@ -398,7 +398,7 @@ export function TopPostCard({
           <button
             type="button"
             onClick={() => onExpandImage?.(post)}
-            className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-full border-0 bg-element p-0 text-left ring-offset-2 transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-border sm:h-auto sm:w-40"
+            className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-md border-0 bg-element p-0 text-left ring-offset-2 transition-opacity hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-border sm:h-auto sm:w-40"
             aria-label={
               isCarousel
                 ? `Open carousel preview, ${imageUrls.length} images`

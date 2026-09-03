@@ -167,26 +167,7 @@ export default function AnalyticsPage() {
   const { billing, loading: billingLoading } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
   const router = useRouter();
-  const selected = billing?.connected;
   const activePlan = billing?.activePlan ?? 'non-subscribed';
-  const selectedCount = countEnabledPlatforms(selected);
-  const maxPlatforms: number = activePlan !== 'non-subscribed' ? 3 : 0;
-
-  const showSelectionIncompleteNotice =
-    !billingLoading &&
-    billing != null &&
-    activePlan !== 'non-subscribed' &&
-    !isPlatformSelectionComplete({ activePlan, selected });
-
-  useEffect(() => {
-    if (!selected) return;
-    const available: PlatformTab[] = [];
-    if (selected.facebook) available.push('facebook');
-    if (selected.instagram) available.push('instagram');
-    if (selected.linkedin) available.push('linkedin');
-    if (available.length === 0) return;
-    setPlatform((prev) => (available.includes(prev) ? prev : available[0]));
-  }, [selected]);
 
   // Tracks the cron snapshot for the "Refreshed Xh ago" badge. Null
   // means either no snapshot exists yet (brand-new user / first run) or
@@ -665,40 +646,6 @@ export default function AnalyticsPage() {
     return <PageLoadingState />;
   }
 
-  if (showSelectionIncompleteNotice) {
-    return (
-      <>
-        <div
-          className="mb-6 flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/10 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
-          role="status"
-        >
-          <div className="flex items-start gap-3">
-            <AlertCircle
-              className="mt-0.5 h-5 w-5 shrink-0 text-link"
-              aria-hidden
-            />
-            <p className="text-sm text-default">
-              Your{' '}
-              <span className="font-semibold capitalize">{activePlan}</span>{' '}
-              plan supports{' '}
-              <span className="font-semibold">{maxPlatforms}</span> platform
-              {maxPlatforms === 1 ? '' : 's'}, but you&apos;ve only selected{' '}
-              <span className="font-semibold">{selectedCount}</span>. Complete
-              your platform selection to unlock all your slots.
-            </p>
-          </div>
-          <Button
-            type="button"
-            size="sm"
-            className="shrink-0 self-start sm:self-auto"
-            onClick={() => router.push('/autopilot')}
-          >
-            Select platforms
-          </Button>
-        </div>
-      </>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-5xl pb-8">
@@ -716,17 +663,11 @@ export default function AnalyticsPage() {
       >
         <TabsList
           className={`grid h-auto w-full mx-auto max-w-md gap-1 
-          ${selectedCount === 1 ? 'grid-cols-0 ' : selectedCount === 2 ? 'grid-cols-2 ' : 'grid-cols-3'}`}
+          grid-cols-3`}
         >
-          {selected?.facebook && (
-            <TabsTrigger value="facebook">Facebook</TabsTrigger>
-          )}
-          {selected?.instagram && (
-            <TabsTrigger value="instagram">Instagram</TabsTrigger>
-          )}
-          {selected?.linkedin && (
-            <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
-          )}
+          <TabsTrigger value="facebook">Facebook</TabsTrigger>
+          <TabsTrigger value="instagram">Instagram</TabsTrigger>
+          <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
         </TabsList>
 
         <TabsContent value="facebook" className="mt-0 space-y-10 outline-none">
