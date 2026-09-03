@@ -1991,8 +1991,8 @@ export default function BillingsPage() {
             <DialogTitle>Top up your credits</DialogTitle>
             <DialogDescription className="text-left text-secondary space-y-3">
               <p>
-                Credits are used for product ads, instant posts, festive
-                campaigns, and regenerations. Valid for 30 days from purchase.
+                Credits are used for Product Posts, Create Post, Occasion Posts,
+                Campaigns, and regenerations. Valid for 30 days from purchase.
               </p>
               {topUpRequiresPlan ? (
                 <p className="text-xs font-medium text-warning bg-warning border border-warning rounded-lg px-3 py-2">

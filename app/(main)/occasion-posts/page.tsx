@@ -251,7 +251,7 @@ export default function AutomatedPostPage() {
       const response = await createAutomatedPost(selectedEvents, genPlatforms);
       clearSelected();
       if ((response.failedCount ?? 0) > 0) {
-        showErrorToast('Event studio creation failed. Please try again later.');
+        showErrorToast('Occasion Posts creation failed. Please try again later.');
         setIsSubmitting(false);
         return;
       }
@@ -268,14 +268,14 @@ export default function AutomatedPostPage() {
         if (wait.outcome === 'generated') toast.success('Generated');
         else
           showErrorToast(
-            'Event studio creation failed. Please try again later.'
+            'Occasion Posts creation failed. Please try again later.'
           );
       } else {
-        showErrorToast('Event studio creation failed. Please try again later.');
+        showErrorToast('Occasion Posts creation failed. Please try again later.');
       }
       setIsSubmitting(false);
     } catch (error: unknown) {
-      showErrorToast('Event studio creation failed. Please try again later.');
+      showErrorToast('Occasion Posts creation failed. Please try again later.');
       setIsSubmitting(false);
     } finally {
       setTimeout(() => setMessage(''), 5000);

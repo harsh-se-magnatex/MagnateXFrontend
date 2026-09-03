@@ -76,7 +76,7 @@ const AGENTS: Agent[] = [
     tag: 'Creative Director',
     title: 'Visuals that match your brand',
     description:
-      'Builds every visual in your chosen style and brand colors — product ads, carousels, 8-second videos, event greetings — designed to stop the scroll.',
+      'Builds every visual in your chosen style and brand colors — Product Posts, Carousel Posts, 8-second Videos, Occasion Posts — designed to stop the scroll.',
     icon: Sparkles,
     accent: 'var(--brand-violet)',
   },
@@ -340,7 +340,7 @@ export function LandingClose() {
           </h2>
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-secondary">
             SocioGenie creates, reviews, schedules and publishes — so you can
-            focus on customers while your social media runs on autopilot with
+            focus on customers while your social media runs through AI Manager
             AI, or exactly the way you run it with Studio.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">

@@ -248,7 +248,7 @@ export default function AutomationPreferencePage() {
   const fmtTimestamp = useTimestampFormatter();
   const { billing, loading: billingLoading } = useUserPlanCredits();
   /**
-   * AI plans default to Auto Approve at purchase; users may switch to Manual
+   * AI Manager defaults to Auto Approve at purchase; users may switch to Manual
    * Review here. Studio (manual-mode) plans always use Manual Review — Auto
    * Approve is locked behind `<UpgradeGate>` and stale `false` values are
    * normalised back to `true` on mount.
@@ -940,7 +940,7 @@ export default function AutomationPreferencePage() {
                 </span>
                 <UpgradeGate
                   gated={isManualMode}
-                  tooltip="Upgrade to an AI plan to use Auto Approve"
+                  tooltip="Upgrade to an AI Manager tier to use Auto Approve"
                   className="flex-1"
                 >
                   <button
@@ -1013,7 +1013,7 @@ export default function AutomationPreferencePage() {
                 Analytics-based optimal posting time
               </label>
               <p className="text-xs text-secondary mb-3">
-                When enabled, AI-engine scheduled posts use your best posting
+                When enabled, AI Manager scheduled posts use your best posting
                 hour derived from synced social analytics. With fewer than 5
                 synced posts, the first posts try different times of day (e.g.
                 1:30am, 8:30am, noon, 5pm, 9pm) so we can learn what works —

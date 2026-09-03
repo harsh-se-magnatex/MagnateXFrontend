@@ -89,7 +89,7 @@ export type PendingScheduledPost = {
   /**
    * Mirrors `users/{uid}/scheduledPosts/{postId}.regenratedCount` (typo
    * preserved to match the Firestore field). The backend initializes it to
-   * `1` when the AI engine first writes the post, increments by `1` on every
+   * `1` when AI Manager first writes the post, increments by `1` on every
    * user-initiated regen, and only deducts credits once the count has rolled
    * past the first free slot — see
    * `backend/apps/worker/src/pipelines/ai-engine/regenerate/regenerate_scheduled_post.ts`.

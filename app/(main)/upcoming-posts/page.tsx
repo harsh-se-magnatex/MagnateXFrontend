@@ -102,7 +102,7 @@ export type ScheduledPost = {
   /** Regenerations so far; also stored as `regenratedCount` in some API payloads. */
   regeneratedCount?: number;
   regenratedCount?: number;
-  /** When true, user may regenerate via AI engine (matches stored post). */
+  /** When true, user may regenerate via AI Manager (matches stored post). */
   generatedByAiEngine?: boolean;
   generationProof?: unknown;
   lifecycle: string;
@@ -127,7 +127,7 @@ export type ScheduledPost = {
   updatedAt: FirestoreTimestamp;
   /**
    * Pipeline that produced this scheduled post — newly added on the backend
-   * (`'ai-engine' | 'batch-generation' | 'events-post' | 'product-advert' | 'scheduler' | 'instant-generation'`).
+   * (`'ai-engine' | 'batch-generation' | 'events-post' | 'festive-post' | 'product-advert' | 'scheduler' | 'instant-generation'`).
    * Optional because older docs predate this field.
    */
   GeneratedBy?: string;

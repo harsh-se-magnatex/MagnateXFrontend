@@ -210,6 +210,9 @@ export function generatedByLabel(value: string | undefined): string | null {
     case 'batch-generation':
       return 'Create Post';
     case 'events-post':
+    case 'festive-post':
+    case 'festive':
+    case 'festival':
       return 'Occasion Posts';
     case 'product-advert':
       return 'Product Posts';

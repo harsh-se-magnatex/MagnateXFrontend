@@ -156,7 +156,8 @@ function EmptyState() {
         feature.
       </p>
       <p className="mt-1 text-[11px]">
-        I can also draft posts, campaigns, festive ideas, or product ads — you
+        I can also draft Create Post content, Campaigns, Occasion Posts, or
+        Product Posts — you
         decide when to run them.
       </p>
     </div>

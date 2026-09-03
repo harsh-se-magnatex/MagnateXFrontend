@@ -79,22 +79,22 @@ const PLATFORM_ICON: Record<
 function kindLabel(kind: string): string {
   switch (kind) {
     case 'campaign':
-      return 'Campaign';
+      return 'Campaigns';
     case 'ai-engine':
-      return 'AI Engine';
+      return 'AI Manager';
     case 'bulk-create':
       return 'Automated';
     case 'quick-create':
-      return 'Content Studio';
+      return 'Create Post';
     case 'product-advert':
-      return 'Product Ads';
+      return 'Product Posts';
     case 'video-generation':
-      return 'Video';
+      return 'Videos';
     case 'carousel':
-      return 'Carousel';
+      return 'Carousel Posts';
     case 'festive':
     case 'festival':
-      return 'Event Studio';
+      return 'Occasion Posts';
     case 'empty':
       return '—';
     default:
@@ -734,8 +734,8 @@ export default function AdminContentCalendarReviewPage() {
                     .trim()
                     .toLowerCase() === 'auto' ? (
                     <p className="rounded-md border border-default bg-element px-3 py-2 text-sm text-secondary">
-                      Force Run appears on planned Campaign, Content Studio, AI
-                      Engine, Video, Carousel, or Event Studio cells for today
+                      Force Run appears on planned Campaigns, Create Post, AI
+                      Manager, Videos, Carousel Posts, or Occasion Posts cells for today
                       and future dates — it hides after Force Run, when content
                       is already generating/generated, or when the post was
                       removed or rejected by the user.

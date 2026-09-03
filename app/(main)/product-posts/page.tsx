@@ -339,13 +339,13 @@ export default function ProductAdvertPage() {
         toast.success('Generated');
       } else {
         showErrorToast(
-          'Product advert generation failed. Please try again later.'
+          'Product Posts generation failed. Please try again later.'
         );
       }
       setIsGenerating(false);
     } catch (e: unknown) {
       showErrorToast(
-        'Product advert generation failed. Please try again later.'
+        'Product Posts generation failed. Please try again later.'
       );
       console.log(e);
       setIsGenerating(false);

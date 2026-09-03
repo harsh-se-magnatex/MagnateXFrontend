@@ -386,8 +386,8 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
 
 function kindLabelFromCellKind(kind: string): string {
   if (kind === 'video') return 'Video generated';
-  if (kind === 'quick-create') return 'Content Studio generated';
-  if (kind === 'ai-engine') return 'AutoPilot generated';
+  if (kind === 'quick-create') return 'Create Post generated';
+  if (kind === 'ai-engine') return 'AI Manager generated';
   if (kind === 'carousel') return 'Carousel generated';
   if (kind === 'campaign') return 'Campaign generated';
   return 'Generated';
