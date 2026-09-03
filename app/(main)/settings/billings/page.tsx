@@ -91,6 +91,7 @@ import {
   needsEmailVerificationForPurchase,
 } from '@/lib/email-verification-for-purchase';
 import { isPlanInactive } from '@/lib/plan-access';
+import { PriceDisplay } from '@/components/pricing/price-display';
 
 type PlanModeDisplay = 'AIManager' | 'Studio';
 type PlanMode = 'auto' | 'manual';
@@ -1595,7 +1596,7 @@ export default function BillingsPage() {
                     </p>
                     <div className="mt-1 mb-4 text-center">
                       <p className="text-sm font-semibold text-default">
-                        {formatUsd(displayPrice)}/mo
+                        <PriceDisplay usd={displayPrice} period="/mo" />
                       </p>
                     </div>
                     {isActive ? (
@@ -2018,7 +2019,7 @@ export default function BillingsPage() {
                       {pack.label ?? TOP_UP_PACK_LABELS[packIndex] ?? pack.name}
                     </p>
                     <p className="text-lg font-bold text-default mt-1">
-                      {formatUsd(pack.price)}
+                      <PriceDisplay usd={pack.price} />
                     </p>
                     <p className="text-sm text-secondary">
                       {pack.credits} credits

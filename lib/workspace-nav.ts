@@ -9,7 +9,7 @@ export const WORKSPACE_NAV_HREFS = {
   carouselCreate: '/carousel-posts',
   schedulePost: '/schedule-post',
   postQueue: '/upcoming-posts',
-  contentPlan: '/ai-plan',
+  contentPlan: '/ai-manager',
   gallery: '/media-library',
   linkedProfiles: '/connected-accounts',
   analytics: '/analytics',

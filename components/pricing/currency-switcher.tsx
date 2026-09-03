@@ -32,7 +32,7 @@ export function CurrencySwitcher({ className }: { className?: string }) {
         className="cursor-pointer bg-transparent pr-1 font-medium text-default outline-none"
       >
         {SUPPORTED_CURRENCIES.map((c) => (
-          <option key={c.code} value={c.code}>
+          <option key={c.code} value={c.code} className="bg-white text-gray-900">
             {c.code} · {c.label}
           </option>
         ))}

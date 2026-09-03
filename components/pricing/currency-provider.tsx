@@ -11,11 +11,9 @@ import {
 } from 'react';
 import {
   COUNTRY_COOKIE,
-  CURRENCY_COOKIE,
   PREFERENCE_COOKIE_MAX_AGE,
   USD,
   currencyForCountry,
-  isSupportedCurrency,
   type SupportedCurrency,
 } from '@/lib/geo-currency';
 
@@ -34,6 +32,7 @@ import {
 
 type CurrencyContextValue = {
   currency: SupportedCurrency;
+  exchangeRate: number | null;
   /** False until the client has resolved, so callers can avoid flashing. */
   isResolved: boolean;
   /** True when the user picked it, rather than it being inferred. */
@@ -43,6 +42,7 @@ type CurrencyContextValue = {
 
 const CurrencyContext = createContext<CurrencyContextValue>({
   currency: USD,
+  exchangeRate: 1,
   isResolved: false,
   isExplicit: false,
   setCurrency: () => {},
@@ -97,6 +97,14 @@ const TIMEZONE_COUNTRY: Record<string, string> = {
   'America/Mexico_City': 'MX',
 };
 
+const FX_RATE_CACHE_PREFIX = 'sg-frankfurter-rate-';
+const FX_RATE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+type CachedExchangeRate = {
+  rate: number;
+  expiresAt: number;
+};
+
 function countryFromTimeZone(): string | undefined {
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -110,16 +118,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currency, setCurrencyState] = useState<SupportedCurrency>(USD);
   const [isResolved, setIsResolved] = useState(false);
   const [isExplicit, setIsExplicit] = useState(false);
+  const [exchangeRate, setExchangeRate] = useState<number | null>(1);
 
   useEffect(() => {
-    const chosen = readCookie(CURRENCY_COOKIE);
-    if (isSupportedCurrency(chosen)) {
-      setCurrencyState(chosen.toUpperCase() as SupportedCurrency);
-      setIsExplicit(true);
-      setIsResolved(true);
-      return;
-    }
-
     // Middleware writes this when the host provides a geo header.
     let country = readCookie(COUNTRY_COOKIE);
     if (!country) {
@@ -131,15 +132,79 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     setIsResolved(true);
   }, []);
 
+  useEffect(() => {
+    if (!isResolved) return;
+    if (currency === USD) {
+      setExchangeRate(1);
+      return;
+    }
+
+    const cacheKey = `${FX_RATE_CACHE_PREFIX}${currency}`;
+    try {
+      const cached = JSON.parse(
+        localStorage.getItem(cacheKey) ?? 'null'
+      ) as CachedExchangeRate | null;
+      if (
+        cached &&
+        typeof cached.rate === 'number' &&
+        Number.isFinite(cached.rate) &&
+        cached.expiresAt > Date.now()
+      ) {
+        setExchangeRate(cached.rate);
+        return;
+      }
+      localStorage.removeItem(cacheKey);
+    } catch {
+      // localStorage may be unavailable; continue with a live request.
+    }
+
+    let cancelled = false;
+    setExchangeRate(null);
+    void fetch(
+      `https://api.frankfurter.dev/v2/rates?base=USD&quotes=${encodeURIComponent(currency)}`
+    )
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`Frankfurter request failed: ${response.status}`);
+        return (await response.json()) as Array<{
+          quote?: string;
+          rate?: number | string;
+        }>;
+      })
+      .then((rates) => {
+        const rawRate = rates.find((item) => item.quote === currency)?.rate;
+        const rate = typeof rawRate === 'number' ? rawRate : Number(rawRate);
+        if (Number.isFinite(rate)) {
+          try {
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify({
+                rate,
+                expiresAt: Date.now() + FX_RATE_CACHE_TTL_MS,
+              } satisfies CachedExchangeRate)
+            );
+          } catch {
+            // The fetched rate is still usable when localStorage is unavailable.
+          }
+        }
+        if (!cancelled) setExchangeRate(Number.isFinite(rate) ? rate : null);
+      })
+      .catch(() => {
+        if (!cancelled) setExchangeRate(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currency, isResolved]);
+
   const setCurrency = useCallback((next: SupportedCurrency) => {
     setCurrencyState(next);
     setIsExplicit(true);
-    writeCookie(CURRENCY_COOKIE, next);
   }, []);
 
   const value = useMemo(
-    () => ({ currency, isResolved, isExplicit, setCurrency }),
-    [currency, isResolved, isExplicit, setCurrency]
+    () => ({ currency, exchangeRate, isResolved, isExplicit, setCurrency }),
+    [currency, exchangeRate, isResolved, isExplicit, setCurrency]
   );
 
   return (

@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { useCurrency } from '@/components/pricing/currency-provider';
 import {
   PRICING_DISCLAIMER,
-  RATES_AS_OF,
   localizePrice,
 } from '@/lib/geo-currency';
 
@@ -26,8 +25,8 @@ export function PriceDisplay({
   className?: string;
   amountClassName?: string;
 }) {
-  const { currency } = useCurrency();
-  const price = localizePrice(usd, currency);
+  const { currency, exchangeRate } = useCurrency();
+  const price = localizePrice(usd, currency, exchangeRate);
 
   return (
     <div className={className}>
@@ -46,8 +45,8 @@ export function PriceDisplay({
 
 /** Inline variant for prose and table rows — no USD sub-line. */
 export function InlinePrice({ usd }: { usd: number }) {
-  const { currency } = useCurrency();
-  return <>{localizePrice(usd, currency).display}</>;
+  const { currency, exchangeRate } = useCurrency();
+  return <>{localizePrice(usd, currency, exchangeRate).display}</>;
 }
 
 /**
@@ -55,8 +54,8 @@ export function InlinePrice({ usd }: { usd: number }) {
  * disclaim when the figure shown is already the settlement currency.
  */
 export function PricingDisclaimer({ className }: { className?: string }) {
-  const { currency } = useCurrency();
-  if (currency === 'USD') return null;
+  const { currency, exchangeRate } = useCurrency();
+  if (currency === 'USD' || exchangeRate == null) return null;
 
   return (
     <p
@@ -65,8 +64,7 @@ export function PricingDisclaimer({ className }: { className?: string }) {
         className
       )}
     >
-      {PRICING_DISCLAIMER}{' '}
-      <span className="whitespace-nowrap">Rates as of {RATES_AS_OF}.</span>
+      {PRICING_DISCLAIMER}
     </p>
   );
 }

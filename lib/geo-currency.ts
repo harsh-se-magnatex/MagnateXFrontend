@@ -101,71 +101,24 @@ export function currencyForCountry(
   return COUNTRY_TO_CURRENCY[countryCode.toUpperCase()] ?? USD;
 }
 
-/**
- * Dodo's Adaptive Currency converts the USD base at live rates and adds a 4%
- * markup on orders under $500 — which is every plan and pack we sell. Building
- * that into the displayed figure keeps us from quoting *below* what the card is
- * actually charged, which is the one direction it is unacceptable to be wrong in.
- *
- * Set this to 0 ONLY after confirming Localized Pricing is configured in the
- * Dodo dashboard for these products — that mode overrides Adaptive Currency and
- * absorbs the FX fee, so the markup would then over-quote.
- * https://docs.dodopayments.com/features/adaptive-currency
- */
-export const DODO_FX_MARKUP = 0.04;
-
-/**
- * Hand-maintained, intentionally not a live API call: the figure is approximate
- * by construction, a static table adds no runtime dependency and no new
- * sub-processor to disclose, and it renders identically on server and client
- * (no hydration mismatch). Refresh periodically and move the date with it — the
- * date is shown to users, so drift is self-evident rather than silent.
- */
-export const RATES_AS_OF = '2026-08-30';
-
-const FX_RATES: Record<SupportedCurrency, number> = {
-  USD: 1,
-  INR: 87.5,
-  EUR: 0.92,
-  GBP: 0.78,
-  AED: 3.67,
-  SGD: 1.34,
-  AUD: 1.52,
-  CAD: 1.37,
-  JPY: 152,
-  BRL: 5.45,
-  ZAR: 18.2,
-  MXN: 18.6,
-};
-
 /** Currencies conventionally written without minor units. */
 const ZERO_DECIMAL: ReadonlySet<SupportedCurrency> = new Set(['JPY']);
 
-/**
- * Round UP to a tidy local increment. Up, never down — a rounded-down figure
- * would under-quote the real charge, and the whole point of this module is that
- * the number a nervous international buyer sees is not lower than their bill.
- */
-function roundUpToIncrement(value: number, currency: SupportedCurrency): number {
-  if (currency === USD) return value;
-  // Increment scales with magnitude so the rounding error stays under ~1%.
-  // Rounding a £12.16 up to a tidy £13 would overstate by 7% — safe, but it
-  // gives away the very saving the localised price is meant to communicate.
-  if (ZERO_DECIMAL.has(currency)) return Math.ceil(value / 10) * 10;
-  if (value >= 1000) return Math.ceil(value / 10) * 10;
-  if (value >= 100) return Math.ceil(value);
-  return Math.ceil(value * 100) / 100;
-}
-
-/** USD list price → approximate local amount, markup applied. */
+/** USD list price → Frankfurter reference-rate amount, truncated for display. */
 export function convertFromUsd(
   usd: number,
-  currency: SupportedCurrency
+  currency: SupportedCurrency,
+  exchangeRate?: number | null
 ): number {
   if (currency === USD) return usd;
-  const rate = FX_RATES[currency];
-  if (!rate) return usd;
-  return roundUpToIncrement(usd * rate * (1 + DODO_FX_MARKUP), currency);
+  if (typeof exchangeRate !== 'number' || !Number.isFinite(exchangeRate)) {
+    return usd;
+  }
+
+  const converted = usd * exchangeRate;
+  return ZERO_DECIMAL.has(currency)
+    ? Math.trunc(converted)
+    : Math.trunc(converted * 100) / 100;
 }
 
 /** Formats an amount already in `currency`. */
@@ -213,7 +166,8 @@ export type LocalizedPrice = {
 
 export function localizePrice(
   usd: number,
-  currency: SupportedCurrency
+  currency: SupportedCurrency,
+  exchangeRate?: number | null
 ): LocalizedPrice {
   const usdDisplay = formatUsdPrice(usd);
   if (currency === USD) {
@@ -224,8 +178,16 @@ export function localizePrice(
       currency: USD,
     };
   }
+  if (typeof exchangeRate !== 'number' || !Number.isFinite(exchangeRate)) {
+    return {
+      display: usdDisplay,
+      usdDisplay,
+      isConverted: false,
+      currency: USD,
+    };
+  }
   return {
-    display: `≈ ${formatAmount(convertFromUsd(usd, currency), currency)}`,
+    display: `≈ ${formatAmount(convertFromUsd(usd, currency, exchangeRate), currency)}`,
     usdDisplay,
     isConverted: true,
     currency,
@@ -238,7 +200,7 @@ export function localizePrice(
  * promise about the final figure.
  */
 export const PRICING_DISCLAIMER =
-  'Converted from USD for reference only. Your final amount and currency are set at checkout by Dodo Payments, our Merchant of Record, and may differ slightly depending on your billing country, local taxes, and exchange rate.';
+  "Converted using Frankfurter's latest reference rate for display only. Your final amount and currency are set at checkout by Dodo Payments and may differ slightly based on checkout rates and taxes.";
 
 export const COUNTRY_COOKIE = 'sg-country';
 export const CURRENCY_COOKIE = 'sg-currency';
