@@ -8,6 +8,7 @@ import { handleSameHashLinkClick } from '@/lib/scroll-to-hash';
 import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import { useServerSession } from '@/hooks/useServerSession';
 import { lockBodyScroll } from '@/lib/body-scroll-lock';
+import { usePathname } from 'next/navigation';
 
 const NAV_ITEMS = [
   { label: 'Try it', href: '/try-it' },
@@ -32,6 +33,16 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const hasSession = useServerSession();
   const signedIn = hasSession === true;
+  const pathname = usePathname();
+  const [hash, setHash] = useState('');
+
+  useEffect(() => {
+    const updateHash = () => setHash(window.location.hash);
+    updateHash();
+    window.addEventListener('hashchange', updateHash);
+
+    return () => window.removeEventListener('hashchange', updateHash);
+  }, []);
 
   useEffect(() => {
     if (!mobileNavOpen) return;
@@ -77,12 +88,19 @@ export default function NavBar({ isAuthRender = false }: NavBarProps) {
           <div className="hidden md:flex items-center gap-8">
             {NAV_ITEMS.map((item) => {
               const href = navItemHref(item.href, isAuthRender);
+              const [itemPath, itemHash] = href.split('#');
+              const isActive =
+                pathname === itemPath && (!itemHash || hash === `#${itemHash}`);
               return (
                 <a
                   key={item.href}
                   href={href}
                   onClick={(event) => handleSameHashLinkClick(event, href)}
-                  className="flex h-9 items-center rounded-full px-3 text-sm font-medium text-secondary transition-expo hover:bg-element hover:text-default"
+                  className={cn(
+                    'relative flex h-9 items-center rounded-full px-3 text-sm font-medium text-secondary transition-expo hover:bg-element hover:text-default',
+                    isActive &&
+                      'after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-gradient-to-r after:from-pink-500 after:to-blue-500'
+                  )}
                 >
                   {item.label}
                 </a>

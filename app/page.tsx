@@ -115,7 +115,6 @@ export default function Home() {
         </section>
 
         <LandingChallenge />
-        <LandingAutomation />
         <LandingAgents />
         <LandingClose />
       </main>

@@ -158,7 +158,8 @@ export const performActionOnScheduledPost = async (
   action: string,
   userId: string,
   platform: string,
-  draftId?: string | null
+  draftId?: string | null,
+  regenerationMode?: 'image' | 'fresh-context'
 ) => {
   const response = await axiosClient.post(
     '/api/v1/admin/perform-action-on-scheduled-post',
@@ -168,6 +169,7 @@ export const performActionOnScheduledPost = async (
       action,
       userId,
       platform,
+      ...(regenerationMode ? { regenerationMode } : {}),
     }
   );
   return response.data;

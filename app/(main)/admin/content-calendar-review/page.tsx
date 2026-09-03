@@ -529,7 +529,9 @@ export default function AdminContentCalendarReviewPage() {
     }
   };
 
-  const handleRegenerate = async () => {
+  const handleRegenerate = async (
+    regenerationMode: 'image' | 'fresh-context' = 'image'
+  ) => {
     if (!preview || !detail) return;
     if (
       String(detail.mode ?? '')
@@ -561,7 +563,8 @@ export default function AdminContentCalendarReviewPage() {
         'regenerate',
         preview.userId,
         preview.platform,
-        draftId || null
+        draftId || null,
+        regenerationMode
       );
       setRegeneratingKeys((prev) => {
         const next = new Set(prev);
@@ -831,7 +834,7 @@ export default function AdminContentCalendarReviewPage() {
             )
           }
           onClose={() => setPreview(null)}
-          onRegenerate={() => void handleRegenerate()}
+          onRegenerate={(mode) => void handleRegenerate(mode)}
         />
       ) : null}
     </div>
@@ -1173,7 +1176,7 @@ function PreviewModal({
   regenerateEnabled: boolean;
   isRegenerating: boolean;
   onClose: () => void;
-  onRegenerate: () => void;
+  onRegenerate: (mode: 'image' | 'fresh-context') => void;
 }) {
   const { item, platform, preferences } = target;
   const Icon = PLATFORM_ICON[platform];
@@ -1216,6 +1219,7 @@ function PreviewModal({
   const isVideo =
     !isCarousel && mediaPreview.isVideo && Boolean(mediaPreview.videoUrl);
   const [mounted, setMounted] = useState(false);
+  const [showRegenerationOptions, setShowRegenerationOptions] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -1445,7 +1449,7 @@ function PreviewModal({
           ) : canRegenerate ? (
             <button
               type="button"
-              onClick={onRegenerate}
+              onClick={() => setShowRegenerationOptions(true)}
               className="inline-flex items-center gap-2 rounded-full border border-warning bg-warning px-4 py-2 text-sm font-semibold text-warning transition hover:bg-warning disabled:text-quaternary"
             >
               <RefreshCw className="h-4 w-4" />
@@ -1453,6 +1457,24 @@ function PreviewModal({
             </button>
           ) : null}
         </div>
+        {showRegenerationOptions ? (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Choose regeneration type" onClick={() => setShowRegenerationOptions(false)}>
+            <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#0F162E] p-5 text-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold">Choose regeneration type</h3>
+              <div className="mt-5 grid gap-3">
+                <button type="button" className="rounded-lg border border-white/15 p-3 text-left hover:bg-white/5" onClick={() => { setShowRegenerationOptions(false); onRegenerate('image'); }}>
+                  <span className="block font-semibold">Image regeneration</span>
+                  <span className="mt-1 block text-xs text-white/60">Keep the existing context and prompt; create a new image.</span>
+                </button>
+                <button type="button" className="rounded-lg border border-warning p-3 text-left hover:bg-white/5" onClick={() => { setShowRegenerationOptions(false); onRegenerate('fresh-context'); }}>
+                  <span className="block font-semibold">Whole new context &amp; prompt</span>
+                  <span className="mt-1 block text-xs text-white/60">Start fresh and replace this scheduled post in place.</span>
+                </button>
+              </div>
+              <button type="button" className="mt-4 w-full rounded-lg border border-white/15 px-3 py-2 text-sm text-white/70" onClick={() => setShowRegenerationOptions(false)}>Cancel</button>
+            </div>
+          </div>
+        ) : null}
       </div>
       <ImagePreviewOverlay
         src={imagePreview.previewUrl}

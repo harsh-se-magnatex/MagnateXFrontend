@@ -126,11 +126,12 @@ function ActionButtons({
   stopPropagation,
 }: {
   size: 'card' | 'modal';
-  onRegenerate?: () => void;
+  onRegenerate?: (mode: 'image' | 'fresh-context') => void;
   onAccept?: () => void;
   onReject?: () => void;
   stopPropagation?: boolean;
 }) {
+  const [showRegenerationOptions, setShowRegenerationOptions] = useState(false);
   const handle = (fn: (() => void) | undefined, e: React.MouseEvent) => {
     if (stopPropagation) e.stopPropagation();
     fn?.();
@@ -143,7 +144,10 @@ function ActionButtons({
     <div className={`flex items-center gap-3 ${!isCard ? 'flex-wrap' : ''}`}>
       <button
         type="button"
-        onClick={(e) => handle(onRegenerate, e)}
+         onClick={(e) => {
+           if (stopPropagation) e.stopPropagation();
+           setShowRegenerationOptions(true);
+         }}
         className={`${btn} bg-[var(--amber-9)] text-default hover:bg-warning focus:ring-[var(--border-warning)]`}
       >
         Regenerate
@@ -155,6 +159,25 @@ function ActionButtons({
       >
         Accept
       </button>
+      {showRegenerationOptions ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4" role="dialog" aria-modal="true" aria-label="Choose regeneration type" onClick={() => setShowRegenerationOptions(false)}>
+          <div className="w-full max-w-md rounded-xl border border-default bg-default p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-default">Choose regeneration type</h3>
+            <p className="mt-1 text-sm text-secondary">This admin action applies to the selected scheduled post.</p>
+            <div className="mt-5 grid gap-3">
+              <button type="button" className="rounded-lg border border-default p-3 text-left hover:bg-element" onClick={() => { setShowRegenerationOptions(false); onRegenerate?.('image'); }}>
+                <span className="block font-semibold text-default">Image regeneration</span>
+                <span className="mt-1 block text-xs text-secondary">Keep the existing content and prompt; create a new image.</span>
+              </button>
+              <button type="button" className="rounded-lg border border-warning p-3 text-left hover:bg-element" onClick={() => { setShowRegenerationOptions(false); onRegenerate?.('fresh-context'); }}>
+                <span className="block font-semibold text-default">Whole new context &amp; prompt</span>
+                <span className="mt-1 block text-xs text-secondary">Start fresh and replace this scheduled post in place.</span>
+              </button>
+            </div>
+            <button type="button" className="mt-4 w-full rounded-lg border border-default px-3 py-2 text-sm text-secondary" onClick={() => setShowRegenerationOptions(false)}>Cancel</button>
+          </div>
+        </div>
+      ) : null}
       <button
         type="button"
         onClick={(e) => handle(onReject, e)}
@@ -294,7 +317,8 @@ export default function MonitoringPage() {
       postId: string,
       action: string,
       userId: string,
-      platform: string
+      platform: string,
+      regenerationMode?: 'image' | 'fresh-context'
     ) => {
       // Snapshot for rollback if the API call fails after we optimistically
       // popped the post from the UI.
@@ -303,7 +327,9 @@ export default function MonitoringPage() {
       setSelectedPost((prev) => (prev?.postId === postId ? null : prev));
 
       try {
-        await performActionOnScheduledPost(postId, action, userId, platform);
+        await performActionOnScheduledPost(
+          postId, action, userId, platform, null, regenerationMode
+        );
       } catch {
         showErrorToast(
           'Failed to perform action on scheduled post. Please try again later.'
@@ -494,12 +520,13 @@ export default function MonitoringPage() {
                         <ActionButtons
                           size="card"
                           stopPropagation
-                          onRegenerate={() =>
+                          onRegenerate={(mode) =>
                             handleAction(
                               post.postId,
                               'regenerate',
                               post.userId,
-                              post.platform
+                              post.platform,
+                              mode
                             )
                           }
                           onAccept={() =>
@@ -559,8 +586,8 @@ export default function MonitoringPage() {
         <DetailModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
-          onAction={(postId, action, platform) =>
-            handleAction(postId, action, selectedPost.userId, platform)
+           onAction={(postId, action, platform, mode) =>
+             handleAction(postId, action, selectedPost.userId, platform, mode)
           }
           formatTimestamp={fmtTimestamp}
         />
@@ -580,7 +607,8 @@ function DetailModal({
   onAction: (
     postId: string,
     action: string,
-    platform: string
+    platform: string,
+    regenerationMode?: 'image' | 'fresh-context'
   ) => void | Promise<unknown>;
   formatTimestamp: (ts: TimestampInput) => string;
 }) {
@@ -704,8 +732,8 @@ function DetailModal({
             <p className="text-xs font-medium text-secondary mb-3">Actions</p>
             <ActionButtons
               size="modal"
-              onRegenerate={() =>
-                onAction(post.postId, 'regenerate', post.platform)
+               onRegenerate={(mode) =>
+                 onAction(post.postId, 'regenerate', post.platform, mode)
               }
               onAccept={() => onAction(post.postId, 'approve', post.platform)}
               onReject={() => onAction(post.postId, 'reject', post.platform)}

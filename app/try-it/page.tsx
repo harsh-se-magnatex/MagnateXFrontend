@@ -27,7 +27,6 @@ export default function TryItPage() {
     <div className="min-h-screen bg-screen">
       <JsonLd data={SOFTWARE_APPLICATION_JSON_LD} />
       <NavBar />
-      <p className="mx-auto max-w-3xl px-6 pt-28 text-center text-secondary">SocioGenie&apos;s free sample writes and designs one finished social media post from your website address, with no account and no card. Enter your URL, confirm the brand details it reads back, pick Instagram, Facebook or LinkedIn, and judge the output before you subscribe. It takes about a minute.</p>
       <LeadMagnetSection />
     </div>
   );
