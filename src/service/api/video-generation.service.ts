@@ -17,7 +17,7 @@ export async function fetchVideoGeneratorProfile(): Promise<{
   return {
     logoUrl: logo || null,
     avatarUrl: avatar || null,
-    useVideoAvatar: profile.useVideoAvatar === true,
+    useVideoAvatar: Boolean(avatar) && profile.useVideoAvatar === true,
   };
 }
 
@@ -25,7 +25,7 @@ export async function fetchVideoGeneratorProfile(): Promise<{
 export async function startVideoGeneration(args: {
   referencePrompt?: string;
   referenceImages?: Array<{ file: File; source: 'upload' | 'gallery' }>;
-  logoFramePosition: 'first' | 'last';
+  logoFramePosition?: 'first' | 'last';
 }): Promise<ProductAdvertVideoGenerateResponse> {
   return generateProductAdvertVideoApi(args);
 }

@@ -18,6 +18,14 @@ const SCHEDULABLE_COLLECTIONS = new Set<PostSchedulerPrefillSource>([
 
 const SCHEDULE_PLATFORMS = new Set(['instagram', 'facebook', 'linkedin']);
 
+function isSharedManualVideo(item: GeneratedMediaLibraryItem): boolean {
+  return (
+    item.collection === 'videoGeneration' &&
+    item.platform.trim().toLowerCase() === 'all_platforms' &&
+    isVideoGalleryItem(item)
+  );
+}
+
 function currentLocalIsoDate(): string {
   const now = new Date();
   const year = now.getFullYear();
@@ -88,7 +96,9 @@ export function galleryItemCanSchedule(item: GeneratedMediaLibraryItem): boolean
   if (typeof item.canSchedule === 'boolean') return item.canSchedule;
 
   const platform = item.platform?.trim().toLowerCase() ?? '';
-  if (!SCHEDULE_PLATFORMS.has(platform)) return false;
+  if (!SCHEDULE_PLATFORMS.has(platform) && !isSharedManualVideo(item)) {
+    return false;
+  }
 
   if (isCarouselGalleryItem(item)) {
     return carouselSlidesFromItem(item) !== null;
@@ -109,7 +119,8 @@ export function galleryItemToPrefillPost(
   item: GeneratedMediaLibraryItem
 ): PostSchedulerPrefillPost | null {
   if (!galleryItemCanSchedule(item)) return null;
-  const platform = item.platform.trim().toLowerCase();
+  const rawPlatform = item.platform.trim().toLowerCase();
+  const platform = isSharedManualVideo(item) ? 'facebook' : rawPlatform;
   if (!SCHEDULE_PLATFORMS.has(platform)) return null;
   if (!isSchedulableSource(item.collection)) return null;
   const caption =

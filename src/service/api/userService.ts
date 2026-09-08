@@ -101,12 +101,24 @@ export const uploadLogo = async (
   >('/api/v1/user/upload-logo', formData);
 };
 
+export const deleteLogo = async () => {
+  return apiDelete<
+    ApiEnvelope<{ logo: null; useLogoVariantsForImages: false }>
+  >('/api/v1/user/logo');
+};
+
 export const uploadVideoAvatar = async (avatar: File) => {
   const formData = new FormData();
   formData.append('avatar', avatar);
   return apiPost<ApiEnvelope<{ avatarUrl: string; enabled: boolean }>>(
     '/api/v1/user/upload-video-avatar',
     formData
+  );
+};
+
+export const deleteVideoAvatar = async () => {
+  return apiDelete<ApiEnvelope<{ avatarUrl: null; enabled: false }>>(
+    '/api/v1/user/video-avatar'
   );
 };
 

@@ -76,10 +76,12 @@ export const generateProductAdvertApi = async ({
 export const generateProductAdvertVideoApi = async (args: {
   referencePrompt?: string;
   referenceImages?: Array<{ file: File; source: 'upload' | 'gallery' }>;
-  logoFramePosition: 'first' | 'last';
+  logoFramePosition?: 'first' | 'last';
 }): Promise<ProductAdvertVideoGenerateResponse> => {
   const form = new FormData();
-  form.append('logoFramePosition', args.logoFramePosition);
+  if (args.logoFramePosition) {
+    form.append('logoFramePosition', args.logoFramePosition);
+  }
   if (args.referencePrompt?.trim()) {
     form.append('referencePrompt', args.referencePrompt.trim());
   }

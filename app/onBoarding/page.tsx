@@ -238,6 +238,31 @@ type SourceMode = 'website' | 'catalog';
 
 type ExtractSource = SourceMode | null;
 
+const EXTRACTION_STATUS_MESSAGES: Record<SourceMode, readonly string[]> = {
+  website: [
+    'Connecting securely to your website…',
+    'Reading your homepage and key pages…',
+    'Finding your business and contact details…',
+    'Understanding your products and services…',
+    'Identifying your industry and audience…',
+    'Collecting your logo and brand imagery…',
+    'Detecting your colors and visual style…',
+    'Organizing your Brand DNA for review…',
+  ],
+  catalog: [
+    'Opening your catalog securely…',
+    'Reading pages and product sections…',
+    'Extracting business and contact details…',
+    'Identifying products, services, and categories…',
+    'Understanding descriptions and selling points…',
+    'Finding logos and brand visuals…',
+    'Detecting colors and visual style…',
+    'Organizing your Brand DNA for review…',
+  ],
+};
+
+const EXTRACTION_STATUS_INTERVAL_MS = 2200;
+
 const EMPTY_SUGGESTIONS: OnboardingFieldSuggestions = {
   logos: [],
   hashtags: [],
@@ -408,6 +433,9 @@ export default function OnboardingMenu() {
   const [catalogFile, setCatalogFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [fetchingBusinessData, setFetchingBusinessData] = useState(false);
+  const [activeExtractMode, setActiveExtractMode] =
+    useState<SourceMode | null>(null);
+  const [extractionStatusIndex, setExtractionStatusIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [fieldSuggestions, setFieldSuggestions] =
@@ -432,6 +460,19 @@ export default function OnboardingMenu() {
   useEffect(() => {
     formDataRef.current = formData;
   }, [formData]);
+
+  useEffect(() => {
+    if (!fetchingBusinessData || !activeExtractMode) return;
+
+    const messageCount = EXTRACTION_STATUS_MESSAGES[activeExtractMode].length;
+    const interval = window.setInterval(() => {
+      setExtractionStatusIndex((currentIndex) =>
+        (currentIndex + 1) % messageCount
+      );
+    }, EXTRACTION_STATUS_INTERVAL_MS);
+
+    return () => window.clearInterval(interval);
+  }, [activeExtractMode, fetchingBusinessData]);
 
   useEffect(() => {
     if (localStorage.getItem('isNewUser') != null) {
@@ -691,6 +732,8 @@ export default function OnboardingMenu() {
       if (url !== String(formData.website ?? '').trim()) {
         setFormData((prev) => ({ ...prev, website: url }));
       }
+      setActiveExtractMode('website');
+      setExtractionStatusIndex(0);
       setFetchingBusinessData(true);
       try {
         const response = (await scrapeUrl(url)) as {
@@ -741,11 +784,14 @@ export default function OnboardingMenu() {
         );
       } finally {
         setFetchingBusinessData(false);
+        setActiveExtractMode(null);
       }
       return;
     }
 
     if (!catalogFile) return;
+    setActiveExtractMode('catalog');
+    setExtractionStatusIndex(0);
     setFetchingBusinessData(true);
     try {
       const response = await extractCatalogPdf(catalogFile);
@@ -806,6 +852,7 @@ export default function OnboardingMenu() {
       throw error;
     } finally {
       setFetchingBusinessData(false);
+      setActiveExtractMode(null);
     }
   };
 
@@ -1344,15 +1391,33 @@ export default function OnboardingMenu() {
               <Sparkles className="size-5" />
             </span>
             <p className="bg-gradient-primary-text text-xl font-bold">
-              {sourceMode === 'catalog' && step === 0
+              {(activeExtractMode ?? sourceMode) === 'catalog'
                 ? 'Reading your catalog…'
                 : 'Reading your website…'}
             </p>
-            <p className="text-sm text-secondary">
-              We&apos;re extracting brand details so you can review and edit
-              them in the next steps.
-            </p>
             <Spinner className="size-5 text-link" />
+            <div
+              className="relative flex min-h-10 items-center justify-center"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.p
+                  key={`${activeExtractMode ?? sourceMode}-${extractionStatusIndex}`}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-sm text-secondary"
+                >
+                  {
+                    EXTRACTION_STATUS_MESSAGES[activeExtractMode ?? sourceMode][
+                      extractionStatusIndex
+                    ]
+                  }
+                </motion.p>
+              </AnimatePresence>
+            </div>
           </Card>
         </div>
       )}

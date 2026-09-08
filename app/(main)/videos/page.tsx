@@ -172,7 +172,7 @@ function FrameCard({
             disabled={disabled}
             onClick={() => inputRef.current?.click()}
             className={cn(
-              'flex w-full max-w-full flex-col items-center justify-center gap-2 rounded-full border-2 border-dashed border-default bg-element text-secondary transition hover:border-strong hover:bg-element disabled:text-quaternary',
+              'flex w-full max-w-full flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-default bg-element text-secondary transition hover:border-strong hover:bg-element disabled:text-quaternary',
               previewAspectClass
             )}
           >
@@ -268,7 +268,7 @@ export default function VideoGenerationPage() {
 
   const isBusy = pipelinePhase === 'generating';
 
-  const canGenerate = creditOk && !!logoUrl && !isBusy && !profileLoading;
+  const canGenerate = creditOk && !isBusy && !profileLoading;
 
   useEffect(() => {
     let cancelled = false;
@@ -402,10 +402,6 @@ export default function VideoGenerationPage() {
 
   const handleGenerate = async () => {
     try {
-      if (!logoUrl) {
-        toast.error('Add a logo first.');
-        return;
-      }
       const user = auth.currentUser;
       if (!user) throw new Error('You must be signed in to generate videos.');
 
@@ -422,7 +418,7 @@ export default function VideoGenerationPage() {
       const response = await startVideoGeneration({
         referencePrompt: referencePrompt.trim() || undefined,
         referenceImages: referenceImageFiles,
-        logoFramePosition,
+        logoFramePosition: logoUrl ? logoFramePosition : undefined,
       });
       setResult({
         platform: 'all_platforms',
@@ -487,7 +483,6 @@ export default function VideoGenerationPage() {
         ...(posterFilePath ? { videoPosterPath: posterFilePath } : {}),
         message: result.videoCaption?.trim() ?? '',
         platform,
-        source: 'videoGeneration',
       })),
     };
     setPostSchedulerPrefill(payload);
@@ -581,8 +576,8 @@ export default function VideoGenerationPage() {
             </div>
             {!logoUrl ? (
               <p className="mt-2 text-xs font-medium text-warning" role="alert">
-                Add a logo first. Video generation is unavailable until your
-                business profile has a saved logo.
+                No logo is saved. Your video will be generated as a 20-second
+                video without the 4-second logo transition.
               </p>
             ) : null}
           </div>
