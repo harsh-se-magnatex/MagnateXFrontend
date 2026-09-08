@@ -464,6 +464,7 @@ export default function TemplateDnaMemoryLayerPage() {
 
     const failedNames: string[] = [];
     let humanRejectedCount = 0;
+    let firstFailureMessage = '';
 
     try {
       for (const item of snapshot) {
@@ -499,7 +500,7 @@ export default function TemplateDnaMemoryLayerPage() {
           ).data;
 
           const humanFailure = data?.failed?.find((failure) =>
-            failure.reason.toLowerCase().includes('human or real person')
+            failure.reason.toLowerCase().includes('visible human face')
           );
           if (humanFailure) {
             humanRejectedCount++;
@@ -533,13 +534,16 @@ export default function TemplateDnaMemoryLayerPage() {
         } catch (itemErr) {
           if (
             itemErr instanceof Error &&
-            itemErr.message.toLowerCase().includes('human or real person')
+            itemErr.message.toLowerCase().includes('visible human face')
           ) {
             humanRejectedCount++;
             await removeImage(item.id);
             continue;
           }
           failedNames.push(item.file.name || 'image');
+          if (!firstFailureMessage && itemErr instanceof Error) {
+            firstFailureMessage = itemErr.message.trim();
+          }
 
           updateImage(item.id, {
             uploading: false,
@@ -552,15 +556,16 @@ export default function TemplateDnaMemoryLayerPage() {
 
       if (humanRejectedCount > 0) {
         toast.error(
-          'The product cannot contain any human or real person. Please upload a product-only image.'
+          'The uploaded photo cannot contain a visible human face. Body parts such as arms, hands, necks, legs, and torsos are allowed.'
         );
       } else if (failedNames.length > 0) {
         const names = failedNames.slice(0, 3).join(', ');
 
-        toast.message(
+        showErrorToast(
           uploadedCount > 0
-            ? `Uploaded ${uploadedCount}; ${failedNames.length} failed${names ? ` (${names})` : ''}`
-            : `Upload failed${names ? `: ${names}` : ''}`
+            ? `Uploaded ${uploadedCount} image(s). ${firstFailureMessage || `${failedNames.length} image(s) could not be processed${names ? ` (${names})` : ''}.`}`
+            : firstFailureMessage ||
+                `We could not process ${names || 'the selected image'}. Use a supported image and try again.`
         );
       } else if (describeError) {
         toast.message(

@@ -17,6 +17,7 @@ import {
   generateAIPlanApi,
   getAIPlanApi,
   type AIPlanCell,
+  type AIPlanResponse,
   selectAIPlanPlatformsApi,
   type AIPlanDay,
   type AIPlanGeneratedItem,
@@ -49,7 +50,7 @@ function kindLabel(kind: AIPlanGeneratedKind | string): string {
     case 'campaign':
       return workspacePageTitle(WORKSPACE_NAV_HREFS.createCampaign);
     case 'ai-engine':
-      return workspacePageTitle(WORKSPACE_NAV_HREFS.contentPlan);
+      return 'AI Creator';
     case 'bulk-create':
       return workspacePageTitle(WORKSPACE_NAV_HREFS.quickCreate);
     case 'quick-create':
@@ -85,6 +86,10 @@ function statusLabel(status: AIPlanGeneratedItem['status']): string {
       return 'Failed';
     case 'scheduled':
       return 'Scheduled';
+    case 'publishing':
+      return 'Publishing';
+    case 'published':
+      return 'Published';
     case 'removed':
       return 'Removed by user';
     case 'rejected-by-admin':
@@ -183,6 +188,24 @@ function canForceRunKind(kind: string): boolean {
   );
 }
 
+function isCreatePostKind(kind: string): boolean {
+  return kind === 'quick-create' || kind === 'ai-engine';
+}
+
+function createPostBrief(cell?: AIPlanCell): string | undefined {
+  if (!cell || !isCreatePostKind(cell.kind)) return undefined;
+  switch (cell.briefKey) {
+    case 'recreate-winner':
+      return 'Recreate the winner';
+    case 'plug-a-gap':
+      return 'Plug a content gap';
+    case 'try-a-new-format':
+      return 'Try a new format';
+    default:
+      return cell.reason?.trim() || undefined;
+  }
+}
+
 function hasGeneratedCounterpart(
   generated: AIPlanGeneratedItem[],
   upcomingKind: AIPlanUpcomingItem['kind']
@@ -203,6 +226,7 @@ function globalForceRunTargets(args: {
   days: AIPlanDay[];
   platforms: AIPlanPlatform[];
   todayIso: string;
+  connectionState: AIPlanResponse['connectionState'] | null;
 }): GlobalForceRunTarget[] {
   const targets: GlobalForceRunTarget[] = [];
   const seen = new Set<string>();
@@ -214,6 +238,8 @@ function globalForceRunTargets(args: {
       for (const item of slot.upcoming) {
         const status = String(item.status ?? '').toLowerCase();
         if (
+          (item.kind === 'quick-create' &&
+            !args.connectionState?.[platform]?.connected) ||
           !canForceRunKind(item.kind) ||
           item.kind === 'empty' ||
           hasGeneratedCounterpart(slot.generated, item.kind) ||
@@ -254,6 +280,7 @@ function entriesForSlot(args: {
       status: statusLabel(item.status),
       hideStatus: item.kind === 'video-generation' && item.status === 'failed',
       note:
+        createPostBrief(item.cell) ||
         videoScheduleDetails(item.cell) ||
         (hideDetail
           ? undefined
@@ -287,13 +314,15 @@ function entriesForSlot(args: {
               : `Campaign · ${suppliedLabel}`
             : kindLabel(item.kind),
         note:
+          createPostBrief(item.cell) ||
           (item.kind === 'video-generation'
             ? videoScheduleDetails(item.cell)
             : isOccasion
               ? suppliedLabel
               : isFailed
                 ? undefined
-                : item.note?.trim()) || undefined,
+                : item.note?.trim()) ||
+          undefined,
         href: null,
         source: 'upcoming' as const,
         status: item.status,
@@ -342,6 +371,7 @@ function PlatformCell({
   entries,
   todayIso,
   forceRunEnabled,
+  connected,
   suppressVideoForceRun = false,
   sharedVideoRunning = false,
   runningForceRunKeys,
@@ -352,6 +382,7 @@ function PlatformCell({
   entries: CellEntry[];
   todayIso: string;
   forceRunEnabled: boolean;
+  connected: boolean;
   suppressVideoForceRun?: boolean;
   sharedVideoRunning?: boolean;
   runningForceRunKeys: Set<string>;
@@ -372,7 +403,7 @@ function PlatformCell({
 
   const isPast = date < todayIso;
   return (
-    <div className="flex h-full min-h-[3.25rem] flex-col gap-1 px-1.5 py-1.5">
+    <div className="flex h-full min-h-[3.25rem] min-w-0 flex-col gap-1 px-1.5 py-1.5 [overflow-wrap:anywhere]">
       {entries.map((entry, idx) => {
         const runKey = forceRunVisualKey({
           date,
@@ -380,9 +411,11 @@ function PlatformCell({
           kind: entry.kind,
           eventId: entry.eventId,
         });
+        const connectionLocked = entry.kind === 'quick-create' && !connected;
         const isRunning =
-          runningForceRunKeys.has(runKey) ||
-          (sharedVideoRunning && entry.kind === 'video-generation') ||
+          (entry.source === 'upcoming' &&
+            (runningForceRunKeys.has(runKey) ||
+              (sharedVideoRunning && entry.kind === 'video-generation'))) ||
           entry.status === 'enqueued' ||
           entry.status === 'queued';
         const displayStatus = entry.hideStatus
@@ -460,6 +493,12 @@ function PlatformCell({
             {showForceRun ? (
               <button
                 type="button"
+                disabled={connectionLocked}
+                title={
+                  connectionLocked
+                    ? `Connect ${PLATFORM_LABEL[platform]} to create posts`
+                    : undefined
+                }
                 onClick={() =>
                   onForceRun(
                     date,
@@ -477,7 +516,11 @@ function PlatformCell({
                 ) : (
                   <Play className="h-3 w-3" aria-hidden />
                 )}
-                {isRunning ? 'Running…' : 'Force Run'}
+                {connectionLocked
+                  ? `Connect ${PLATFORM_SHORT[platform]} to run`
+                  : isRunning
+                    ? 'Running…'
+                    : 'Force Run'}
               </button>
             ) : null}
           </div>
@@ -488,6 +531,7 @@ function PlatformCell({
 }
 
 function AIPlanSheet({
+  connectionState,
   days,
   platforms,
   todayIso,
@@ -495,6 +539,7 @@ function AIPlanSheet({
   runningForceRunKeys,
   onForceRun,
 }: {
+  connectionState: AIPlanResponse['connectionState'] | null;
   days: AIPlanDay[];
   platforms: AIPlanPlatform[];
   /** YYYY-MM-DD in the user's timezone — highlighted as Today. */
@@ -511,7 +556,13 @@ function AIPlanSheet({
   return (
     <div className="overflow-hidden rounded-lg border border-default bg-default">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[36rem] border-collapse text-sm">
+        <table className="w-full min-w-[36rem] table-fixed border-collapse text-sm">
+          <colgroup>
+            <col className="w-[7.5rem]" />
+            {platforms.map((platform) => (
+              <col key={platform} />
+            ))}
+          </colgroup>
           <thead>
             <tr className="bg-element">
               <th
@@ -655,6 +706,9 @@ function AIPlanSheet({
                               entries={entriesByPlatform[platform]}
                               todayIso={todayIso}
                               forceRunEnabled={forceRunEnabled}
+                              connected={
+                                connectionState?.[platform]?.connected === true
+                              }
                               suppressVideoForceRun
                               sharedVideoRunning={sharedVideoRunning}
                               runningForceRunKeys={runningForceRunKeys}
@@ -707,6 +761,9 @@ function AIPlanSheet({
                           entries={entriesByPlatform[platform]}
                           todayIso={todayIso}
                           forceRunEnabled={forceRunEnabled}
+                          connected={
+                            connectionState?.[platform]?.connected === true
+                          }
                           runningForceRunKeys={runningForceRunKeys}
                           onForceRun={onForceRun}
                         />
@@ -741,6 +798,9 @@ export default function AIPlanPage() {
     () => formatInTimeZone(new Date(), timeZone, 'yyyy-MM-dd'),
     [timeZone]
   );
+  const [connectionState, setConnectionState] = useState<
+    AIPlanResponse['connectionState'] | null
+  >(null);
   const [days, setDays] = useState<AIPlanDay[]>([]);
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -809,6 +869,7 @@ export default function AIPlanPage() {
     try {
       const data = await getAIPlanApi();
       setDays(data.days);
+      setConnectionState(data.connectionState);
       setRange({ from: data.from, to: data.to });
       setCalendarSeeded(data.calendarSeeded);
       setInitialGenerationPending(data.initialCalendarGenerationPending);
@@ -913,6 +974,10 @@ export default function AIPlanPage() {
       kind: AIPlanUpcomingItem['kind'],
       eventId?: string
     ) => {
+      if (kind === 'quick-create' && !connectionState?.[platform]?.connected) {
+        toast.error(`Connect ${PLATFORM_LABEL[platform]} to create posts`);
+        return;
+      }
       if (date < todayIso) {
         toast.error('Force Run is not available for past dates');
         return;
@@ -1003,11 +1068,16 @@ export default function AIPlanPage() {
         toast.error(message);
       }
     },
-    [load, todayIso]
+    [connectionState, load, todayIso]
   );
 
   const handleGlobalForceRun = useCallback(async () => {
-    const targets = globalForceRunTargets({ days, platforms, todayIso });
+    const targets = globalForceRunTargets({
+      days,
+      platforms,
+      todayIso,
+      connectionState,
+    });
     if (targets.length === 0) {
       toast.error(
         'There is no remaining AI Manager content available to Force Run'
@@ -1067,7 +1137,7 @@ export default function AIPlanPage() {
       toast.error(message);
       setGlobalForceRunProgress(null);
     }
-  }, [days, load, platforms, todayIso]);
+  }, [connectionState, days, load, platforms, todayIso]);
 
   useEffect(() => {
     if (globalForceRunProgress?.phase !== 'generating') return;
@@ -1124,8 +1194,8 @@ export default function AIPlanPage() {
           Upgrade to unlock AI Manager
         </h1>
         <p className="text-sm text-secondary">
-          AI Manager automation is available on Prime AI, Elite AI, and Legacy AI
-          plans.
+          AI Manager automation is available on Prime AI, Elite AI, and Legacy
+          AI plans.
         </p>
         <Link
           href="/settings/billings"
@@ -1181,8 +1251,8 @@ export default function AIPlanPage() {
         </div>
         <h1 className="text-page-title text-default">AI Manager</h1>
         <p className="max-w-2xl text-sm text-secondary">
-          Your AI Manager calendar from start to end — rows are days, columns are
-          the platforms locked for this billing cycle.
+          Your AI Manager calendar from start to end — rows are days, columns
+          are the platforms locked for this billing cycle.
         </p>
         {range?.from && range?.to ? (
           <p className="text-xs font-medium text-default">
@@ -1303,7 +1373,9 @@ export default function AIPlanPage() {
             {generatingCalendar ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : null}
-            {generatingCalendar ? 'Generating AI Manager…' : 'Generate AI Manager'}
+            {generatingCalendar
+              ? 'Generating AI Manager…'
+              : 'Generate AI Manager'}
           </button>
           {!canGenerateCalendar ? (
             <p className="mt-3 text-xs text-secondary">
@@ -1360,6 +1432,7 @@ export default function AIPlanPage() {
             </p>
           )}
           <AIPlanSheet
+            connectionState={connectionState}
             days={visibleDays}
             platforms={platforms}
             todayIso={todayIso}

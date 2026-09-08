@@ -206,7 +206,7 @@ export function generatedByLabel(value: string | undefined): string | null {
   if (!trimmed) return null;
   switch (trimmed.toLowerCase()) {
     case 'ai-engine':
-      return 'AI Manager';
+      return 'AI Creator';
     case 'batch-generation':
       return 'Create Post';
     case 'events-post':

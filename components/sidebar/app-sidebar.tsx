@@ -145,7 +145,11 @@ export function AppSidebar({
         (item) => item.href === WORKSPACE_NAV_HREFS.linkedProfiles
       );
     }
-    const items = [...workspaceNav];
+    const items = workspaceNav.filter(
+      (item) =>
+        billing?.mode !== 'auto' ||
+        item.href !== WORKSPACE_NAV_HREFS.festivePost
+    );
     return items;
   })();
   const settingsChildItems = isAccountFrozen

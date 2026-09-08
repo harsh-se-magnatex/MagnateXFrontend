@@ -467,6 +467,7 @@ export default function BrandMemoryPage() {
       if (snapshot.length > 0) {
         let uploadedCount = 0;
         const failedNames: string[] = [];
+        let firstFailureMessage = '';
 
         for (const item of snapshot) {
           setPendingStaged((prev) =>
@@ -518,6 +519,9 @@ export default function BrandMemoryPage() {
           } catch (itemErr) {
             photosFailed = true;
             failedNames.push(item.file.name || 'image');
+            if (!firstFailureMessage && itemErr instanceof Error) {
+              firstFailureMessage = itemErr.message.trim();
+            }
             setPendingStaged((prev) =>
               prev.map((p) =>
                 p.id === item.id ? { ...p, uploading: false, failed: true } : p
@@ -529,10 +533,13 @@ export default function BrandMemoryPage() {
 
         if (photosFailed) {
           const names = failedNames.slice(0, 3).join(', ');
-          toast.message(
+          const message =
+            firstFailureMessage ||
+            `We could not process ${names || 'the selected image'}. Use a supported image without a visible human face and try again.`;
+          showErrorToast(
             uploadedCount > 0
-              ? `Uploaded ${uploadedCount}; ${failedNames.length} failed${names ? ` (${names})` : ''}. Fix or remove failed images to continue.`
-              : `Upload failed${names ? `: ${names}` : ''}. Fix or remove failed images to continue.`
+              ? `Uploaded ${uploadedCount} image(s). ${message}`
+              : message
           );
           return;
         }

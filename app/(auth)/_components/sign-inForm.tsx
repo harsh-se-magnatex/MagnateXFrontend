@@ -168,8 +168,9 @@ export function SigninForm({
       const token = recoveryToken;
       const docId = deletedDocId;
       await recoverDeletedUserAccount(docId, token);
+      setRecoveryDialogOpen(false);
       toast.success('Old Account Recovered Successfully.');
-      router.push('/home');
+      router.replace('/home');
     } catch (err: unknown) {
       if (err instanceof Error && err.message === 'recovery-verify-failed') {
         return;

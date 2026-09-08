@@ -274,6 +274,19 @@ export const signInEmailPassword = async (email: string, password: string) => {
     throw new Error('Login failed');
   }
 
+  // A soft-deleted account still has Firebase credentials, so password
+  // authentication succeeds. Read the pending deletion marker before
+  // treating that credential as a normal sign-in.
+  const pendingDeletion = await checkEmailExistsinDeletedUsers(email);
+  if (pendingDeletion.data?.exists && pendingDeletion.data.deletedDocId) {
+    return {
+      user: result.user,
+      result,
+      showRecoveryPopup: true,
+      deletedDocId: pendingDeletion.data.deletedDocId,
+    };
+  }
+
   const idToken = await result.user.getIdToken(true);
   const response = (await loginUser(
     idToken,

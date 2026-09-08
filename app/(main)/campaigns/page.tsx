@@ -81,6 +81,7 @@ import {
   type CampaignDraft,
   type CampaignSuggestion,
 } from '@/src/service/api/campaign.service';
+import { getMemoryLayer } from '@/src/service/api/userService';
 import {
   waitForCampaignDraftRegen,
   waitForParentJobDocs,
@@ -367,6 +368,35 @@ export default function CreateCampaignPage() {
 
   const goal = useCampaignState((s) => s.goal);
   const setGoal = useCampaignState((s) => s.setGoal);
+
+  // Photo-first is the default: planning the campaign from real photos is what
+  // stops a day's copy describing a product the picture does not show.
+  const [useBrandPhotos, setUseBrandPhotos] = useState(true);
+  const [hasBrandPhotos, setHasBrandPhotos] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await getMemoryLayer();
+        const layer = res?.data?.memoryLayer as
+          | { brandPhotos?: unknown[] }
+          | undefined;
+        const count = Array.isArray(layer?.brandPhotos)
+          ? layer!.brandPhotos!.length
+          : 0;
+        if (cancelled) return;
+        setHasBrandPhotos(count > 0);
+        // Nothing to build from — start on the generate route rather than
+        // showing an error the user has not caused yet.
+        if (count === 0) setUseBrandPhotos(false);
+      } catch {
+        if (!cancelled) setHasBrandPhotos(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const suggestions = useCampaignState((s) => s.suggestions);
   const maxDaysFromServer = useCampaignState((s) => s.maxDays);
   const autoSeeded = useCampaignState((s) => s.autoSeeded);
@@ -522,6 +552,10 @@ export default function CreateCampaignPage() {
         const set = await suggestCampaignSetApi({
           goal,
           count: size ?? DEFAULT_CAMPAIGN_SET_SIZE,
+          // Photo-first when the user has photos and wants them used: the
+          // planner writes each day about a real photo, so the picture and
+          // the copy cannot end up describing different products.
+          useBrandPhotos: useBrandPhotos && hasBrandPhotos,
         });
         loadSuggestionSet(set.suggestions, set.maxDays, {
           autoSeeded: false,
@@ -539,7 +573,14 @@ export default function CreateCampaignPage() {
         setIsLoadingSuggestions(false);
       }
     },
-    [goal, isLoadingSuggestions, loadSuggestionSet, setIsLoadingSuggestions]
+    [
+      goal,
+      hasBrandPhotos,
+      useBrandPhotos,
+      isLoadingSuggestions,
+      loadSuggestionSet,
+      setIsLoadingSuggestions,
+    ]
   );
 
   const handleRegenerateOne = useCallback(
@@ -712,6 +753,8 @@ export default function CreateCampaignPage() {
           reference: day.reference,
           caption: day.caption,
           date: day.date,
+          // The planner wrote this day's copy about this specific photo.
+          ...(day.photoPath ? { photoPath: day.photoPath } : {}),
         })),
         platforms: genPlatforms,
         suggestionId: selectedSuggestionId ?? undefined,
@@ -841,6 +884,9 @@ export default function CreateCampaignPage() {
           autoSeeded={autoSeeded}
           pickedSuggestionId={pickedSuggestionId}
           pickedReason={pickedReason}
+          useBrandPhotos={useBrandPhotos}
+          onUseBrandPhotosChange={setUseBrandPhotos}
+          hasBrandPhotos={hasBrandPhotos}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -860,6 +906,7 @@ export default function CreateCampaignPage() {
               onUpdate={updateDay}
               onPickDate={handlePickDate}
               onRemove={removeDay}
+              locked={autoSeeded}
             />
 
             <CampaignWeeksOverview
@@ -943,6 +990,10 @@ type SuggestionGalleryProps = {
   autoSeeded?: boolean;
   pickedSuggestionId?: string | null;
   pickedReason?: string | null;
+  /** Plan the campaign from the brand's real photos vs generate the imagery. */
+  useBrandPhotos: boolean;
+  onUseBrandPhotosChange: (value: boolean) => void;
+  hasBrandPhotos: boolean;
 };
 
 function SuggestionGallery(props: SuggestionGalleryProps) {
@@ -959,6 +1010,9 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
     autoSeeded = false,
     pickedSuggestionId = null,
     pickedReason = null,
+    useBrandPhotos,
+    onUseBrandPhotosChange,
+    hasBrandPhotos,
   } = props;
 
   const showSkeleton = isLoading && suggestions.length === 0;
@@ -979,10 +1033,62 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
             </h2>
             <p className="text-xs text-secondary">
               {autoSeeded && pickedSuggestionId
-                ? 'Auto mode already chose one idea for you (see the badge below). You can still pick a different card.'
+                ? 'Your AI Manager plan built this campaign automatically. It is shown here for reference and cannot be edited.'
                 : `Optional: tell the AI what the campaign should focus on, then hit Generate. Each idea is a ${effectiveMaxDays}-day plan you can fully edit after picking.`}
             </p>
           </div>
+        </div>
+
+        <div className="px-6 pt-6">
+          <span className="text-xs font-semibold uppercase tracking-wider text-secondary">
+            Build this campaign from
+          </span>
+          <div role="radiogroup" className="mt-2 grid gap-2 sm:grid-cols-2">
+            {(
+              [
+                {
+                  value: true,
+                  label: 'My brand photos',
+                  hint: 'Each day is written about one of your real photos, so the picture and the copy always match.',
+                },
+                {
+                  value: false,
+                  label: 'Generate the imagery',
+                  hint: 'Ideas from your brand profile, with all visuals created by AI. Best if you have no product photos.',
+                },
+              ] as const
+            ).map((option) => {
+              const active = useBrandPhotos === option.value;
+              return (
+                <button
+                  key={String(option.value)}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => onUseBrandPhotosChange(option.value)}
+                  className={cn(
+                    'rounded-xl border px-4 py-3 text-left transition',
+                    active
+                      ? 'border-primary-purple bg-primary-purple/10'
+                      : 'border-default hover:border-primary-purple/40'
+                  )}
+                >
+                  <span className="block text-sm font-semibold text-default">
+                    {option.label}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-secondary">
+                    {option.hint}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {useBrandPhotos && !hasBrandPhotos ? (
+            <p className="mt-2 text-xs text-destructive">
+              You have no photos in Brand Memory yet. Add some there first, or
+              switch to &ldquo;Generate the imagery&rdquo;.
+            </p>
+          ) : null}
         </div>
 
         <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -1002,7 +1108,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
           </label>
           <button
             type="button"
-            onClick={onGenerateSet}
+            onClick={() => onGenerateSet()}
             disabled={isLoading}
             aria-busy={isLoading}
             className="inline-flex items-center justify-center gap-2 rounded-full btn-brand-fill px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:bg-element disabled:text-secondary disabled:shadow-none"
@@ -1239,6 +1345,12 @@ type DayDraftListProps = {
   onUpdate: (dayNumber: number, patch: Partial<CampaignDayDraft>) => void;
   onPickDate: (dayNumber: number, date: string | null) => void;
   onRemove: (dayNumber: number) => void;
+  /**
+   * AI-Manager campaigns are shown for reference only. Their days were planned
+   * against specific brand photos, so editing the copy here would break the
+   * photo↔copy pairing the plan exists to guarantee.
+   */
+  locked?: boolean;
 };
 
 function DayDraftList(props: DayDraftListProps) {
@@ -1250,6 +1362,7 @@ function DayDraftList(props: DayDraftListProps) {
     onUpdate,
     onPickDate,
     onRemove,
+    locked = false,
   } = props;
 
   if (days.length === 0) {
@@ -1276,13 +1389,30 @@ function DayDraftList(props: DayDraftListProps) {
           <CalendarDays className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h2 className="text-subsection text-default">
-            2. Pick dates &amp; tweak briefs
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-subsection text-default">
+              {locked ? '2. Campaign schedule' : '2. Pick dates & tweak briefs'}
+            </h2>
+            {locked ? (
+              <span className="rounded-full border border-primary-purple/30 bg-primary-purple/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-preview">
+                AI Manager
+              </span>
+            ) : null}
+          </div>
           <p className="text-xs text-secondary">
-            Your first date sets a {MAX_CAMPAIGN_DAYS}-day window. All posts
-            must fall inside that range before your plan ends.{' '}
-            <span className="font-medium text-secondary">{windowHint}</span>
+            {locked ? (
+              <>
+                Built automatically by your AI Manager plan. Each day was
+                written around one of your brand photos, so the briefs are
+                locked to keep the copy and the image in step.
+              </>
+            ) : (
+              <>
+                Your first date sets a {MAX_CAMPAIGN_DAYS}-day window. All posts
+                must fall inside that range before your plan ends.{' '}
+                <span className="font-medium text-secondary">{windowHint}</span>
+              </>
+            )}
           </p>
         </div>
       </div>
@@ -1341,6 +1471,7 @@ function DayDraftList(props: DayDraftListProps) {
                         onUpdate(day.dayNumber, { title: e.target.value })
                       }
                       placeholder="Short day headline"
+                      disabled={locked}
                       className="mt-1"
                     />
                   </label>
@@ -1355,6 +1486,7 @@ function DayDraftList(props: DayDraftListProps) {
                       }
                       placeholder="Describe what this day's post should look like."
                       rows={2}
+                      disabled={locked}
                       className="mt-1"
                     />
                   </label>
@@ -1374,6 +1506,7 @@ function DayDraftList(props: DayDraftListProps) {
                       }
                       placeholder="Optional caption line to steer the copy."
                       rows={1}
+                      disabled={locked}
                       className="mt-1"
                     />
                   </label>
@@ -2182,9 +2315,19 @@ function DraftRow(props: DraftRowProps) {
 
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-default line-clamp-2 leading-snug">
-            {draft.eventName || draft.campaignTheme || 'Untitled day'}
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-bold text-default line-clamp-2 leading-snug">
+              {draft.eventName || draft.campaignTheme || 'Untitled day'}
+            </p>
+            {draft.autoSeeded === true ? (
+              <span
+                title="Created automatically by your AI Manager plan"
+                className="shrink-0 rounded-full border border-primary-purple/30 bg-primary-purple/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-preview"
+              >
+                AI Manager
+              </span>
+            ) : null}
+          </div>
           <p className="mt-1 text-[11px] text-secondary capitalize">
             {draft.platform || 'unknown'} ·{' '}
             {formatDisplayDate(draft.targetDate)}

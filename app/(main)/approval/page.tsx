@@ -791,7 +791,7 @@ export default function ApprovalPage() {
       }
       const target = pendingPosts.find((p) => p.postId === postId);
       if (action === 'regenerate' && target?.generatedByAiEngine !== true) {
-        showErrorToast('Only AI Manager posts can be regenerated.');
+        showErrorToast('Only AI Creator posts can be regenerated.');
         return;
       }
 

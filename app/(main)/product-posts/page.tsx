@@ -684,7 +684,7 @@ export default function ProductAdvertPage() {
                           `Generated advert for ${item.platform}`
                         )
                       }
-                      className="group relative block w-full cursor-pointer overflow-hidden rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
+                      className="group relative block w-full cursor-pointer overflow-hidden  focus:outline-none focus-visible:ring-2 focus-visible:ring-strong"
                       aria-label="Open image preview"
                     >
                       <img

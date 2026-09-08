@@ -217,7 +217,7 @@ export default function AutomatedPostPage() {
 
   const handleSubmit = async () => {
     if (isTourDemo) return;
-    if (planCreditsLoading || isSubmitting) return;
+    if (planCreditsLoading || isSubmitting || billing?.mode === 'auto') return;
     const cost = selected.length * CREDIT_PER_EVENT * genPlatforms.length;
     if (cost > userCredits) {
       setMessage('Not enough credits. Please top up your account.');
@@ -251,7 +251,9 @@ export default function AutomatedPostPage() {
       const response = await createAutomatedPost(selectedEvents, genPlatforms);
       clearSelected();
       if ((response.failedCount ?? 0) > 0) {
-        showErrorToast('Occasion Posts creation failed. Please try again later.');
+        showErrorToast(
+          'Occasion Posts creation failed. Please try again later.'
+        );
         setIsSubmitting(false);
         return;
       }
@@ -271,7 +273,9 @@ export default function AutomatedPostPage() {
             'Occasion Posts creation failed. Please try again later.'
           );
       } else {
-        showErrorToast('Occasion Posts creation failed. Please try again later.');
+        showErrorToast(
+          'Occasion Posts creation failed. Please try again later.'
+        );
       }
       setIsSubmitting(false);
     } catch (error: unknown) {
@@ -327,6 +331,26 @@ export default function AutomatedPostPage() {
 
   if (!isTourDemo && isPlanInactive(billing)) {
     return <NonSubscribedFeatureBlock />;
+  }
+
+  if (billing?.mode === 'auto') {
+    return (
+      <div className="mx-auto max-w-xl rounded-2xl border border-default bg-default p-8 text-center">
+        <Lock className="mx-auto h-8 w-8 text-secondary" aria-hidden />
+        <h1 className="mt-4 text-xl font-semibold text-default">
+          Occasion Posts are managed automatically
+        </h1>
+        <p className="mt-2 text-sm text-secondary">
+          Your auto plan creates occasion posts through AI Manager.
+        </p>
+        <Link
+          href={WORKSPACE_NAV_HREFS.contentPlan}
+          className="mt-5 inline-flex rounded-full btn-brand-fill px-5 py-2 text-sm font-semibold"
+        >
+          Open AI Manager
+        </Link>
+      </div>
+    );
   }
 
   return (

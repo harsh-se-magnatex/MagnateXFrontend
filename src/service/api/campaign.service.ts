@@ -21,6 +21,8 @@ export type CampaignDayPlan = {
   title: string;
   reference: string;
   caption?: string;
+  /** Brand photo the planner built this day around, when the brand has photos. */
+  photoPath?: string;
 };
 
 export type CampaignSuggestion = {
@@ -64,6 +66,16 @@ export type CampaignSuggestionSet = {
 export async function suggestCampaignSetApi(params: {
   goal?: string;
   count?: number;
+  /**
+   * false = "generate without my photos": ideas from brand copy, imagery
+   * generated. The right route for a service business.
+   *
+   * true (default) = plan the campaign FROM the brand's photos, so each day's
+   * copy is written about the image it will be locked to.
+   */
+  useBrandPhotos?: boolean;
+  /** Narrow the library to a hand-picked set. */
+  photoPaths?: string[];
 }): Promise<CampaignSuggestionSet> {
   const response = await axiosClient.post<{
     success: boolean;
@@ -72,6 +84,8 @@ export async function suggestCampaignSetApi(params: {
   }>('/api/v1/campaign/suggest-set', {
     goal: params.goal?.trim() || undefined,
     count: params.count,
+    useBrandPhotos: params.useBrandPhotos,
+    photoPaths: params.photoPaths?.length ? params.photoPaths : undefined,
   });
   return response.data.data;
 }
@@ -116,6 +130,13 @@ export type CreateCampaignDayInput = {
   reference: string;
   caption?: string;
   dayNumber?: number;
+  /**
+   * Brand photo this day is built on. The planner assigns it, and render loads
+   * exactly this photo — the day's copy was written about it, and the image is
+   * pixel-locked downstream, so substituting another one ships a visible
+   * contradiction.
+   */
+  photoPath?: string;
 };
 
 export type CreateCampaignParams = {

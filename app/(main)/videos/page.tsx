@@ -27,8 +27,10 @@ import { MediaLibraryImagePickerDialog } from '@/components/shared/MediaLibraryI
 import { type VideoFramePreviewMode } from '@/lib/video-frame-preview';
 import { DownloadVideoButton } from '@/components/download-video-button';
 import { toast } from 'sonner';
+import { prepareGenerationImage } from '@/lib/prepare-generation-image';
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
+const MAX_VIDEO_REFERENCE_IMAGE_BYTES = 4 * 1024 * 1024;
 type LogoFramePosition = 'first' | 'last';
 type PipelinePhase = 'idle' | 'preparing' | 'generating' | 'ready' | 'failed';
 
@@ -39,7 +41,7 @@ type FrameSlot = {
   file: File | null;
   kind: FrameKind | null;
   isLogoFromDb: boolean;
-  /** Matches backend logo-card vs hero-photo framing for the 9:16/16:9 preview. */
+  /** Matches backend logo-card vs hero-photo framing for the square preview. */
   previewMode: VideoFramePreviewMode;
 };
 
@@ -155,7 +157,8 @@ function FrameCard({
             className={cn(
               'object-contain',
               // Logo-card: keep the centered mark modest, not full-bleed.
-              // Hero/product: contain the full still — never object-cover on 9:16.
+              // Hero/product: contain the full still — never object-cover, so a
+              // non-square upload is shown whole rather than silently trimmed.
               isLogoCard
                 ? 'max-h-[38%] max-w-[70%]'
                 : 'h-auto w-auto max-h-full max-w-full'
@@ -320,11 +323,14 @@ export default function VideoGenerationPage() {
   );
 
   const setUploadReference = useCallback(
-    (file: File, targetIndex: number | null) => {
-      const previewUrl = URL.createObjectURL(file);
+    async (file: File, targetIndex: number | null) => {
+      const preparedFile = await prepareGenerationImage(file, {
+        maxBytes: MAX_VIDEO_REFERENCE_IMAGE_BYTES,
+      });
+      const previewUrl = URL.createObjectURL(preparedFile);
       const next: FrameSlot = {
         previewUrl,
-        file,
+        file: preparedFile,
         kind: 'upload',
         isLogoFromDb: false,
         previewMode: 'hero-photo',
@@ -345,14 +351,21 @@ export default function VideoGenerationPage() {
 
   /** Add a file-picker selection in its original picker order, up to ten slots. */
   const addUploadReferences = useCallback(
-    (files: File[]) => {
+    async (files: File[]) => {
       const available = Math.max(0, 10 - referenceImages.length);
       const accepted = files.slice(0, available);
       if (!accepted.length) return;
       if (accepted.length < files.length) {
         toast.error('You can add up to 10 reference images.');
       }
-      const next = accepted.map((file): FrameSlot => ({
+      const preparedFiles = await Promise.all(
+        accepted.map((file) =>
+          prepareGenerationImage(file, {
+            maxBytes: MAX_VIDEO_REFERENCE_IMAGE_BYTES,
+          })
+        )
+      );
+      const next = preparedFiles.map((file): FrameSlot => ({
         previewUrl: URL.createObjectURL(file),
         file,
         kind: 'upload',
@@ -389,6 +402,10 @@ export default function VideoGenerationPage() {
 
   const handleGenerate = async () => {
     try {
+      if (!logoUrl) {
+        toast.error('Add a logo first.');
+        return;
+      }
       const user = auth.currentUser;
       if (!user) throw new Error('You must be signed in to generate videos.');
 
@@ -486,7 +503,8 @@ export default function VideoGenerationPage() {
   }
 
   const progressLabel = isBusy ? 'Generating video...' : '';
-  const framePreviewAspect = 'aspect-video';
+  // Adverts render square so one video can be boosted on all three platforms.
+  const framePreviewAspect = 'aspect-square';
   const isPortraitPreview = false;
 
   if (creditsLoading || profileLoading) {
@@ -517,11 +535,12 @@ export default function VideoGenerationPage() {
         <div className="space-y-6">
           <div className="rounded-2xl border border-primary-purple/20 bg-primary-purple/5 px-4 py-3">
             <p className="text-sm font-semibold text-default">
-              One 16:9 video for Instagram, Facebook, and LinkedIn
+              One 1:1 square video for Instagram, Facebook, and LinkedIn
             </p>
             <p className="mt-1 text-xs text-secondary">
               Generate once, then schedule the identical video to all three
-              platforms.
+              platforms. Square is the only format all three accept for paid ad
+              boosting without cropping.
             </p>
           </div>
 
@@ -561,9 +580,9 @@ export default function VideoGenerationPage() {
               })}
             </div>
             {!logoUrl ? (
-              <p className="mt-2 text-xs text-warning">
-                Add a business logo in your profile to enable first or last
-                placement.
+              <p className="mt-2 text-xs font-medium text-warning" role="alert">
+                Add a logo first. Video generation is unavailable until your
+                business profile has a saved logo.
               </p>
             ) : null}
           </div>
@@ -610,7 +629,7 @@ export default function VideoGenerationPage() {
                     previewAspectClass={framePreviewAspect}
                     isPortraitPreview={isPortraitPreview}
                     disabled={isBusy}
-                    onUpload={(file) => setUploadReference(file, index)}
+                    onUpload={(file) => void setUploadReference(file, index)}
                     onRemove={() => clearReference(index)}
                     onPickFromGallery={() => {
                       setGalleryTargetIndex(index);
@@ -647,8 +666,8 @@ export default function VideoGenerationPage() {
                   previewAspectClass={framePreviewAspect}
                   isPortraitPreview={isPortraitPreview}
                   disabled={isBusy}
-                  onUpload={(file) => setUploadReference(file, null)}
-                  onFilesSelected={addUploadReferences}
+                  onUpload={(file) => void setUploadReference(file, null)}
+                  onFilesSelected={(files) => void addUploadReferences(files)}
                   multiple
                   onRemove={() => undefined}
                   onPickFromGallery={() => {
@@ -712,7 +731,7 @@ export default function VideoGenerationPage() {
                 poster={result.posterUrl}
                 className={cn(
                   'w-full max-w-2xl mx-auto rounded-lg border border-primary-purple/25 bg-black object-contain',
-                  'aspect-video'
+                  'aspect-square'
                 )}
                 src={result.videoUrl}
               />

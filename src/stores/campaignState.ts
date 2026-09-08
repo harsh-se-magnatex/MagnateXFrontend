@@ -23,6 +23,11 @@ export type CampaignDayDraft = {
   caption?: string;
   /** ISO YYYY-MM-DD. `null` until the user picks a date for this slot. */
   date: string | null;
+  /**
+   * Brand photo this day was planned around. Carried through to create so
+   * render loads the same photo the copy was written about.
+   */
+  photoPath?: string;
 };
 
 type CampaignState = {
@@ -135,6 +140,7 @@ function planToDraft(
     reference: plan.reference,
     caption: plan.caption,
     date: carriedDate ?? null,
+    ...(plan.photoPath ? { photoPath: plan.photoPath } : {}),
   };
 }
 

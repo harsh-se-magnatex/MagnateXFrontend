@@ -72,6 +72,8 @@ type BusinessProfileForm = {
   recommendedSlogans: string[];
   /** Explicit true = use variants in AI images and keep saved variants; omitted/false = off. */
   useLogoVariantsForImages?: boolean;
+  /** Steers video creative. 'auto' lets the pipeline classify the business. */
+  businessSegmentOverride: 'auto' | 'product' | 'service';
 };
 
 const inputBase =
@@ -172,7 +174,9 @@ export default function BusinessProfilePage() {
     recommendedHashtags: [],
     recommendedSlogans: [],
     useLogoVariantsForImages: false,
+    businessSegmentOverride: 'auto',
   });
+  const [detectedSegment, setDetectedSegment] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [variantsPreferenceLoading, setVariantsPreferenceLoading] =
@@ -372,7 +376,15 @@ export default function BusinessProfilePage() {
             recommendedHashtags,
             recommendedSlogans,
             useLogoVariantsForImages: p.useLogoVariantsForImages === true,
+            businessSegmentOverride:
+              p.businessSegmentOverride === 'product' ||
+              p.businessSegmentOverride === 'service'
+                ? p.businessSegmentOverride
+                : 'auto',
           }));
+          setDetectedSegment(
+            String(p.detectedBusinessSegment ?? '').trim() || null
+          );
           setAvatarUrl(String(p.videoAvatarUrl ?? '').trim() || null);
           setUseVideoAvatar(p.useVideoAvatar === true);
           applyStoredPhone(p.businesscontact);
@@ -937,6 +949,50 @@ export default function BusinessProfilePage() {
                       />
                     </div>
                     <div>
+                      <span className="mb-1.5 block text-sm font-semibold text-default">
+                        What you sell
+                      </span>
+                      <div
+                        role="radiogroup"
+                        aria-label="What you sell"
+                        className="flex gap-2"
+                      >
+                        {(['auto', 'product', 'service'] as const).map((value) => {
+                          const active =
+                            (formData.businessSegmentOverride ?? 'auto') === value;
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  businessSegmentOverride: value,
+                                }))
+                              }
+                              className={cn(
+                                'flex-1 rounded-lg border px-3 py-2 text-sm font-medium capitalize transition',
+                                active
+                                  ? 'border-primary-purple bg-primary-purple/10 text-default'
+                                  : 'border-default text-secondary hover:border-primary-purple/40'
+                              )}
+                            >
+                              {value}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="mt-1.5 text-xs text-secondary">
+                        {(formData.businessSegmentOverride ?? 'auto') === 'auto'
+                          ? detectedSegment
+                            ? `Detected automatically: ${detectedSegment}. Videos are directed for a ${detectedSegment} business.`
+                            : 'Detected automatically the first time you generate a video.'
+                          : 'Videos will always be directed for this kind of business.'}
+                      </p>
+                    </div>
+                    <div>
                       <label
                         htmlFor="website"
                         className="mb-1.5 block text-sm font-semibold text-default"
@@ -1103,7 +1159,7 @@ export default function BusinessProfilePage() {
                     </p>
                     <p className="mb-3 text-xs text-secondary">
                       Choose how your social page should feel — used for Content
-                      Studio, carousels, Occasion Posts, and AI Manager
+                      Studio, carousels, Occasion Posts, and AI Creator
                       generations.
                     </p>
                     <PageLookSelector

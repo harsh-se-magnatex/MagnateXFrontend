@@ -46,6 +46,8 @@ export type AIPlanGeneratedItem = {
   status:
     | 'draft'
     | 'scheduled'
+    | 'publishing'
+    | 'published'
     | 'pending-approval'
     | 'queued'
     | 'failed'
@@ -159,6 +161,8 @@ export function generatedStatus(value: string): AIPlanGeneratedItem['status'] {
   if (lifecycle === 'review_pending') return 'pending-approval';
   if (
     lifecycle === 'scheduled' ||
+    lifecycle === 'publishing' ||
+    lifecycle === 'published' ||
     lifecycle === 'draft' ||
     lifecycle === 'failed' ||
     lifecycle === 'removed' ||
@@ -387,7 +391,7 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
 function kindLabelFromCellKind(kind: string): string {
   if (kind === 'video') return 'Video generated';
   if (kind === 'quick-create') return 'Create Post generated';
-  if (kind === 'ai-engine') return 'AI Manager generated';
+  if (kind === 'ai-engine') return 'AI Creator generated';
   if (kind === 'carousel') return 'Carousel generated';
   if (kind === 'campaign') return 'Campaign generated';
   return 'Generated';
