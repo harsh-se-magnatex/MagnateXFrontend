@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
 import { SyncErrorBanner } from './SyncErrorBanner';
 import {
@@ -74,6 +74,7 @@ export function InstagramAnalyticsView({
   pageAiContext,
   repliedCommentIds,
   preloadedReplySuggestions,
+  refreshControl,
 }: {
   ig: InstagramAnalytics | null;
   profileUrl?: string | null;
@@ -84,6 +85,7 @@ export function InstagramAnalyticsView({
   pageAiContext: Record<string, unknown>;
   repliedCommentIds?: string[];
   preloadedReplySuggestions?: PreloadedReplySuggestions;
+  refreshControl?: ReactNode;
 }) {
   const topMedia = useMemo(
     () =>
@@ -236,11 +238,12 @@ export function InstagramAnalyticsView({
             · {formatCompact(ig.mediaCount)} media
           </p>
         ) : null}
-        {ig?.lastUpdated ? (
-          <p className="text-sm text-secondary">
-            Last updated {formatLastUpdated(ig.lastUpdated)}
-          </p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          {ig?.lastUpdated ? (
+            <p className="text-sm text-secondary">Last updated {formatLastUpdated(ig.lastUpdated)}</p>
+          ) : null}
+          {refreshControl}
+        </div>
       </header>
 
       <AnalyticsWeeklyVerdict platform="instagram" context={pageAiContext} />

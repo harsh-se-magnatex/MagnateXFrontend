@@ -21,7 +21,7 @@ import {
   TopPostImageDialog,
   trendDelta,
 } from './utils/facebook_components/util_component';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
 import { SyncErrorBanner } from './SyncErrorBanner';
 import {
@@ -264,6 +264,7 @@ export default function WLinkedInAnalyticsView({
   updatedLabel,
   repliedCommentIds,
   preloadedReplySuggestions,
+  refreshControl,
 }: {
   connection: LinkedInAnalyticsConnection;
   li: LinkedInAnalytics | null;
@@ -285,6 +286,7 @@ export default function WLinkedInAnalyticsView({
   updatedLabel?: string;
   repliedCommentIds?: string[];
   preloadedReplySuggestions?: PreloadedReplySuggestions;
+  refreshControl?: ReactNode;
 }) {
   const growthSectionRef = useRef<HTMLElement>(null);
   const topPostsSectionRef = useRef<HTMLElement>(null);
@@ -430,9 +432,12 @@ export default function WLinkedInAnalyticsView({
             )}
           </p>
         ) : null}
-        {updatedLabel ? (
-          <p className="text-sm text-secondary">Last updated {updatedLabel}</p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          {updatedLabel ? (
+            <p className="text-sm text-secondary">Last updated {updatedLabel}</p>
+          ) : null}
+          {refreshControl}
+        </div>
       </header>
 
       <AnalyticsWeeklyVerdict platform="linkedin" context={pageAiContext} />

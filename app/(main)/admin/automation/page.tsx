@@ -9,6 +9,7 @@ import {
 import { useUser } from '../../_components/useUser';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { showErrorToast } from '@/lib/show-error-toast';
+import { downloadCsv } from '@/lib/download-csv';
 import { useRouter } from 'next/navigation';
 import {
   useTimestampFormatter,
@@ -72,6 +73,32 @@ export default function AdminUnpaidSignupsPage() {
     await loadClients({ search: '' });
   };
 
+  const handleExport = () => {
+    downloadCsv(
+      `unpaid-signups-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        'Name',
+        'Email',
+        'Business',
+        'Industry',
+        'Website',
+        'User ID',
+        'Signup',
+        'Last login',
+      ],
+      clients.map((client) => [
+        client.name,
+        client.email,
+        client.businessName,
+        client.industry,
+        client.website,
+        client.userId,
+        formatDate(client.createdAt as TimestampInput),
+        formatDate(client.lastLoginAt as TimestampInput),
+      ])
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#0B1020] text-white px-6 py-8 md:px-10">
       <h1 className="text-page-title text-default mb-2">
@@ -82,19 +109,29 @@ export default function AdminUnpaidSignupsPage() {
         <code className="text-white/70">activePlan = non-subscribed</code>).
       </p>
 
-      <div className="mb-6 flex flex-wrap gap-2">
-        <Link
-          href="/admin/automation"
-          className="rounded-lg bg-[#00D1FF] px-4 py-2 text-sm font-semibold text-[#0B1020]"
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/automation"
+            className="rounded-lg bg-[#00D1FF] px-4 py-2 text-sm font-semibold text-[#0B1020]"
+          >
+            Unpaid signups
+          </Link>
+          <Link
+            href="/admin/automation/landing-leads"
+            className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 hover:bg-default"
+          >
+            Landing first posts
+          </Link>
+        </div>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={loading || clients.length === 0}
+          className="rounded-full border border-[#00D1FF]/60 px-4 py-2 text-sm font-semibold text-[#00D1FF] transition-expo hover:bg-[#00D1FF]/10 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Unpaid signups
-        </Link>
-        <Link
-          href="/admin/automation/landing-leads"
-          className="rounded-lg border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 hover:bg-default"
-        >
-          Landing first posts
-        </Link>
+          Export to Excel
+        </button>
       </div>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2">

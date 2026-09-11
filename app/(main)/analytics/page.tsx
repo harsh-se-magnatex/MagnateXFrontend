@@ -3,7 +3,7 @@
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { isPlanInactive } from '@/lib/plan-access';
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import {
   getInsightsFaceBook,
   getInsightsInstagram,
@@ -38,7 +38,7 @@ import {
 } from '../_components/UserPlanCreditsProvider';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import { useTimestampFormatter } from '@/lib/user-timezone';
 import {
   countEnabledPlatforms,
@@ -176,6 +176,92 @@ export default function AnalyticsPage() {
   const [snapshot, setSnapshot] = useState<AnalyticsSnapshotDocument | null>(
     null
   );
+  const [manualRefreshByPlatform, setManualRefreshByPlatform] = useState<
+    Record<PlatformTab, { used: number; limit: number; remaining: number }> 
+  >({
+    facebook: { used: 0, limit: 2, remaining: 2 },
+    instagram: { used: 0, limit: 2, remaining: 2 },
+    linkedin: { used: 0, limit: 2, remaining: 2 },
+  });
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+
+  const seedSnapshot = useCallback((latest: AnalyticsSnapshotDocument) => {
+    setSnapshot(latest);
+    const wtnCache = useWhatToPostNextCache.getState();
+    const wtsCache = useWhereToSpendCache.getState();
+    const verdictCache = useWeeklyVerdictCache.getState();
+    (['facebook', 'instagram', 'linkedin'] as const).forEach((p) => {
+      const wtn = latest.whatToPostNext[p];
+      if (wtn) wtnCache.set(p, wtn);
+      const wts = latest.whereToSpend[p];
+      if (wts) wtsCache.set(p, wts);
+      const verdict = latest.weeklyVerdict?.[p];
+      if (verdict) verdictCache.set(p, verdict.verdict, verdict.source);
+    });
+  }, []);
+
+  const loadPlatformAnalytics = useCallback(async (
+    isCancelled: () => boolean,
+    onlyPlatform?: PlatformTab
+  ) => {
+    const [fbOutcome, igOutcome, liOutcome] = await Promise.allSettled([
+      !onlyPlatform || onlyPlatform === 'facebook'
+        ? getInsightsFaceBook()
+        : Promise.resolve(null),
+      !onlyPlatform || onlyPlatform === 'instagram'
+        ? getInsightsInstagram()
+        : Promise.resolve(null),
+      !onlyPlatform || onlyPlatform === 'linkedin'
+        ? getInsightsLinkedIn()
+        : Promise.resolve(null),
+    ]);
+    if (isCancelled()) return;
+
+    if (fbOutcome.status === 'fulfilled' && fbOutcome.value) {
+      const response = fbOutcome.value;
+      const paUnknown: unknown = response.data.pageAnalytics;
+      setPageAnalytics(
+        paUnknown != null && typeof paUnknown === 'object' && !Array.isArray(paUnknown)
+          ? (paUnknown as PageAnalytics)
+          : null
+      );
+      const postsUnknown: unknown = response.data.allPosts;
+      setAllPosts(Array.isArray(postsUnknown) ? (postsUnknown as Post[]) : []);
+      setFbRepliedCommentIds(response.data.repliedCommentIds ?? []);
+    }
+
+    if (igOutcome.status === 'fulfilled' && igOutcome.value) {
+      const response = igOutcome.value;
+      const igUnknown: unknown = response.data.igAnalytics;
+      setIgAnalytics(
+        igUnknown != null && typeof igUnknown === 'object' && !Array.isArray(igUnknown)
+          ? (igUnknown as InstagramAnalytics)
+          : null
+      );
+      const igPostsUnknown: unknown = response.data.allPosts;
+      setAllIgPosts(
+        Array.isArray(igPostsUnknown) ? (igPostsUnknown as InstagramPost[]) : []
+      );
+      setIgRepliedCommentIds(response.data.repliedCommentIds ?? []);
+    }
+
+    if (liOutcome.status === 'fulfilled' && liOutcome.value) {
+      const response = liOutcome.value;
+      const liUnknown: unknown = response.data.liAnalytics;
+      setLiAnalytics(
+        liUnknown != null && typeof liUnknown === 'object' && !Array.isArray(liUnknown)
+          ? (liUnknown as LinkedInAnalytics)
+          : null
+      );
+      const liPostsUnknown: unknown = response.data.allPosts;
+      setAllLiPosts(
+        Array.isArray(liPostsUnknown) ? (liPostsUnknown as LinkedInPost[]) : []
+      );
+      setLiRepliedCommentIds(response.data.repliedCommentIds ?? []);
+      setLiConnection({ connected: Boolean(response.data.linkedinAnalyticsConnected) });
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -189,93 +275,20 @@ export default function AnalyticsPage() {
         // LinkedIn round-trips) and now runs once per 24h via
         // `/cron/sync-analytics` on the API.
         try {
-          const { snapshot: latest } = await getInsightsSnapshot();
+          const { snapshot: latest, manualRefreshByPlatform: quotas } =
+            await getInsightsSnapshot();
           if (!cancelled && latest) {
-            setSnapshot(latest);
-            const wtnCache = useWhatToPostNextCache.getState();
-            const wtsCache = useWhereToSpendCache.getState();
-            const verdictCache = useWeeklyVerdictCache.getState();
-            (['facebook', 'instagram', 'linkedin'] as const).forEach((p) => {
-              const wtn = latest.whatToPostNext[p];
-              if (wtn) wtnCache.set(p, wtn);
-              const wts = latest.whereToSpend[p];
-              if (wts) wtsCache.set(p, wts);
-              const verdict = latest.weeklyVerdict?.[p];
-              if (verdict) {
-                verdictCache.set(p, verdict.verdict, verdict.source);
-              }
-            });
+            seedSnapshot(latest);
+          }
+          if (!cancelled && quotas) {
+            setManualRefreshByPlatform((current) => ({ ...current, ...quotas }));
           }
         } catch (e) {
           console.warn('[analytics] snapshot read failed', e);
         }
         if (cancelled) return;
 
-        const [fbOutcome, igOutcome, liOutcome] = await Promise.allSettled([
-          getInsightsFaceBook(),
-          getInsightsInstagram(),
-          getInsightsLinkedIn(),
-        ]);
-        if (cancelled) return;
-
-        if (fbOutcome.status === 'fulfilled') {
-          const response = fbOutcome.value;
-          const paUnknown: unknown = response.data.pageAnalytics;
-          const pageAnalyticsPayload: PageAnalytics | null =
-            paUnknown != null &&
-            typeof paUnknown === 'object' &&
-            !Array.isArray(paUnknown)
-              ? (paUnknown as PageAnalytics)
-              : null;
-          setPageAnalytics(pageAnalyticsPayload);
-          const postsUnknown: unknown = response.data.allPosts;
-          setAllPosts(
-            Array.isArray(postsUnknown) ? (postsUnknown as Post[]) : []
-          );
-          setFbRepliedCommentIds(response.data.repliedCommentIds ?? []);
-        }
-
-        if (igOutcome.status === 'fulfilled') {
-          const response = igOutcome.value;
-          const igUnknown: unknown = response.data.igAnalytics;
-          const igPayload: InstagramAnalytics | null =
-            igUnknown != null &&
-            typeof igUnknown === 'object' &&
-            !Array.isArray(igUnknown)
-              ? (igUnknown as InstagramAnalytics)
-              : null;
-          setIgAnalytics(igPayload);
-          const igPostsUnknown: unknown = response.data.allPosts;
-          setAllIgPosts(
-            Array.isArray(igPostsUnknown)
-              ? (igPostsUnknown as InstagramPost[])
-              : []
-          );
-          setIgRepliedCommentIds(response.data.repliedCommentIds ?? []);
-        }
-
-        if (liOutcome.status === 'fulfilled') {
-          const response = liOutcome.value;
-
-          const liUnknown: unknown = response.data.liAnalytics;
-          const liPayload: LinkedInAnalytics | null =
-            liUnknown != null &&
-            typeof liUnknown === 'object' &&
-            !Array.isArray(liUnknown)
-              ? (liUnknown as LinkedInAnalytics)
-              : null;
-          setLiAnalytics(liPayload);
-          const liPostsUnknown: unknown = response.data.allPosts;
-          setAllLiPosts(
-            Array.isArray(liPostsUnknown)
-              ? (liPostsUnknown as LinkedInPost[])
-              : []
-          );
-          setLiRepliedCommentIds(response.data.repliedCommentIds ?? []);
-          setLiConnection({
-            connected: Boolean(response.data.linkedinAnalyticsConnected),
-          });
-        }
+        await loadPlatformAnalytics(() => cancelled);
       } catch (e) {
         console.error(e);
       } finally {
@@ -285,7 +298,33 @@ export default function AnalyticsPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadPlatformAnalytics, seedSnapshot]);
+
+  async function handleManualRefresh() {
+    if (refreshing || manualRefreshByPlatform[platform].remaining === 0) return;
+    setRefreshing(true);
+    setRefreshError(null);
+    try {
+      const { snapshot: latest, manualRefresh: quota } =
+        await getInsightsSnapshot({ build: true, platform });
+      if (latest) seedSnapshot(latest);
+      if (quota) {
+        setManualRefreshByPlatform((current) => ({
+          ...current,
+          [platform]: quota,
+        }));
+      }
+      await loadPlatformAnalytics(() => false, platform);
+      setRefreshing(false);
+    } catch (error) {
+      setRefreshing(false);
+      setRefreshError(
+        error instanceof Error
+          ? error.message
+          : 'Could not refresh analytics right now.'
+      );
+    }
+  }
 
   const merged = useMemo(() => {
     if (!pageAnalytics) {
@@ -646,15 +685,34 @@ export default function AnalyticsPage() {
     return <PageLoadingState />;
   }
 
+  const refreshControl = (
+    <div className="flex items-center gap-2">
+      {refreshError ? (
+        <span className="text-[11px] text-danger">{refreshError}</span>
+      ) : null}
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={handleManualRefresh}
+        disabled={refreshing || manualRefreshByPlatform[platform].remaining === 0}
+        title={
+          manualRefreshByPlatform[platform].remaining === 0
+            ? 'You have used both manual refreshes for today.'
+            : undefined
+        }
+      >
+        {refreshing ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+        {`Refresh (${manualRefreshByPlatform[platform].remaining}/2)`}
+      </Button>
+    </div>
+  );
 
   return (
     <div className="mx-auto max-w-5xl pb-8">
       <p className="mb-3 flex flex-wrap items-center gap-1.5 text-[11px] text-secondary">
-        <span
-          aria-hidden
-          className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--green-9)] text-white"
-        />
-        <span>Insights refreshes and updates once every 24 hours.</span>
+        <span aria-hidden className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--green-9)] text-white" />
+        <span>Insights refresh automatically once every 24 hours.</span>
       </p>
       <Tabs
         value={platform}
@@ -672,6 +730,7 @@ export default function AnalyticsPage() {
 
         <TabsContent value="facebook" className="mt-0 space-y-10 outline-none">
           <FaceBookAnalytics
+            key={`facebook-${snapshot?.meta.generatedAt ?? 'initial'}`}
             TOP_POSTS_LIMIT={TOP_POSTS_LIMIT}
             metrics={metrics}
             pageAnalytics={pageAnalytics}
@@ -686,11 +745,13 @@ export default function AnalyticsPage() {
             pageAiContext={fbPageAiContext}
             repliedCommentIds={fbRepliedCommentIds}
             preloadedReplySuggestions={snapshot?.replySuggestions?.facebook}
+            refreshControl={refreshControl}
           />
         </TabsContent>
 
         <TabsContent value="instagram" className="mt-0 outline-none">
           <InstagramAnalyticsView
+            key={`instagram-${snapshot?.meta.generatedAt ?? 'initial'}`}
             IG_MEDIA_LIMIT={IG_MEDIA_LIMIT}
             ig={igAnalytics}
             profileUrl={instagramProfileUrl}
@@ -700,11 +761,13 @@ export default function AnalyticsPage() {
             pageAiContext={igPageAiContext}
             repliedCommentIds={igRepliedCommentIds}
             preloadedReplySuggestions={snapshot?.replySuggestions?.instagram}
+            refreshControl={refreshControl}
           />
         </TabsContent>
 
         <TabsContent value="linkedin" className="mt-0 outline-none">
           <LinkedInAnalyticsView
+            key={`linkedin-${snapshot?.meta.generatedAt ?? 'initial'}`}
             TOP_POSTS_LIMIT={TOP_POSTS_LIMIT}
             connection={liConnection}
             li={liAnalytics}
@@ -724,6 +787,7 @@ export default function AnalyticsPage() {
             })}
             repliedCommentIds={liRepliedCommentIds}
             preloadedReplySuggestions={snapshot?.replySuggestions?.linkedin}
+            refreshControl={refreshControl}
           />
         </TabsContent>
       </Tabs>

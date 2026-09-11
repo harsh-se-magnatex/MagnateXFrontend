@@ -9,6 +9,7 @@ import {
 import { useUser } from '../../../_components/useUser';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { showErrorToast } from '@/lib/show-error-toast';
+import { downloadCsv } from '@/lib/download-csv';
 import { useRouter } from 'next/navigation';
 import {
   useTimestampFormatter,
@@ -25,29 +26,47 @@ function defaultToDate(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function AutomationTabs({ active }: { active: 'unpaid' | 'landing' }) {
+function AutomationTabs({
+  active,
+  onExport,
+  exportDisabled,
+}: {
+  active: 'unpaid' | 'landing';
+  onExport: () => void;
+  exportDisabled: boolean;
+}) {
   return (
-    <div className="mb-6 flex flex-wrap gap-2">
-      <Link
-        href="/admin/automation"
-        className={`rounded-lg px-4 py-2 text-sm font-semibold transition-expo ${
-          active === 'unpaid'
-            ? 'bg-[#00D1FF] text-[#0B1020]'
-            : 'border border-white/20 text-white/80 hover:bg-default'
-        }`}
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/admin/automation"
+          className={`rounded-lg px-4 py-2 text-sm font-semibold transition-expo ${
+            active === 'unpaid'
+              ? 'bg-[#00D1FF] text-[#0B1020]'
+              : 'border border-white/20 text-white/80 hover:bg-default'
+          }`}
+        >
+          Unpaid signups
+        </Link>
+        <Link
+          href="/admin/automation/landing-leads"
+          className={`rounded-lg px-4 py-2 text-sm font-semibold transition-expo ${
+            active === 'landing'
+              ? 'bg-[#00D1FF] text-[#0B1020]'
+              : 'border border-white/20 text-white/80 hover:bg-default'
+          }`}
+        >
+          Landing first posts
+        </Link>
+      </div>
+      <button
+        type="button"
+        onClick={onExport}
+        disabled={exportDisabled}
+        className="rounded-full border border-[#00D1FF]/60 px-4 py-2 text-sm font-semibold text-[#00D1FF] transition-expo hover:bg-[#00D1FF]/10 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        Unpaid signups
-      </Link>
-      <Link
-        href="/admin/automation/landing-leads"
-        className={`rounded-lg px-4 py-2 text-sm font-semibold transition-expo ${
-          active === 'landing'
-            ? 'bg-[#00D1FF] text-[#0B1020]'
-            : 'border border-white/20 text-white/80 hover:bg-default'
-        }`}
-      >
-        Landing first posts
-      </Link>
+        Export to Excel
+      </button>
     </div>
   );
 }
@@ -132,6 +151,32 @@ export default function AdminLandingLeadsPage() {
     await loadLeads({ from: nextFrom, to: nextTo, search: '' });
   };
 
+  const handleExport = () => {
+    downloadCsv(
+      `landing-first-posts-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        'Email',
+        'Business',
+        'Industry',
+        'Website',
+        'Platform',
+        'Post status',
+        'Post caption',
+        'Claimed',
+      ],
+      leads.map((lead) => [
+        lead.email,
+        lead.businessName,
+        lead.industry,
+        lead.website,
+        lead.platform,
+        lead.postStatus,
+        lead.postCaption,
+        formatDate(lead.createdAt as TimestampInput),
+      ])
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[#0B1020] text-white px-6 py-8 md:px-10">
       <h1 className="text-page-title text-default mb-2">
@@ -142,7 +187,11 @@ export default function AdminLandingLeadsPage() {
         sample post (marketing leads).
       </p>
 
-      <AutomationTabs active="landing" />
+      <AutomationTabs
+        active="landing"
+        onExport={handleExport}
+        exportDisabled={loading || leads.length === 0}
+      />
 
       <form
         onSubmit={handleFilter}

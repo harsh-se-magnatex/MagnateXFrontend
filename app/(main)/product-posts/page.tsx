@@ -45,6 +45,7 @@ import {
 } from '@/lib/platform-selection';
 import { useTourDemo } from '@/src/stores/tourState';
 import { toast } from 'sonner';
+import { getTemplateDna, type TemplateDnaProfile } from '@/src/service/api/template-dna.service';
 
 const BACKGROUND_OPTIONS = [
   '',
@@ -158,6 +159,8 @@ export default function ProductAdvertPage() {
   const [error, setError] = useState<string>('');
   const [captionCopied, setCaptionCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [templateDnaProfiles, setTemplateDnaProfiles] = useState<Partial<Record<SocialPlatform, TemplateDnaProfile>>>({});
+  const [templateDnaLayouts, setTemplateDnaLayouts] = useState<Record<string, string>>({});
   const imagePreview = useImagePreview();
 
   // Session state: in-memory Zustand, survives SPA navigation within the tab.
@@ -187,6 +190,14 @@ export default function ProductAdvertPage() {
     const TWO_HOURS = 2 * 60 * 60 * 1000;
     if (generatedAt && Date.now() - generatedAt > TWO_HOURS) clearOutput();
   }, []);
+
+  useEffect(() => {
+    if (generationMode !== 'social_full') return;
+    void getTemplateDna().then((data) => {
+      const profiles = data as TemplateDnaProfile[];
+      setTemplateDnaProfiles(Object.fromEntries(profiles.map((profile) => [profile.platform, profile])));
+    }).catch(() => undefined);
+  }, [generationMode]);
 
   const { billing, loading: creditsLoading } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
@@ -318,6 +329,7 @@ export default function ProductAdvertPage() {
         generationMode,
         campaignContext,
         useIndustryResearch: generationMode === 'social_full' ? true : false,
+        templateDnaLayoutByPlatform: generationMode === 'social_full' ? templateDnaLayouts : undefined,
       });
       setFinalResult(null);
       setLastGenerationMode(response.generationMode);
@@ -631,7 +643,7 @@ export default function ProductAdvertPage() {
           {isGenerating
             ? 'Creating…'
             : generationMode === 'social_full'
-              ? 'Create post with caption'
+              ? 'Create post'
               : 'Create product post'}
         </button>
 

@@ -69,6 +69,25 @@ export type AnalyticsSnapshotDocument = {
 
 export type GetInsightsSnapshotResponse = {
   snapshot: AnalyticsSnapshotDocument | null;
+  manualRefreshByPlatform?: Partial<
+    Record<
+      AnalyticsSnapshotPlatform,
+      {
+        used: number;
+        limit: number;
+        remaining: number;
+        date: string;
+        nextResetAt: string;
+      }
+    >
+  >;
+  manualRefresh?: {
+    used: number;
+    limit: number;
+    remaining: number;
+    date: string;
+    nextResetAt: string;
+  };
   reason?: string;
 };
 
@@ -83,10 +102,13 @@ export type GetInsightsSnapshotResponse = {
  */
 export async function getInsightsSnapshot(opts?: {
   build?: boolean;
+  platform?: 'facebook' | 'instagram' | 'linkedin';
 }): Promise<GetInsightsSnapshotResponse> {
-  const url = opts?.build
-    ? '/api/v1/insights/snapshot?build=true'
-    : '/api/v1/insights/snapshot';
+  const params = new URLSearchParams();
+  if (opts?.build) params.set('build', 'true');
+  if (opts?.platform) params.set('platform', opts.platform);
+  const query = params.toString();
+  const url = `/api/v1/insights/snapshot${query ? `?${query}` : ''}`;
   const res = await apiGet<ApiEnvelope<GetInsightsSnapshotResponse>>(url);
   return res.data;
 }

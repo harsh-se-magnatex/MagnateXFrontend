@@ -151,7 +151,7 @@ export default function CarouselGenerationPage() {
   const imagePreview = useImagePreview();
 
   const [prompt, setPrompt] = useState('');
-  const [slideCount, setSlideCount] = useState(5);
+  const [slideCount, setSlideCount] = useState(4);
   const [platform, setPlatform] = useState<SocialPlatform>('instagram');
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);

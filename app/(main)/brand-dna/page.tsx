@@ -1,5 +1,6 @@
 'use client';
 
+import { VisualStyleSelector } from '@/components/brand/VisualStyleSelector';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import {
   getProfile,
@@ -35,6 +36,16 @@ import {
 import { cn } from '@/lib/utils';
 import { FieldSeparator } from '@/components/ui/field';
 import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { scrapeUrl, extractCatalogPdf } from '@/src/service/api/scrape';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { toast } from 'sonner';
@@ -201,6 +212,7 @@ export default function BusinessProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [useVideoAvatar, setUseVideoAvatar] = useState(false);
   const [avatarSaving, setAvatarSaving] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const avatarPreview = useImagePreview();
 
@@ -448,6 +460,23 @@ export default function BusinessProfilePage() {
       setAvatarSaving(false);
     }
   }, []);
+
+  const handleAvatarFileChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+      if (!file) return;
+      setPendingAvatarFile(file);
+    },
+    []
+  );
+
+  const handleAvatarConsent = useCallback(() => {
+    if (!pendingAvatarFile) return;
+    const file = pendingAvatarFile;
+    setPendingAvatarFile(null);
+    void handleAvatarUpload(file);
+  }, [handleAvatarUpload, pendingAvatarFile]);
 
   const handleAvatarToggle = useCallback(async () => {
     if (!avatarUrl || avatarSaving) return;
@@ -1223,6 +1252,11 @@ export default function BusinessProfilePage() {
                       Studio, carousels, Occasion Posts, and AI Creator
                       generations.
                     </p>
+                    <VisualStyleSelector
+                      imageStyle={formData.imageStyle}
+                      businessName={formData.businessName}
+                      brandColors={[formData.primaryColor, formData.secondaryColor, formData.accentColor]}
+                    />
                     <PageLookSelector
                       value={formData.imageStyle}
                       onChange={(next) =>
@@ -1509,11 +1543,7 @@ export default function BusinessProfilePage() {
                         accept="image/png,image/jpeg,image/webp"
                         className="hidden"
                         disabled={avatarSaving}
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          if (file) void handleAvatarUpload(file);
-                          event.target.value = '';
-                        }}
+                        onChange={handleAvatarFileChange}
                       />
                     </div>
                   </div>
@@ -1577,6 +1607,16 @@ export default function BusinessProfilePage() {
                 </div>
                 <div className="absolute inset-0 bg-primary-purple/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
+              <Link
+                href="/brand-dna/template-dna"
+                className="group relative overflow-hidden rounded-2xl border border-default bg-default p-4 transition-expo hover:border-primary-purple/50 hover:shadow-sm"
+              >
+                <div className="flex items-center justify-between relative z-10">
+                  <div><span className="font-semibold text-default">Template DNA</span><span className="ml-2 rounded-full bg-primary-purple/10 px-2 py-0.5 text-[10px] font-semibold text-primary-purple">2–8 examples</span></div>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-tr from-[var(--purple-9)] to-[var(--purple-9)] text-white"><Sparkles className="w-4 h-4" /></div>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-secondary">Match recurring social layouts, typography, spacing, and visual rules across Instagram, Facebook, and LinkedIn.</p>
+              </Link>
             </nav>
           </section>
         </div>
@@ -1586,6 +1626,28 @@ export default function BusinessProfilePage() {
         alt={avatarPreview.previewAlt}
         onClose={avatarPreview.close}
       />
+      <AlertDialog
+        open={!!pendingAvatarFile}
+        onOpenChange={(open) => {
+          if (!open) setPendingAvatarFile(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Consent to create an AI avatar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              By uploading this photo, you consent to its processing to create
+              an AI avatar and use it in generated videos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAvatarConsent}>
+              I consent and continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

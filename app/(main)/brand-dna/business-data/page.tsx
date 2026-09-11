@@ -74,6 +74,8 @@ type BrandPhoto = {
   descriptionSource?: 'ai' | 'user';
   imageType?: string;
   sourceDocumentId?: string;
+  hasNoProduct?: boolean;
+  hasMultipleProducts?: boolean;
 };
 
 type MemoryPayload = {
@@ -1485,6 +1487,13 @@ export default function TemplateDnaMemoryLayerPage() {
                             </span>
                           ) : null}
                         </div>
+                        {p.hasNoProduct || p.hasMultipleProducts ? (
+                          <p className="text-xs text-warning">
+                            {p.hasNoProduct
+                              ? 'No product detected in this image.'
+                              : 'Multiple products detected in this image.'}
+                          </p>
+                        ) : null}
                         <textarea
                           value={photoDescriptionDrafts[p.path] ?? ''}
                           disabled={savingDescriptionPath === p.path}

@@ -60,9 +60,12 @@ export function GenerationResearchDialog({
     ? formatResearchContextForDisplay(research.context)
     : '';
 
+  // Keep the research dialog above detail/image-preview overlays. The parent
+  // detail modal is portaled at z-[9998], so z-[220] left this dialog mounted
+  // but visually behind it.
   return createPortal(
     <div
-      className="fixed inset-0 z-[220] flex items-center justify-center p-4 sm:p-6 bg-black/55 backdrop-blur-sm"
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4 sm:p-6 bg-black/55 backdrop-blur-sm"
       style={{ minHeight: '100dvh', height: '100dvh' }}
       onClick={onClose}
       role="dialog"

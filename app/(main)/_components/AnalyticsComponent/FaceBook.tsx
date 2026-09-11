@@ -18,7 +18,7 @@ import {
   TopPostCard,
   TopPostImageDialog,
 } from './utils/facebook_components/util_component';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { SyncErrorBanner } from './SyncErrorBanner';
 import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
 import {
@@ -75,6 +75,7 @@ export default function FaceBookAnalytics({
   pageAiContext,
   repliedCommentIds,
   preloadedReplySuggestions,
+  refreshControl,
 }: {
   metrics: Metrics;
   pageAnalytics: PageAnalytics | null;
@@ -90,6 +91,7 @@ export default function FaceBookAnalytics({
   pageAiContext: Record<string, unknown>;
   repliedCommentIds?: string[];
   preloadedReplySuggestions?: PreloadedReplySuggestions;
+  refreshControl?: ReactNode;
 }) {
   const [focusedMetric, setFocusedMetric] = useState<InsightMetric | null>(
     null
@@ -212,11 +214,12 @@ export default function FaceBookAnalytics({
             pageAnalytics?.pageName
           )}
         </p>
-        {metrics.updatedLabel ? (
-          <p className="text-sm text-secondary">
-            Last updated {metrics.updatedLabel}
-          </p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-3">
+          {metrics.updatedLabel ? (
+            <p className="text-sm text-secondary">Last updated {metrics.updatedLabel}</p>
+          ) : null}
+          {refreshControl}
+        </div>
       </header>
 
       <AnalyticsWeeklyVerdict platform="facebook" context={pageAiContext} />
