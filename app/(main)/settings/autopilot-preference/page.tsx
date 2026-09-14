@@ -1015,8 +1015,8 @@ export default function AutomationPreferencePage() {
               <p className="text-xs text-secondary mb-3">
                 When enabled, AI Manager scheduled posts use your best posting
                 hour derived from synced social analytics. With fewer than 5
-                synced posts, the first posts try different times of day (e.g.
-                1:30am, 8:30am, noon, 5pm, 9pm) so we can learn what works —
+                synced posts, the first posts try different daylight times (e.g.
+                7am, 9am, 11am, 12:30pm, 2pm) so we can learn what works —
                 then we recommend an hour and refine at :15 / :30 / :45. Your
                 preferred time below is used when this is off.
               </p>
