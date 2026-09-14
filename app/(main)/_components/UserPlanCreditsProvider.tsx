@@ -15,6 +15,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { reconcilePlanApi } from '@/src/service/api/userService';
 
 export type UserPlanCredits = {
+  accessPhase?: 'trial' | 'paid' | 'inactive';
+  trialEndsAt?: FirestoreTimestamp | null;
+  calendarPreparing?: boolean;
   planCredits: number;
   planCreditsExpiresAt: FirestoreTimestamp | null;
   topupCredits: number;
@@ -234,6 +237,9 @@ function parseBilling(
     topupCredits: isTopupCreditsExpired ? 0 : topupCredits,
     topupCreditsExpiresAt: normalizedTopupExpiresAt,
     activePlan: typeof plan.id === 'string' ? plan.id : 'non-subscribed',
+    accessPhase: plan.accessPhase === 'trial' || plan.accessPhase === 'inactive' ? plan.accessPhase : 'paid',
+    trialEndsAt: normalizeTimestamp(plan.trialEndsAt),
+    calendarPreparing: Boolean(aiPlan.pendingCycleId && plan.accessPhase === 'paid'),
     mode: plan.mode === 'auto' || plan.mode === 'manual' ? plan.mode : null,
     isAccountFrozen: account.frozen === true,
     planExpiresAt: normalizedPlanExpiresAt,

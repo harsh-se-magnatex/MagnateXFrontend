@@ -793,6 +793,14 @@ export default function BillingsPage() {
       </div>
 
       <AccountFrozenAlert className="mb-8" showBillingLink={false} />
+      {billing?.accessPhase === 'trial' ? (
+        <div role="status" className="mb-8 rounded-xl border border-default bg-element p-4 text-sm">
+          <p className="font-semibold">3-day free trial · 0 subscription credits{billing.mode === 'auto' ? ' · 1 included AI Creator activity' : ''}</p>
+          <p className="mt-1 text-secondary">Plan credits become available after your first successful subscription payment. Existing purchased top-ups are kept separately.</p>
+        </div>
+      ) : billing?.accessPhase === 'inactive' ? (
+        <p role="status" className="mb-8 rounded-xl border border-default p-4 text-sm">Subscription execution is paused. Credits and full automation require a successful payment.</p>
+      ) : null}
 
       <EmailVerificationPurchaseAlert user={user} className="mb-8" />
 

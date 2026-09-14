@@ -11,6 +11,7 @@ export type AIPlanGeneratedKind =
   | 'festive'
   | 'other';
 export type AIPlanCell = {
+  executionEntitlement?: 'example' | 'trial_activity' | 'paid';
   id: string;
   date: string;
   platform: AIPlanPlatform;
@@ -102,6 +103,10 @@ export type AIPlanDay = {
 };
 
 type RawAIPlan = {
+  accessPhase?: 'trial' | 'paid' | 'inactive';
+  trialEndsAt?: string | null;
+  calendarPreparing?: boolean;
+  paymentPending?: boolean;
   aiPlan: {
     status: 'awaiting_selection' | 'calendar_ready' | 'inactive';
     selectedPlatforms: AIPlanPlatform[];
@@ -142,6 +147,10 @@ type RawAIPlanContent = {
 };
 
 export type AIPlanResponse = {
+  accessPhase?: 'trial' | 'paid' | 'inactive';
+  trialEndsAt?: string | null;
+  calendarPreparing?: boolean;
+  paymentPending?: boolean;
   from: string;
   to: string;
   platforms: AIPlanPlatform[];
@@ -319,7 +328,7 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
           ...(generatedForPlannedCell.length ||
           (cell.status !== 'planned' &&
             cell.status !== 'enqueued' &&
-            cell.status !== 'failed')
+            cell.status !== 'failed' && cell.status !== 'missed')
             ? []
             : [
                 {
@@ -329,8 +338,8 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
                       ? cell.campaign?.title ||
                         `Campaigns · Day ${cell.campaign?.dayNumber ?? ''}`.trim()
                       : cell.kind,
-                  note: cell.reason,
-                  status: cell.status,
+                  note: cell.status === 'missed' ? 'Trial activity missed: setup was completed after its scheduled slot.' : cell.reason,
+                  status: cell.executionEntitlement === 'example' && cell.kind !== 'empty' ? 'Locked example' : cell.status,
                   cellId: cell.id,
                   date: cell.date,
                   platform: cell.platform,
@@ -373,13 +382,17 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
   });
   return {
     from: dates[0] ?? '',
+    accessPhase: raw.accessPhase,
+    trialEndsAt: raw.trialEndsAt,
+    calendarPreparing: raw.calendarPreparing,
+    paymentPending: raw.paymentPending,
     to: dates.at(-1) ?? '',
     platforms: selectedPlatforms,
     days,
-    calendarSeeded: raw.aiPlan.status === 'calendar_ready',
+    calendarSeeded: raw.aiPlan.status === 'calendar_ready' || Boolean(raw.calendarPreparing && raw.cycle),
     initialCalendarGenerationPending:
       raw.aiPlan.status === 'awaiting_selection' && raw.aiPlan.lockedAt != null,
-    canGenerateCalendar: raw.aiPlan.lockedAt != null,
+    canGenerateCalendar: raw.aiPlan.lockedAt != null && raw.accessPhase !== 'inactive',
     platformLimit: raw.plan.platformLimit,
     selectedPlatforms,
     locked: raw.aiPlan.lockedAt != null,

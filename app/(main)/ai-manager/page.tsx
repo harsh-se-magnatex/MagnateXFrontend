@@ -822,7 +822,8 @@ export default function AIPlanPage() {
 
   const isAuto = billing?.mode === 'auto';
   const hasAccess = isAuto;
-  const planInactive = isPlanInactive(billing);
+  const planInactive = isPlanInactive(billing) && !billing?.trialEndsAt;
+  const forceRunAllowed = isAuto && billing?.accessPhase === 'paid' && !billing?.calendarPreparing && !isPlanInactive(billing);
 
   const selectedPlatforms = useMemo((): AIPlanPlatform[] => {
     const selected = billing?.aiPlanSelected;
@@ -1178,6 +1179,10 @@ export default function AIPlanPage() {
     void load();
   }, [authLoading, creditsLoading, user, planInactive, hasAccess, load]);
 
+  useEffect(() => {
+    if (user && !authLoading && !creditsLoading && hasAccess && !planInactive) void load({ silent: true });
+  }, [billing?.accessPhase, billing?.calendarPreparing, billing?.planStartedAt?.seconds]);
+
   if (authLoading || creditsLoading) {
     return <PageLoadingState />;
   }
@@ -1250,13 +1255,23 @@ export default function AIPlanPage() {
           </span>
         </div>
         <h1 className="text-page-title text-default">AI Manager</h1>
+        {billing?.accessPhase === 'trial' ? (
+          <div className="rounded-lg border border-default bg-element p-4 text-sm" role="status">
+            <p className="font-semibold">3-day trial · 0 subscription credits · 1 included AI Creator activity</p>
+            <p className="mt-1 text-secondary">Days 4–30 are locked examples. Your personalized calendar is created after your first payment.</p>
+          </div>
+        ) : billing?.accessPhase === 'inactive' ? (
+          <p role="status" className="rounded-lg border border-default p-4 text-sm">Execution is paused. A successful subscription payment is required to activate your paid calendar.</p>
+        ) : billing?.calendarPreparing ? (
+          <p role="status" className="rounded-lg border border-default p-4 text-sm">Payment confirmed. Preparing your paid calendar; the previous preview remains visible until it is ready.</p>
+        ) : null}
         <p className="max-w-2xl text-sm text-secondary">
           Your AI Manager calendar from start to end — rows are days, columns
           are the platforms locked for this billing cycle.
         </p>
         {range?.from && range?.to ? (
           <p className="text-xs font-medium text-default">
-            Plan period:{' '}
+            {billing?.accessPhase === 'trial' ? 'Preview dates: ' : 'Calendar dates: '}
             <span className="tabular-nums text-secondary">
               {formatDateParts(range.from).day} →{' '}
               {formatDateParts(range.to).day}
@@ -1391,7 +1406,7 @@ export default function AIPlanPage() {
       (!isAuto || calendarSeeded) ? (
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2 px-0.5">
-            {isAuto ? (
+            {forceRunAllowed ? (
               <button
                 type="button"
                 onClick={() => void handleGlobalForceRun()}
@@ -1417,7 +1432,7 @@ export default function AIPlanPage() {
               </span>
             ))}
           </div>
-          {isAuto ? (
+          {forceRunAllowed ? (
             <p className="rounded-md border border-default bg-element px-3 py-2 text-sm text-secondary">
               Tip: hover over a cell for details. Force Run appears on planned
               Campaigns, Create Post, Videos, Carousel Posts, or Occasion Posts
@@ -1436,7 +1451,7 @@ export default function AIPlanPage() {
             days={visibleDays}
             platforms={platforms}
             todayIso={todayIso}
-            forceRunEnabled={isAuto}
+            forceRunEnabled={forceRunAllowed}
             runningForceRunKeys={runningForceRunKeys}
             onForceRun={handleForceRun}
           />

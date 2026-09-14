@@ -34,6 +34,33 @@ const target = {
 };
 const locks = loadTypescript('../lib/content-plan-force-run.ts');
 
+test('trial preview exposes locked examples and the missed included activity', async () => {
+  const raw = {
+    accessPhase: 'trial', aiPlan: { status: 'calendar_ready', selectedPlatforms: ['facebook'], lockedAt: {} },
+    plan: { platformLimit: 1 }, connectionState: {}, cycle: { id: 'trial-1' }, content: [],
+    cells: [
+      { id: 'trial-cell', date: '2026-09-03', platform: 'facebook', kind: 'ai-engine', status: 'missed', executionEntitlement: 'trial_activity' },
+      { id: 'example-cell', date: '2026-09-04', platform: 'facebook', kind: 'campaign', status: 'planned', executionEntitlement: 'example' },
+    ],
+  };
+  const api = loadTypescript('../src/service/api/ai-plan.service.ts', { '@/lib/axios': { get: async () => ({ data: { data: raw } }) } });
+  const response = await api.getAIPlanApi();
+  assert.equal(response.accessPhase, 'trial');
+  assert.equal(response.days[1].byPlatform.facebook.upcoming[0].status, 'Locked example');
+  assert.match(response.days[0].byPlatform.facebook.upcoming[0].note, /missed/);
+});
+
+test('paid preparation keeps the old preview visible and allows a seed retry', async () => {
+  const raw = { accessPhase: 'paid', calendarPreparing: true,
+    aiPlan: { status: 'awaiting_selection', selectedPlatforms: ['facebook'], lockedAt: {} },
+    plan: { platformLimit: 1 }, connectionState: {}, cycle: { id: 'trial-1' }, cells: [], content: [] };
+  const api = loadTypescript('../src/service/api/ai-plan.service.ts', { '@/lib/axios': { get: async () => ({ data: { data: raw } }) } });
+  const response = await api.getAIPlanApi();
+  assert.equal(response.calendarSeeded, true);
+  assert.equal(response.calendarPreparing, true);
+  assert.equal(response.canGenerateCalendar, true);
+});
+
 for (const [lifecycle, expectedStatus, completed] of [
   ['generating', 'queued', false],
   ['draft', 'draft', true],
