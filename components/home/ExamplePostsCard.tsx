@@ -1,6 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useState, type KeyboardEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { ChevronDown, ImageOff, Loader2, Sparkles } from 'lucide-react';
@@ -27,9 +33,11 @@ function platformLabel(platform: string): string {
 function ExamplePostDetailModal({
   post,
   onClose,
+  onImageError,
 }: {
   post: ExamplePostItem;
   onClose: () => void;
+  onImageError: (postId: string) => void;
 }) {
   useEffect(() => {
     return lockBodyScroll();
@@ -90,6 +98,7 @@ function ExamplePostDetailModal({
                 src={post.imageUrl}
                 alt={`${post.platform} example`}
                 className="max-h-80 w-full rounded-xl border border-default bg-element object-contain"
+                onError={() => onImageError(post.id)}
               />
             </div>
           ) : (
@@ -121,6 +130,7 @@ export function ExamplePostsCard() {
   const [selectedPost, setSelectedPost] = useState<ExamplePostItem | null>(
     null
   );
+  const imageRefreshAtRef = useRef(new Map<string, number>());
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -168,6 +178,18 @@ export function ExamplePostsCard() {
       setGenerating(false);
     }
   };
+
+  const refreshExpiredImage = useCallback(
+    (postId: string) => {
+      const now = Date.now();
+      const lastRefreshAt = imageRefreshAtRef.current.get(postId) ?? 0;
+      // Prevent an image error loop if the storage object itself is missing.
+      if (now - lastRefreshAt < 30_000) return;
+      imageRefreshAtRef.current.set(postId, now);
+      void load(true);
+    },
+    [load]
+  );
 
   const isRunning = meta?.status === 'running' || generating;
   const triggerLabel =
@@ -282,6 +304,7 @@ export function ExamplePostsCard() {
                           src={post.imageUrl}
                           alt={`${post.platform} example`}
                           className="h-full w-full object-cover"
+                          onError={() => refreshExpiredImage(post.id)}
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center text-secondary">
@@ -312,6 +335,7 @@ export function ExamplePostsCard() {
         <ExamplePostDetailModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
+          onImageError={refreshExpiredImage}
         />
       ) : null}
     </>
