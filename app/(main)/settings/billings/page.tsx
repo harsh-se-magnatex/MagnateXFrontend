@@ -795,7 +795,7 @@ export default function BillingsPage() {
       <AccountFrozenAlert className="mb-8" showBillingLink={false} />
       {billing?.accessPhase === 'trial' ? (
         <div role="status" className="mb-8 rounded-xl border border-default bg-element p-4 text-sm">
-          <p className="font-semibold">3-day free trial · 0 subscription credits{billing.mode === 'auto' ? ' · 1 included AI Creator activity' : ''}</p>
+          <p className="font-semibold">3-day free trial · 0 subscription credits{billing.mode === 'auto' ? ' · 1 included AI Creator activity per selected platform' : ''}</p>
           <p className="mt-1 text-secondary">Plan credits become available after your first successful subscription payment. Existing purchased top-ups are kept separately.</p>
         </div>
       ) : billing?.accessPhase === 'inactive' ? (
@@ -1040,11 +1040,14 @@ export default function BillingsPage() {
               >
                 Manage plan
               </Button>
-              {isSubscribed && subscriptionSummary?.subscriptionId ? (
+              {isSubscribed && !['cancelled', 'expired'].includes(
+                (subscriptionSummary?.status ?? '').toLowerCase()
+              ) ? (
                 <Button
                   type="button"
                   variant="outline"
                   className="rounded-full"
+                  disabled={cancelSubscriptionLoading || revokeCancellationLoading}
                   title={
                     subscriptionSummary?.cancelAtNextBillingDate
                       ? 'Cancellation is already scheduled.'

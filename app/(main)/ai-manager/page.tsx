@@ -1257,7 +1257,7 @@ export default function AIPlanPage() {
         <h1 className="text-page-title text-default">AI Manager</h1>
         {billing?.accessPhase === 'trial' ? (
           <div className="rounded-lg border border-default bg-element p-4 text-sm" role="status">
-            <p className="font-semibold">3-day trial · 0 subscription credits · 1 included AI Creator activity</p>
+            <p className="font-semibold">3-day trial · 0 subscription credits · 1 included AI Creator activity per selected platform</p>
             <p className="mt-1 text-secondary">Days 4–30 are locked examples. Your personalized calendar is created after your first payment.</p>
           </div>
         ) : billing?.accessPhase === 'inactive' ? (
