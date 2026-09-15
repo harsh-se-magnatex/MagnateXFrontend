@@ -70,17 +70,10 @@ export function DeltaBadge({
   className?: string;
 }) {
   if (pct === null || pct === undefined || !Number.isFinite(pct)) {
-    return (
-      <span
-        className={cn(
-          'inline-flex items-center gap-0.5 rounded-full bg-element px-1.5 py-0.5 text-[10px] font-medium text-secondary ring-1 ring-inset ring-border',
-          className
-        )}
-        title="Not enough recent data to compare to last week"
-      >
-        <Minus className="h-3 w-3" aria-hidden /> n/a
-      </span>
-    );
+    // A missing delta means there is not enough history for a meaningful
+    // week-over-week comparison. Keep the stat clean instead of showing an
+    // ambiguous "n/a" badge beside a valid current value.
+    return null;
   }
   const rounded = Math.round(pct * 10) / 10;
   const isFlat = Math.abs(rounded) < 0.05;
@@ -128,7 +121,7 @@ export function StatCard({
   className?: string;
   selected?: boolean;
   onClick?: () => void;
-  /** Signed % vs previous 7-day window; `null` renders an "n/a" badge. */
+  /** Signed % vs previous 7-day window; `null` hides the comparison badge. */
   delta?: number | null;
 }) {
   return (

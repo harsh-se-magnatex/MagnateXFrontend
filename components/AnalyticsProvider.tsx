@@ -8,12 +8,18 @@ import {
   syncAnalyticsWithStoredConsent,
   trackPageView,
 } from '@/lib/analytics';
+import {
+  applyMetaPixelConsent,
+  syncMetaPixelWithStoredConsent,
+  trackMetaPixelPageView,
+} from '@/lib/meta-pixel';
 
 export function AnalyticsProvider() {
   const pathname = usePathname();
 
   useEffect(() => {
     void syncAnalyticsWithStoredConsent();
+    syncMetaPixelWithStoredConsent();
 
     const onConsentUpdated = (event: Event) => {
       const detail = (event as CustomEvent<CookieConsent>).detail;
@@ -22,6 +28,7 @@ export function AnalyticsProvider() {
           void trackPageView(pathname);
         }
       });
+      applyMetaPixelConsent(detail.marketing);
     };
 
     window.addEventListener('cookieConsentUpdated', onConsentUpdated);
@@ -33,6 +40,7 @@ export function AnalyticsProvider() {
   useEffect(() => {
     if (!pathname) return;
     void trackPageView(pathname);
+    trackMetaPixelPageView();
   }, [pathname]);
 
   return null;

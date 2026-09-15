@@ -1,6 +1,6 @@
 # Cookie Policy
 
-Effective date: 10 August 2026 · Last updated: 10 August 2026
+Effective date: 10 August 2026 · Last updated: 15 September 2026
 
 This Cookie Policy explains how **MAGNATEX LLP** uses cookies and similar technologies on [www.sociogenie.ai](https://www.sociogenie.ai) and in the SocioGenie application. It should be read alongside our [Privacy Policy](https://www.sociogenie.ai/legal/privacy).
 
@@ -16,9 +16,9 @@ Cookies are either **first-party** (set by us) or **third-party** (set by a serv
 
 ## 2. Our Approach
 
-We keep this deliberately small. **We do not run advertising cookies, retargeting pixels, or ad-network trackers, and we do not sell or share personal data for cross-context behavioural advertising.**
+We keep this deliberately small. **We do not use analytics or advertising cookies, including the Meta Pixel described below, unless you consent to them.**
 
-We use three categories, described below. Only one of them requires your consent.
+We use four categories, described below. Two of them require your consent.
 
 ---
 
@@ -62,13 +62,23 @@ These help us understand how the product is used so we can improve it.
 
 **Vercel Web Analytics does not set cookies** and does not create a persistent identifier for you, so it does not require consent under cookie rules. It still processes limited technical data, which we rely on legitimate interest to do under the GDPR. You can object to that at any time by emailing <founder@magnatex.co>.
 
+### 3.4 Marketing — consent required
+
+This lets us measure the performance of our own advertising and build retargeting audiences.
+
+| Service | Provider | What it does | Cookies? |
+| --- | --- | --- | --- |
+| Meta Pixel | Meta Platforms, Inc. | Measures conversions from our Meta (Facebook/Instagram) ad campaigns and builds retargeting audiences from visits to our website | Yes — `_fbp`, and `_fbc` if you arrive via a Meta ad |
+
+**The Meta Pixel loads only after you give consent.** If you decline or ignore the banner, or select essential-only, it is not loaded, no pixel cookies are set, and no browsing data is sent to Meta for this purpose. Declining marketing cookies (or later changing your choice) is how you exercise your right to opt out of this sharing under the CCPA/CPRA. See our [Privacy Policy](https://www.sociogenie.ai/legal/privacy) §7.
+
 ---
 
 ## 4. Your Choices
 
 ### 4.1 The consent banner
 
-On your first visit we show a cookie banner. You can accept or decline analytics cookies. Declining does not restrict your access to the Services — everything works either way.
+On your first visit we show a cookie banner. You can accept or decline analytics and marketing cookies independently. Declining does not restrict your access to the Services — everything works either way.
 
 Your choice is stored so we do not ask again. To change it, clear the SocioGenie cookies in your browser and reload the site, or email <founder@magnatex.co> and we will action it.
 
@@ -107,13 +117,13 @@ There is no consistent industry standard for Do Not Track headers, so we do not 
 
 ## 6. International Transfers
 
-Data collected by our analytics providers may be processed outside your country, including in the United States. Transfers are covered by Standard Contractual Clauses, the UK International Data Transfer Addendum, and the EU–US Data Privacy Framework where the provider participates. See [Sub-processors](https://www.sociogenie.ai/legal/sub-processors) and Section 8 of our [Privacy Policy](https://www.sociogenie.ai/legal/privacy).
+Data collected by our analytics and marketing providers, including Meta Platforms, Inc., may be processed outside your country, including in the United States. Transfers are covered by Standard Contractual Clauses, the UK International Data Transfer Addendum, and the EU–US Data Privacy Framework where the provider participates. See [Sub-processors](https://www.sociogenie.ai/legal/sub-processors) and Section 8 of our [Privacy Policy](https://www.sociogenie.ai/legal/privacy).
 
 ---
 
 ## 7. Retention
 
-Session cookies expire when you close your browser. Persistent cookies expire on a schedule set by whoever placed them — typically up to 24 months for Google Analytics identifiers, and up to 12 months for your consent record. You can delete any of them at any time through your browser.
+Session cookies expire when you close your browser. Persistent cookies expire on a schedule set by whoever placed them — typically up to 24 months for Google Analytics identifiers, up to 90 days for Meta Pixel identifiers, and up to 12 months for your consent record. You can delete any of them at any time through your browser.
 
 ---
 

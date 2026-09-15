@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Effective date: 10 August 2026 · Last updated: 10 August 2026
+Effective date: 10 August 2026 · Last updated: 15 September 2026
 
 This Privacy Policy explains how **MAGNATEX LLP** ("MagnateX", "SocioGenie", "we", "our", "us") collects, uses, shares, stores, and protects personal data when you visit [www.sociogenie.ai](https://www.sociogenie.ai), create an account, or use the SocioGenie platform (the "Services").
 
@@ -112,11 +112,12 @@ Review covers brand consistency, caption quality, creative presentation, and rea
 
 ## 7. Who We Share Data With
 
-**We do not sell personal data.** We do not "share" it for cross-context behavioural advertising within the meaning of the CCPA/CPRA. We do not run advertising pixels.
+**We do not sell personal data.** Where you consent to marketing cookies, we use the **Meta Pixel** to measure the performance of our own advertising and to build retargeting audiences from visits to our website; this involves Meta Platforms, Inc. receiving browsing data about your visit, which we treat as a "share" for cross-context behavioural advertising within the meaning of the CCPA/CPRA. The Meta Pixel loads only after you accept marketing cookies in the cookie banner — if you decline or select essential-only, it does not load and no data is sent to Meta for this purpose. You can change your choice at any time from the cookie banner, which functions as your right to opt out of this sharing. See our [Cookie Policy](https://www.sociogenie.ai/legal/cookie) §3.4.
 
 We disclose personal data to:
 
 - **Sub-processors** who operate parts of the platform for us — hosting, AI generation, payments, analytics, brand extraction, and email delivery. The full current list, with locations and safeguards, is at [Sub-processors](https://www.sociogenie.ai/legal/sub-processors).
+- **Meta Platforms, Inc.**, for advertising measurement and retargeting via the Meta Pixel, only where you have consented to marketing cookies.
 - **Social-media platforms you connect** — we transmit the content you have authorised us to publish to Meta Platforms (Instagram, Facebook) and LinkedIn Corporation.
 - **Professional advisors** — lawyers, accountants, auditors, and insurers, under confidentiality.
 - **Authorities** — where required by law, court order, or valid government or regulatory request, or to protect our rights, our users, or the public.
@@ -186,7 +187,7 @@ In the event of a personal-data breach likely to result in risk to your rights, 
 
 ## 12. Cookies and Analytics
 
-We use a limited set of cookies and similar technologies for authentication and security, preference storage, and product analytics. Analytics cookies are set only where you have given consent. Full detail, including each cookie and how to change your choices, is in our [Cookie Policy](https://www.sociogenie.ai/legal/cookie).
+We use a limited set of cookies and similar technologies for authentication and security, preference storage, product analytics, and marketing (the Meta Pixel). Analytics and marketing cookies are set only where you have given consent. Full detail, including each cookie and how to change your choices, is in our [Cookie Policy](https://www.sociogenie.ai/legal/cookie).
 
 ---
 

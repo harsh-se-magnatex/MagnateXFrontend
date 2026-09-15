@@ -28,7 +28,7 @@ export function IgMetricTile({
   label: string;
   value: string;
   icon: ComponentType<{ className?: string }>;
-  /** Signed % change vs the previous 7-day window. Pass `null` for "n/a". */
+  /** Signed % change vs the previous 7-day window. Pass `null` to hide it. */
   delta?: number | null;
 }) {
   return (
@@ -68,6 +68,7 @@ export function InstagramMediaCard({
   const preview = post.caption?.trim().slice(0, 140) || 'No caption';
   const ellipsis = post.caption && post.caption.length > 140 ? '…' : '';
   const isStory = post.mediaType === 'STORY';
+  const isVideo = ['VIDEO', 'REELS'].includes(post.mediaType.toUpperCase());
 
   return (
     <article className="overflow-hidden rounded-xl border border-default bg-default transition-">
@@ -76,15 +77,26 @@ export function InstagramMediaCard({
           <button
             type="button"
             onClick={() => onExpand?.(post)}
-            className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-full border-0 bg-element p-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:h-auto sm:w-40"
+            className="group relative h-36 w-full shrink-0 cursor-zoom-in overflow-hidden rounded-md border-0 bg-element p-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:h-auto sm:w-40"
             aria-label="Open media preview"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={post.mediaUrl}
-              alt=""
-              className="h-full w-full object-cover transition-transform duration-200"
-            />
+            {isVideo ? (
+              <video
+                src={post.mediaUrl}
+                className="h-full w-full object-cover transition-transform duration-200"
+                muted
+                playsInline
+                preload="metadata"
+                aria-label="Video thumbnail"
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={post.mediaUrl}
+                alt=""
+                className="h-full w-full object-cover transition-transform duration-200"
+              />
+            )}
           </button>
         ) : (
           <div className="flex h-36 w-full shrink-0 items-center justify-center rounded-lg bg-element text-secondary sm:h-auto sm:w-40">

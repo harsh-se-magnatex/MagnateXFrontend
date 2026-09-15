@@ -597,6 +597,16 @@ export default function VideoGenerationPage() {
                 <p className="mt-1 text-xs font-medium text-amber-700">
                   Make sure the reference images do not contain any humans.
                 </p>
+                {referenceImages.length === 0 ? (
+                  <p
+                    className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800"
+                    role="alert"
+                  >
+                    If you don’t add a reference image, your video will be
+                    generated as a story about your business and will focus on
+                    promoting the services you offer.
+                  </p>
+                ) : null}
               </div>
             </div>
 

@@ -151,9 +151,10 @@ export function formatWatchSeconds(sec: number): string {
  *
  * `pct` is a signed percentage change versus the previous window.
  *
- * First-connect / sparse syncs often produce absurd spikes (e.g. +365% or
- * +4000%) when the prior window is empty or near-zero. In those cases we
- * return null instead of a misleading percentage.
+ * First-connect / sparse syncs can produce absurd spikes (e.g. +365% or
+ * +4000%) when the prior window is empty or near-zero. We still calculate
+ * from a sparse but valid series; only an empty/zero-baseline comparison or
+ * an extreme percentage is treated as unavailable.
  */
 export function weeklyDeltaFromTrend(
   trend: { date: string; value: number }[] | null | undefined
@@ -165,9 +166,11 @@ export function weeklyDeltaFromTrend(
   if (sorted.length === 0) return null;
 
   const totalLen = sorted.length;
-  // Need enough points for a real week-over-week compare (≈7 vs ≈7).
-  // With fewer than 8 points the prior window is too thin for first-connect users.
-  if (totalLen < 8) return null;
+  // A sync can legitimately contain fewer than 8 observations when the
+  // platform omits days with no activity. Requiring 8 points made valid
+  // current/prior data show as n/a. Two observations per side is enough to
+  // establish a directional comparison without comparing single points.
+  if (totalLen < 4) return null;
 
   // Use up to the last 14 points; split into "recent 7" vs "prior 7".
   // If we only have 8-13 points we still split, biasing recent half.
@@ -177,8 +180,7 @@ export function weeklyDeltaFromTrend(
   const previous = tail.slice(0, tail.length - split);
   const current = tail.slice(tail.length - split);
 
-  // Each window should have several days — a 1-point "previous week" is not meaningful.
-  if (current.length < 3 || previous.length < 3) return null;
+  if (current.length < 2 || previous.length < 2) return null;
 
   const currentSum = current.reduce((s, p) => s + (Number(p.value) || 0), 0);
   const previousSum = previous.reduce((s, p) => s + (Number(p.value) || 0), 0);
