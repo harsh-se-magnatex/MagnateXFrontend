@@ -22,6 +22,7 @@ import { SyncErrorBanner } from './SyncErrorBanner';
 import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
 import {
   buildReplyQueueGroupsFacebook,
+  BudgetPlanSection,
   GrowthStudioBlock,
 } from './growth-studio';
 import type { PreloadedReplySuggestions } from './growth-studio/_common';
@@ -218,6 +219,7 @@ export default function FaceBookAnalytics({
         </div>
       </header>
 
+      <BudgetPlanSection platform="facebook" />
       <AnalyticsWeeklyVerdict platform="facebook" context={pageAiContext} />
 
       <section aria-labelledby="analytics-cards-heading">

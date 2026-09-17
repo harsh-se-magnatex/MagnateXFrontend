@@ -2,7 +2,7 @@ export { FirstHourNudgeCard } from './FirstHourNudgeCard';
 export { RepliesWaitingCard } from './RepliesWaitingCard';
 export { WhatToPostNextSection } from './WhatToPostNextSection';
 export { WhereToSpendSection } from './WhereToSpendSection';
-export { MonthlyBudgetAllocationSection } from './MonthlyBudgetAllocationSection';
+export { BudgetPlanSection } from './budget-plan/BudgetPlanSection';
 export { GrowthStudioBlock } from './GrowthStudioBlock';
 export type { GrowthStudioPlatform } from './_common';
 export {

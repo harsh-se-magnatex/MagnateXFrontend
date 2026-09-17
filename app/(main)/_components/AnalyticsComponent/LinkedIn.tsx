@@ -26,6 +26,7 @@ import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
 import { SyncErrorBanner } from './SyncErrorBanner';
 import {
   buildReplyQueueGroupsLinkedIn,
+  BudgetPlanSection,
   GrowthStudioBlock,
 } from './growth-studio';
 import type { PreloadedReplySuggestions } from './growth-studio/_common';
@@ -440,6 +441,7 @@ export default function WLinkedInAnalyticsView({
         </div>
       </header>
 
+      <BudgetPlanSection platform="linkedin" />
       <AnalyticsWeeklyVerdict platform="linkedin" context={pageAiContext} />
 
       <section aria-labelledby="li-analytics-cards-heading">

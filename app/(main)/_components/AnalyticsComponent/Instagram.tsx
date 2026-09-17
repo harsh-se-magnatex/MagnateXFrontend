@@ -3,6 +3,7 @@ import { AnalyticsWeeklyVerdict } from './AnalyticsWeeklyVerdict';
 import { SyncErrorBanner } from './SyncErrorBanner';
 import {
   buildReplyQueueGroupsInstagram,
+  BudgetPlanSection,
   GrowthStudioBlock,
   replyQueueLoadStatsInstagram,
 } from './growth-studio';
@@ -234,6 +235,7 @@ export function InstagramAnalyticsView({
         </div>
       </header>
 
+      <BudgetPlanSection platform="instagram" />
       <AnalyticsWeeklyVerdict platform="instagram" context={pageAiContext} />
 
       {ig ? (

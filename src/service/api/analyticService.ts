@@ -362,45 +362,98 @@ export const postFirstCommentUndo = async (body: FirstCommentUndoInput) => {
   );
 };
 
-/* ────────────────── Growth Studio — Monthly budget allocation ──────────── */
-
-export type BudgetAllocationPlatform = WhereToSpendPlatform;
-
-export type PostBudgetAllocation = {
+/* ────────────────── Growth Studio — Monthly budget plan ───────────────── */
+export type BudgetPlanPlatform = WhereToSpendPlatform;
+export type BudgetNowAction = {
+  kind: 'boost' | 'hold' | 'waiting-data';
+  message: string;
+};
+export type BudgetPickView = {
   postId: string;
   caption: string;
   mediaUrl?: string;
   permalinkUrl?: string;
-  engagementRate: number;
-  hoursSincePost: number;
   format: 'single' | 'carousel' | 'video' | 'reel' | 'other';
+  engagementRateAtPick: number;
+  usualRateAtPick: number;
+  ratioAtPick: number;
+  hoursSincePostAtPick: number;
+  kind: 'good' | 'super' | 'last-week';
+  weekIndex: 1 | 2 | 3 | 4;
+  weeklyAmount: number;
+  reserveAmount: number;
   amount: number;
-  percent: number;
+  days: number;
+  dailyAmount: number;
+  expectedReach: { low: number; high: number };
   rationale: string;
-};
-
-export type BudgetAllocationPayload = {
-  visible: boolean;
-  currency: 'INR';
-  monthlyBudget: number;
-  /** Posts published in the current calendar month (UTC). */
-  postsThisMonth: number;
-  /** How many of this month's posts should receive ad budget. */
-  recommendedPostCount: number;
-  allocations: PostBudgetAllocation[];
+  suggestedDate: string;
+  suggestedAt: string;
   source: 'openai' | 'fallback';
+  isNewToday: boolean;
+};
+export type BudgetPlanWeekView = {
+  index: 1 | 2 | 3 | 4;
+  from: string;
+  to: string;
+  activeFrom: string | null;
+  plannedPosts: number;
+  plannedPostsEstimated: boolean;
+  boxAmount: number;
+  status: 'before-plan' | 'done' | 'this-week' | 'coming';
+  rolledIn: number;
+  suggested: number;
+  moneyLeft: number;
+};
+export type BudgetPlanResponse = {
+  visible: boolean;
   reason?: string;
-  summary?: string;
+  platform: BudgetPlanPlatform;
+  currency: 'INR';
+  month: string;
+  monthLabel: string;
+  today: string;
+  nextBudgetDate: string;
+  minBudget: number;
+  maxBudget: number;
+  budgetSet: boolean;
+  plan: null | {
+    monthlyBudget: number;
+    startDate: string;
+    stage: 'empty' | 'building' | 'growing' | 'established';
+    split: {
+      alwaysOnPercent: number;
+      alwaysOnAmount: number;
+      alwaysOnDaily: number;
+      reservePercent: number;
+      reserveAmount: number;
+      weeklyPoolAmount: number;
+      explanation: string;
+      source: 'openai' | 'fallback';
+      reserveLeft: number;
+    };
+    weeks: BudgetPlanWeekView[];
+    currentWeekIndex: 1 | 2 | 3 | 4;
+    moneyLeftThisWeek: number;
+    keptForLaterWeeks: number;
+    upcomingPlannedPosts: number;
+    leftForMonth: number;
+    picks: BudgetPickView[];
+    nowAction: BudgetNowAction | null;
+    summary: string | null;
+    source: 'openai' | 'fallback' | null;
+    lastRefreshAt: string | null;
+  };
 };
-
-export type BudgetAllocationInput = {
-  platform: BudgetAllocationPlatform;
+export const getBudgetPlan = (platform: BudgetPlanPlatform) =>
+  apiGet<ApiEnvelope<BudgetPlanResponse>>(
+    `/api/v1/growth-studio/budget-plan?platform=${platform}`
+  );
+export const createBudgetPlan = (body: {
+  platform: BudgetPlanPlatform;
   monthlyBudget: number;
-};
-
-export const postBudgetAllocation = async (body: BudgetAllocationInput) => {
-  return apiPost<ApiEnvelope<BudgetAllocationPayload>>(
-    '/api/v1/growth-studio/budget-allocation',
+}) =>
+  apiPost<ApiEnvelope<BudgetPlanResponse>>(
+    '/api/v1/growth-studio/budget-plan',
     body
   );
-};
