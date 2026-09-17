@@ -4,20 +4,15 @@ import {
 } from '@/src/service/api/product-advert.service';
 import { getProfile } from '@/src/service/api/userService';
 
-/** Fetches the saved assets and opt-in state used by the Video Generator. */
+/** Fetches the saved logo used by the Video Generator. */
 export async function fetchVideoGeneratorProfile(): Promise<{
   logoUrl: string | null;
-  avatarUrl: string | null;
-  useVideoAvatar: boolean;
 }> {
   const response = await getProfile();
   const profile = response?.data?.profile ?? {};
   const logo = String(profile.logo ?? '').trim();
-  const avatar = String(profile.videoAvatarUrl ?? '').trim();
   return {
     logoUrl: logo || null,
-    avatarUrl: avatar || null,
-    useVideoAvatar: Boolean(avatar) && profile.useVideoAvatar === true,
   };
 }
 

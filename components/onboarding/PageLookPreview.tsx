@@ -2,17 +2,19 @@
 
 /**
  * Phone mock preview for page-look presets.
- * Currently unused — wired from PageLookSelector when preview panel is re-enabled.
+ * Uses the same generated visual assets as the public How It Looks gallery.
  */
 
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { PAGE_LOOK_PRESETS } from '@/lib/page-look-styles';
 import {
   CUSTOM_PAGE_LOOK_PREVIEW,
   PAGE_LOOK_PREVIEW_THEMES,
   type PageLookPreviewTheme,
 } from '@/lib/page-look-preview-themes';
+import { SEVEN_VISUAL_STYLES } from '@/components/landing/seven-visuals/seven-visuals-data';
 
 type PageLookPreviewProps = {
   value: string;
@@ -24,6 +26,7 @@ function resolvePreview(value: string): {
   theme: PageLookPreviewTheme;
   label: string;
   isCustom: boolean;
+  visualImages: string[];
 } {
   const trimmed = value.trim();
   if (!trimmed) {
@@ -31,6 +34,7 @@ function resolvePreview(value: string): {
       theme: PAGE_LOOK_PREVIEW_THEMES.minimalistic,
       label: 'Pick a style',
       isCustom: false,
+      visualImages: [],
     };
   }
 
@@ -38,10 +42,19 @@ function resolvePreview(value: string): {
     (p) => p.label.toLowerCase() === trimmed.toLowerCase()
   );
   if (preset) {
+    // The marketing gallery calls this style "Minimalist", while the Brand
+    // DNA setting intentionally remains "Minimalistic" for compatibility.
+    const visualStyleId =
+      preset.id === 'minimalistic' ? 'minimalist' : preset.id;
+    const visualStyle = SEVEN_VISUAL_STYLES.find(
+      (style) => style.id === visualStyleId
+    );
     return {
       theme: PAGE_LOOK_PREVIEW_THEMES[preset.id],
       label: preset.label,
       isCustom: false,
+      visualImages:
+        visualStyle?.visuals.slice(0, 6).map((visual) => visual.image) ?? [],
     };
   }
 
@@ -49,6 +62,7 @@ function resolvePreview(value: string): {
     theme: CUSTOM_PAGE_LOOK_PREVIEW,
     label: trimmed,
     isCustom: true,
+    visualImages: [],
   };
 }
 
@@ -57,7 +71,7 @@ export function PageLookPreview({
   businessName,
   className,
 }: PageLookPreviewProps) {
-  const { theme, label, isCustom } = resolvePreview(value);
+  const { theme, label, isCustom, visualImages } = resolvePreview(value);
   const displayName = businessName?.trim() || 'Your brand';
 
   return (
@@ -142,8 +156,19 @@ export function PageLookPreview({
               {theme.tileStyles.map((tileClass, i) => (
                 <div
                   key={i}
-                  className={cn('aspect-square rounded-sm', tileClass)}
-                />
+                  className={cn('relative aspect-square rounded-sm', tileClass)}
+                >
+                  {visualImages[i] ? (
+                    <Image
+                      src={visualImages[i]}
+                      alt=""
+                      fill
+                      loading="lazy"
+                      className="object-cover"
+                      sizes="(max-width: 640px) 20vw, 70px"
+                    />
+                  ) : null}
+                </div>
               ))}
             </div>
 

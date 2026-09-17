@@ -5,13 +5,10 @@ import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import {
   getProfile,
   deleteLogo,
-  deleteVideoAvatar,
   setLogoVariantsForImagesPreference,
   suggestOnboardingBrandCopy,
   updateProfile,
   uploadLogo,
-  setVideoAvatarPreference,
-  uploadVideoAvatar,
 } from '@/src/service/api/userService';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -29,23 +26,12 @@ import {
   Globe,
   FileText,
   Upload,
-  UserRound,
   CheckCircle2,
   Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FieldSeparator } from '@/components/ui/field';
 import { Switch } from '@/components/ui/switch';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { scrapeUrl, extractCatalogPdf } from '@/src/service/api/scrape';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { toast } from 'sonner';
@@ -54,11 +40,6 @@ import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
 import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
 import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
-import {
-  ImagePreviewButton,
-  ImagePreviewOverlay,
-  useImagePreview,
-} from '@/components/image-preview';
 import {
   joinPhone,
   normalizeBusinessContactValue,
@@ -209,12 +190,6 @@ export default function BusinessProfilePage() {
   const [committedSloganSaved, setCommittedSloganSaved] = useState(false);
   const [phoneCountryCode, setPhoneCountryCode] = useState('');
   const [phoneNationalNumber, setPhoneNationalNumber] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [useVideoAvatar, setUseVideoAvatar] = useState(false);
-  const [avatarSaving, setAvatarSaving] = useState(false);
-  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-  const avatarPreview = useImagePreview();
 
   const activePlan = billing?.activePlan;
 
@@ -405,9 +380,6 @@ export default function BusinessProfilePage() {
           setDetectedSegment(
             String(p.detectedBusinessSegment ?? '').trim() || null
           );
-          const loadedAvatarUrl = String(p.videoAvatarUrl ?? '').trim() || null;
-          setAvatarUrl(loadedAvatarUrl);
-          setUseVideoAvatar(Boolean(loadedAvatarUrl) && p.useVideoAvatar === true);
           applyStoredPhone(p.businesscontact);
 
           // Skipped onboarding / raced past suggest → backfill recommendations.
@@ -437,66 +409,6 @@ export default function BusinessProfilePage() {
     if (user) fetchProfile();
   }, [user]);
 
-  const handleAvatarUpload = useCallback(async (file: File) => {
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      showErrorToast('Please upload a JPEG, PNG, or WebP avatar photo.');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      showErrorToast('Avatar photo must be smaller than 10 MB.');
-      return;
-    }
-    setAvatarSaving(true);
-    try {
-      const response = await uploadVideoAvatar(file);
-      setAvatarUrl(response.data?.avatarUrl ?? null);
-      setUseVideoAvatar(response.data?.enabled === true);
-      toast.success('AI avatar created');
-    } catch {
-      showErrorToast(
-        'Could not create your AI avatar. Please try again later.'
-      );
-    } finally {
-      setAvatarSaving(false);
-    }
-  }, []);
-
-  const handleAvatarFileChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      event.target.value = '';
-      if (!file) return;
-      setPendingAvatarFile(file);
-    },
-    []
-  );
-
-  const handleAvatarConsent = useCallback(() => {
-    if (!pendingAvatarFile) return;
-    const file = pendingAvatarFile;
-    setPendingAvatarFile(null);
-    void handleAvatarUpload(file);
-  }, [handleAvatarUpload, pendingAvatarFile]);
-
-  const handleAvatarToggle = useCallback(async () => {
-    if (!avatarUrl || avatarSaving) return;
-    const next = !useVideoAvatar;
-    setAvatarSaving(true);
-    try {
-      const response = await setVideoAvatarPreference(next);
-      setUseVideoAvatar(response.data?.enabled === true);
-      toast.success(
-        next ? 'Avatar enabled for videos' : 'Avatar disabled for videos'
-      );
-    } catch {
-      showErrorToast(
-        'Could not update the avatar preference. Please try again later.'
-      );
-    } finally {
-      setAvatarSaving(false);
-    }
-  }, [avatarSaving, avatarUrl, useVideoAvatar]);
-
   const handleRemoveLogo = useCallback(async () => {
     if (logoRemoving) return;
     setLogoRemoving(true);
@@ -520,22 +432,6 @@ export default function BusinessProfilePage() {
       setLogoRemoving(false);
     }
   }, [logoRemoving]);
-
-  const handleRemoveAvatar = useCallback(async () => {
-    if (avatarSaving) return;
-    setAvatarSaving(true);
-    try {
-      await deleteVideoAvatar();
-      setAvatarUrl(null);
-      setUseVideoAvatar(false);
-      avatarPreview.close();
-      toast.success('AI avatar removed and disabled for videos');
-    } catch {
-      showErrorToast('Could not remove the AI avatar. Please try again later.');
-    } finally {
-      setAvatarSaving(false);
-    }
-  }, [avatarPreview, avatarSaving]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1446,108 +1342,6 @@ export default function BusinessProfilePage() {
                     </div>
                   </div>
 
-                  <div className="pt-6 border-t border-default">
-                    <div className="rounded-2xl border border-default bg-default p-4">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-preview bg-default">
-                            {avatarUrl ? (
-                              <>
-                                <img
-                                  src={avatarUrl}
-                                  alt="Saved AI avatar"
-                                  className="h-full w-full object-cover"
-                                />
-                                <ImagePreviewButton
-                                  variant="overlay-icon"
-                                  label="Preview AI avatar"
-                                  ariaLabel="Preview AI avatar"
-                                  className="absolute inset-0 h-full w-full rounded-full bg-black/0 opacity-0 ring-0 hover:bg-black/45 hover:opacity-100 focus-visible:bg-black/45 focus-visible:opacity-100"
-                                  onClick={() =>
-                                    avatarPreview.open(
-                                      avatarUrl,
-                                      'AI avatar preview'
-                                    )
-                                  }
-                                />
-                              </>
-                            ) : (
-                              <UserRound
-                                className="h-7 w-7 text-tertiary"
-                                aria-hidden
-                              />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-default">
-                              Use my AI avatar in videos
-                            </p>
-                            <p className="text-xs leading-relaxed text-secondary">
-                              Upload a photo and we’ll create an animated AI
-                              avatar for your videos.
-                            </p>
-                            <div className="mt-2 flex flex-wrap items-center gap-3">
-                              <button
-                                type="button"
-                                disabled={avatarSaving}
-                                onClick={() => avatarInputRef.current?.click()}
-                                className="text-xs font-semibold text-preview hover:underline disabled:text-quaternary"
-                              >
-                                {avatarSaving
-                                  ? 'Saving AI avatar…'
-                                  : avatarUrl
-                                    ? 'Replace avatar'
-                                    : 'Create AI avatar'}
-                              </button>
-                              {avatarUrl ? (
-                                <button
-                                  type="button"
-                                  disabled={avatarSaving}
-                                  onClick={() => void handleRemoveAvatar()}
-                                  className="inline-flex items-center gap-1 text-xs font-semibold text-danger hover:underline disabled:text-quaternary"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                  Remove avatar
-                                </button>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={useVideoAvatar}
-                          disabled={!avatarUrl || avatarSaving}
-                          onClick={() => void handleAvatarToggle()}
-                          className={cn(
-                            'relative h-7 w-12 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:text-quaternary',
-                            useVideoAvatar
-                              ? 'bg-[var(--purple-9)]'
-                              : 'bg-selected'
-                          )}
-                        >
-                          <span
-                            className={cn(
-                              'absolute left-1 top-1 h-5 w-5 rounded-full bg-default transition-transform',
-                              useVideoAvatar ? 'translate-x-5' : 'translate-x-0'
-                            )}
-                          />
-                          <span className="sr-only">
-                            Use avatar in generated videos
-                          </span>
-                        </button>
-                      </div>
-                      <input
-                        ref={avatarInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        disabled={avatarSaving}
-                        onChange={handleAvatarFileChange}
-                      />
-                    </div>
-                  </div>
-
                   <div className="pt-6 border-t border-default flex justify-end">
                     <button
                       type="submit"
@@ -1621,33 +1415,6 @@ export default function BusinessProfilePage() {
           </section>
         </div>
       </div>
-      <ImagePreviewOverlay
-        src={avatarPreview.previewUrl}
-        alt={avatarPreview.previewAlt}
-        onClose={avatarPreview.close}
-      />
-      <AlertDialog
-        open={!!pendingAvatarFile}
-        onOpenChange={(open) => {
-          if (!open) setPendingAvatarFile(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Consent to create an AI avatar?</AlertDialogTitle>
-            <AlertDialogDescription>
-              By uploading this photo, you consent to its processing to create
-              an AI avatar and use it in generated videos.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleAvatarConsent}>
-              I consent and continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

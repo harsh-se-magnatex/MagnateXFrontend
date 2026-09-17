@@ -155,8 +155,7 @@ function videoScheduleDetails(cell?: AIPlanCell | null): string | undefined {
   if (!cell || cell.kind !== 'video') return undefined;
   const logoPosition =
     cell.videoVariant === 'logo-first-memory-last' ? 'First' : 'Last';
-  const avatarUsage = cell.videoUseAvatar === true ? 'Used' : 'Not used';
-  return `Avatar: ${avatarUsage} · Logo: ${logoPosition}`;
+  return `Logo: ${logoPosition}`;
 }
 
 type GlobalForceRunTarget = {
