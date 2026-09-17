@@ -21,6 +21,7 @@ export async function startVideoGeneration(args: {
   referencePrompt?: string;
   referenceImages?: Array<{ file: File; source: 'upload' | 'gallery' }>;
   logoFramePosition?: 'first' | 'last';
+  videoStyle?: 'normal' | 'ugc';
 }): Promise<ProductAdvertVideoGenerateResponse> {
   return generateProductAdvertVideoApi(args);
 }

@@ -31,7 +31,10 @@ import { prepareGenerationImage } from '@/lib/prepare-generation-image';
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 const MAX_VIDEO_REFERENCE_IMAGE_BYTES = 4 * 1024 * 1024;
+const MAX_NORMAL_REFERENCE_IMAGES = 10;
+const MAX_UGC_REFERENCE_IMAGES = 1;
 type LogoFramePosition = 'first' | 'last';
+type VideoStyle = 'normal' | 'ugc';
 type PipelinePhase = 'idle' | 'preparing' | 'generating' | 'ready' | 'failed';
 
 type FrameKind = 'logo' | 'upload' | 'gallery';
@@ -246,6 +249,7 @@ export default function VideoGenerationPage() {
   const [logoFramePosition, setLogoFramePosition] =
     useState<LogoFramePosition>('first');
   const [referencePrompt, setReferencePrompt] = useState('');
+  const [videoStyle, setVideoStyle] = useState<VideoStyle>('normal');
   const [pipelinePhase, setPipelinePhase] = useState<PipelinePhase>('idle');
   const [result, setResult] = useState<VideoGenerationResult | null>(null);
   const [captionCopied, setCaptionCopied] = useState(false);
@@ -267,6 +271,8 @@ export default function VideoGenerationPage() {
     userCredits !== undefined && userCredits < perPlatformCost;
 
   const isBusy = pipelinePhase === 'generating';
+  const maxReferenceImages =
+    videoStyle === 'ugc' ? MAX_UGC_REFERENCE_IMAGES : MAX_NORMAL_REFERENCE_IMAGES;
 
   const canGenerate = creditOk && !isBusy && !profileLoading;
 
@@ -315,11 +321,11 @@ export default function VideoGenerationPage() {
           updated[targetIndex] = next;
           return updated;
         }
-        return prev.length < 10 ? [...prev, next] : prev;
+        return prev.length < maxReferenceImages ? [...prev, next] : prev;
       });
       resetRun();
     },
-    [resetRun]
+    [maxReferenceImages, resetRun]
   );
 
   const setUploadReference = useCallback(
@@ -342,21 +348,21 @@ export default function VideoGenerationPage() {
           updated[targetIndex] = next;
           return updated;
         }
-        return prev.length < 10 ? [...prev, next] : prev;
+        return prev.length < maxReferenceImages ? [...prev, next] : prev;
       });
       resetRun();
     },
-    [resetRun]
+    [maxReferenceImages, resetRun]
   );
 
   /** Add a file-picker selection in its original picker order, up to ten slots. */
   const addUploadReferences = useCallback(
     async (files: File[]) => {
-      const available = Math.max(0, 10 - referenceImages.length);
+      const available = Math.max(0, maxReferenceImages - referenceImages.length);
       const accepted = files.slice(0, available);
       if (!accepted.length) return;
       if (accepted.length < files.length) {
-        toast.error('You can add up to 10 reference images.');
+        toast.error(`You can add up to ${maxReferenceImages} reference image${maxReferenceImages === 1 ? '' : 's'}.`);
       }
       const preparedFiles = await Promise.all(
         accepted.map((file) =>
@@ -372,11 +378,21 @@ export default function VideoGenerationPage() {
         isLogoFromDb: false,
         previewMode: 'hero-photo',
       }));
-      setReferenceImages((prev) => [...prev, ...next].slice(0, 10));
+      setReferenceImages((prev) => [...prev, ...next].slice(0, maxReferenceImages));
       resetRun();
     },
-    [referenceImages.length, resetRun]
+    [maxReferenceImages, referenceImages.length, resetRun]
   );
+
+  useEffect(() => {
+    if (referenceImages.length <= maxReferenceImages) return;
+    setReferenceImages((prev) => {
+      const removed = prev.slice(maxReferenceImages);
+      removed.forEach((frame) => revokeIfBlob(frame.previewUrl));
+      return prev.slice(0, maxReferenceImages);
+    });
+    resetRun();
+  }, [maxReferenceImages, referenceImages.length, resetRun]);
 
   const clearReference = useCallback((index: number) => {
     setReferenceImages((prev) => {
@@ -419,6 +435,7 @@ export default function VideoGenerationPage() {
         referencePrompt: referencePrompt.trim() || undefined,
         referenceImages: referenceImageFiles,
         logoFramePosition: logoUrl ? logoFramePosition : undefined,
+        videoStyle,
       });
       setResult({
         platform: 'all_platforms',
@@ -517,9 +534,9 @@ export default function VideoGenerationPage() {
           {workspacePageTitle(WORKSPACE_NAV_HREFS.videoGeneration)}
         </h1>
         <p className="text-sm text-slate-600 mb-6">
-          Describe the advert you want and optionally add up to ten reference images.
-          Your direction and business profile guide the complete 20-second
-          video.
+          Describe the advert you want and optionally add up to {maxReferenceImages}{' '}
+          reference image{maxReferenceImages === 1 ? '' : 's'}. Your direction and
+          business profile guide the complete {videoStyle === 'ugc' ? 12 : 20}-second video.
         </p>
 
         <div className="flex justify-end flex-col items-end mb-6">
@@ -537,6 +554,44 @@ export default function VideoGenerationPage() {
               platforms. Square is the only format all three accept for paid ad
               boosting without cropping.
             </p>
+          </div>
+
+          <div className="rounded-2xl border border-default bg-default p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-default">Video style</p>
+                <p className="mt-1 text-xs text-secondary">
+                  Choose a polished product advert or an AI-directed UGC-style story.
+                </p>
+              </div>
+              <div className="flex rounded-full border border-default bg-element p-1" role="group" aria-label="Video style">
+                {([['normal', 'Normal'], ['ugc', 'UGC']] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    disabled={isBusy}
+                    aria-pressed={videoStyle === value}
+                    onClick={() => {
+                      setVideoStyle(value);
+                      resetRun();
+                    }}
+                    className={cn(
+                      'rounded-full px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60',
+                      videoStyle === value
+                        ? 'bg-[var(--purple-9)] text-white'
+                        : 'text-default hover:bg-default'
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {videoStyle === 'ugc' ? (
+              <p className="mt-3 text-xs text-preview">
+                UGC lets the creative director choose the format, presentation, performer, and delivery from your hook and business context.
+              </p>
+            ) : null}
           </div>
 
           <div className="rounded-2xl border border-default bg-default p-4">
@@ -576,7 +631,7 @@ export default function VideoGenerationPage() {
             </div>
             {!logoUrl ? (
               <p className="mt-2 text-xs font-medium text-warning" role="alert">
-                No logo is saved. Your video will be generated as a 20-second
+                No logo is saved. Your video will be generated as a {videoStyle === 'ugc' ? 12 : 20}-second
                 video without the 4-second logo transition.
               </p>
             ) : null}
@@ -590,7 +645,7 @@ export default function VideoGenerationPage() {
                   <span className="font-normal text-slate-400">(optional)</span>
                 </p>
                 <p className="text-xs text-slate-500">
-                  Add up to 10 product, property, place, or visual references.
+                  Add up to {maxReferenceImages} product, property, place, or visual reference{maxReferenceImages === 1 ? '' : 's'}.
                   Their order is chronological: Image 1 opens the advert and each
                   following image advances the story. Drag cards to reorder them.
                 </p>
@@ -663,7 +718,7 @@ export default function VideoGenerationPage() {
                   </div>
                 </div>
               ))}
-              {referenceImages.length < 10 ? (
+              {referenceImages.length < maxReferenceImages ? (
                 <FrameCard
                   title={`Add reference ${referenceImages.length + 1}`}
                   subtitle="Upload or choose from Media Library"
@@ -673,7 +728,7 @@ export default function VideoGenerationPage() {
                   disabled={isBusy}
                   onUpload={(file) => void setUploadReference(file, null)}
                   onFilesSelected={(files) => void addUploadReferences(files)}
-                  multiple
+                  multiple={maxReferenceImages > 1}
                   onRemove={() => undefined}
                   onPickFromGallery={() => {
                     setGalleryTargetIndex(null);
@@ -723,6 +778,7 @@ export default function VideoGenerationPage() {
               <div>
                 <h2 className="text-section text-default">
                   Generated video
+                  {videoStyle === 'ugc' ? ' • UGC' : ' • Normal'}
                   {result.videoAspectRatio
                     ? ` • ${result.videoAspectRatio}`
                     : ''}

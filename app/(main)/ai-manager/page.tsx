@@ -153,8 +153,9 @@ type CellEntry = {
 
 function videoScheduleDetails(cell?: AIPlanCell | null): string | undefined {
   if (!cell || cell.kind !== 'video') return undefined;
-  const logoPosition =
-    cell.videoVariant === 'logo-first-memory-last' ? 'First' : 'Last';
+  if (cell.videoVariant === 'ugc-logo-last') return 'UGC · Logo: Last';
+  if (cell.videoVariant === 'normal-logo-last') return 'Normal · Logo: Last';
+  const logoPosition = cell.videoVariant === 'logo-first-memory-last' ? 'First' : 'Last';
   return `Logo: ${logoPosition}`;
 }
 

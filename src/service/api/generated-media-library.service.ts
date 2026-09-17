@@ -71,6 +71,7 @@ export type GeneratedMediaLibraryItem = {
   canSchedule?: boolean;
   /** Backend-authoritative: false once any schedule/publication linkage exists. */
   canDelete?: boolean;
+  lifecycle?: string | null;
   /** Campaign-draft only: doc id under `users/{uid}/campaignDrafts/{id}`. The
    *  gallery uses this to call `/campaign/drafts/:id/schedule` directly. */
   campaignDraftId?: string;

@@ -38,6 +38,7 @@ export type ProductAdvertVideoGenerateResponse = {
   platform: string;
   platforms: string[];
   creditCost: number;
+  videoStyle?: 'normal' | 'ugc';
 };
 
 function appendPlatforms(form: FormData, platforms?: string[]) {
@@ -80,8 +81,10 @@ export const generateProductAdvertVideoApi = async (args: {
   referencePrompt?: string;
   referenceImages?: Array<{ file: File; source: 'upload' | 'gallery' }>;
   logoFramePosition?: 'first' | 'last';
+  videoStyle?: 'normal' | 'ugc';
 }): Promise<ProductAdvertVideoGenerateResponse> => {
   const form = new FormData();
+  form.append('videoStyle', args.videoStyle ?? 'normal');
   if (args.logoFramePosition) {
     form.append('logoFramePosition', args.logoFramePosition);
   }

@@ -9,12 +9,10 @@ import {
 import type { PreloadedReplySuggestions } from './growth-studio/_common';
 import { InstagramAnalytics, InstagramPost } from '../types';
 import {
-  audienceCounts,
   formatLastUpdated,
   igTrendSeries,
   classifyPostsAsNudgeOrDud,
   postFrequencyEntries,
-  rankedRecordEntries,
   weeklyDeltaFromPostFrequency,
   weeklyDeltaFromTrend,
 } from './utils/utils_functions';
@@ -28,7 +26,6 @@ import {
   ImageIcon,
   Instagram,
   Layers,
-  MapPin,
   PlayCircle,
   Sparkles,
   TrendingUp,
@@ -112,15 +109,6 @@ export function InstagramAnalyticsView({
       })),
     [ig]
   );
-
-  const igAudience = useMemo(() => {
-    return {
-      countries: audienceCounts(ig, 'topCountries').slice(0, 12),
-      cities: audienceCounts(ig, 'topCities').slice(0, 12),
-      ageGender: rankedRecordEntries(ig?.ageGender).slice(0, 16),
-      genderSplit: rankedRecordEntries(ig?.genderSplit),
-    };
-  }, [ig]);
 
   const freqChips = useMemo(() => postFrequencyEntries(ig).slice(0, 7), [ig]);
 
@@ -485,100 +473,6 @@ export function InstagramAnalyticsView({
               )}
             </TabsContent>
           </Tabs>
-        )}
-      </section>
-
-      <section className="space-y-4" aria-labelledby="ig-audience">
-        <h2
-          id="ig-audience"
-          className="text-section text-default flex items-center gap-2"
-        >
-          <MapPin className="h-5 w-5 text-preview" aria-hidden />
-          Audience
-        </h2>
-        {igAudience.countries.length === 0 &&
-        igAudience.cities.length === 0 &&
-        igAudience.ageGender.length === 0 &&
-        igAudience.genderSplit.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-default bg-element px-4 py-6 text-center text-sm text-secondary">
-            Demographics will appear after Instagram provides audience
-            breakdowns.
-          </p>
-        ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {igAudience.countries.length > 0 ? (
-              <div className="rounded-xl border border-default bg-default p-4">
-                <h3 className="text-subsection text-default">Top countries</h3>
-                <ul className="mt-3 space-y-2 text-sm text-secondary">
-                  {igAudience.countries.map(({ name, count }) => (
-                    <li
-                      key={name}
-                      className="flex justify-between gap-2 border-b border-default pb-2 last:border-0 last:pb-0"
-                    >
-                      <span className="font-medium text-default">{name}</span>
-                      <span className="tabular-nums text-secondary">
-                        {formatCompact(count)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {igAudience.cities.length > 0 ? (
-              <div className="rounded-xl border border-default bg-default p-4">
-                <h3 className="text-subsection text-default">Top cities</h3>
-                <ul className="mt-3 space-y-2 text-sm text-secondary">
-                  {igAudience.cities.map(({ name, count }) => (
-                    <li
-                      key={name}
-                      className="flex justify-between gap-2 border-b border-default pb-2 last:border-0 last:pb-0"
-                    >
-                      <span className="font-medium text-default">{name}</span>
-                      <span className="tabular-nums text-secondary">
-                        {formatCompact(count)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {igAudience.ageGender.length > 0 ? (
-              <div className="rounded-xl border border-default bg-default p-4 lg:col-span-2">
-                <h3 className="text-subsection text-default">Age & gender</h3>
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {igAudience.ageGender.map(({ name, value }) => (
-                    <li
-                      key={name}
-                      className="rounded-lg bg-preview px-2.5 py-1 text-xs text-preview ring-1 ring-brand/20"
-                    >
-                      <span className="font-medium">{name}</span>{' '}
-                      <span className="tabular-nums opacity-80">
-                        {formatCompact(value)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {igAudience.genderSplit.length > 0 ? (
-              <div className="rounded-xl border border-default bg-default p-4 lg:col-span-2">
-                <h3 className="text-subsection text-default">Gender split</h3>
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {igAudience.genderSplit.map(({ name, value }) => (
-                    <li
-                      key={name}
-                      className="rounded-lg bg-element px-2.5 py-1 text-xs text-default ring-1 ring-border"
-                    >
-                      <span className="font-medium">{name}</span>{' '}
-                      <span className="tabular-nums text-secondary">
-                        {formatCompact(value)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </div>
         )}
       </section>
 

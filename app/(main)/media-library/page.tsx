@@ -470,7 +470,9 @@ function MediaDetailModal({
           {!item.scheduleAt && item.targetCalendarDate ? (
             <DetailRow label="Scheduled date" value={item.targetCalendarDate} />
           ) : null}
-          {item.scheduledPostId && !canSchedule ? (
+          {item.lifecycle === 'removed' ? (
+            <DetailRow label="Status" value="Removed" />
+          ) : item.scheduledPostId && !canSchedule ? (
             <DetailRow label="Status" value="Scheduled" />
           ) : null}
         </div>
@@ -1136,6 +1138,10 @@ export default function MediaLibraryPage() {
                   {canSchedule ? (
                     <p className="text-[11px] font-medium text-link">
                       Ready to schedule
+                    </p>
+                  ) : item.lifecycle === 'removed' ? (
+                    <p className="text-[11px] text-secondary">
+                      Removed
                     </p>
                   ) : item.earlierScheduled ? (
                     <p className="text-[11px] text-secondary">

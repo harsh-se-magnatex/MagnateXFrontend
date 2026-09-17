@@ -89,20 +89,25 @@ export const getScheduledPostsInRange = async (params: {
 
 export type AdminPendingScheduledPostsTab = 'today' | 'future';
 
+export type AdminPendingScheduledPostsCursor = {
+  scheduleAt: { _seconds: number; _nanoseconds?: number };
+  postId: string;
+};
+
 export const getAdminPendingScheduledPosts = async (params: {
   tab: AdminPendingScheduledPostsTab;
   todayStartMs: number;
   todayEndMs: number;
-  lastScheduleAt?: { _seconds: number; _nanoseconds?: number } | null;
+  cursor?: AdminPendingScheduledPostsCursor | null;
 }) => {
-  const { tab, todayStartMs, todayEndMs, lastScheduleAt } = params;
+  const { tab, todayStartMs, todayEndMs, cursor } = params;
   const search = new URLSearchParams({
     tab,
     todayStartMs: String(todayStartMs),
     todayEndMs: String(todayEndMs),
   });
-  if (lastScheduleAt && '_seconds' in lastScheduleAt) {
-    search.set('lastScheduleAt', JSON.stringify(lastScheduleAt));
+  if (cursor?.postId && cursor.scheduleAt && '_seconds' in cursor.scheduleAt) {
+    search.set('lastScheduleAt', JSON.stringify(cursor));
   }
   const response = await axiosClient.get(
     `/api/v1/admin/get-pending-scheduled-posts?${search.toString()}`

@@ -4,7 +4,6 @@ import {
   Facebook,
   FileText,
   Heart,
-  MapPin,
   TrendingUp,
   Trophy,
   Users,
@@ -27,7 +26,6 @@ import {
 } from './growth-studio';
 import type { PreloadedReplySuggestions } from './growth-studio/_common';
 import {
-  audienceRanked,
   InsightMetric,
   Merged,
   Metrics,
@@ -71,7 +69,6 @@ export default function FaceBookAnalytics({
   topPosts,
   expandedPost,
   setExpandedPost,
-  audienceRanked,
   pageAiContext,
   repliedCommentIds,
   preloadedReplySuggestions,
@@ -87,7 +84,6 @@ export default function FaceBookAnalytics({
   topPosts: Post[];
   expandedPost: Post | null;
   setExpandedPost: (post: Post | null) => void;
-  audienceRanked: audienceRanked;
   pageAiContext: Record<string, unknown>;
   repliedCommentIds?: string[];
   preloadedReplySuggestions?: PreloadedReplySuggestions;
@@ -423,62 +419,6 @@ export default function FaceBookAnalytics({
               )}
             </TabsContent>
           </Tabs>
-        )}
-      </section>
-
-      <section className="space-y-4" aria-labelledby="audience-heading">
-        <h2
-          id="audience-heading"
-          className="text-section text-default flex items-center gap-2"
-        >
-          <MapPin className="h-5 w-5 text-secondary" aria-hidden />
-          Audience
-          <span className="text-xs font-normal text-secondary">(optional)</span>
-        </h2>
-        {audienceRanked.countries.length === 0 &&
-        audienceRanked.cities.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-default bg-element px-4 py-6 text-center text-sm text-secondary">
-            Location breakdown will appear here when available.
-          </p>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {audienceRanked.countries.length > 0 ? (
-              <div className="rounded-xl border border-default bg-default p-4">
-                <h3 className="text-subsection text-default">Top countries</h3>
-                <ul className="mt-3 space-y-2 text-sm text-secondary">
-                  {audienceRanked.countries.map(({ name, count }) => (
-                    <li
-                      key={name}
-                      className="flex items-center justify-between gap-2 border-b border-default pb-2 last:border-0 last:pb-0"
-                    >
-                      <span className="font-medium text-default">{name}</span>
-                      <span className="tabular-nums text-secondary">
-                        {formatCompact(count)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-            {audienceRanked.cities.length > 0 ? (
-              <div className="rounded-xl border border-default bg-default p-4">
-                <h3 className="text-subsection text-default">Top cities</h3>
-                <ul className="mt-3 space-y-2 text-sm text-secondary">
-                  {audienceRanked.cities.map(({ name, count }) => (
-                    <li
-                      key={name}
-                      className="flex items-center justify-between gap-2 border-b border-default pb-2 last:border-0 last:pb-0"
-                    >
-                      <span className="font-medium text-default">{name}</span>
-                      <span className="tabular-nums text-secondary">
-                        {formatCompact(count)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-          </div>
         )}
       </section>
 

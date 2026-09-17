@@ -3,6 +3,7 @@
 import {
   getAdminPendingScheduledPosts,
   performActionOnScheduledPost,
+  type AdminPendingScheduledPostsCursor,
   type AdminPendingScheduledPostsTab,
 } from '@/src/service/api/social.servce';
 import { ExternalLink } from 'lucide-react';
@@ -74,7 +75,7 @@ export type PendingScheduledPost = {
 
 type TabState = {
   posts: PendingScheduledPost[];
-  cursor: FirestoreTimestamp | null;
+  cursor: AdminPendingScheduledPostsCursor | null;
   hasMore: boolean;
   initialLoading: boolean;
   loadingMore: boolean;
@@ -235,7 +236,7 @@ export default function MonitoringPage() {
           tab,
           todayStartMs: todayBounds.todayStartMs,
           todayEndMs: todayBounds.todayEndMs,
-          lastScheduleAt: current.cursor ?? undefined,
+          cursor: current.cursor ?? undefined,
         });
         const data = response?.data;
         const posts: PendingScheduledPost[] = data?.posts ?? [];

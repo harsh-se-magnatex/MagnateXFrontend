@@ -738,7 +738,6 @@ export default function AnalyticsPage() {
             merged={merged}
             reachChartData={reachChartData}
             followersChartData={followersChartData}
-            audienceRanked={audienceRanked}
             expandedPost={expandedPost}
             setExpandedPost={setExpandedPost}
             topPosts={topPosts}
