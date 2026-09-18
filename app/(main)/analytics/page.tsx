@@ -21,6 +21,10 @@ import FaceBookAnalytics from '../_components/AnalyticsComponent/FaceBook';
 import { InstagramAnalyticsView } from '../_components/AnalyticsComponent/Instagram';
 import LinkedInAnalyticsView from '../_components/AnalyticsComponent/LinkedIn';
 import {
+  SocialAccountPreview,
+  type SocialAccountMedia,
+} from '../_components/AnalyticsComponent/SocialAccountPreview';
+import {
   InstagramAnalytics,
   InstagramPost,
   LiTrendKey,
@@ -505,6 +509,21 @@ export default function AnalyticsPage() {
     [pageAnalytics]
   );
 
+  const facebookAccountMedia = useMemo<SocialAccountMedia[]>(
+    () =>
+      allPosts.map((post) => ({
+        id: post.postId,
+        caption: post.message ?? '',
+        createdAt: post.createdAt,
+        mediaUrl: post.mediaUrl ?? '',
+        mediaUrls: post.mediaUrls,
+        mediaType: post.mediaType ?? post.type,
+        videoUrl: post.videoUrl,
+        permalink: post.permalinkUrl,
+      })),
+    [allPosts]
+  );
+
   const instagramProfileUrl = useMemo(
     () =>
       igAnalytics
@@ -513,6 +532,23 @@ export default function AnalyticsPage() {
           })
         : null,
     [igAnalytics]
+  );
+
+  const instagramAccountMedia = useMemo<SocialAccountMedia[]>(
+    () =>
+      allIgPosts.map((post) => {
+        const isVideo = /video|reel/i.test(post.mediaType ?? '');
+        return {
+          id: post.postId,
+          caption: post.caption ?? '',
+          createdAt: post.timestamp,
+          mediaUrl: isVideo ? '' : (post.mediaUrl ?? ''),
+          mediaType: post.mediaType,
+          videoUrl: isVideo ? post.mediaUrl : undefined,
+          permalink: post.permalink,
+        };
+      }),
+    [allIgPosts]
   );
 
   const liMerged = useMemo((): LinkedInMerged => {
@@ -673,6 +709,20 @@ export default function AnalyticsPage() {
     [liAnalytics]
   );
 
+  const linkedInAccountMedia = useMemo<SocialAccountMedia[]>(
+    () =>
+      allLiPosts.map((post) => ({
+        id: post.postId,
+        caption: post.commentary ?? post.message ?? '',
+        createdAt: post.createdAt,
+        mediaUrl: post.mediaUrl ?? '',
+        mediaUrls: post.mediaUrls,
+        mediaType: post.type,
+        permalink: post.permalinkUrl,
+      })),
+    [allLiPosts]
+  );
+
   if (billingLoading && !billing) {
     return <PageLoadingState />;
   }
@@ -728,66 +778,132 @@ export default function AnalyticsPage() {
           <TabsTrigger value="linkedin">LinkedIn</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="facebook" className="mt-0 space-y-10 outline-none">
-          <FaceBookAnalytics
-            key={`facebook-${snapshot?.meta.generatedAt ?? 'initial'}`}
-            TOP_POSTS_LIMIT={TOP_POSTS_LIMIT}
-            metrics={metrics}
-            pageAnalytics={pageAnalytics}
-            profileUrl={facebookProfileUrl}
-            merged={merged}
-            reachChartData={reachChartData}
-            followersChartData={followersChartData}
-            expandedPost={expandedPost}
-            setExpandedPost={setExpandedPost}
-            topPosts={topPosts}
-            pageAiContext={fbPageAiContext}
-            repliedCommentIds={fbRepliedCommentIds}
-            preloadedReplySuggestions={snapshot?.replySuggestions?.facebook}
-            refreshControl={refreshControl}
-          />
+        <TabsContent value="facebook" className="mt-0 outline-none">
+          <Tabs defaultValue="analytics" className="space-y-6">
+            <TabsList className="mx-auto grid h-auto w-full max-w-xs grid-cols-2 gap-1">
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="account">My Facebook</TabsTrigger>
+            </TabsList>
+            <TabsContent
+              value="analytics"
+              className="mt-0 space-y-10 outline-none"
+            >
+              <FaceBookAnalytics
+                key={`facebook-${snapshot?.meta.generatedAt ?? 'initial'}`}
+                TOP_POSTS_LIMIT={TOP_POSTS_LIMIT}
+                metrics={metrics}
+                pageAnalytics={pageAnalytics}
+                profileUrl={facebookProfileUrl}
+                merged={merged}
+                reachChartData={reachChartData}
+                followersChartData={followersChartData}
+                expandedPost={expandedPost}
+                setExpandedPost={setExpandedPost}
+                topPosts={topPosts}
+                pageAiContext={fbPageAiContext}
+                repliedCommentIds={fbRepliedCommentIds}
+                preloadedReplySuggestions={snapshot?.replySuggestions?.facebook}
+                refreshControl={refreshControl}
+              />
+            </TabsContent>
+            <TabsContent value="account" className="mt-0 outline-none">
+              <SocialAccountPreview
+                platform="facebook"
+                name={pageAnalytics?.pageName || 'My Facebook Page'}
+                handle={pageAnalytics?.pageName}
+                followers={pageAnalytics?.followers}
+                profileUrl={facebookProfileUrl}
+                media={facebookAccountMedia}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="instagram" className="mt-0 outline-none">
-          <InstagramAnalyticsView
-            key={`instagram-${snapshot?.meta.generatedAt ?? 'initial'}`}
-            IG_MEDIA_LIMIT={IG_MEDIA_LIMIT}
-            ig={igAnalytics}
-            profileUrl={instagramProfileUrl}
-            posts={allIgPosts}
-            expandedPost={expandedIgPost}
-            onExpandedPostChange={setExpandedIgPost}
-            pageAiContext={igPageAiContext}
-            repliedCommentIds={igRepliedCommentIds}
-            preloadedReplySuggestions={snapshot?.replySuggestions?.instagram}
-            refreshControl={refreshControl}
-          />
+          <Tabs defaultValue="analytics" className="space-y-6">
+            <TabsList className="mx-auto grid h-auto w-full max-w-xs grid-cols-2 gap-1">
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="account">My Instagram</TabsTrigger>
+            </TabsList>
+            <TabsContent value="analytics" className="mt-0 outline-none">
+              <InstagramAnalyticsView
+                key={`instagram-${snapshot?.meta.generatedAt ?? 'initial'}`}
+                IG_MEDIA_LIMIT={IG_MEDIA_LIMIT}
+                ig={igAnalytics}
+                profileUrl={instagramProfileUrl}
+                posts={allIgPosts}
+                expandedPost={expandedIgPost}
+                onExpandedPostChange={setExpandedIgPost}
+                pageAiContext={igPageAiContext}
+                repliedCommentIds={igRepliedCommentIds}
+                preloadedReplySuggestions={
+                  snapshot?.replySuggestions?.instagram
+                }
+                refreshControl={refreshControl}
+              />
+            </TabsContent>
+            <TabsContent value="account" className="mt-0 outline-none">
+              <SocialAccountPreview
+                platform="instagram"
+                name={igAnalytics?.username || 'My Instagram'}
+                handle={igAnalytics?.username}
+                followers={igAnalytics?.followers}
+                following={igAnalytics?.following}
+                profileUrl={instagramProfileUrl}
+                media={instagramAccountMedia}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         <TabsContent value="linkedin" className="mt-0 outline-none">
-          <LinkedInAnalyticsView
-            key={`linkedin-${snapshot?.meta.generatedAt ?? 'initial'}`}
-            TOP_POSTS_LIMIT={TOP_POSTS_LIMIT}
-            connection={liConnection}
-            li={liAnalytics}
-            profileUrl={linkedInProfileUrl}
-            posts={allLiPosts}
-            merged={liMerged}
-            topPosts={topLiPosts}
-            expandedPost={expandedLiPost}
-            setExpandedPost={setExpandedLiPost}
-            audienceRanked={liAudienceRanked}
-            pageAiContext={liPageAiContext}
-            followersChartData={liFollowersChartData}
-            pageViewsChartData={liPageViewsChartData}
-            impressionsChartData={liImpressionsChartData}
-            updatedLabel={fmtTimestamp(liAnalytics?.lastUpdated, {
-              placeholder: '',
-            })}
-            repliedCommentIds={liRepliedCommentIds}
-            preloadedReplySuggestions={snapshot?.replySuggestions?.linkedin}
-            refreshControl={refreshControl}
-          />
+          <Tabs defaultValue="analytics" className="space-y-6">
+            <TabsList className="mx-auto grid h-auto w-full max-w-xs grid-cols-2 gap-1">
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="account">My LinkedIn</TabsTrigger>
+            </TabsList>
+            <TabsContent value="analytics" className="mt-0 outline-none">
+              <LinkedInAnalyticsView
+                key={`linkedin-${snapshot?.meta.generatedAt ?? 'initial'}`}
+                TOP_POSTS_LIMIT={TOP_POSTS_LIMIT}
+                connection={liConnection}
+                li={liAnalytics}
+                profileUrl={linkedInProfileUrl}
+                posts={allLiPosts}
+                merged={liMerged}
+                topPosts={topLiPosts}
+                expandedPost={expandedLiPost}
+                setExpandedPost={setExpandedLiPost}
+                audienceRanked={liAudienceRanked}
+                pageAiContext={liPageAiContext}
+                followersChartData={liFollowersChartData}
+                pageViewsChartData={liPageViewsChartData}
+                impressionsChartData={liImpressionsChartData}
+                updatedLabel={fmtTimestamp(liAnalytics?.lastUpdated, {
+                  placeholder: '',
+                })}
+                repliedCommentIds={liRepliedCommentIds}
+                preloadedReplySuggestions={snapshot?.replySuggestions?.linkedin}
+                refreshControl={refreshControl}
+              />
+            </TabsContent>
+            <TabsContent value="account" className="mt-0 outline-none">
+              <SocialAccountPreview
+                platform="linkedin"
+                name={
+                  liAnalytics?.pageName ||
+                  liAnalytics?.displayName ||
+                  'My LinkedIn Page'
+                }
+                handle={liAnalytics?.displayName}
+                description={liAnalytics?.headline}
+                followers={liAnalytics?.followers}
+                following={liAnalytics?.connections}
+                profileUrl={linkedInProfileUrl}
+                media={linkedInAccountMedia}
+              />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>
