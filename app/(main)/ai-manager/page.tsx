@@ -151,14 +151,6 @@ type CellEntry = {
   hideStatus?: boolean;
 };
 
-function videoScheduleDetails(cell?: AIPlanCell | null): string | undefined {
-  if (!cell || cell.kind !== 'video') return undefined;
-  if (cell.videoVariant === 'ugc-logo-last') return 'UGC · Logo: Last';
-  if (cell.videoVariant === 'normal-logo-last') return 'Normal · Logo: Last';
-  const logoPosition = cell.videoVariant === 'logo-first-memory-last' ? 'First' : 'Last';
-  return `Logo: ${logoPosition}`;
-}
-
 type GlobalForceRunTarget = {
   date: string;
   platform: AIPlanPlatform;
@@ -281,7 +273,6 @@ function entriesForSlot(args: {
       hideStatus: item.kind === 'video-generation' && item.status === 'failed',
       note:
         createPostBrief(item.cell) ||
-        videoScheduleDetails(item.cell) ||
         (hideDetail
           ? undefined
           : item.title?.trim() || item.captionPreview?.trim() || undefined),
@@ -315,13 +306,11 @@ function entriesForSlot(args: {
             : kindLabel(item.kind),
         note:
           createPostBrief(item.cell) ||
-          (item.kind === 'video-generation'
-            ? videoScheduleDetails(item.cell)
-            : isOccasion
-              ? suppliedLabel
-              : isFailed
-                ? undefined
-                : item.note?.trim()) ||
+          (isOccasion
+            ? suppliedLabel
+            : isFailed
+              ? undefined
+              : item.note?.trim()) ||
           undefined,
         href: null,
         source: 'upcoming' as const,

@@ -1,6 +1,5 @@
 'use client';
 
-import { VisualStyleSelector } from '@/components/brand/VisualStyleSelector';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import {
   getProfile,
@@ -38,7 +37,6 @@ import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
-import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
 import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
 import {
   joinPhone,
@@ -1139,78 +1137,6 @@ export default function BusinessProfilePage() {
                     />
                   </div>
 
-                  <div className="pt-2">
-                    <p className="mb-1.5 block text-sm font-semibold text-default">
-                      Page look & visual style
-                    </p>
-                    <p className="mb-3 text-xs text-secondary">
-                      Choose how your social page should feel — used for Content
-                      Studio, carousels, Occasion Posts, and AI Creator
-                      generations.
-                    </p>
-                    <VisualStyleSelector
-                      imageStyle={formData.imageStyle}
-                      businessName={formData.businessName}
-                      brandColors={[formData.primaryColor, formData.secondaryColor, formData.accentColor]}
-                    />
-                    <PageLookSelector
-                      value={formData.imageStyle}
-                      onChange={(next) =>
-                        setFormData((prev) => ({ ...prev, imageStyle: next }))
-                      }
-                      idPrefix="template-dna-page-look" // businessName={formData.businessName}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-                    <div>
-                      <label className="mb-1.5 block text-sm font-semibold text-default">
-                        Brand Colors
-                      </label>
-                      <div className="flex gap-3">
-                        {[
-                          {
-                            id: 'primaryColor',
-                            name: 'primaryColor',
-                            val: formData.primaryColor,
-                            tooltip: 'Primary',
-                          },
-                          {
-                            id: 'secondaryColor',
-                            name: 'secondaryColor',
-                            val: formData.secondaryColor,
-                            tooltip: 'Secondary',
-                          },
-                          {
-                            id: 'accentColor',
-                            name: 'accentColor',
-                            val: formData.accentColor,
-                            tooltip: 'Accent',
-                          },
-                        ].map((colorField, idx) => (
-                          <div
-                            key={colorField.id}
-                            className="relative group flex-1"
-                          >
-                            <div className="absolute inset-0 rounded-xl border border-default overflow-hidden bg-default">
-                              <input
-                                id={colorField.id}
-                                name={colorField.name}
-                                type="color"
-                                value={colorField.val}
-                                onChange={handleChange}
-                                className="absolute -inset-2 w-[calc(100%+16px)] h-[calc(100%+16px)] cursor-pointer"
-                              />
-                            </div>
-                            <div className="relative h-11 w-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-xl pointer-events-none text-white text-[10px] font-bold uppercase tracking-wider">
-                              {colorField.tooltip}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="pt-6 border-t border-default space-y-4">
                     <label className="mb-1.5 block text-sm font-semibold text-default">
                       Logo
@@ -1406,7 +1332,7 @@ export default function BusinessProfilePage() {
                 className="group relative overflow-hidden rounded-2xl border border-default bg-default p-4 transition-expo hover:border-primary-purple/50 hover:shadow-sm"
               >
                 <div className="flex items-center justify-between relative z-10">
-                  <div><span className="font-semibold text-default">Template DNA</span><span className="ml-2 rounded-full bg-primary-purple/10 px-2 py-0.5 text-[10px] font-semibold text-primary-purple">2–8 examples</span></div>
+                  <div><span className="font-semibold text-default">Template DNA</span><span className="ml-2 rounded-full bg-primary-purple/10 px-2 py-0.5 text-[10px] font-semibold text-primary-purple">Create or learn</span></div>
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-tr from-[var(--purple-9)] to-[var(--purple-9)] text-white"><Sparkles className="w-4 h-4" /></div>
                 </div>
                 <p className="mt-2 text-xs leading-5 text-secondary">Match recurring social layouts, typography, spacing, and visual rules across Instagram, Facebook, and LinkedIn.</p>

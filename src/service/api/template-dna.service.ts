@@ -15,8 +15,17 @@ export type TemplateDnaProfile = {
   extractionModel: string | null; updatedAt: string; extractedAt: string | null; lastError?: string | null;
 };
 export type VisualStyleStatus = { source: 'brand' | 'template_dna'; platforms: Array<{ platform: string; source: 'brand' | 'template_dna'; fallbackReason: string | null }> };
+export type GeneratedVisualStyle = {
+  label: string;
+  selectedPresetId: string;
+  fields: { font: string; style: string; fontColor: string; fontSize: string };
+  revision: number;
+  updatedAt: string;
+};
 export async function getVisualStyle() { return (await axiosClient.get<ApiEnvelope<VisualStyleStatus>>('/api/v1/template-dna/style-source')).data.data; }
 export async function setVisualStyle(source: VisualStyleStatus['source']) { await axiosClient.patch('/api/v1/template-dna/style-source', { source }); return getVisualStyle(); }
+export async function getGeneratedVisualStyle() { return (await axiosClient.get<ApiEnvelope<GeneratedVisualStyle | null>>('/api/v1/template-dna/create-your-own')).data.data; }
+export async function generateVisualStyle(selectedPresetId: string, business?: Record<string, unknown>) { return (await axiosClient.post<ApiEnvelope<GeneratedVisualStyle>>('/api/v1/template-dna/create-your-own/generate', { selectedPresetId, business })).data.data; }
 export async function getReferencePreview(platform: string, id: string) { return (await axiosClient.get<Blob>(`/api/v1/template-dna/${platform}/references/${id}/preview`, { responseType: 'blob' })).data; }
 
 type ApiEnvelope<T> = { data: T };

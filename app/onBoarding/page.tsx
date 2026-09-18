@@ -14,7 +14,6 @@ import {
   Image as ImageIcon,
   LayoutGrid,
   MapPin,
-  Palette,
   Phone,
   Sparkles,
   Tag,
@@ -50,7 +49,7 @@ import {
   MAX_ONBOARDING_AI_LOGOS,
   type OnboardingLogoPick,
 } from '@/components/onboarding/OnboardingAiLogoSection';
-import { PageLookSelector } from '@/components/onboarding/PageLookSelector';
+import { VisualDnaChoice } from '@/components/brand/VisualDnaChoice';
 import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
 import {
   joinPhone,
@@ -67,7 +66,7 @@ type QuestionType =
   | 'textarea'
   | 'hashtags'
   | 'brandSlogan'
-  | 'pageLook';
+  | 'visualDna';
 
 type Question = {
   name: string;
@@ -184,28 +183,6 @@ const questions: Question[] = [
     icon: Sparkles,
   },
   {
-    name: 'primaryColor',
-    label: 'Primary Brand Color',
-    description:
-      'Dominant brand color — check suggestions for extracted hex values.',
-    type: 'color',
-    icon: Palette,
-  },
-  {
-    name: 'secondaryColor',
-    label: 'Secondary Brand Color',
-    description: 'Supports your primary color across assets.',
-    type: 'color',
-    icon: Palette,
-  },
-  {
-    name: 'accentColor',
-    label: 'Accent Brand Color',
-    description: 'A pop color for highlights and call-outs.',
-    type: 'color',
-    icon: Palette,
-  },
-  {
     name: 'brandDescription',
     label: 'What does your brand do?',
     description: 'A few sentences about what you sell and who you serve.',
@@ -215,11 +192,11 @@ const questions: Question[] = [
     icon: FileText,
   },
   {
-    name: 'imageStyle',
-    label: 'How should your page look?',
+    name: 'visualDna',
+    label: 'Create your Template DNA',
     description:
-      'Pick one visual style for your social page — we use this across images, carousels, videos, and event posts.',
-    type: 'pageLook',
+      'Create a shared visual identity with AI, or let AI learn the formats you already use.',
+    type: 'visualDna',
     icon: LayoutGrid,
   },
 ];
@@ -1036,15 +1013,17 @@ export default function OnboardingMenu() {
   const renderField = () => {
     if (current.type === 'hashtags') return renderHashtagsStep();
     if (current.type === 'brandSlogan') return renderBrandSloganStep();
-    if (current.type === 'pageLook') {
+    if (current.type === 'visualDna') {
       return (
-        <PageLookSelector
-          value={String(formData.imageStyle ?? '')}
-          onChange={(next) =>
-            setFormData((prev) => ({ ...prev, imageStyle: next }))
+        <VisualDnaChoice
+          compact
+          business={formData as Record<string, unknown>}
+          onGenerated={(next) =>
+            setFormData((prev) => ({ ...prev, imageStyle: next.selectedPresetId }))
           }
-          idPrefix="onboarding-page-look"
-          // businessName={String(formData.businessName ?? '')}
+          onLearnFromPosts={() =>
+            setFormData((prev) => ({ ...prev, imageStyle: String(prev.imageStyle || 'professional') }))
+          }
         />
       );
     }
