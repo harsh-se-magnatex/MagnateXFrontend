@@ -19,6 +19,7 @@ export type GeneratedVisualStyle = {
   label: string;
   selectedPresetId: string;
   fields: { font: string; style: string; fontColor: string; fontSize: string };
+  preview?: { background: string; accentPalette: string[]; imagery: string; composition: string };
   revision: number;
   updatedAt: string;
 };

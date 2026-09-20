@@ -6,6 +6,7 @@ import { showErrorToast } from '@/lib/show-error-toast';
 import { ImagePreviewButton, ImagePreviewOverlay, useImagePreview } from '@/components/image-preview';
 import { ReferenceThumbnail } from '@/components/brand/TemplateDesignEditor';
 import { VisualDnaChoice } from '@/components/brand/VisualDnaChoice';
+import { DnaStylePreview } from '@/components/brand/DnaStylePreview';
 import { extractTemplateDna, getTemplateDna, removeTemplateDnaReference, updateTemplateDna, uploadTemplateDnaReferences, type TemplateDnaPlatform, type TemplateDnaProfile } from '@/src/service/api/template-dna.service';
 
 const platforms: TemplateDnaPlatform[] = ['instagram', 'facebook', 'linkedin'];
@@ -70,7 +71,7 @@ export default function TemplateDnaPage() {
       </div>{dirty[platform] && <p className="mt-2 text-xs text-secondary">Save your edits before changing references or re-extracting.</p>}
       {profile?.lastError && <p className="mt-3 text-sm text-secondary">{profile.lastError}</p>}
       {profile?.needsMeasurementExtraction && profile.extractedAt && <p className="mt-4 rounded-lg bg-element p-3 text-sm text-secondary">This legacy profile remains usable. Re-extract to add measured font sizes, color roles and placements.</p>}
-      </div><aside className="h-fit rounded-2xl border border-default bg-element p-4"><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-default"><WandSparkles className="size-4 text-primary-purple"/>How it works</div><ol className="space-y-3 text-xs leading-5 text-secondary"><li><span className="mr-2 font-bold text-primary-purple">1</span>Upload 4–8 recognizable examples.</li><li><span className="mr-2 font-bold text-primary-purple">2</span>Extract the recurring visual rules.</li><li><span className="mr-2 font-bold text-primary-purple">3</span>Review the preview and adjust measurements.</li></ol>{count < 4 && <p className="mt-4 rounded-xl bg-amber-500/10 p-3 text-xs text-amber-800">Add {4 - count} more {4 - count === 1 ? 'image' : 'images'} to unlock extraction.</p>}</aside></div>
+      </div><aside className="h-fit space-y-4 rounded-2xl border border-default bg-element p-4">{ready && profile && <DnaStylePreview label="Learned from your posts" platform={platform} colors={profile.colors.value} fontDescription={profile.typography.value} styleDescription={profile.visualCharacter.value} compact/>}<div><div className="mb-3 flex items-center gap-2 text-sm font-semibold text-default"><WandSparkles className="size-4 text-primary-purple"/>How it works</div><ol className="space-y-3 text-xs leading-5 text-secondary"><li><span className="mr-2 font-bold text-primary-purple">1</span>Upload 4–8 recognizable examples.</li><li><span className="mr-2 font-bold text-primary-purple">2</span>Extract the recurring visual rules.</li><li><span className="mr-2 font-bold text-primary-purple">3</span>Review the post-style preview.</li></ol>{count < 4 && <p className="mt-4 rounded-xl bg-amber-500/10 p-3 text-xs text-amber-800">Add {4 - count} more {4 - count === 1 ? 'image' : 'images'} to unlock extraction.</p>}</div></aside></div>
     </section>; })}</div>}
     <ImagePreviewOverlay src={referencePreview.previewUrl} alt={referencePreview.previewAlt} onClose={referencePreview.close} />
   </div>;

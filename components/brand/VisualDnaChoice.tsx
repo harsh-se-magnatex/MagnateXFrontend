@@ -6,6 +6,7 @@ import { PAGE_LOOK_PRESETS } from '@/lib/page-look-styles';
 import { SEVEN_VISUAL_STYLES } from '@/components/landing/seven-visuals/seven-visuals-data';
 import { cn } from '@/lib/utils';
 import { TemplateDnaReferenceSetup } from '@/components/brand/TemplateDnaReferenceSetup';
+import { DnaStylePreview } from '@/components/brand/DnaStylePreview';
 import { showErrorToast } from '@/lib/show-error-toast';
 import {
   generateVisualStyle,
@@ -121,6 +122,19 @@ export function VisualDnaChoice({ business, onGenerated, onLearnFromPosts, compa
         </div>
         {!generated && !showPresets && <button type="button" disabled={!!switching} onClick={() => void chooseCreate()} className="mt-5 w-full rounded-xl btn-brand-fill px-4 py-3 text-sm font-semibold disabled:opacity-50">Generate</button>}
         {generated && <div className="mt-5 space-y-3">
+          <DnaStylePreview
+            label={generated.label}
+            colors={[
+              generated.preview?.background,
+              ...(generated.preview?.accentPalette ?? []),
+              generated.fields.fontColor,
+            ]}
+            fontColor={generated.fields.fontColor}
+            fontDescription={generated.fields.font}
+            styleDescription={`${generated.fields.style} ${generated.preview?.composition ?? ''}`}
+            presetId={generated.selectedPresetId}
+            compact
+          />
           <div className="grid gap-2 sm:grid-cols-2">{fieldLabels.map(([key, label]) => <div key={key} className="rounded-xl border border-default bg-element p-3"><p className="text-[11px] font-semibold uppercase tracking-wide text-secondary">{label}</p><div className="mt-1 flex items-center gap-2"><span className="text-sm font-medium text-default">{generated.fields[key]}</span>{key === 'fontColor' && <span className="size-5 shrink-0 rounded-full border border-black/10" style={{ backgroundColor: generated.fields.fontColor }}/>}</div></div>)}</div>
           {selectedPath !== 'create' && <button type="button" disabled={!!switching} onClick={() => void chooseCreate()} className="inline-flex w-full items-center justify-center gap-2 rounded-xl btn-brand-fill px-4 py-3 text-sm font-semibold disabled:opacity-50">{switching === 'create' && <Loader2 className="size-4 animate-spin"/>}Use this style</button>}
           <button type="button" disabled={!!switching} onClick={() => setShowPresets(true)} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary-purple/30 px-4 py-3 text-sm font-semibold text-primary-purple disabled:opacity-50"><RefreshCw className="size-4"/>Regenerate</button>
