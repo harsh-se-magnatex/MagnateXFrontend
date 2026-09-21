@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, ImagePlus, Loader2, Trash2, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import {
@@ -13,6 +13,7 @@ import {
   previewLeadMagnet,
   type LeadMagnetDna,
   type LeadMagnetPlatform,
+  type LeadMagnetOffering,
   type LeadMagnetPost,
 } from '@/src/service/api/lead-magnet';
 
@@ -35,12 +36,27 @@ const PREVIEW_TIMEOUT_MS = 90_000;
 const POLL_INTERVAL_MS = 2_000;
 const POLL_TIMEOUT_MS = 12 * 60_000;
 
+function readImage(file: File): Promise<string> {
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+    return Promise.reject(new Error('Choose a PNG, JPEG, or WebP image.'));
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    return Promise.reject(new Error('Images must be 4 MB or smaller.'));
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('Could not read that image.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 /** User-facing stages. The internal `loading` / `generating` waits belong to
  *  the stage they resolve, and `result` is the payoff rather than a step. */
 const FLOW_STAGES = [
-  { key: 'site', label: 'Website', steps: ['website'] },
+  { key: 'site', label: 'Brand details', steps: ['website'] },
   { key: 'email', label: 'Email', steps: ['email', 'loading'] },
-  { key: 'brand', label: 'Brand', steps: ['brand'] },
+  { key: 'brand', label: 'Your offer', steps: ['brand'] },
   { key: 'platform', label: 'Platform', steps: ['platform', 'generating'] },
 ] as const;
 
@@ -109,7 +125,7 @@ function FlowProgress({ step }: { step: Step }) {
  * hang — the single biggest reason people abandon this flow.
  */
 const GENERATING_STAGES = [
-  { at: 0, label: 'Reading your website' },
+  { at: 0, label: 'Preparing your brand' },
   { at: 14, label: 'Learning your brand voice' },
   { at: 32, label: 'Choosing an angle that fits' },
   { at: 52, label: 'Designing the visual' },
@@ -338,10 +354,26 @@ function BrandPreviewCard({ dna }: { dna: LeadMagnetDna }) {
 export function LeadMagnetSection() {
   const sectionRef = React.useRef<HTMLElement | null>(null);
   const resultRef = React.useRef<HTMLDivElement | null>(null);
+  const logoInputRef = React.useRef<HTMLInputElement | null>(null);
+  const productInputRef = React.useRef<HTMLInputElement | null>(null);
   const [step, setStep] = React.useState<Step>('website');
   const [email, setEmail] = React.useState('');
   const [emailAcknowledged, setEmailAcknowledged] = React.useState(false);
   const [website, setWebsite] = React.useState('');
+  const [hasWebsite, setHasWebsite] = React.useState(true);
+  const [manualName, setManualName] = React.useState('');
+  const [manualColors, setManualColors] = React.useState({
+    primary: '#7c6bf5',
+    secondary: '#9b8afb',
+    accent: '#c7b8fd',
+  });
+  const [logoImage, setLogoImage] = React.useState('');
+  const [logoFileName, setLogoFileName] = React.useState('');
+  const [offering, setOffering] = React.useState<LeadMagnetOffering | null>(
+    null
+  );
+  const [productImage, setProductImage] = React.useState('');
+  const [productFileName, setProductFileName] = React.useState('');
   const [platform, setPlatform] = React.useState<LeadMagnetPlatform | null>(
     null
   );
@@ -404,8 +436,18 @@ export function LeadMagnetSection() {
   const onContinueWebsite = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!website.trim()) {
+    if (hasWebsite && !website.trim()) {
       setError('Enter your website to continue.');
+      return;
+    }
+    if (
+      !hasWebsite &&
+      (!manualName.trim() ||
+        !Object.values(manualColors).every((color) =>
+          /^#[0-9a-fA-F]{6}$/.test(color)
+        ))
+    ) {
+      setError('Add your name and all three brand colors to continue.');
       return;
     }
     setStep('email');
@@ -426,7 +468,7 @@ export function LeadMagnetSection() {
       setError('Please acknowledge how your email will be used to continue.');
       return;
     }
-    if (!website.trim()) {
+    if (hasWebsite && !website.trim()) {
       setError('Enter your website to continue.');
       setStep('website');
       return;
@@ -437,7 +479,25 @@ export function LeadMagnetSection() {
       const data = await claimLeadMagnetEmail(email);
       setEmail(data.email);
       if (data.consentText) setConsentText(data.consentText);
-      await runWebsitePreview({ email: data.email, website });
+      if (hasWebsite) {
+        await runWebsitePreview({ email: data.email, website });
+      } else {
+        setDomainKey('');
+        setDna({
+          website: '',
+          businessName: manualName.trim(),
+          industry: 'Other',
+          brandDescription: '',
+          logo: logoImage,
+          location: '',
+          hashtags: '',
+          primaryColor: manualColors.primary,
+          secondaryColor: manualColors.secondary,
+          accentColor: manualColors.accent,
+        });
+        setStep('brand');
+        scrollToSection();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not verify email');
       // Stay on email if claim failed; go back to email if preview failed after claim.
@@ -448,7 +508,8 @@ export function LeadMagnetSection() {
   };
 
   const onPickPlatform = async (nextPlatform: LeadMagnetPlatform) => {
-    if (busy || !dna) return;
+    if (busy || !dna || !offering || (offering === 'product' && !productImage))
+      return;
     setBusy(true);
     setPickingPlatform(nextPlatform);
     setError(null);
@@ -463,6 +524,9 @@ export function LeadMagnetSection() {
         website: dna.website || website,
         platform: nextPlatform,
         dna,
+        offering,
+        logoImage: !hasWebsite ? logoImage : undefined,
+        productImage: offering === 'product' ? productImage : undefined,
       });
       setDomainKey(queued.domainKey);
 
@@ -521,6 +585,18 @@ export function LeadMagnetSection() {
     setEmail('');
     setEmailAcknowledged(false);
     setWebsite('');
+    setHasWebsite(true);
+    setManualName('');
+    setManualColors({
+      primary: '#7c6bf5',
+      secondary: '#9b8afb',
+      accent: '#c7b8fd',
+    });
+    setLogoImage('');
+    setLogoFileName('');
+    setOffering(null);
+    setProductImage('');
+    setProductFileName('');
     setPlatform(null);
     setPickingPlatform(null);
     setDomainKey('');
@@ -543,8 +619,8 @@ export function LeadMagnetSection() {
           See a post for your brand
         </h2>
         <p className="landing-body mx-auto mt-4 max-w-xl text-center text-base text-white/60">
-          Drop your website, enter your email, confirm your brand, pick a
-          platform, and we&apos;ll craft one sample post — no signup required.
+          Add your website or brand details, enter your email, choose what you
+          offer, and we&apos;ll craft one sample post — no signup required.
         </p>
 
         <div className="mt-12 rounded-2xl border border-white/10 bg-white/[0.03] p-6 backdrop-blur-md md:p-8">
@@ -559,23 +635,169 @@ export function LeadMagnetSection() {
             >
               {step === 'website' && (
                 <form onSubmit={onContinueWebsite} className="space-y-4">
-                  <label className="landing-body block text-sm text-white/70">
-                    Your website
-                    <input
-                      type="text"
-                      inputMode="url"
-                      autoComplete="url"
-                      placeholder="yourbusiness.com"
-                      value={website}
-                      onChange={(e) => setWebsite(e.target.value)}
-                      className="lead-magnet-input mt-2"
-                      disabled={busy}
-                    />
-                  </label>
+                  <div
+                    className="grid gap-3 sm:grid-cols-2"
+                    role="group"
+                    aria-label="Website availability"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHasWebsite(true);
+                        setError(null);
+                      }}
+                      className={`lead-magnet-platform-btn ${hasWebsite ? 'ring-2 ring-violet-400' : ''}`}
+                      aria-pressed={hasWebsite}
+                    >
+                      I have a website
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHasWebsite(false);
+                        setError(null);
+                      }}
+                      className={`lead-magnet-platform-btn ${!hasWebsite ? 'ring-2 ring-violet-400' : ''}`}
+                      aria-pressed={!hasWebsite}
+                    >
+                      I don&apos;t have a website
+                    </button>
+                  </div>
+                  {hasWebsite ? (
+                    <label className="landing-body block text-sm text-white/70">
+                      Your website
+                      <input
+                        type="text"
+                        inputMode="url"
+                        autoComplete="url"
+                        placeholder="yourbusiness.com"
+                        value={website}
+                        onChange={(e) => setWebsite(e.target.value)}
+                        className="lead-magnet-input mt-2"
+                        disabled={busy}
+                      />
+                    </label>
+                  ) : (
+                    <div className="space-y-4">
+                      <label className="landing-body block text-sm text-white/70">
+                        Brand or business name
+                        <input
+                          type="text"
+                          maxLength={120}
+                          value={manualName}
+                          onChange={(e) => setManualName(e.target.value)}
+                          placeholder="Your business"
+                          className="lead-magnet-input mt-2"
+                        />
+                      </label>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        {(
+                          [
+                            ['primary', 'Primary'],
+                            ['secondary', 'Secondary'],
+                            ['accent', 'Accent'],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <label
+                            key={key}
+                            className="landing-body block text-sm text-white/70"
+                          >
+                            {label} color
+                            <input
+                              type="color"
+                              value={manualColors[key]}
+                              onChange={(e) =>
+                                setManualColors((current) => ({
+                                  ...current,
+                                  [key]: e.target.value,
+                                }))
+                              }
+                              className="mt-2 block h-12 w-24 cursor-pointer rounded border border-white/20 bg-transparent p-1"
+                            />
+                          </label>
+                        ))}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="landing-body text-sm text-white/70">
+                            Logo{' '}
+                            <span className="text-white/35">(optional)</span>
+                          </p>
+                          {logoImage ? (
+                            <button
+                              type="button"
+                              className="landing-body inline-flex items-center gap-1 text-xs text-white/45 hover:text-white/80"
+                              onClick={() => {
+                                setLogoImage('');
+                                setLogoFileName('');
+                                if (logoInputRef.current)
+                                  logoInputRef.current.value = '';
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Remove
+                            </button>
+                          ) : null}
+                        </div>
+                        <input
+                          ref={logoInputRef}
+                          id="try-it-logo-upload"
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            void readImage(file)
+                              .then((data) => {
+                                setLogoImage(data);
+                                setLogoFileName(file.name);
+                                setError(null);
+                              })
+                              .catch((err) => setError(err.message));
+                          }}
+                          className="sr-only"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          className="flex w-full items-center gap-4 rounded-xl border border-dashed border-white/20 bg-white/[0.025] p-3 text-left transition hover:border-white/40 hover:bg-white/[0.05]"
+                        >
+                          <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/30">
+                            {logoImage ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={logoImage}
+                                alt="Logo preview"
+                                className="h-full w-full object-contain p-1"
+                              />
+                            ) : (
+                              <ImagePlus className="h-6 w-6 text-white/35" />
+                            )}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="landing-body block text-sm text-white/75">
+                              {logoFileName || 'Upload your logo'}
+                            </span>
+                            <span className="landing-body mt-1 block text-xs text-white/40">
+                              PNG, JPG, or WebP up to 4 MB
+                            </span>
+                          </span>
+                          <Upload className="h-4 w-4 shrink-0 text-white/45" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <button
                     type="submit"
                     className="landing-btn-primary w-full sm:w-auto"
-                    disabled={busy || !website.trim()}
+                    disabled={
+                      busy ||
+                      (hasWebsite
+                        ? !website.trim()
+                        : !manualName.trim() ||
+                          !Object.values(manualColors).every((color) =>
+                            /^#[0-9a-fA-F]{6}$/.test(color)
+                          ))
+                    }
                   >
                     Continue
                     <ArrowRight className="h-4 w-4" />
@@ -589,11 +811,21 @@ export function LeadMagnetSection() {
                   className="space-y-4"
                 >
                   <p className="landing-body text-xs text-white/40">
-                    Looking up{' '}
-                    <span className="text-white/60">
-                      {website.replace(/^https?:\/\//, '')}
-                    </span>{' '}
-                    after we verify your email
+                    {hasWebsite ? (
+                      <>
+                        Looking up{' '}
+                        <span className="text-white/60">
+                          {website.replace(/^https?:\/\//, '')}
+                        </span>{' '}
+                        after we verify your email
+                      </>
+                    ) : (
+                      <>
+                        Preparing a sample for{' '}
+                        <span className="text-white/60">{manualName}</span>{' '}
+                        after we verify your email
+                      </>
+                    )}
                   </p>
                   <label className="landing-body block text-sm text-white/70">
                     Email
@@ -654,7 +886,7 @@ export function LeadMagnetSection() {
                       }}
                       disabled={busy}
                     >
-                      Change website
+                      Change brand details
                     </button>
                   </div>
                 </form>
@@ -677,25 +909,146 @@ export function LeadMagnetSection() {
                 <div className="space-y-5">
                   <div>
                     <p className="landing-body text-sm text-white/70">
-                      We found this brand from your website
+                      {hasWebsite
+                        ? 'We found this brand from your website'
+                        : 'Your brand details'}
                     </p>
                     <p className="landing-body mt-1 text-xs text-white/40">
-                      Confirm it looks right, then pick a platform for your
-                      sample post.
+                      Choose whether to feature a service or a product.
                     </p>
                   </div>
                   <BrandPreviewCard dna={dna} />
+                  {dna.logo.trim() ? (
+                    <button
+                      type="button"
+                      className="landing-body inline-flex items-center gap-1 text-xs text-white/45 hover:text-white/80"
+                      onClick={() => {
+                        setDna({ ...dna, logo: '' });
+                        setLogoImage('');
+                        setLogoFileName('');
+                        if (logoInputRef.current)
+                          logoInputRef.current.value = '';
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Remove logo from this
+                      post
+                    </button>
+                  ) : null}
+                  <div
+                    className="grid gap-3 sm:grid-cols-2"
+                    role="group"
+                    aria-label="What do you offer?"
+                  >
+                    <button
+                      type="button"
+                      className={`lead-magnet-platform-btn ${offering === 'service' ? 'ring-2 ring-violet-400' : ''}`}
+                      aria-pressed={offering === 'service'}
+                      onClick={() => {
+                        setOffering('service');
+                        setError(null);
+                      }}
+                    >
+                      Service
+                    </button>
+                    <button
+                      type="button"
+                      className={`lead-magnet-platform-btn ${offering === 'product' ? 'ring-2 ring-violet-400' : ''}`}
+                      aria-pressed={offering === 'product'}
+                      onClick={() => {
+                        setOffering('product');
+                        setError(null);
+                      }}
+                    >
+                      Product
+                    </button>
+                  </div>
+                  {offering === 'product' ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="landing-body text-sm text-white/70">
+                          Product image
+                        </p>
+                        {productImage ? (
+                          <button
+                            type="button"
+                            className="landing-body inline-flex items-center gap-1 text-xs text-white/45 hover:text-white/80"
+                            onClick={() => {
+                              setProductImage('');
+                              setProductFileName('');
+                              if (productInputRef.current)
+                                productInputRef.current.value = '';
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Remove
+                          </button>
+                        ) : null}
+                      </div>
+                      <input
+                        ref={productInputRef}
+                        id="try-it-product-upload"
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          void readImage(file)
+                            .then((data) => {
+                              setProductImage(data);
+                              setProductFileName(file.name);
+                              setError(null);
+                            })
+                            .catch((err) => setError(err.message));
+                        }}
+                        className="sr-only"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => productInputRef.current?.click()}
+                        className="flex w-full items-center gap-4 rounded-xl border border-dashed border-white/20 bg-white/[0.025] p-3 text-left transition hover:border-white/40 hover:bg-white/[0.05]"
+                      >
+                        <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/30">
+                          {productImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={productImage}
+                              alt="Product preview"
+                              className="h-full w-full object-contain p-1"
+                            />
+                          ) : (
+                            <ImagePlus className="h-6 w-6 text-white/35" />
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="landing-body block text-sm text-white/75">
+                            {productFileName || 'Upload your product image'}
+                          </span>
+                          <span className="landing-body mt-1 block text-xs text-white/40">
+                            PNG, JPG, or WebP up to 4 MB
+                          </span>
+                        </span>
+                        <Upload className="h-4 w-4 shrink-0 text-white/45" />
+                      </button>
+                    </div>
+                  ) : null}
                   <div className="flex flex-wrap items-center gap-3">
                     <button
                       type="button"
                       className="landing-btn-primary w-full sm:w-auto"
                       onClick={() => {
+                        if (!offering) {
+                          setError('Choose service or product.');
+                          return;
+                        }
+                        if (offering === 'product' && !productImage) {
+                          setError('Choose a product image.');
+                          return;
+                        }
                         setError(null);
                         setStep('platform');
                         scrollToSection();
                       }}
                     >
-                      Looks good
+                      Continue
                       <ArrowRight className="h-4 w-4" />
                     </button>
                     <button
@@ -707,7 +1060,7 @@ export function LeadMagnetSection() {
                         setStep('website');
                       }}
                     >
-                      Change website
+                      Change brand details
                     </button>
                   </div>
                 </div>
@@ -730,7 +1083,7 @@ export function LeadMagnetSection() {
                         <button
                           key={p.id}
                           type="button"
-                          disabled={busy || !dna}
+                          disabled={busy || !dna || !offering}
                           onClick={() => void onPickPlatform(p.id)}
                           className="lead-magnet-platform-btn"
                         >
@@ -810,7 +1163,7 @@ export function LeadMagnetSection() {
                       onClick={reset}
                       className="landing-btn-secondary"
                     >
-                      Try another website
+                      Try another brand
                     </button>
                     <Link
                       href="/product"

@@ -2,6 +2,7 @@ import { apiPost } from '@/lib/api-client';
 import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
 
 export type LeadMagnetPlatform = 'instagram' | 'facebook' | 'linkedin';
+export type LeadMagnetOffering = 'service' | 'product';
 
 export type LeadMagnetDna = {
   website: string;
@@ -80,6 +81,9 @@ export async function generateLeadMagnet(args: {
   website: string;
   platform: LeadMagnetPlatform;
   dna?: LeadMagnetDna;
+  offering: LeadMagnetOffering;
+  logoImage?: string;
+  productImage?: string;
 }) {
   const res = await apiPost<
     ApiEnvelope<{
@@ -97,6 +101,9 @@ export async function generateLeadMagnet(args: {
       website: normalizeWebsiteUrl(args.website),
       platform: args.platform,
       dna: args.dna,
+      offering: args.offering,
+      logoImage: args.logoImage,
+      productImage: args.productImage,
     },
     { timeout: 30_000 }
   );

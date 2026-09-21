@@ -23,6 +23,22 @@ async function loadAccountNameForSession(): Promise<string | null> {
   }
 }
 
+async function refreshServerSession(firebaseUser: User): Promise<void> {
+  const base = process.env.NEXT_PUBLIC_BACKEND_URL?.replace(/\/$/, '');
+  if (!base) return;
+  try {
+    const idToken = await firebaseUser.getIdToken();
+    await fetch(`${base}/api/v1/user/auth/refresh-session`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    });
+  } catch {
+    // A protected API request will surface a real authentication failure.
+  }
+}
+
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
@@ -44,6 +60,7 @@ export function useAuth() {
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
+        await refreshServerSession(firebaseUser);
         setAccountName(await loadAccountNameForSession());
       } else {
         setAccountName(null);

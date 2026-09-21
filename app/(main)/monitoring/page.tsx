@@ -207,6 +207,7 @@ export default function MonitoringPage() {
     today: false,
     future: false,
   });
+  const initialTabsLoadStartedRef = useRef(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
@@ -240,7 +241,8 @@ export default function MonitoringPage() {
         });
         const data = response?.data;
         const posts: PendingScheduledPost[] = data?.posts ?? [];
-        const next: FirestoreTimestamp | null = data?.nextCursor ?? null;
+        const next: AdminPendingScheduledPostsCursor | null =
+          data?.nextCursor ?? null;
         setTabsState((prev) => ({
           ...prev,
           [tab]: {
@@ -271,13 +273,13 @@ export default function MonitoringPage() {
     [todayBounds.todayEndMs, todayBounds.todayStartMs]
   );
 
-  // Lazy-load each tab the first time the user lands on it.
+  // Load both buckets together so the tab counters are accurate before the
+  // admin switches tabs. Each tab still owns its own cursor and loading lock.
   useEffect(() => {
-    const current = tabsStateRef.current[dateTab];
-    if (!current.loaded && !fetchingTabRef.current[dateTab]) {
-      fetchPending(dateTab);
-    }
-  }, [dateTab, fetchPending]);
+    if (initialTabsLoadStartedRef.current) return;
+    initialTabsLoadStartedRef.current = true;
+    void Promise.all([fetchPending('today'), fetchPending('future')]);
+  }, [fetchPending]);
 
   const tabState = tabsState[dateTab];
   const visiblePosts = tabState.posts;

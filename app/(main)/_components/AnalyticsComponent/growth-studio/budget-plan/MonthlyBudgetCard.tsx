@@ -50,6 +50,10 @@ export function MonthlyBudgetCard({
           Set how much you want to spend on ads this month. You can set it once.
           The next change is possible from {shortDate(data.nextBudgetDate)}.
         </p>
+        <p className="text-xs text-secondary">
+          The plan covers posts from the 1st of {data.monthLabel}, including
+          posts published before you set the budget.
+        </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <label className="flex-1 space-y-1">
             <span className="text-xs text-secondary">Monthly budget (INR)</span>
@@ -198,8 +202,8 @@ export function MonthlyBudgetCard({
           more planned posts.
         </p>
         <p className="text-secondary">
-          Run a follower campaign at {money(plan.split.alwaysOnDaily)}/day all
-          month.
+          Run a follower campaign at {money(plan.split.alwaysOnDaily)}/day from{' '}
+          {shortDate(plan.startDate)} for the rest of the month.
         </p>
       </div>
     </section>

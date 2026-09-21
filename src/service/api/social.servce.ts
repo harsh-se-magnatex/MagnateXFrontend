@@ -91,7 +91,7 @@ export type AdminPendingScheduledPostsTab = 'today' | 'future';
 
 export type AdminPendingScheduledPostsCursor = {
   scheduleAt: { _seconds: number; _nanoseconds?: number };
-  postId: string;
+  documentPath: string;
 };
 
 export const getAdminPendingScheduledPosts = async (params: {
@@ -106,7 +106,11 @@ export const getAdminPendingScheduledPosts = async (params: {
     todayStartMs: String(todayStartMs),
     todayEndMs: String(todayEndMs),
   });
-  if (cursor?.postId && cursor.scheduleAt && '_seconds' in cursor.scheduleAt) {
+  if (
+    cursor?.documentPath &&
+    cursor.scheduleAt &&
+    '_seconds' in cursor.scheduleAt
+  ) {
     search.set('lastScheduleAt', JSON.stringify(cursor));
   }
   const response = await axiosClient.get(
