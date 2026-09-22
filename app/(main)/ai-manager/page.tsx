@@ -141,6 +141,7 @@ function cellToneClass(kind: string): string {
 type CellEntry = {
   kind: string;
   label: string;
+  videoType?: 'Normal video' | 'UGC video';
   status?: string;
   note?: string;
   href?: string | null;
@@ -150,6 +151,16 @@ type CellEntry = {
   alreadyGenerated?: boolean;
   hideStatus?: boolean;
 };
+
+function videoTypeLabel(
+  kind: string,
+  cell?: AIPlanCell
+): CellEntry['videoType'] {
+  if (kind !== 'video-generation') return undefined;
+  return String(cell?.videoVariant ?? '').toLowerCase().includes('ugc')
+    ? 'UGC video'
+    : 'Normal video';
+}
 
 type GlobalForceRunTarget = {
   date: string;
@@ -269,6 +280,7 @@ function entriesForSlot(args: {
     return {
       kind: item.kind,
       label: kindLabel(item.kind),
+      videoType: videoTypeLabel(item.kind, item.cell),
       status: statusLabel(item.status),
       hideStatus: item.kind === 'video-generation' && item.status === 'failed',
       note:
@@ -304,6 +316,7 @@ function entriesForSlot(args: {
               ? suppliedLabel
               : `Campaign · ${suppliedLabel}`
             : kindLabel(item.kind),
+        videoType: videoTypeLabel(item.kind, item.cell),
         note:
           createPostBrief(item.cell) ||
           (isOccasion
@@ -426,6 +439,7 @@ function PlatformCell({
             )}
             title={[
               entry.label,
+              entry.videoType,
               displayStatus,
               entry.origin === 'manual' ? 'Manual' : undefined,
               entry.note,
@@ -436,6 +450,11 @@ function PlatformCell({
             <div className="text-[11px] font-bold tracking-tight">
               {entry.label}
             </div>
+            {entry.videoType ? (
+              <div className="text-[10px] font-semibold opacity-90">
+                {entry.videoType}
+              </div>
+            ) : null}
             {displayStatus ? (
               <div className="flex items-center gap-1 text-[10px] font-medium opacity-90">
                 {displayStatus === 'Generating' ? (

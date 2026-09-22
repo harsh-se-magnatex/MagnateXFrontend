@@ -7,7 +7,10 @@ import { SEVEN_VISUAL_STYLES } from '@/components/landing/seven-visuals/seven-vi
 import { cn } from '@/lib/utils';
 import { TemplateDnaReferenceSetup } from '@/components/brand/TemplateDnaReferenceSetup';
 import { DnaStylePreview } from '@/components/brand/DnaStylePreview';
+import { BrandColorsFields, isValidBrandColor, type BrandColors } from '@/components/brand/BrandColorsFields';
 import { showErrorToast } from '@/lib/show-error-toast';
+import { toast } from 'sonner';
+import { getProfile, updateProfile } from '@/src/service/api/userService';
 import {
   generateVisualStyle,
   getGeneratedVisualStyle,
@@ -29,6 +32,7 @@ const fieldLabels: Array<[keyof GeneratedVisualStyle['fields'], string]> = [
   ['fontColor', 'Font color'],
   ['fontSize', 'Font size'],
 ];
+const emptyColors: BrandColors = { primaryColor: '', secondaryColor: '', accentColor: '' };
 
 export function VisualDnaChoice({ business, onGenerated, onLearnFromPosts, compact = false }: Props) {
   const [generated, setGenerated] = useState<GeneratedVisualStyle | null>(null);
@@ -38,6 +42,18 @@ export function VisualDnaChoice({ business, onGenerated, onLearnFromPosts, compa
   const [loadFailed, setLoadFailed] = useState(false);
   const [switching, setSwitching] = useState<'create' | 'learn' | null>(null);
   const [selectedPath, setSelectedPath] = useState<'create' | 'learn' | null>(null);
+  const [brandColors, setBrandColors] = useState<BrandColors>(emptyColors);
+  const [savedColors, setSavedColors] = useState<BrandColors>(emptyColors);
+  const [colorsLoading, setColorsLoading] = useState(!compact);
+  const [colorsLoadFailed, setColorsLoadFailed] = useState(false);
+  const [savingColors, setSavingColors] = useState(false);
+  const previewColors = compact
+    ? {
+        primaryColor: String(business?.primaryColor ?? ''),
+        secondaryColor: String(business?.secondaryColor ?? ''),
+        accentColor: String(business?.accentColor ?? ''),
+      }
+    : brandColors;
 
   useEffect(() => {
     void Promise.all([getGeneratedVisualStyle(), getVisualStyle()])
@@ -55,6 +71,43 @@ export function VisualDnaChoice({ business, onGenerated, onLearnFromPosts, compa
     // The initial source is loaded once; callbacks only reveal the matching block.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (compact) return;
+    void getProfile()
+      .then(response => {
+        const profile = response.data?.profile;
+        const next = {
+          primaryColor: String(profile?.primaryColor ?? ''),
+          secondaryColor: String(profile?.secondaryColor ?? ''),
+          accentColor: String(profile?.accentColor ?? ''),
+        };
+        setBrandColors(next);
+        setSavedColors(next);
+      })
+      .catch(() => setColorsLoadFailed(true))
+      .finally(() => setColorsLoading(false));
+  }, [compact]);
+
+  async function saveColors() {
+    if (!Object.values(brandColors).every(isValidBrandColor)) {
+      showErrorToast('Enter valid hex brand colors before saving.');
+      return;
+    }
+    setSavingColors(true);
+    try {
+      const normalized = Object.fromEntries(Object.entries(brandColors).map(([key, value]) => [key, value.trim().toUpperCase()])) as BrandColors;
+      await updateProfile(normalized);
+      setBrandColors(normalized);
+      setSavedColors(normalized);
+      toast.success('Brand colors saved');
+      window.dispatchEvent(new CustomEvent('visual-style-changed', { detail: 'brand' }));
+    } catch {
+      showErrorToast('Could not save brand colors. Your previous colors are still active.');
+    } finally {
+      setSavingColors(false);
+    }
+  }
 
   async function create(presetId: string) {
     setBusy(presetId);
@@ -121,12 +174,21 @@ export function VisualDnaChoice({ business, onGenerated, onLearnFromPosts, compa
           {selectedPath === 'create' && <Check className="size-5 shrink-0 text-primary-purple"/>}
         </div>
         {!generated && !showPresets && <button type="button" disabled={!!switching} onClick={() => void chooseCreate()} className="mt-5 w-full rounded-xl btn-brand-fill px-4 py-3 text-sm font-semibold disabled:opacity-50">Generate</button>}
+        {!compact && (selectedPath === 'create' || showPresets) && <div className="mt-5 border-t border-default pt-4">
+          <p className="text-sm font-semibold text-default">Brand colors</p>
+          <p className="mt-1 mb-3 text-xs leading-5 text-secondary">Edit the colors used by Create your own across all platforms. Save to apply them to future posts.</p>
+          {colorsLoading ? <div className="flex items-center gap-2 text-xs text-secondary"><Loader2 className="size-4 animate-spin"/>Loading colors…</div> : colorsLoadFailed ? <p className="text-xs text-red-600">Colors could not be loaded. Refresh before editing.</p> : <>
+            <BrandColorsFields idPrefix="template-dna" value={brandColors} onChange={(key, value) => setBrandColors(prev => ({ ...prev, [key]: value }))} disabled={savingColors} className="sm:grid-cols-1" />
+            <button type="button" disabled={savingColors || JSON.stringify(brandColors) === JSON.stringify(savedColors) || !Object.values(brandColors).every(isValidBrandColor)} onClick={() => void saveColors()} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl btn-brand-fill px-4 py-2.5 text-xs font-semibold disabled:opacity-50">{savingColors && <Loader2 className="size-4 animate-spin"/>}Save brand colors</button>
+          </>}
+        </div>}
         {generated && <div className="mt-5 space-y-3">
           <DnaStylePreview
             label={generated.label}
             colors={[
-              generated.preview?.background,
-              ...(generated.preview?.accentPalette ?? []),
+              previewColors.primaryColor || generated.preview?.background,
+              previewColors.secondaryColor || generated.preview?.accentPalette?.[0],
+              previewColors.accentColor || generated.preview?.accentPalette?.[1],
               generated.fields.fontColor,
             ]}
             fontColor={generated.fields.fontColor}

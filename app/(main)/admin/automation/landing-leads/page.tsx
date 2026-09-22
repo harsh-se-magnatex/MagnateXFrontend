@@ -15,6 +15,11 @@ import {
   useTimestampFormatter,
   type TimestampInput,
 } from '@/lib/user-timezone';
+import {
+  ImagePreviewButton,
+  ImagePreviewOverlay,
+  useImagePreview,
+} from '@/components/image-preview';
 
 function defaultFromDate(): string {
   const d = new Date();
@@ -84,6 +89,7 @@ export default function AdminLandingLeadsPage() {
   const [activeTo, setActiveTo] = useState(defaultToDate);
   const [activeSearch, setActiveSearch] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const imagePreview = useImagePreview();
 
   const loadLeads = async (args: {
     from: string;
@@ -347,6 +353,18 @@ export default function AdminLandingLeadsPage() {
                               className="max-h-64 w-full rounded-lg object-contain"
                             />
                           ) : null}
+                          {lead.postImageUrl ? (
+                            <ImagePreviewButton
+                              label="Preview post image"
+                              ariaLabel={`Preview post image for ${lead.businessName}`}
+                              onClick={() =>
+                                imagePreview.open(
+                                  lead.postImageUrl,
+                                  `${lead.businessName} landing post`
+                                )
+                              }
+                            />
+                          ) : null}
                           <p className="whitespace-pre-wrap text-xs leading-relaxed text-white/75">
                             {lead.postCaption || 'No caption'}
                           </p>
@@ -360,6 +378,11 @@ export default function AdminLandingLeadsPage() {
           </table>
         </div>
       )}
+      <ImagePreviewOverlay
+        src={imagePreview.previewUrl}
+        alt={imagePreview.previewAlt}
+        onClose={imagePreview.close}
+      />
     </div>
   );
 }

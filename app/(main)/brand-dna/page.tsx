@@ -38,6 +38,7 @@ import { showErrorToast } from '@/lib/show-error-toast';
 import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { normalizeWebsiteUrl } from '@/utils/normalizeWebsiteUrl';
 import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
+import { BrandColorsFields, isValidBrandColor } from '@/components/brand/BrandColorsFields';
 import {
   joinPhone,
   normalizeBusinessContactValue,
@@ -364,6 +365,9 @@ export default function BusinessProfilePage() {
           setFormData((prev) => ({
             ...prev,
             ...p,
+            primaryColor: String(p.primaryColor ?? ''),
+            secondaryColor: String(p.secondaryColor ?? ''),
+            accentColor: String(p.accentColor ?? ''),
             hashtags: hashtagsJoined,
             brandSlogan,
             recommendedHashtags,
@@ -433,6 +437,10 @@ export default function BusinessProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (![formData.primaryColor, formData.secondaryColor, formData.accentColor].every(isValidBrandColor)) {
+      showErrorToast('Enter valid hex brand colors before saving.');
+      return;
+    }
     try {
       setSaving(true);
       let finalLogoForVariants = formData.logo;
@@ -1134,6 +1142,17 @@ export default function BusinessProfilePage() {
                       onChange={handleChange}
                       className={cn(inputBase, 'resize-y min-h-[100px]')}
                       placeholder="Describe your brand's mission, tone of voice, and target audience..."
+                    />
+                  </div>
+
+                  <div className="border-t border-default pt-6">
+                    <h3 className="text-sm font-semibold text-default">Brand colors</h3>
+                    <p className="mt-1 mb-3 text-xs text-secondary">These colors guide your generated visuals. You can also edit them in Create your own Template DNA.</p>
+                    <BrandColorsFields
+                      idPrefix="brand-dna"
+                      value={formData}
+                      onChange={(key, value) => setFormData(prev => ({ ...prev, [key]: value }))}
+                      disabled={saving}
                     />
                   </div>
 

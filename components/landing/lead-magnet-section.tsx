@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, ImagePlus, Loader2, Trash2, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
+import { prepareGenerationImage } from '@/lib/prepare-generation-image';
 import {
   claimLeadMagnetEmail,
   generateLeadMagnet,
@@ -32,22 +33,46 @@ const PLATFORMS: { id: LeadMagnetPlatform; label: string }[] = [
   { id: 'linkedin', label: 'LinkedIn' },
 ];
 
+const TRY_IT_INDUSTRIES = [
+  'Fashion',
+  'Food & Beverage',
+  'Tech',
+  'Health',
+  'Education',
+  'Retail',
+  'Finance',
+  'Travel',
+  'Entertainment',
+  'Real Estate',
+  'E-commerce',
+  'Consulting',
+  'Beauty',
+  'Fitness',
+  'Art & Design',
+  'Other',
+] as const;
+
 const PREVIEW_TIMEOUT_MS = 90_000;
 const POLL_INTERVAL_MS = 2_000;
 const POLL_TIMEOUT_MS = 12 * 60_000;
 
-function readImage(file: File): Promise<string> {
+async function readImage(file: File): Promise<string> {
   if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
-    return Promise.reject(new Error('Choose a PNG, JPEG, or WebP image.'));
+    throw new Error('Choose a PNG, JPEG, or WebP image.');
   }
-  if (file.size > 4 * 1024 * 1024) {
-    return Promise.reject(new Error('Images must be 4 MB or smaller.'));
+  const prepared = await prepareGenerationImage(file, {
+    maxEdgePx: 2048,
+    maxBytes: 4 * 1024 * 1024,
+    mimeType: 'image/webp',
+  });
+  if (prepared.size > 4 * 1024 * 1024) {
+    throw new Error('This image could not be resized below 4 MB.');
   }
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
     reader.onerror = () => reject(new Error('Could not read that image.'));
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(prepared);
   });
 }
 
@@ -362,6 +387,7 @@ export function LeadMagnetSection() {
   const [website, setWebsite] = React.useState('');
   const [hasWebsite, setHasWebsite] = React.useState(true);
   const [manualName, setManualName] = React.useState('');
+  const [manualIndustry, setManualIndustry] = React.useState('');
   const [manualColors, setManualColors] = React.useState({
     primary: '#7c6bf5',
     secondary: '#9b8afb',
@@ -486,7 +512,7 @@ export function LeadMagnetSection() {
         setDna({
           website: '',
           businessName: manualName.trim(),
-          industry: 'Other',
+          industry: manualIndustry,
           brandDescription: '',
           logo: logoImage,
           location: '',
@@ -587,6 +613,7 @@ export function LeadMagnetSection() {
     setWebsite('');
     setHasWebsite(true);
     setManualName('');
+    setManualIndustry('');
     setManualColors({
       primary: '#7c6bf5',
       secondary: '#9b8afb',
@@ -962,6 +989,26 @@ export function LeadMagnetSection() {
                       Product
                     </button>
                   </div>
+                  {!hasWebsite && offering === 'service' ? (
+                    <label className="landing-body block text-sm text-white/70">
+                      Industry
+                      <select
+                        value={manualIndustry}
+                        onChange={(e) => {
+                          setManualIndustry(e.target.value);
+                          setError(null);
+                        }}
+                        className="lead-magnet-input mt-2"
+                      >
+                        <option value="">Select your industry</option>
+                        {TRY_IT_INDUSTRIES.map((industry) => (
+                          <option key={industry} value={industry}>
+                            {industry}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
                   {offering === 'product' ? (
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
@@ -1039,9 +1086,20 @@ export function LeadMagnetSection() {
                           setError('Choose service or product.');
                           return;
                         }
+                        if (
+                          !hasWebsite &&
+                          offering === 'service' &&
+                          !manualIndustry
+                        ) {
+                          setError('Select your industry.');
+                          return;
+                        }
                         if (offering === 'product' && !productImage) {
                           setError('Choose a product image.');
                           return;
+                        }
+                        if (!hasWebsite && offering === 'service') {
+                          setDna({ ...dna, industry: manualIndustry });
                         }
                         setError(null);
                         setStep('platform');

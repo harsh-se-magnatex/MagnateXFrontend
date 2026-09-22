@@ -50,6 +50,7 @@ import {
   type OnboardingLogoPick,
 } from '@/components/onboarding/OnboardingAiLogoSection';
 import { VisualDnaChoice } from '@/components/brand/VisualDnaChoice';
+import { BrandColorsFields, isValidBrandColor } from '@/components/brand/BrandColorsFields';
 import { CountryCodePhoneField } from '@/components/shared/CountryCodePhoneField';
 import {
   joinPhone,
@@ -66,6 +67,7 @@ type QuestionType =
   | 'textarea'
   | 'hashtags'
   | 'brandSlogan'
+  | 'brandColors'
   | 'visualDna';
 
 type Question = {
@@ -190,6 +192,13 @@ const questions: Question[] = [
       'We make small-batch cold brew for office breakrooms — bold flavor, no jitters.',
     type: 'textarea',
     icon: FileText,
+  },
+  {
+    name: 'brandColors',
+    label: 'Choose your brand colors',
+    description: 'Set your primary, secondary, and accent colors. You can change them later in Brand DNA or Template DNA.',
+    type: 'brandColors',
+    icon: ImageIcon,
   },
   {
     name: 'visualDna',
@@ -836,6 +845,10 @@ export default function OnboardingMenu() {
   const current = questions[step];
 
   const handleStepNext = async () => {
+    if (current.name === 'brandColors' && !['primaryColor', 'secondaryColor', 'accentColor'].every(key => isValidBrandColor(String(formData[key] ?? '')))) {
+      showErrorToast('Enter valid hex brand colors before continuing.');
+      return;
+    }
     if (current.name === 'website') {
       if (sourceMode === 'catalog') {
         if (!catalogFile) return;
@@ -1013,6 +1026,22 @@ export default function OnboardingMenu() {
   const renderField = () => {
     if (current.type === 'hashtags') return renderHashtagsStep();
     if (current.type === 'brandSlogan') return renderBrandSloganStep();
+    if (current.type === 'brandColors') {
+      return <BrandColorsFields
+        idPrefix="onboarding"
+        value={{
+          primaryColor: String(formData.primaryColor ?? ''),
+          secondaryColor: String(formData.secondaryColor ?? ''),
+          accentColor: String(formData.accentColor ?? ''),
+        }}
+        onChange={(key, value) => setFormData(prev => ({ ...prev, [key]: value }))}
+        suggestions={{
+          primaryColor: fieldSuggestions.colors.primary,
+          secondaryColor: fieldSuggestions.colors.secondary,
+          accentColor: fieldSuggestions.colors.accent,
+        }}
+      />;
+    }
     if (current.type === 'visualDna') {
       return (
         <VisualDnaChoice

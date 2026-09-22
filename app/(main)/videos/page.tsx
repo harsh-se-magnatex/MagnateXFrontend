@@ -587,11 +587,7 @@ export default function VideoGenerationPage() {
                 ))}
               </div>
             </div>
-            {videoStyle === 'ugc' ? (
-              <p className="mt-3 text-xs text-preview">
-                UGC lets the creative director choose the format, presentation, performer, and delivery from your hook and business context.
-              </p>
-            ) : null}
+      
           </div>
 
           <div className="rounded-2xl border border-default bg-default p-4">
