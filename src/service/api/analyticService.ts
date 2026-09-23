@@ -403,7 +403,19 @@ export type BudgetPlanWeekView = {
   status: 'before-plan' | 'done' | 'this-week' | 'coming';
   rolledIn: number;
   suggested: number;
+  reserveSuggested: number;
   moneyLeft: number;
+  posts: Array<{
+    postId: string;
+    caption: string;
+    mediaUrl?: string;
+    videoUrl?: string;
+    permalinkUrl?: string;
+    format: 'single' | 'carousel' | 'video' | 'reel' | 'other';
+    publishedAt: string;
+    engagementRate: number;
+    recommendation: BudgetPickView | null;
+  }>;
 };
 export type BudgetPlanResponse = {
   visible: boolean;
@@ -420,6 +432,7 @@ export type BudgetPlanResponse = {
   plan: null | {
     monthlyBudget: number;
     startDate: string;
+    expiresAt: string;
     stage: 'empty' | 'building' | 'growing' | 'established';
     split: {
       alwaysOnPercent: number;

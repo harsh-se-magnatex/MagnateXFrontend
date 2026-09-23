@@ -80,6 +80,8 @@ function linkedInPostToPost(p: LinkedInPost): Post {
     message: text,
     mediaUrl: p.mediaUrl ?? '',
     mediaUrls: p.mediaUrls,
+    mediaType: p.type?.toLowerCase(),
+    videoUrl: p.videoUrl,
     permalinkUrl: p.permalinkUrl,
     type: p.type,
     reactions: p.reactions ?? p.likes ?? 0,

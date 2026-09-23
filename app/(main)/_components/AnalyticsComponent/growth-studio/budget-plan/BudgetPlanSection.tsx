@@ -1,7 +1,6 @@
 'use client';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { GrowthStudioPlatform } from '../_common';
-import { BudgetPostSuggestions } from './BudgetPostSuggestions';
 import { MonthlyBudgetCard } from './MonthlyBudgetCard';
 import { useBudgetPlan } from './useBudgetPlan';
 export function BudgetPlanSection({
@@ -28,7 +27,6 @@ export function BudgetPlanSection({
         </p>
       ) : null}
       <MonthlyBudgetCard data={state.data} save={save} />
-      <BudgetPostSuggestions data={state.data} />
     </div>
   );
 }

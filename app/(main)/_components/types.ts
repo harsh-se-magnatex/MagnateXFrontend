@@ -179,8 +179,10 @@ export type LinkedInPost = {
   mediaUrl?: string;
   /** All image URLs for MultiImage / carousel posts. */
   mediaUrls?: string[];
+  videoUrl?: string;
   mediaId?: string;
   mediaUrlExpiresAt?: number | null;
+  videoUrlExpiresAt?: number | null;
   permalinkUrl?: string;
   type?: string;
   likes?: number;

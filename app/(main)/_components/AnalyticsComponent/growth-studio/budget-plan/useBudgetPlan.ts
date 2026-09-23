@@ -30,6 +30,15 @@ export function useBudgetPlan(platform: GrowthStudioPlatform) {
   }, [platform]);
   useEffect(() => {
     void fetchPlan();
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void fetchPlan();
+    }, 30_000);
+    const onFocus = () => void fetchPlan();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
   }, [fetchPlan]);
   const save = useCallback(
     async (amount: number) => {
