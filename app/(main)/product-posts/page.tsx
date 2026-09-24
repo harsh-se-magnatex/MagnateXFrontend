@@ -6,7 +6,9 @@ import { Expand } from 'lucide-react';
 import { auth } from '@/lib/firebase';
 import {
   generateProductAdvertApi,
+  getProductAdvertPromptPreview,
   type ProductGenerationMode,
+  type ProductAdvertPromptPreview,
 } from '@/src/service/api/product-advert.service';
 import { waitForParentJobDocs } from '@/src/lib/wait-for-parent-job';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
@@ -159,6 +161,9 @@ export default function ProductAdvertPage() {
   const [error, setError] = useState<string>('');
   const [captionCopied, setCaptionCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+  const [promptPreview, setPromptPreview] = useState<ProductAdvertPromptPreview | null>(null);
+  const [promptPreviewError, setPromptPreviewError] = useState('');
   const [templateDnaProfiles, setTemplateDnaProfiles] = useState<Partial<Record<SocialPlatform, TemplateDnaProfile>>>({});
   const [templateDnaLayouts, setTemplateDnaLayouts] = useState<Record<string, string>>({});
   const imagePreview = useImagePreview();
@@ -276,12 +281,20 @@ export default function ProductAdvertPage() {
     !!file &&
     creditOk &&
     !isGenerating &&
+    !isGeneratingPrompt &&
     platformSelection.ok &&
     !(
       generationMode === 'advert_asset' &&
       background === 'Other (custom)' &&
       !customBackground.trim()
     );
+  const canPreviewPrompt = !isTourDemo && generationMode === 'social_full' &&
+    !!file && !isGenerating && !isGeneratingPrompt && platformSelection.ok;
+
+  useEffect(() => {
+    setPromptPreview(null);
+    setPromptPreviewError('');
+  }, [file, prompt, campaignContext, genPlatforms, templateDnaLayouts, generationMode]);
 
   function handleToggleGenPlatform(platformToToggle: SocialPlatform) {
     if (isTourDemo) return;
@@ -361,6 +374,43 @@ export default function ProductAdvertPage() {
       );
       console.log(e);
       setIsGenerating(false);
+    }
+  }
+
+  async function handleGeneratePrompt() {
+    if (!canPreviewPrompt || !file) return;
+    setIsGeneratingPrompt(true);
+    setPromptPreview(null);
+    setPromptPreviewError('');
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('You must be signed in to generate prompts.');
+      const response = await generateProductAdvertApi({
+        image: file,
+        uid: user.uid,
+        prompt,
+        platforms: genPlatforms,
+        generationMode: 'social_full',
+        campaignContext,
+        templateDnaLayoutByPlatform: templateDnaLayouts,
+        promptOnly: true,
+      });
+      for (let attempt = 0; attempt < 90; attempt += 1) {
+        const preview = await getProductAdvertPromptPreview(response.parentJobId);
+        if (preview.platforms.every((platform) => ['ready', 'failed'].includes(preview.results[platform]?.status || ''))) {
+          setPromptPreview(preview);
+          if (preview.platforms.some((platform) => preview.results[platform]?.status === 'failed')) {
+            setPromptPreviewError('One or more platform prompts could not be generated.');
+          }
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+      throw new Error('Prompt generation timed out.');
+    } catch (e) {
+      setPromptPreviewError(e instanceof Error ? e.message : 'Could not generate prompts.');
+    } finally {
+      setIsGeneratingPrompt(false);
     }
   }
 
@@ -646,6 +696,44 @@ export default function ProductAdvertPage() {
               ? 'Create post'
               : 'Create product post'}
         </button>
+
+        {generationMode === 'social_full' && (
+          <>
+            <button
+              type="button"
+              onClick={() => void handleGeneratePrompt()}
+              disabled={!canPreviewPrompt}
+              aria-busy={isGeneratingPrompt}
+              className="w-full rounded-full border border-default px-4 py-3 text-sm font-semibold text-default disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isGeneratingPrompt ? 'Generating prompt…' : 'Generate final prompts only · 0 credits'}
+            </button>
+            {promptPreviewError && <p role="alert" className="text-sm text-destructive">{promptPreviewError}</p>}
+            {promptPreview && (
+              <div className="space-y-4 rounded-2xl border border-default bg-element p-5">
+                <h3 className="font-semibold text-default">Final image generation prompts</h3>
+                <p className="text-xs text-secondary">No images were generated. Each selected platform has its own prompt and Template DNA.</p>
+                {promptPreview.platforms.map((targetPlatform) => {
+                  const result = promptPreview.results[targetPlatform];
+                  return (
+                    <div key={targetPlatform} className="space-y-2 rounded-xl border border-default bg-default p-4">
+                      <p className="font-semibold capitalize text-default">{targetPlatform} · {result?.styleSource === 'template_dna' ? `Template DNA revision ${result.templateDnaRevision ?? '—'}` : 'Brand style'}</p>
+                      {result?.status === 'failed' ? (
+                        <p className="text-sm text-destructive">{result.error || 'Prompt generation failed.'}</p>
+                      ) : result?.status === 'ready' ? (
+                        <>
+                          {result.referenceEditLead && <div><p className="mb-1 text-xs font-semibold text-secondary">Reference edit instruction sent before the image</p><pre className="max-h-52 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-element p-3 text-xs text-default">{result.referenceEditLead}</pre></div>}
+                          <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-element p-3 text-xs text-default">{result.finalPrompt}</pre>
+                          <button type="button" className="text-xs font-semibold text-primary-purple" onClick={() => void navigator.clipboard.writeText([result.referenceEditLead, result.finalPrompt].filter(Boolean).join('\n\n'))}>Copy final prompt</button>
+                        </>
+                      ) : <p className="text-xs text-secondary">Pending…</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
 
         {!isGenerating && insufficientCredits && (
           <p className="mt-2 text-center text-xs text-secondary">

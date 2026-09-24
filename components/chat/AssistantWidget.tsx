@@ -16,7 +16,7 @@ const HIDDEN_ROUTE_PREFIXES = [
   '/onboarding',
   '/sign-in',
   '/sign-up',
-  '/brand-memory',
+  '/brand-dna/business-data',
 ];
 
 export function AssistantWidget() {

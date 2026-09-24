@@ -11,7 +11,7 @@ import {
   type AssistantPrefillKind,
 } from '@/lib/assistant-prefill-store';
 import type { AssistantToolResult } from '@/src/service/api/assistant.service';
-import { WORKSPACE_NAV_HREFS } from '@/lib/workspace-nav';
+import { WORKSPACE_NAV_HREFS, resolveWorkspacePath } from '@/lib/workspace-nav';
 
 interface ChatDraftActionsProps {
   result: AssistantToolResult;
@@ -28,7 +28,9 @@ interface DraftSummary {
 function summariseDraft(result: AssistantToolResult): DraftSummary | null {
   const payload = result.payload as Record<string, unknown>;
   const link =
-    typeof payload.ctaDeepLink === 'string' ? payload.ctaDeepLink : null;
+    typeof payload.ctaDeepLink === 'string'
+      ? resolveWorkspacePath(payload.ctaDeepLink)
+      : null;
   const prompt =
     typeof payload.prompt === 'string' ? (payload.prompt as string) : undefined;
 

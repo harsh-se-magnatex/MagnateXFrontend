@@ -16,6 +16,7 @@ export type ProductAdvertPayload = {
   campaignContext?: string;
   useIndustryResearch?: boolean;
   templateDnaLayoutByPlatform?: Record<string, string>;
+  promptOnly?: boolean;
 };
 
 export type ProductAdvertPlatformResult = {
@@ -29,6 +30,21 @@ export type ProductAdvertGenerateResponse = {
   generationMode: ProductGenerationMode;
   platforms: string[];
   creditCost: number;
+  promptOnly?: boolean;
+};
+
+export type ProductAdvertPromptPreview = {
+  parentJobId: string;
+  platforms: string[];
+  results: Record<string, {
+    status: 'pending' | 'ready' | 'failed';
+    finalPrompt?: string;
+    referenceEditLead?: string;
+    referenceImageUsed?: boolean;
+    styleSource?: string;
+    templateDnaRevision?: number | null;
+    error?: string;
+  }>;
 };
 
 export type ProductAdvertVideoGenerateResponse = {
@@ -57,6 +73,7 @@ export const generateProductAdvertApi = async ({
   campaignContext,
   useIndustryResearch,
   templateDnaLayoutByPlatform,
+  promptOnly,
 }: ProductAdvertPayload): Promise<ProductAdvertGenerateResponse> => {
   const form = new FormData();
   form.append('image', await prepareGenerationImage(image));
@@ -65,6 +82,7 @@ export const generateProductAdvertApi = async ({
   if (background?.trim()) form.append('background', background.trim());
   appendPlatforms(form, platforms);
   if (generationMode) form.append('generationMode', generationMode);
+  if (promptOnly) form.append('promptOnly', 'true');
   if (campaignContext?.trim())
     form.append('campaignContext', campaignContext.trim());
   if (useIndustryResearch) form.append('useIndustryResearch', 'true');
@@ -74,6 +92,13 @@ export const generateProductAdvertApi = async ({
     data: ProductAdvertGenerateResponse;
     message?: string;
   }>('/api/v1/ai-engine/product-advert', form);
+  return response.data.data;
+};
+
+export const getProductAdvertPromptPreview = async (parentJobId: string): Promise<ProductAdvertPromptPreview> => {
+  const response = await axiosClient.get<{ data: ProductAdvertPromptPreview }>(
+    `/api/v1/ai-engine/product-advert/prompt-preview/${encodeURIComponent(parentJobId)}`
+  );
   return response.data.data;
 };
 
