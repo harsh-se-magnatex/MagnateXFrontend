@@ -73,7 +73,6 @@ export const generateProductAdvertApi = async ({
   campaignContext,
   useIndustryResearch,
   templateDnaLayoutByPlatform,
-  promptOnly,
 }: ProductAdvertPayload): Promise<ProductAdvertGenerateResponse> => {
   const form = new FormData();
   form.append('image', await prepareGenerationImage(image));
@@ -82,7 +81,6 @@ export const generateProductAdvertApi = async ({
   if (background?.trim()) form.append('background', background.trim());
   appendPlatforms(form, platforms);
   if (generationMode) form.append('generationMode', generationMode);
-  if (promptOnly) form.append('promptOnly', 'true');
   if (campaignContext?.trim())
     form.append('campaignContext', campaignContext.trim());
   if (useIndustryResearch) form.append('useIndustryResearch', 'true');

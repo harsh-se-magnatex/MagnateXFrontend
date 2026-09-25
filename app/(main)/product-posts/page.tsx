@@ -161,7 +161,6 @@ export default function ProductAdvertPage() {
   const [error, setError] = useState<string>('');
   const [captionCopied, setCaptionCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const [promptPreview, setPromptPreview] = useState<ProductAdvertPromptPreview | null>(null);
   const [promptPreviewError, setPromptPreviewError] = useState('');
   const [templateDnaProfiles, setTemplateDnaProfiles] = useState<Partial<Record<SocialPlatform, TemplateDnaProfile>>>({});
@@ -281,7 +280,6 @@ export default function ProductAdvertPage() {
     !!file &&
     creditOk &&
     !isGenerating &&
-    !isGeneratingPrompt &&
     platformSelection.ok &&
     !(
       generationMode === 'advert_asset' &&
@@ -289,7 +287,7 @@ export default function ProductAdvertPage() {
       !customBackground.trim()
     );
   const canPreviewPrompt = !isTourDemo && generationMode === 'social_full' &&
-    !!file && !isGenerating && !isGeneratingPrompt && platformSelection.ok;
+    !!file && !isGenerating && platformSelection.ok;
 
   useEffect(() => {
     setPromptPreview(null);
@@ -377,43 +375,7 @@ export default function ProductAdvertPage() {
     }
   }
 
-  async function handleGeneratePrompt() {
-    if (!canPreviewPrompt || !file) return;
-    setIsGeneratingPrompt(true);
-    setPromptPreview(null);
-    setPromptPreviewError('');
-    try {
-      const user = auth.currentUser;
-      if (!user) throw new Error('You must be signed in to generate prompts.');
-      const response = await generateProductAdvertApi({
-        image: file,
-        uid: user.uid,
-        prompt,
-        platforms: genPlatforms,
-        generationMode: 'social_full',
-        campaignContext,
-        templateDnaLayoutByPlatform: templateDnaLayouts,
-        promptOnly: true,
-      });
-      for (let attempt = 0; attempt < 90; attempt += 1) {
-        const preview = await getProductAdvertPromptPreview(response.parentJobId);
-        if (preview.platforms.every((platform) => ['ready', 'failed'].includes(preview.results[platform]?.status || ''))) {
-          setPromptPreview(preview);
-          if (preview.platforms.some((platform) => preview.results[platform]?.status === 'failed')) {
-            setPromptPreviewError('One or more platform prompts could not be generated.');
-          }
-          return;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-      }
-      throw new Error('Prompt generation timed out.');
-    } catch (e) {
-      setPromptPreviewError(e instanceof Error ? e.message : 'Could not generate prompts.');
-    } finally {
-      setIsGeneratingPrompt(false);
-    }
-  }
-
+ 
   function buildAdvertCaption(resultItem: AdvertResult) {
     const headline = (resultItem.copy?.headline || '').trim();
     const primary = (resultItem.copy?.primary_text || '').trim();
@@ -699,15 +661,6 @@ export default function ProductAdvertPage() {
 
         {generationMode === 'social_full' && (
           <>
-            <button
-              type="button"
-              onClick={() => void handleGeneratePrompt()}
-              disabled={!canPreviewPrompt}
-              aria-busy={isGeneratingPrompt}
-              className="w-full rounded-full border border-default px-4 py-3 text-sm font-semibold text-default disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isGeneratingPrompt ? 'Generating prompt…' : 'Generate final prompts only · 0 credits'}
-            </button>
             {promptPreviewError && <p role="alert" className="text-sm text-destructive">{promptPreviewError}</p>}
             {promptPreview && (
               <div className="space-y-4 rounded-2xl border border-default bg-element p-5">
