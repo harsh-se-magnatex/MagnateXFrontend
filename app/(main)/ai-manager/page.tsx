@@ -229,7 +229,6 @@ function globalForceRunTargets(args: {
   days: AIPlanDay[];
   platforms: AIPlanPlatform[];
   todayIso: string;
-  connectionState: AIPlanResponse['connectionState'] | null;
 }): GlobalForceRunTarget[] {
   const targets: GlobalForceRunTarget[] = [];
   const seen = new Set<string>();
@@ -241,8 +240,6 @@ function globalForceRunTargets(args: {
       for (const item of slot.upcoming) {
         const status = String(item.status ?? '').toLowerCase();
         if (
-          (item.kind === 'quick-create' &&
-            !args.connectionState?.[platform]?.connected) ||
           !canForceRunKind(item.kind) ||
           item.kind === 'empty' ||
           hasGeneratedCounterpart(slot.generated, item.kind) ||
@@ -373,7 +370,6 @@ function PlatformCell({
   entries,
   todayIso,
   forceRunEnabled,
-  connected,
   suppressVideoForceRun = false,
   sharedVideoRunning = false,
   runningForceRunKeys,
@@ -384,7 +380,6 @@ function PlatformCell({
   entries: CellEntry[];
   todayIso: string;
   forceRunEnabled: boolean;
-  connected: boolean;
   suppressVideoForceRun?: boolean;
   sharedVideoRunning?: boolean;
   runningForceRunKeys: Set<string>;
@@ -413,7 +408,6 @@ function PlatformCell({
           kind: entry.kind,
           eventId: entry.eventId,
         });
-        const connectionLocked = entry.kind === 'quick-create' && !connected;
         const isRunning =
           (entry.source === 'upcoming' &&
             (runningForceRunKeys.has(runKey) ||
@@ -501,12 +495,6 @@ function PlatformCell({
             {showForceRun ? (
               <button
                 type="button"
-                disabled={connectionLocked}
-                title={
-                  connectionLocked
-                    ? `Connect ${PLATFORM_LABEL[platform]} to create posts`
-                    : undefined
-                }
                 onClick={() =>
                   onForceRun(
                     date,
@@ -524,11 +512,7 @@ function PlatformCell({
                 ) : (
                   <Play className="h-3 w-3" aria-hidden />
                 )}
-                {connectionLocked
-                  ? `Connect ${PLATFORM_SHORT[platform]} to run`
-                  : isRunning
-                    ? 'Running…'
-                    : 'Force Run'}
+                {isRunning ? 'Running…' : 'Force Run'}
               </button>
             ) : null}
           </div>
@@ -539,7 +523,6 @@ function PlatformCell({
 }
 
 function AIPlanSheet({
-  connectionState,
   days,
   platforms,
   todayIso,
@@ -547,7 +530,6 @@ function AIPlanSheet({
   runningForceRunKeys,
   onForceRun,
 }: {
-  connectionState: AIPlanResponse['connectionState'] | null;
   days: AIPlanDay[];
   platforms: AIPlanPlatform[];
   /** YYYY-MM-DD in the user's timezone — highlighted as Today. */
@@ -714,9 +696,6 @@ function AIPlanSheet({
                               entries={entriesByPlatform[platform]}
                               todayIso={todayIso}
                               forceRunEnabled={forceRunEnabled}
-                              connected={
-                                connectionState?.[platform]?.connected === true
-                              }
                               suppressVideoForceRun
                               sharedVideoRunning={sharedVideoRunning}
                               runningForceRunKeys={runningForceRunKeys}
@@ -769,9 +748,6 @@ function AIPlanSheet({
                           entries={entriesByPlatform[platform]}
                           todayIso={todayIso}
                           forceRunEnabled={forceRunEnabled}
-                          connected={
-                            connectionState?.[platform]?.connected === true
-                          }
                           runningForceRunKeys={runningForceRunKeys}
                           onForceRun={onForceRun}
                         />
@@ -806,9 +782,6 @@ export default function AIPlanPage() {
     () => formatInTimeZone(new Date(), timeZone, 'yyyy-MM-dd'),
     [timeZone]
   );
-  const [connectionState, setConnectionState] = useState<
-    AIPlanResponse['connectionState'] | null
-  >(null);
   const [days, setDays] = useState<AIPlanDay[]>([]);
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -878,7 +851,6 @@ export default function AIPlanPage() {
     try {
       const data = await getAIPlanApi();
       setDays(data.days);
-      setConnectionState(data.connectionState);
       setRange({ from: data.from, to: data.to });
       setCalendarSeeded(data.calendarSeeded);
       setInitialGenerationPending(data.initialCalendarGenerationPending);
@@ -983,10 +955,6 @@ export default function AIPlanPage() {
       kind: AIPlanUpcomingItem['kind'],
       eventId?: string
     ) => {
-      if (kind === 'quick-create' && !connectionState?.[platform]?.connected) {
-        toast.error(`Connect ${PLATFORM_LABEL[platform]} to create posts`);
-        return;
-      }
       if (date < todayIso) {
         toast.error('Force Run is not available for past dates');
         return;
@@ -998,12 +966,18 @@ export default function AIPlanPage() {
       const lockKey = forceRunLockKey({ date, platform, kind, eventId });
       setRunningForceRunKeys((prev) => new Set(prev).add(lockKey));
       try {
-        await forceRunAIPlanApi({
+        const result = await forceRunAIPlanApi({
           date,
           platform,
           kind,
           ...(eventId ? { eventId } : {}),
         });
+        const usedAiCreatorFallback = result.outcomes.some(
+          (outcome) =>
+            outcome.kind === 'enqueued-ai-engine' &&
+            outcome.strategy === 'ai-engine' &&
+            (kind === 'quick-create' || kind === 'video-generation')
+        );
         toast.success(
           kind === 'video-generation'
             ? `Generating one shared video for all platforms on ${date}`
@@ -1037,6 +1011,8 @@ export default function AIPlanPage() {
                 kind:
                   kind === 'festival'
                     ? 'festive'
+                    : usedAiCreatorFallback
+                      ? 'ai-engine'
                     : (kind as AIPlanGeneratedItem['kind']),
                 status: 'queued',
                 origin: 'auto',
@@ -1077,7 +1053,7 @@ export default function AIPlanPage() {
         toast.error(message);
       }
     },
-    [connectionState, load, todayIso]
+    [load, todayIso]
   );
 
   const handleGlobalForceRun = useCallback(async () => {
@@ -1085,7 +1061,6 @@ export default function AIPlanPage() {
       days,
       platforms,
       todayIso,
-      connectionState,
     });
     if (targets.length === 0) {
       toast.error(
@@ -1146,7 +1121,7 @@ export default function AIPlanPage() {
       toast.error(message);
       setGlobalForceRunProgress(null);
     }
-  }, [connectionState, days, load, platforms, todayIso]);
+  }, [days, load, platforms, todayIso]);
 
   useEffect(() => {
     if (globalForceRunProgress?.phase !== 'generating') return;
@@ -1455,7 +1430,6 @@ export default function AIPlanPage() {
             </p>
           )}
           <AIPlanSheet
-            connectionState={connectionState}
             days={visibleDays}
             platforms={platforms}
             todayIso={todayIso}

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { performActionByUserOnScheduledPost } from '@/src/service/api/userService';
 import { GenerationResearchDialog } from '@/components/generation-research-dialog';
+import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import {
   hasViewableResearch,
   parseGenerationResearchFromProof,
@@ -879,15 +880,18 @@ export default function ApprovalPage() {
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500">
       <div className="overflow-hidden rounded-3xl border border-default bg-default">
         <div className="px-6 pb-8 pt-8 sm:px-10 sm:pt-10">
-          <header className="mb-8 max-w-2xl">
-            <h1 className="text-page-title text-default">
-              <span className="text-default">Approval</span>
-            </h1>
-            <p className="mt-3 text-base text-secondary">
-              Review scheduled posts that need your approval. Accept to keep
-              them in the queue, reject to discard them, or regenerate to get a
-              fresh variation.
-            </p>
+          <header className="mb-8 flex items-start justify-between gap-4">
+            <div className="max-w-2xl">
+              <h1 className="text-page-title text-default">
+                <span className="text-default">Approval</span>
+              </h1>
+              <p className="mt-3 text-base text-secondary">
+                Review scheduled posts that need your approval. Accept to keep
+                them in the queue, reject to discard them, or regenerate to get a
+                fresh variation.
+              </p>
+            </div>
+            <PageDocumentation />
           </header>
 
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">

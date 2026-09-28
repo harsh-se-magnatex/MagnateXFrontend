@@ -95,3 +95,30 @@ for (const [lifecycle, expectedStatus, completed] of [
     assert.equal(locks.isForceRunTargetComplete(response.days, target), completed);
   });
 }
+
+test('Create Post without a brief appears as AI Creator while queued and after completion', async () => {
+  const api = loadTypescript('../src/service/api/ai-plan.service.ts', {
+    '@/lib/axios': { get: async () => ({ data: { data: {
+      aiPlan: { status: 'calendar_ready', selectedPlatforms: ['facebook'], lockedAt: {} },
+      plan: { platformLimit: 1 }, connectionState: {},
+      cells: [{ id: 'cell-1', ...target, status: 'enqueued', runtimeFallback: 'ai-engine' }],
+      content: [],
+    } } }) },
+  });
+  const queued = await api.getAIPlanApi();
+  assert.equal(queued.days[0].byPlatform.facebook.upcoming[0].kind, 'ai-engine');
+  assert.equal(locks.isForceRunTargetComplete(queued.days, target), false);
+
+  const completedApi = loadTypescript('../src/service/api/ai-plan.service.ts', {
+    '@/lib/axios': { get: async () => ({ data: { data: {
+      aiPlan: { status: 'calendar_ready', selectedPlatforms: ['facebook'], lockedAt: {} },
+      plan: { platformLimit: 1 }, connectionState: {},
+      cells: [{ id: 'cell-1', ...target, status: 'done', runtimeFallback: 'ai-engine' }],
+      content: [{ id: 'post-1', platform: 'facebook', lifecycle: 'scheduled', source: 'ai_plan', aiPlan: { cellId: 'cell-1' } }],
+    } } }) },
+  });
+  const completed = await completedApi.getAIPlanApi();
+  assert.equal(completed.days[0].byPlatform.facebook.generated[0].kind, 'ai-engine');
+  assert.equal(completed.days[0].byPlatform.facebook.upcoming.length, 0);
+  assert.equal(locks.isForceRunTargetComplete(completed.days, target), true);
+});

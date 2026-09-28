@@ -49,11 +49,7 @@ function forceRunFallbackKinds(kind: string): string[] {
 }
 
 /**
- * True when Force Run finished — or when a fallback pipeline (AI Engine)
- * has taken over the cell so the original card should stop showing Generating.
- *
- * For fallback aliases we clear as soon as AI Engine appears (even while still
- * queued), so the user never sees Content Studio + AI Engine Generating together.
+ * True when Force Run finished, including through an AI Engine fallback.
  */
 export function isForceRunTargetComplete(
   days: ForceRunCalendarDay[],
@@ -83,6 +79,8 @@ export function isForceRunTargetComplete(
     return true;
   }
 
+  const fallbackKinds = forceRunFallbackKinds(target.kind);
+
   // A failed worker resets its calendar cell to planned so Force Run can be
   // attempted again. Seeing the target return to upcoming is terminal for the
   // previous run and must clear the local Generating spinner.
@@ -102,13 +100,11 @@ export function isForceRunTargetComplete(
     return true;
   }
 
-  const fallbackKinds = forceRunFallbackKinds(target.kind);
   if (fallbackKinds.length > 0) {
     const fallback = slot.generated.find((g) =>
       fallbackKinds.includes(normalizedKind(g.kind))
     );
-    // Fallback pipeline owns the cell — drop the original Force Run lock.
-    if (fallback) return true;
+    if (fallback && fallback.status !== 'queued') return true;
   }
 
   if (!exact) return false;

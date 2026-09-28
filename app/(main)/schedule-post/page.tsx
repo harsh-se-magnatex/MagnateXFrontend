@@ -2,6 +2,7 @@
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import { isPlanInactive } from '@/lib/plan-access';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -974,13 +975,16 @@ export default function PostSchedulePage() {
 
   return (
     <div className="mx-auto max-w-6xl animate-in fade-in duration-500 pb-20">
-      <header className="mb-8">
-        <h1 className={workspacePageTitleClass}>
-          {workspacePageTitle(WORKSPACE_NAV_HREFS.schedulePost)}
-        </h1>
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-secondary">
-          Schedule your social media content perfectly timed for your audience.
-        </p>
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className={workspacePageTitleClass}>
+            {workspacePageTitle(WORKSPACE_NAV_HREFS.schedulePost)}
+          </h1>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-secondary">
+            Schedule your social media content perfectly timed for your audience.
+          </p>
+        </div>
+        <PageDocumentation />
       </header>
 
       <div className="grid gap-8">

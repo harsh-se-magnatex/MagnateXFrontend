@@ -3,7 +3,7 @@ import axiosClient from '@/lib/axios';
 /** Hard cap on how many days a single campaign can plan. Mirrors the
  *  backend constant so the two layers can never drift. Used for the
  *  date-picker window; AI idea length defaults to {@link DEFAULT_CAMPAIGN_PLAN_DAYS}. */
-export const MAX_CAMPAIGN_DAYS = 7;
+export const MAX_CAMPAIGN_DAYS = 5;
 /** Default AI campaign idea length (manual + auto-mode). */
 export const DEFAULT_CAMPAIGN_PLAN_DAYS = 5;
 /** Default suggestion-set size when the page first loads. */

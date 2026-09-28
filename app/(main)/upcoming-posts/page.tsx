@@ -1,6 +1,7 @@
 'use client';
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import { useAuth } from '@/src/hooks/useAuth';
 import {
   getScheduledPosts,
@@ -1897,7 +1898,8 @@ export default function SchedulePostPage() {
         className="overflow-hidden rounded-3xl border border-default bg-default"
       >
         <div className="px-6 pb-8 pt-8 sm:px-10 sm:pt-10">
-          <header className="mb-8">
+          <header className="mb-8 flex items-start justify-between gap-4">
+            <div>
             <h1 className="text-page-title text-default">
               <span className="text-default">
                 {workspacePageTitle(WORKSPACE_NAV_HREFS.postQueue)}
@@ -1929,6 +1931,8 @@ export default function SchedulePostPage() {
                 ) : null}
               </label>
             </div>
+            </div>
+            <PageDocumentation />
           </header>
 
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

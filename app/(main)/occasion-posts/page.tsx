@@ -33,6 +33,7 @@ import Link from 'next/link';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { auth } from '@/lib/firebase';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { isPlanInactive } from '@/lib/plan-access';
 import {
@@ -367,6 +368,7 @@ export default function AutomatedPostPage() {
             schedule campaigns.
           </p>
         </div>
+        <PageDocumentation />
 
         {/* Credit Card */}
         <div className="glass-card flex items-center gap-4 rounded-2xl px-5 py-4 shrink-0 border border-default">

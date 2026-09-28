@@ -22,6 +22,7 @@ export type AIPlanCell = {
   runKey?: string;
   reason?: string;
   briefKey?: string;
+  runtimeFallback?: string;
   videoVariant?: string;
   videoUseAvatar?: boolean;
   sharedVideoKey?: string;
@@ -194,6 +195,17 @@ function upcomingKind(value: string): AIPlanUpcomingItem['kind'] {
   return 'empty';
 }
 
+function displayedCellKind(cell: AIPlanCell): AIPlanUpcomingItem['kind'] {
+  const kind = upcomingKind(cell.kind);
+  if (
+    (kind === 'quick-create' || kind === 'video-generation') &&
+    cell.runtimeFallback?.trim().toLowerCase().startsWith('ai-engine')
+  ) {
+    return 'ai-engine';
+  }
+  return kind;
+}
+
 function generatedKind(item: RawAIPlanContent, cell: AIPlanCell): AIPlanGeneratedKind {
   const raw = String(
     item.GeneratedBy ?? item.generatedBy ?? item.generated_by ?? item.source ?? ''
@@ -201,7 +213,7 @@ function generatedKind(item: RawAIPlanContent, cell: AIPlanCell): AIPlanGenerate
     .trim()
     .toLowerCase()
     .replace(/_/g, '-');
-  if (item.source === 'ai_plan') return upcomingKind(cell.kind) as AIPlanGeneratedKind;
+  if (item.source === 'ai_plan') return displayedCellKind(cell) as AIPlanGeneratedKind;
   if (raw.includes('campaign')) return 'campaign';
   if (raw === 'ai-engine' || raw === 'bulk-create' || raw === 'batch-generation') return 'ai-engine';
   if (raw === 'quick-create' || raw === 'instant-generation') return 'quick-create';
@@ -301,17 +313,17 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
           (item) =>
             item.origin === 'auto' &&
             item.kind !== 'festive' &&
-            item.kind === upcomingKind(cell.kind)
+            item.kind === displayedCellKind(cell)
         )
       ) {
         generated.push({
-          kind: upcomingKind(cell.kind) as AIPlanGeneratedKind,
+          kind: displayedCellKind(cell) as AIPlanGeneratedKind,
           origin: 'auto',
           status: 'scheduled',
           title:
             cell.kind === 'campaign'
               ? cell.campaign?.title
-              : kindLabelFromCellKind(cell.kind),
+              : kindLabelFromCellKind(displayedCellKind(cell)),
           captionPreview: cell.reason,
           cell,
         });
@@ -320,7 +332,7 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
         (item) =>
           item.origin === 'auto' &&
           item.kind !== 'festive' &&
-          item.kind === upcomingKind(cell.kind)
+          item.kind === displayedCellKind(cell)
       );
       byPlatform[platform] = {
         generated,
@@ -332,12 +344,12 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
             ? []
             : [
                 {
-                  kind: upcomingKind(cell.kind),
+                  kind: displayedCellKind(cell),
                   label:
                     cell.kind === 'campaign'
                       ? cell.campaign?.title ||
                         `Campaigns · Day ${cell.campaign?.dayNumber ?? ''}`.trim()
-                      : cell.kind,
+                      : displayedCellKind(cell),
                   note: cell.status === 'missed' ? 'Trial activity missed: setup was completed after its scheduled slot.' : cell.reason,
                   status: cell.executionEntitlement === 'example' && cell.kind !== 'empty' ? 'Locked example' : cell.status,
                   cellId: cell.id,
@@ -440,7 +452,7 @@ export type AIPlanForceRunResult = {
   platform: AIPlanPlatform;
   calendarKind: string;
   enqueuedCount: number;
-  outcomes: Array<{ kind: string; reason?: string }>;
+  outcomes: Array<{ kind: string; reason?: string; strategy?: 'quick-create' | 'ai-engine' }>;
 };
 export async function forceRunAIPlanApi(args: {
   date: string;

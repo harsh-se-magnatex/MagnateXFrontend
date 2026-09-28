@@ -32,6 +32,7 @@ import {
 } from '@/components/image-preview';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import { isPlanInactive } from '@/lib/plan-access';
 import {
   useProductAdvertState,
@@ -458,9 +459,12 @@ export default function ProductAdvertPage() {
   return (
     <div className="mx-auto animate-in fade-in duration-500 pb-20">
       <div className="max-w-5xl mx-auto glass-card rounded-3xl p-8">
-        <h1 className={cn(workspacePageTitleClass, 'mb-6')}>
-          {workspacePageTitle(WORKSPACE_NAV_HREFS.productAdvert)}
-        </h1>
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <h1 className={cn(workspacePageTitleClass)}>
+            {workspacePageTitle(WORKSPACE_NAV_HREFS.productAdvert)}
+          </h1>
+          <PageDocumentation />
+        </div>
         <div className="flex justify-end flex-col items-end">
           <p>Credits: {userCredits}</p>
           <p>

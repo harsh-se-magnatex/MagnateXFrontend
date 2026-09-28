@@ -1,6 +1,7 @@
 'use client';
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import {
   useCallback,
   useEffect,
@@ -876,15 +877,18 @@ export default function MediaLibraryPage() {
 
   return (
     <div id="tour-gl-grid" className="mx-auto max-w-6xl space-y-8 pb-12">
-      <header className="space-y-2">
-        <h1 className="text-page-title text-default">
-          {workspacePageTitle(WORKSPACE_NAV_HREFS.gallery)}
-        </h1>
-        <p className="text-sm text-secondary max-w-2xl">
-          A single place for images produced across SocioGenie. Each Create Post
-          or Product Posts image can be scheduled once from the media library.
-          Links expire after about an hour—refresh if an image stops loading.
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-page-title text-default">
+            {workspacePageTitle(WORKSPACE_NAV_HREFS.gallery)}
+          </h1>
+          <p className="text-sm text-secondary max-w-2xl">
+            A single place for images produced across SocioGenie. Each Create Post
+            or Product Posts image can be scheduled once from the media library.
+            Links expire after about an hour—refresh if an image stops loading.
+          </p>
+        </div>
+        <PageDocumentation />
       </header>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">

@@ -1,6 +1,7 @@
 'use client';
 
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
+import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
 import { isPlanInactive } from '@/lib/plan-access';
 import Link from 'next/link';
@@ -601,14 +602,17 @@ export default function ConnectedPlatformsPage() {
       id="tour-lp-connect"
       className="w-full animate-in fade-in duration-500 pb-20"
     >
-      <header className="mb-8">
-        <h1 className={workspacePageTitleClass}>
-          {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
-        </h1>
-        <p className="mt-3 text-base text-secondary leading-relaxed max-w-2xl">
-          Link your social accounts so Sociogenie can schedule and publish
-          approved content automatically.
-        </p>
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className={workspacePageTitleClass}>
+            {workspacePageTitle(WORKSPACE_NAV_HREFS.linkedProfiles)}
+          </h1>
+          <p className="mt-3 text-base text-secondary leading-relaxed max-w-2xl">
+            Link your social accounts so Sociogenie can schedule and publish
+            approved content automatically.
+          </p>
+        </div>
+        <PageDocumentation />
       </header>
 
       <AccountFrozenAlert className="mb-6" />

@@ -26,6 +26,7 @@ import { workspacePageTitleClass } from '@/lib/workspace-ui';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import {
   Select,
   SelectContent,
@@ -853,6 +854,8 @@ export default function CreateCampaignPage() {
             {workspacePageTitle(WORKSPACE_NAV_HREFS.createCampaign)}
           </h1>
         </div>
+
+        <PageDocumentation />
 
         <div className="flex flex-col items-stretch gap-2 md:items-end">
           <div className="inline-flex items-center gap-2 self-stretch md:self-end rounded-2xl border border-warning bg-warning px-3 py-2 text-xs font-semibold text-warning">

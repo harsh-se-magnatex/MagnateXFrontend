@@ -30,6 +30,7 @@ import {
 } from '@/lib/workspace-ui';
 import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeatureBlock';
+import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import { isPlanInactive } from '@/lib/plan-access';
 import { getTodatDate } from '@/utils/getTodayDate';
 import {
@@ -870,6 +871,7 @@ export default function AIContentPage() {
             to match your brand.
           </p>
         </div>
+        <PageDocumentation />
         <div className="glass-card rounded-2xl px-4 py-3 flex items-center gap-3">
           <div className="p-2 rounded-lg bg-primary-purple/10 text-preview">
             <CreditCard className="h-5 w-5" />
