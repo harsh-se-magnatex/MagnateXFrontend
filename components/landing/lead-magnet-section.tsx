@@ -852,10 +852,9 @@ export function LeadMagnetSection() {
                           }}
                           className="sr-only"
                         />
-                        <button
-                          type="button"
-                          onClick={() => logoInputRef.current?.click()}
-                          className="flex w-full items-center gap-4 rounded-xl border border-dashed border-white/20 bg-white/[0.025] p-3 text-left transition hover:border-white/40 hover:bg-white/[0.05]"
+                        <label
+                          htmlFor="try-it-logo-upload"
+                          className="flex w-full cursor-pointer items-center gap-4 rounded-xl border border-dashed border-white/20 bg-white/[0.025] p-3 text-left transition hover:border-white/40 hover:bg-white/[0.05]"
                         >
                           <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/30">
                             {logoImage ? (
@@ -878,7 +877,7 @@ export function LeadMagnetSection() {
                             </span>
                           </span>
                           <Upload className="h-4 w-4 shrink-0 text-white/45" />
-                        </button>
+                        </label>
                       </div>
                     </div>
                   )}
@@ -1122,10 +1121,9 @@ export function LeadMagnetSection() {
                         }}
                         className="sr-only"
                       />
-                      <button
-                        type="button"
-                        onClick={() => productInputRef.current?.click()}
-                        className="flex w-full items-center gap-4 rounded-xl border border-dashed border-white/20 bg-white/[0.025] p-3 text-left transition hover:border-white/40 hover:bg-white/[0.05]"
+                      <label
+                        htmlFor="try-it-product-upload"
+                        className="flex w-full cursor-pointer items-center gap-4 rounded-xl border border-dashed border-white/20 bg-white/[0.025] p-3 text-left transition hover:border-white/40 hover:bg-white/[0.05]"
                       >
                         <span className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/30">
                           {productImage ? (
@@ -1148,7 +1146,7 @@ export function LeadMagnetSection() {
                           </span>
                         </span>
                         <Upload className="h-4 w-4 shrink-0 text-white/45" />
-                      </button>
+                      </label>
                     </div>
                   ) : null}
                   <div className="flex flex-wrap items-center gap-3">
