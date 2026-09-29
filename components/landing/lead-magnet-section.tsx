@@ -70,7 +70,6 @@ async function readImage(
 
   const maxBytes = 4 * 1024 * 1024;
   const maxEdgePx = 2048;
-  let prepared = file;
   let bitmap: ImageBitmap;
   try {
     bitmap = await createImageBitmap(file);
@@ -93,54 +92,52 @@ async function readImage(
 
   try {
     const longestEdge = Math.max(bitmap.width, bitmap.height);
-    if (isHeic || isTiff || file.type !== 'image/png' || file.size > maxBytes || longestEdge > maxEdgePx) {
-      const scale = Math.min(1, maxEdgePx / longestEdge);
-      let canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-      const context = canvas.getContext('2d');
-      if (!context) throw new Error('Could not convert that image to PNG.');
-      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const scale = Math.min(1, maxEdgePx / longestEdge);
+    let canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('Could not convert that image to PNG.');
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
-      let png: Blob;
-      for (;;) {
-        png = await new Promise<Blob>((resolve, reject) => {
-          canvas.toBlob(
-            (blob) => blob ? resolve(blob) : reject(new Error('Could not convert that image to PNG.')),
-            'image/png'
-          );
-        });
-        if (png.type !== 'image/png') {
-          throw new Error('Could not convert that image to PNG.');
-        }
-        if (png.size <= maxBytes) break;
-        const nextWidth = Math.max(1, Math.floor(canvas.width * 0.75));
-        const nextHeight = Math.max(1, Math.floor(canvas.height * 0.75));
-        if (nextWidth === canvas.width && nextHeight === canvas.height) {
-          throw new Error('This image could not be resized below 4 MB.');
-        }
-        const smaller = document.createElement('canvas');
-        smaller.width = nextWidth;
-        smaller.height = nextHeight;
-        const smallerContext = smaller.getContext('2d');
-        if (!smallerContext) throw new Error('Could not resize that image.');
-        smallerContext.drawImage(canvas, 0, 0, nextWidth, nextHeight);
-        canvas = smaller;
-      }
-      prepared = new File([png], `${file.name.replace(/\.[^.]+$/, '') || 'image'}.png`, {
-        type: 'image/png',
+    let png: Blob;
+    for (;;) {
+      png = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => blob ? resolve(blob) : reject(new Error('Could not convert that image to PNG.')),
+          'image/png'
+        );
       });
+      if (png.type !== 'image/png') {
+        throw new Error('Could not convert that image to PNG.');
+      }
+      if (png.size <= maxBytes) break;
+      const nextWidth = Math.max(1, Math.floor(canvas.width * 0.75));
+      const nextHeight = Math.max(1, Math.floor(canvas.height * 0.75));
+      if (nextWidth === canvas.width && nextHeight === canvas.height) {
+        throw new Error('This image could not be resized below 4 MB.');
+      }
+      const smaller = document.createElement('canvas');
+      smaller.width = nextWidth;
+      smaller.height = nextHeight;
+      const smallerContext = smaller.getContext('2d');
+      if (!smallerContext) throw new Error('Could not resize that image.');
+      smallerContext.drawImage(canvas, 0, 0, nextWidth, nextHeight);
+      canvas = smaller;
     }
+
+    const prepared = new File([png], `${file.name.replace(/\.[^.]+$/, '') || 'image'}.png`, {
+      type: 'image/png',
+    });
+    return await new Promise<{ dataUrl: string; fileName: string }>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ dataUrl: String(reader.result), fileName: prepared.name });
+      reader.onerror = () => reject(new Error('Could not read that image.'));
+      reader.readAsDataURL(prepared);
+    });
   } finally {
     bitmap.close();
   }
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve({ dataUrl: String(reader.result), fileName: prepared.name });
-    reader.onerror = () => reject(new Error('Could not read that image.'));
-    reader.readAsDataURL(prepared);
-  });
 }
 
 /** User-facing stages. The internal `loading` / `generating` waits belong to
