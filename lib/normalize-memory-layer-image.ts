@@ -77,7 +77,7 @@ function toPngFile(file: File, blob: Blob): File {
   });
 }
 
-export async function convertTiffToPng(file: File): Promise<File | null> {
+async function convertTiffToPng(file: File): Promise<File | null> {
   try {
     const UTIF = (await import('@/lib/vendor/utif2-bridge')).default;
     const buffer = await file.arrayBuffer();

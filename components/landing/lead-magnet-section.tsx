@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { ArrowRight, ImagePlus, Loader2, Trash2, Upload } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
-import { convertTiffToPng } from '@/lib/normalize-memory-layer-image';
 import {
   claimLeadMagnetEmail,
   generateLeadMagnet,
@@ -55,90 +54,6 @@ const TRY_IT_INDUSTRIES = [
 const PREVIEW_TIMEOUT_MS = 90_000;
 const POLL_INTERVAL_MS = 2_000;
 const POLL_TIMEOUT_MS = 12 * 60_000;
-
-async function readImage(
-  file: File
-): Promise<{ dataUrl: string; fileName: string }> {
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
-  const isHeic = ['heic', 'heif'].includes(extension) ||
-    ['image/heic', 'image/heif', 'image/heic-sequence', 'image/heif-sequence'].includes(file.type);
-  const isTiff = ['tif', 'tiff'].includes(extension) ||
-    ['image/tiff', 'image/tif', 'image/x-tiff'].includes(file.type);
-  if (file.type && !file.type.startsWith('image/') && !isHeic && !isTiff) {
-    throw new Error('Choose an image file.');
-  }
-
-  const maxBytes = 4 * 1024 * 1024;
-  const maxEdgePx = 2048;
-  let bitmap: ImageBitmap;
-  try {
-    bitmap = await createImageBitmap(file);
-  } catch {
-    try {
-      if (isHeic) {
-        const { heicTo } = await import('heic-to/next');
-        bitmap = await createImageBitmap(await heicTo({ blob: file, type: 'image/png' }));
-      } else if (isTiff) {
-        const converted = await convertTiffToPng(file);
-        if (!converted) throw new Error('TIFF conversion failed');
-        bitmap = await createImageBitmap(converted);
-      } else {
-        throw new Error('Image format is not supported by this browser');
-      }
-    } catch {
-      throw new Error('Could not open this image format. Try exporting it as PNG or JPEG.');
-    }
-  }
-
-  try {
-    const longestEdge = Math.max(bitmap.width, bitmap.height);
-    const scale = Math.min(1, maxEdgePx / longestEdge);
-    let canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-    const context = canvas.getContext('2d');
-    if (!context) throw new Error('Could not convert that image to PNG.');
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-
-    let png: Blob;
-    for (;;) {
-      png = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (blob) => blob ? resolve(blob) : reject(new Error('Could not convert that image to PNG.')),
-          'image/png'
-        );
-      });
-      if (png.type !== 'image/png') {
-        throw new Error('Could not convert that image to PNG.');
-      }
-      if (png.size <= maxBytes) break;
-      const nextWidth = Math.max(1, Math.floor(canvas.width * 0.75));
-      const nextHeight = Math.max(1, Math.floor(canvas.height * 0.75));
-      if (nextWidth === canvas.width && nextHeight === canvas.height) {
-        throw new Error('This image could not be resized below 4 MB.');
-      }
-      const smaller = document.createElement('canvas');
-      smaller.width = nextWidth;
-      smaller.height = nextHeight;
-      const smallerContext = smaller.getContext('2d');
-      if (!smallerContext) throw new Error('Could not resize that image.');
-      smallerContext.drawImage(canvas, 0, 0, nextWidth, nextHeight);
-      canvas = smaller;
-    }
-
-    const prepared = new File([png], `${file.name.replace(/\.[^.]+$/, '') || 'image'}.png`, {
-      type: 'image/png',
-    });
-    return await new Promise<{ dataUrl: string; fileName: string }>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve({ dataUrl: String(reader.result), fileName: prepared.name });
-      reader.onerror = () => reject(new Error('Could not read that image.'));
-      reader.readAsDataURL(prepared);
-    });
-  } finally {
-    bitmap.close();
-  }
-}
 
 /** User-facing stages. The internal `loading` / `generating` waits belong to
  *  the stage they resolve, and `result` is the payoff rather than a step. */
@@ -458,11 +373,13 @@ export function LeadMagnetSection() {
     accent: '#c7b8fd',
   });
   const [logoImage, setLogoImage] = React.useState('');
+  const [logoFile, setLogoFile] = React.useState<File | null>(null);
   const [logoFileName, setLogoFileName] = React.useState('');
   const [offering, setOffering] = React.useState<LeadMagnetOffering | null>(
     null
   );
   const [productImage, setProductImage] = React.useState('');
+  const [productFile, setProductFile] = React.useState<File | null>(null);
   const [productFileName, setProductFileName] = React.useState('');
   const [platform, setPlatform] = React.useState<LeadMagnetPlatform | null>(
     null
@@ -493,6 +410,22 @@ export function LeadMagnetSection() {
     const id = window.setInterval(() => setTick((n) => n + 1), 2_000);
     return () => window.clearInterval(id);
   }, [step, generatingSince]);
+
+  React.useEffect(() => {
+    if (!logoFile || !logoFile.type.startsWith('image/') ||
+      /image\/(?:heic|heif|tiff|tif)/.test(logoFile.type)) return;
+    const url = URL.createObjectURL(logoFile);
+    setLogoImage(url);
+    return () => URL.revokeObjectURL(url);
+  }, [logoFile]);
+
+  React.useEffect(() => {
+    if (!productFile || !productFile.type.startsWith('image/') ||
+      /image\/(?:heic|heif|tiff|tif)/.test(productFile.type)) return;
+    const url = URL.createObjectURL(productFile);
+    setProductImage(url);
+    return () => URL.revokeObjectURL(url);
+  }, [productFile]);
 
   const runWebsitePreview = React.useCallback(
     async (args: { email: string; website: string }) => {
@@ -598,7 +531,7 @@ export function LeadMagnetSection() {
   };
 
   const onPickPlatform = async (nextPlatform: LeadMagnetPlatform) => {
-    if (busy || !dna || !offering || (offering === 'product' && !productImage))
+    if (busy || !dna || !offering || (offering === 'product' && !productFile))
       return;
     setBusy(true);
     setPickingPlatform(nextPlatform);
@@ -615,8 +548,8 @@ export function LeadMagnetSection() {
         platform: nextPlatform,
         dna,
         offering,
-        logoImage: !hasWebsite ? logoImage : undefined,
-        productImage: offering === 'product' ? productImage : undefined,
+        logoFile: !hasWebsite ? logoFile ?? undefined : undefined,
+        productFile: offering === 'product' ? productFile ?? undefined : undefined,
       });
       setDomainKey(queued.domainKey);
 
@@ -684,9 +617,11 @@ export function LeadMagnetSection() {
       accent: '#c7b8fd',
     });
     setLogoImage('');
+    setLogoFile(null);
     setLogoFileName('');
     setOffering(null);
     setProductImage('');
+    setProductFile(null);
     setProductFileName('');
     setPlatform(null);
     setPickingPlatform(null);
@@ -814,12 +749,13 @@ export function LeadMagnetSection() {
                             Logo{' '}
                             <span className="text-white/35">(optional)</span>
                           </p>
-                          {logoImage ? (
+                          {logoFile ? (
                             <button
                               type="button"
                               className="landing-body inline-flex items-center gap-1 text-xs text-white/45 hover:text-white/80"
                               onClick={() => {
                                 setLogoImage('');
+                                setLogoFile(null);
                                 setLogoFileName('');
                                 if (logoInputRef.current)
                                   logoInputRef.current.value = '';
@@ -837,18 +773,10 @@ export function LeadMagnetSection() {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (!file) return;
-                            void readImage(file)
-                              .then(({ dataUrl, fileName }) => {
-                                if (logoInputRef.current?.files?.[0] !== file) return;
-                                setLogoImage(dataUrl);
-                                setLogoFileName(fileName);
-                                setError(null);
-                              })
-                              .catch((err) => {
-                                if (logoInputRef.current?.files?.[0] !== file) return;
-                                logoInputRef.current.value = '';
-                                setError(err.message);
-                              });
+                            setLogoFile(file);
+                            setLogoImage('');
+                            setLogoFileName(file.name);
+                            setError(null);
                           }}
                           className="sr-only"
                         />
@@ -873,7 +801,7 @@ export function LeadMagnetSection() {
                               {logoFileName || 'Upload your logo'}
                             </span>
                             <span className="landing-body mt-1 block text-xs text-white/40">
-                              Images including HEIC and TIFF, converted to PNG
+                              Images including HEIC and TIFF, up to 20 MB
                             </span>
                           </span>
                           <Upload className="h-4 w-4 shrink-0 text-white/45" />
@@ -1020,6 +948,7 @@ export function LeadMagnetSection() {
                       onClick={() => {
                         setDna({ ...dna, logo: '' });
                         setLogoImage('');
+                        setLogoFile(null);
                         setLogoFileName('');
                         if (logoInputRef.current)
                           logoInputRef.current.value = '';
@@ -1083,12 +1012,13 @@ export function LeadMagnetSection() {
                         <p className="landing-body text-sm text-white/70">
                           Product image
                         </p>
-                        {productImage ? (
+                        {productFile ? (
                           <button
                             type="button"
                             className="landing-body inline-flex items-center gap-1 text-xs text-white/45 hover:text-white/80"
                             onClick={() => {
                               setProductImage('');
+                              setProductFile(null);
                               setProductFileName('');
                               if (productInputRef.current)
                                 productInputRef.current.value = '';
@@ -1106,18 +1036,10 @@ export function LeadMagnetSection() {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (!file) return;
-                          void readImage(file)
-                            .then(({ dataUrl, fileName }) => {
-                              if (productInputRef.current?.files?.[0] !== file) return;
-                              setProductImage(dataUrl);
-                              setProductFileName(fileName);
-                              setError(null);
-                            })
-                            .catch((err) => {
-                              if (productInputRef.current?.files?.[0] !== file) return;
-                              productInputRef.current.value = '';
-                              setError(err.message);
-                            });
+                          setProductFile(file);
+                          setProductImage('');
+                          setProductFileName(file.name);
+                          setError(null);
                         }}
                         className="sr-only"
                       />
@@ -1142,7 +1064,7 @@ export function LeadMagnetSection() {
                             {productFileName || 'Upload your product image'}
                           </span>
                           <span className="landing-body mt-1 block text-xs text-white/40">
-                            Images including HEIC and TIFF, converted to PNG
+                            Images including HEIC and TIFF, up to 20 MB
                           </span>
                         </span>
                         <Upload className="h-4 w-4 shrink-0 text-white/45" />
@@ -1166,7 +1088,7 @@ export function LeadMagnetSection() {
                           setError('Select your industry.');
                           return;
                         }
-                        if (offering === 'product' && !productImage) {
+                        if (offering === 'product' && !productFile) {
                           setError('Choose a product image.');
                           return;
                         }

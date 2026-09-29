@@ -27,7 +27,6 @@
     "firebase-admin": "^13.6.1",
     "framer-motion": "^12.36.0",
     "gsap": "^3.15.0",
-    "heic-to": "^1.5.2",
     "idb-keyval": "^6.3.0",
     "input-otp": "^1.4.2",
     "js-cookie": "^3.0.5",

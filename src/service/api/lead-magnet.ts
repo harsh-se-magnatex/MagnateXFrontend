@@ -82,9 +82,18 @@ export async function generateLeadMagnet(args: {
   platform: LeadMagnetPlatform;
   dna?: LeadMagnetDna;
   offering: LeadMagnetOffering;
-  logoImage?: string;
-  productImage?: string;
+  logoFile?: File;
+  productFile?: File;
 }) {
+  const form = new FormData();
+  form.append('email', args.email.trim());
+  form.append('website', normalizeWebsiteUrl(args.website));
+  form.append('platform', args.platform);
+  form.append('offering', args.offering);
+  if (args.dna) form.append('dna', JSON.stringify(args.dna));
+  if (args.logoFile) form.append('logoImage', args.logoFile);
+  if (args.productFile) form.append('productImage', args.productFile);
+
   const res = await apiPost<
     ApiEnvelope<{
       email: string;
@@ -96,15 +105,7 @@ export async function generateLeadMagnet(args: {
     }>
   >(
     '/api/v1/lead-magnet/generate',
-    {
-      email: args.email.trim(),
-      website: normalizeWebsiteUrl(args.website),
-      platform: args.platform,
-      dna: args.dna,
-      offering: args.offering,
-      logoImage: args.logoImage,
-      productImage: args.productImage,
-    },
+    form,
     { timeout: 30_000 }
   );
   if (!res?.data?.jobId) {
