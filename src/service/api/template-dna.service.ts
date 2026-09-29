@@ -1,6 +1,6 @@
 import axiosClient from '@/lib/axios';
 
-export type TemplateDnaPlatform = 'instagram' | 'facebook' | 'linkedin';
+export type TemplateDnaPlatform = 'brand';
 export type DesignFinding = { value: any; confidence: 'high' | 'medium' | 'low'; state: 'observed' | 'not_observed' | 'inconsistent' | 'uncertain'; evidenceImageIds: string[]; observedRange: { min: number; max: number } | null };
 export type TemplateDesign = Record<string, any>;
 export type CompatibleVisualConfiguration = { schema: Record<string, any>; imageModifiers: string; imageAvoid: string };
@@ -30,7 +30,7 @@ export async function generateVisualStyle(selectedPresetId: string, business?: R
 export async function getReferencePreview(platform: string, id: string) { return (await axiosClient.get<Blob>(`/api/v1/template-dna/${platform}/references/${id}/preview`, { responseType: 'blob' })).data; }
 
 type ApiEnvelope<T> = { data: T };
-export async function getTemplateDna(platform?: TemplateDnaPlatform) { const response = await axiosClient.get<ApiEnvelope<TemplateDnaProfile | TemplateDnaProfile[]>>('/api/v1/template-dna', { params: platform ? { platform } : undefined }); return response.data.data; }
+export async function getTemplateDna() { const response = await axiosClient.get<ApiEnvelope<TemplateDnaProfile>>('/api/v1/template-dna'); return response.data.data; }
 export async function uploadTemplateDnaReferences(platform: TemplateDnaPlatform, files: File[]) { const form = new FormData(); files.forEach((file) => form.append('references', file)); const response = await axiosClient.post<ApiEnvelope<TemplateDnaProfile>>(`/api/v1/template-dna/${platform}/references`, form); return response.data.data; }
 export async function extractTemplateDna(platform: TemplateDnaPlatform) {
   const response = await axiosClient.post<ApiEnvelope<TemplateDnaProfile>>(`/api/v1/template-dna/${platform}/extract`, {}, { timeout: 30 * 1000 });
@@ -38,7 +38,7 @@ export async function extractTemplateDna(platform: TemplateDnaPlatform) {
   const started = Date.now();
   while (profile.status === 'extracting' && Date.now() - started < 25 * 60 * 1000) {
     await new Promise(resolve => setTimeout(resolve, 2500));
-    profile = (await axiosClient.get<ApiEnvelope<TemplateDnaProfile>>('/api/v1/template-dna', { params: { platform } })).data.data;
+    profile = await getTemplateDna();
   }
   if (profile.status === 'extracting') throw new Error('Extraction is still running. Refresh this page shortly to see the result.');
   if (profile.status === 'failed') throw new Error(profile.lastError || 'Template DNA extraction failed.');

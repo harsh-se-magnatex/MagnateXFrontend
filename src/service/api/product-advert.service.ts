@@ -15,7 +15,6 @@ export type ProductAdvertPayload = {
   generationMode?: ProductGenerationMode;
   campaignContext?: string;
   useIndustryResearch?: boolean;
-  templateDnaLayoutByPlatform?: Record<string, string>;
   promptOnly?: boolean;
 };
 
@@ -72,7 +71,6 @@ export const generateProductAdvertApi = async ({
   generationMode,
   campaignContext,
   useIndustryResearch,
-  templateDnaLayoutByPlatform,
 }: ProductAdvertPayload): Promise<ProductAdvertGenerateResponse> => {
   const form = new FormData();
   form.append('image', await prepareGenerationImage(image));
@@ -84,7 +82,6 @@ export const generateProductAdvertApi = async ({
   if (campaignContext?.trim())
     form.append('campaignContext', campaignContext.trim());
   if (useIndustryResearch) form.append('useIndustryResearch', 'true');
-  if (templateDnaLayoutByPlatform && Object.keys(templateDnaLayoutByPlatform).length) form.append('templateDnaLayoutByPlatform', JSON.stringify(templateDnaLayoutByPlatform));
   const response = await axiosClient.post<{
     success: boolean;
     data: ProductAdvertGenerateResponse;

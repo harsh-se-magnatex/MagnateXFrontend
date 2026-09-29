@@ -48,7 +48,6 @@ import {
 } from '@/lib/platform-selection';
 import { useTourDemo } from '@/src/stores/tourState';
 import { toast } from 'sonner';
-import { getTemplateDna, type TemplateDnaProfile } from '@/src/service/api/template-dna.service';
 
 const BACKGROUND_OPTIONS = [
   '',
@@ -164,8 +163,6 @@ export default function ProductAdvertPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [promptPreview, setPromptPreview] = useState<ProductAdvertPromptPreview | null>(null);
   const [promptPreviewError, setPromptPreviewError] = useState('');
-  const [templateDnaProfiles, setTemplateDnaProfiles] = useState<Partial<Record<SocialPlatform, TemplateDnaProfile>>>({});
-  const [templateDnaLayouts, setTemplateDnaLayouts] = useState<Record<string, string>>({});
   const imagePreview = useImagePreview();
 
   // Session state: in-memory Zustand, survives SPA navigation within the tab.
@@ -196,13 +193,6 @@ export default function ProductAdvertPage() {
     if (generatedAt && Date.now() - generatedAt > TWO_HOURS) clearOutput();
   }, []);
 
-  useEffect(() => {
-    if (generationMode !== 'social_full') return;
-    void getTemplateDna().then((data) => {
-      const profiles = data as TemplateDnaProfile[];
-      setTemplateDnaProfiles(Object.fromEntries(profiles.map((profile) => [profile.platform, profile])));
-    }).catch(() => undefined);
-  }, [generationMode]);
 
   const { billing, loading: creditsLoading } = useUserPlanCredits();
   const fmtTimestamp = useTimestampFormatter();
@@ -293,7 +283,7 @@ export default function ProductAdvertPage() {
   useEffect(() => {
     setPromptPreview(null);
     setPromptPreviewError('');
-  }, [file, prompt, campaignContext, genPlatforms, templateDnaLayouts, generationMode]);
+  }, [file, prompt, campaignContext, genPlatforms, generationMode]);
 
   function handleToggleGenPlatform(platformToToggle: SocialPlatform) {
     if (isTourDemo) return;
@@ -341,7 +331,6 @@ export default function ProductAdvertPage() {
         generationMode,
         campaignContext,
         useIndustryResearch: generationMode === 'social_full' ? true : false,
-        templateDnaLayoutByPlatform: generationMode === 'social_full' ? templateDnaLayouts : undefined,
       });
       setFinalResult(null);
       setLastGenerationMode(response.generationMode);
