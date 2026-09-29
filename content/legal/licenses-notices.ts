@@ -12,16 +12,16 @@ export type LicenseNoticeSection = {
 };
 
 export const licensesNotices = {
-  "generatedDate": "2026-05-29",
-  "total": 685,
+  "generatedDate": "2026-09-29",
+  "total": 692,
   "summary": [
     {
       "license": "MIT",
-      "count": 516
+      "count": 519
     },
     {
       "license": "Apache-2.0",
-      "count": 81
+      "count": 83
     },
     {
       "license": "ISC",
@@ -52,6 +52,14 @@ export const licensesNotices = {
       "count": 1
     },
     {
+      "license": "Custom: https://gsap.com/GSAP-share-image.png",
+      "count": 1
+    },
+    {
+      "license": "LGPL-3.0",
+      "count": 1
+    },
+    {
       "license": "(BSD-3-Clause OR GPL-2.0)",
       "count": 1
     },
@@ -71,7 +79,7 @@ export const licensesNotices = {
   "sections": [
     {
       "license": "MIT",
-      "count": 516,
+      "count": 519,
       "entries": [
         {
           "name": "@antfu/ni@25.0.0",
@@ -682,6 +690,10 @@ export const licensesNotices = {
           "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped"
         },
         {
+          "name": "@vercel/analytics@2.0.1",
+          "repository": "https://github.com/vercel/analytics"
+        },
+        {
           "name": "abort-controller@3.0.0",
           "repository": "https://github.com/mysticatea/abort-controller"
         },
@@ -902,6 +914,10 @@ export const licensesNotices = {
           "repository": "https://github.com/date-fns-jalali/date-fns-jalali"
         },
         {
+          "name": "date-fns-tz@3.2.0",
+          "repository": "https://github.com/marnusw/date-fns-tz"
+        },
+        {
           "name": "date-fns@4.1.0",
           "repository": "https://github.com/date-fns/date-fns"
         },
@@ -948,6 +964,10 @@ export const licensesNotices = {
         {
           "name": "dom-helpers@5.2.1",
           "repository": "https://github.com/react-bootstrap/dom-helpers"
+        },
+        {
+          "name": "driver.js@1.4.0",
+          "repository": "https://github.com/kamranahmedse/driver.js"
         },
         {
           "name": "dunder-proto@1.0.1",
@@ -2141,7 +2161,7 @@ export const licensesNotices = {
     },
     {
       "license": "Apache-2.0",
-      "count": 81,
+      "count": 83,
       "entries": [
         {
           "name": "@firebase/ai@2.8.0",
@@ -2364,6 +2384,10 @@ export const licensesNotices = {
           "repository": "https://github.com/swc-project/swc"
         },
         {
+          "name": "@vercel/speed-insights@2.0.0",
+          "repository": "https://github.com/vercel/speed-insights"
+        },
+        {
           "name": "baseline-browser-mapping@2.10.0",
           "repository": "https://github.com/web-platform-dx/baseline-browser-mapping"
         },
@@ -2434,6 +2458,10 @@ export const licensesNotices = {
         {
           "name": "human-signals@8.0.1",
           "repository": "https://github.com/ehmicky/human-signals"
+        },
+        {
+          "name": "idb-keyval@6.3.0",
+          "repository": "https://github.com/jakearchibald/idb-keyval"
         },
         {
           "name": "long@5.3.2",
@@ -2844,6 +2872,26 @@ export const licensesNotices = {
         {
           "name": "caniuse-lite@1.0.30001774",
           "repository": "https://github.com/browserslist/caniuse-lite"
+        }
+      ]
+    },
+    {
+      "license": "Custom: https://gsap.com/GSAP-share-image.png",
+      "count": 1,
+      "entries": [
+        {
+          "name": "gsap@3.15.0",
+          "repository": "https://github.com/greensock/GSAP"
+        }
+      ]
+    },
+    {
+      "license": "LGPL-3.0",
+      "count": 1,
+      "entries": [
+        {
+          "name": "heic-to@1.5.2",
+          "repository": "https://github.com/hoppergee/heic-to"
         }
       ]
     },

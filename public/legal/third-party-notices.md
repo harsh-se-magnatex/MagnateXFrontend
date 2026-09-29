@@ -1,8 +1,8 @@
 # Third-Party Notices
 
 **Product:** magnatex (SocioGenie frontend)
-**Generated:** 2026-05-29
-**Total third-party packages:** 685
+**Generated:** 2026-09-29
+**Total third-party packages:** 692
 
 This file lists the open-source software components that are bundled with or used by this product, together with their respective licenses. It is provided in compliance with the attribution requirements of those licenses (e.g., MIT, BSD, Apache 2.0).
 
@@ -12,8 +12,8 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 
 | License | # of packages |
 |---|---|
-| MIT | 516 |
-| Apache-2.0 | 81 |
+| MIT | 519 |
+| Apache-2.0 | 83 |
 | ISC | 48 |
 | BSD-3-Clause | 22 |
 | BlueOak-1.0.0 | 6 |
@@ -21,6 +21,8 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 | Apache-2.0 AND LGPL-3.0-or-later | 1 |
 | Python-2.0 | 1 |
 | CC-BY-4.0 | 1 |
+| Custom: https://gsap.com/GSAP-share-image.png | 1 |
+| LGPL-3.0 | 1 |
 | (BSD-3-Clause OR GPL-2.0) | 1 |
 | 0BSD | 1 |
 | (MIT OR CC0-1.0) | 1 |
@@ -28,7 +30,7 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 
 ## Packages by license
 
-### MIT (516)
+### MIT (519)
 
 - `@antfu/ni@25.0.0` — https://github.com/antfu-collective/ni
 - `@babel/code-frame@7.29.0` — https://github.com/babel/babel
@@ -182,6 +184,7 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 - `@types/statuses@2.0.6` — https://github.com/DefinitelyTyped/DefinitelyTyped
 - `@types/tough-cookie@4.0.5` — https://github.com/DefinitelyTyped/DefinitelyTyped
 - `@types/validate-npm-package-name@4.0.2` — https://github.com/DefinitelyTyped/DefinitelyTyped
+- `@vercel/analytics@2.0.1` — https://github.com/vercel/analytics
 - `abort-controller@3.0.0` — https://github.com/mysticatea/abort-controller
 - `accepts@2.0.0` — https://github.com/jshttp/accepts
 - `agent-base@6.0.2` — https://github.com/TooTallNate/node-agent-base
@@ -237,6 +240,7 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 - `csstype@3.2.3` — https://github.com/frenic/csstype
 - `data-uri-to-buffer@4.0.1` — https://github.com/TooTallNate/node-data-uri-to-buffer
 - `date-fns-jalali@4.1.0-0` — https://github.com/date-fns-jalali/date-fns-jalali
+- `date-fns-tz@3.2.0` — https://github.com/marnusw/date-fns-tz
 - `date-fns@4.1.0` — https://github.com/date-fns/date-fns
 - `debug@4.4.3` — https://github.com/debug-js/debug
 - `decimal.js-light@2.5.1` — https://github.com/MikeMcl/decimal.js-light
@@ -249,6 +253,7 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 - `depd@2.0.0` — https://github.com/dougwilson/nodejs-depd
 - `detect-node-es@1.1.0` — https://github.com/thekashey/detect-node
 - `dom-helpers@5.2.1` — https://github.com/react-bootstrap/dom-helpers
+- `driver.js@1.4.0` — https://github.com/kamranahmedse/driver.js
 - `dunder-proto@1.0.1` — https://github.com/es-shims/dunder-proto
 - `duplexify@4.1.3` — https://github.com/mafintosh/duplexify
 - `eastasianwidth@0.2.0` — https://github.com/komagata/eastasianwidth
@@ -547,7 +552,7 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 - `zod@3.25.76` — https://github.com/colinhacks/zod
 - `zustand@5.0.12` — https://github.com/pmndrs/zustand
 
-### Apache-2.0 (81)
+### Apache-2.0 (83)
 
 - `@firebase/ai@2.8.0` — https://github.com/firebase/firebase-js-sdk
 - `@firebase/analytics-compat@0.2.25` — https://github.com/firebase/firebase-js-sdk
@@ -604,6 +609,7 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 - `@grpc/proto-loader@0.8.0` — https://github.com/grpc/grpc-node
 - `@opentelemetry/api@1.9.0` — https://github.com/open-telemetry/opentelemetry-js
 - `@swc/helpers@0.5.15` — https://github.com/swc-project/swc
+- `@vercel/speed-insights@2.0.0` — https://github.com/vercel/speed-insights
 - `baseline-browser-mapping@2.10.0` — https://github.com/web-platform-dx/baseline-browser-mapping
 - `class-variance-authority@0.7.1` — https://github.com/joe-bell/cva
 - `detect-libc@2.1.2` — https://github.com/lovell/detect-libc
@@ -622,6 +628,7 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 - `google-logging-utils@1.1.3` — https://github.com/googleapis/google-cloud-node-core
 - `human-signals@2.1.0` — https://github.com/ehmicky/human-signals
 - `human-signals@8.0.1` — https://github.com/ehmicky/human-signals
+- `idb-keyval@6.3.0` — https://github.com/jakearchibald/idb-keyval
 - `long@5.3.2` — https://github.com/dcodeIO/long.js
 - `proto3-json-serializer@2.0.2` — https://github.com/googleapis/proto3-json-serializer-nodejs
 - `sharp@0.34.5` — https://github.com/lovell/sharp
@@ -735,6 +742,14 @@ MAGNATEX LLP (the publisher of SocioGenie) is grateful to the maintainers of the
 ### CC-BY-4.0 (1)
 
 - `caniuse-lite@1.0.30001774` — https://github.com/browserslist/caniuse-lite
+
+### Custom: https://gsap.com/GSAP-share-image.png (1)
+
+- `gsap@3.15.0` — https://github.com/greensock/GSAP
+
+### LGPL-3.0 (1)
+
+- `heic-to@1.5.2` — https://github.com/hoppergee/heic-to
 
 ### (BSD-3-Clause OR GPL-2.0) (1)
 
