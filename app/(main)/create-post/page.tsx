@@ -143,73 +143,6 @@ function mapInstantDocsToCreatedContent(args: {
 
 const PLATFORM_ORDER = ['instagram', 'facebook', 'linkedin'] as const;
 
-/**
- * Caption block that starts clamped and reveals the full text when the
- * user clicks "View more". Used in places where multiple captions are
- * shown side-by-side and we don't want one long LLM caption to crowd
- * out the others, while still letting the user read every word.
- */
-function ExpandableCaption({
-  text,
-  clampLines = 3,
-  className,
-}: {
-  text: string;
-  clampLines?: 2 | 3 | 4 | 5 | 6;
-  className?: string;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const trimmed = text?.trim() ?? '';
-  if (!trimmed) return null;
-
-  // Cheap heuristic — if the caption is short enough that the clamp
-  // would never kick in we don't even render the toggle. ~55 chars per
-  // line is a reasonable average for the panel width these captions
-  // render in.
-  const approxLines = Math.ceil(
-    Math.max(trimmed.split('\n').length, trimmed.length / 55)
-  );
-  const showToggle = approxLines > clampLines;
-
-  const clampClass = (() => {
-    switch (clampLines) {
-      case 2:
-        return 'line-clamp-2';
-      case 4:
-        return 'line-clamp-4';
-      case 5:
-        return 'line-clamp-5';
-      case 6:
-        return 'line-clamp-6';
-      case 3:
-      default:
-        return 'line-clamp-3';
-    }
-  })();
-
-  return (
-    <div className={cn('space-y-1', className)}>
-      <p
-        className={cn(
-          'leading-relaxed whitespace-pre-wrap',
-          !expanded && showToggle ? clampClass : null
-        )}
-      >
-        {trimmed}
-      </p>
-      {showToggle && (
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-preview hover:text-preview hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-strong rounded-full"
-        >
-          {expanded ? 'View less' : 'View more'}
-        </button>
-      )}
-    </div>
-  );
-}
-
 const OPTIMAL_TIME_FIELD: Record<
   SocialPlatform,
   'optimalFacebookTime' | 'optimalInstagramTime' | 'optimalLinkedinTime'
@@ -1835,11 +1768,26 @@ export default function AIContentPage() {
                       />
                     </div>
                   ) : null}
-                  <ExpandableCaption
-                    text={activeRenderedImage.caption}
-                    clampLines={4}
-                    className="text-sm text-default"
-                  />
+                  <div className="mt-3">
+                    <label
+                      htmlFor="single-post-caption"
+                      className="mb-2 block text-sm font-semibold text-default"
+                    >
+                      Caption
+                    </label>
+                    <textarea
+                      id="single-post-caption"
+                      value={activeRenderedImage.caption}
+                      onChange={(event) =>
+                        updateRenderedImageCaption(
+                          activeRenderedImage.platform,
+                          event.target.value
+                        )
+                      }
+                      rows={6}
+                      className={cn(inputBase, 'resize-y text-sm leading-relaxed')}
+                    />
+                  </div>
                 </div>
 
                 {scheduleTargets.map(({ platform: targetPlatform }) => {

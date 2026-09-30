@@ -2194,10 +2194,14 @@ function DraftRow(props: DraftRowProps) {
   // Default to the user's preferred / analytics-optimal time for this platform.
   const [time, setTime] = useState<string>(defaultScheduleTime);
   const [scheduling, setScheduling] = useState(false);
+  const [caption, setCaption] = useState(draft.message ?? '');
 
   useEffect(() => {
     setTime(defaultScheduleTime);
   }, [defaultScheduleTime, draft.draftId]);
+  useEffect(() => {
+    setCaption(draft.message ?? '');
+  }, [draft.draftId, draft.message]);
 
   // First regen is free; everything after costs CAMPAIGN_REGENERATE_CREDIT.
   // Surface this in the button label so the user knows exactly what they're
@@ -2215,6 +2219,10 @@ function DraftRow(props: DraftRowProps) {
 
   const handleSchedule = useCallback(async () => {
     if (scheduling) return;
+    if (!caption.trim()) {
+      showErrorToast('Add a caption before scheduling.');
+      return;
+    }
     if (!date || !time) {
       showErrorToast('Pick a date and time first.');
       return;
@@ -2233,6 +2241,7 @@ function DraftRow(props: DraftRowProps) {
       await scheduleCampaignDraftApi({
         draftId: draft.draftId,
         scheduleAt: iso.toISOString(),
+        message: caption,
       });
       toast.success('Draft scheduled.');
       onScheduled();
@@ -2241,7 +2250,7 @@ function DraftRow(props: DraftRowProps) {
     } finally {
       setScheduling(false);
     }
-  }, [date, draft.draftId, onScheduled, scheduling, time]);
+  }, [caption, date, draft.draftId, onScheduled, scheduling, time]);
 
   const previewAlt = draft.eventName || draft.campaignTheme || 'Campaign draft';
 
@@ -2340,10 +2349,28 @@ function DraftRow(props: DraftRowProps) {
           </p>
         </div>
 
-        {draft.message && (
-          <p className="text-[11px] text-secondary line-clamp-3">
-            {draft.message}
-          </p>
+        {isScheduled || isUserRemoved ? (
+          draft.message && (
+            <p className="text-[11px] text-secondary line-clamp-3">
+              {draft.message}
+            </p>
+          )
+        ) : (
+          <div>
+            <label
+              htmlFor={`campaign-caption-${draft.draftId}`}
+              className="text-[11px] font-semibold text-secondary"
+            >
+              Caption
+            </label>
+            <textarea
+              id={`campaign-caption-${draft.draftId}`}
+              value={caption}
+              onChange={(event) => setCaption(event.target.value)}
+              rows={4}
+              className="mt-1 w-full resize-y rounded-lg border border-default bg-element p-2 text-xs text-default focus:border-primary-purple focus:outline-none"
+            />
+          </div>
         )}
 
         {isUserRemoved ? (

@@ -12,6 +12,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type DragEvent,
@@ -142,6 +143,7 @@ export default function PostSchedulePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const appliedPrefillAt = useRef<number | null>(null);
   const [selectedMediaFile, setSelectedMediaFile] = useState<File | null>(null);
   const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
   const [captionGenerating, setCaptionGenerating] = useState(false);
@@ -488,6 +490,7 @@ export default function PostSchedulePage() {
   // schedule slots, and selected platforms.
   const resetSchedulerForm = () => {
     clearPostSchedulerPrefill();
+    appliedPrefillAt.current = null;
     setSelectedMediaFile(null);
     setSelectedImageFiles([]);
     setPrefilledImageUrl('');
@@ -557,8 +560,7 @@ export default function PostSchedulePage() {
       if (isPrefilledFlow) {
         const post = prefilledPosts.find((p) => p.platform === platform);
         if (!post) return false;
-        const captionOk =
-          post.message.trim().length > 0 || message.trim().length > 0;
+        const captionOk = post.message.trim().length > 0;
         if (!captionOk) return false;
         const mediaOk =
           post.mediaType === 'carousel'
@@ -636,7 +638,8 @@ export default function PostSchedulePage() {
     // video slides. Cleared only after a successful schedule via resetSchedulerForm.
     const payload =
       peekPostSchedulerPrefill() as PostSchedulerPrefillPayload | null;
-    if (!payload) return;
+    if (!payload || appliedPrefillAt.current === payload.createdAt) return;
+    appliedPrefillAt.current = payload.createdAt;
 
     const parsedPosts = Array.isArray(payload.posts)
       ? payload.posts
@@ -881,10 +884,9 @@ export default function PostSchedulePage() {
                   imageFilePath: post.imageFilePath,
                   imageUrl: post.imageUrl,
                 }),
-          // In the single-prefill flow the textarea is the source of truth.
-          // The gallery caption is only the initial value and must not override
-          // an edit made in the scheduler.
-          message: isMultiPrefilledSchedule ? post.message : message,
+          // The imported post is the source of truth for both the editor and
+          // the schedule request, including single-post prefills.
+          message: post.message,
           time: scheduledAtIso,
           platform: post.platform,
           ...(post.source ? { source: post.source } : {}),
@@ -1220,8 +1222,21 @@ export default function PostSchedulePage() {
                 </label>
                 <textarea
                   id="schedule-message"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  value={
+                    isSinglePrefilledSchedule
+                      ? singlePrefilledPost?.message ?? ''
+                      : message
+                  }
+                  onChange={(e) => {
+                    const nextMessage = e.target.value;
+                    if (isSinglePrefilledSchedule) {
+                      setPrefilledPosts((current) =>
+                        current.map((post) => ({ ...post, message: nextMessage }))
+                      );
+                    } else {
+                      setMessage(nextMessage);
+                    }
+                  }}
                   placeholder={
                     hasMedia
                       ? 'Add a captivating caption...'

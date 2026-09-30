@@ -252,6 +252,7 @@ export async function scheduleCampaignDraftApi(params: {
   draftId: string;
   /** ISO-8601 string. Server treats `<now` as an error. */
   scheduleAt: string;
+  message?: string;
 }): Promise<ScheduleCampaignDraftResponse> {
   const response = await axiosClient.post<{
     success: boolean;
@@ -259,6 +260,7 @@ export async function scheduleCampaignDraftApi(params: {
     message?: string;
   }>(`/api/v1/campaign/drafts/${encodeURIComponent(params.draftId)}/schedule`, {
     scheduleAt: params.scheduleAt,
+    ...(params.message !== undefined ? { message: params.message } : {}),
   });
   return response.data.data;
 }
