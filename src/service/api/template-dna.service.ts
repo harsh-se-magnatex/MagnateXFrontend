@@ -4,6 +4,9 @@ export type TemplateDnaPlatform = 'brand';
 export type DesignFinding = { value: any; confidence: 'high' | 'medium' | 'low'; state: 'observed' | 'not_observed' | 'inconsistent' | 'uncertain'; evidenceImageIds: string[]; observedRange: { min: number; max: number } | null };
 export type TemplateDesign = Record<string, any>;
 export type CompatibleVisualConfiguration = { schema: Record<string, any>; imageModifiers: string; imageAvoid: string };
+export type TemplateDnaPreview = {
+  fields: { font: string; style: string; fontColor: string; fontSize: string };
+};
 export type TemplateDnaProfile = {
   schemaVersion: 1 | 2 | 3; revision: number; platform: TemplateDnaPlatform; enabled: boolean;
   status: 'idle' | 'needs_reextraction' | 'extracting' | 'ready' | 'failed';
@@ -13,6 +16,7 @@ export type TemplateDnaProfile = {
   typography: { value: any }; colors: { value: any }; composition: { value: any }; background: { value: any }; imagery: { value: any }; graphicElements: { value: any }; branding: { value: any }; onImageCopyPattern: { value: any }; visualCharacter: { value: any };
   layoutVariants: Array<{ id: string; name: string; suitableUse: string | null; compositionOverrides: string | null; styleOverrides: string | null; supportingImageIds: string[]; overrides?: TemplateDesign }>;
   extractionModel: string | null; updatedAt: string; extractedAt: string | null; lastError?: string | null;
+  preview?: TemplateDnaPreview | null;
 };
 export type VisualStyleStatus = { source: 'brand' | 'template_dna'; platforms: Array<{ platform: string; source: 'brand' | 'template_dna'; fallbackReason: string | null }> };
 export type GeneratedVisualStyle = {
