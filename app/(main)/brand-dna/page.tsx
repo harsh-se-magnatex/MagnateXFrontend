@@ -717,6 +717,12 @@ export default function BusinessProfilePage() {
         <p className="mt-2 text-base text-secondary max-w-2xl">
           Manage your business details here.
         </p>
+        <Link
+          href="/onBoarding?redo=1"
+          className="mt-4 inline-flex rounded-full border border-default px-4 py-2 text-sm font-semibold text-default hover:bg-hover"
+        >
+          Redo onboarding
+        </Link>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">

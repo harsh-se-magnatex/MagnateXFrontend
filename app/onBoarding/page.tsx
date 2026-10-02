@@ -32,6 +32,9 @@ import { scrapeUrl, extractCatalogPdf } from '@/src/service/api/scrape';
 import {
   getUserAIenginePageContext,
   getAiGeneratedLogos,
+  getProfile,
+  updateProfile,
+  useAiGeneratedLogo as saveAiGeneratedLogo,
   onBoardUser,
   suggestOnboardingBrandCopy,
   uploadLogo,
@@ -442,6 +445,7 @@ export default function OnboardingMenu() {
   const [aiLogoSectionOpen, setAiLogoSectionOpen] = useState(false);
   const aiLogoHydratedRef = useRef(false);
   const router = useRouter();
+  const [redoOnboarding, setRedoOnboarding] = useState(false);
 
   useEffect(() => {
     formDataRef.current = formData;
@@ -472,7 +476,23 @@ export default function OnboardingMenu() {
       try {
         const status = await getUserAIenginePageContext();
         if (!cancelled && status?.data?.onBoarded === true) {
-          router.replace('/home');
+          if (new URLSearchParams(window.location.search).get('redo') === '1') {
+            setRedoOnboarding(true);
+            const response = await getProfile();
+            if (cancelled) return;
+            const profile = response.data?.profile || {};
+            setFormData((prev) => {
+              const next = { ...prev };
+              for (const key of Object.keys(prev)) {
+                if (profile[key] !== undefined) next[key] = profile[key];
+              }
+              return next;
+            });
+            applyStoredPhone(profile.businesscontact);
+            if (typeof profile.logo === 'string') setPreview(profile.logo);
+          } else {
+            router.replace('/home');
+          }
         }
       } catch {
         // stay on onboarding if status check fails
@@ -653,16 +673,17 @@ export default function OnboardingMenu() {
 
       // Guard before any writes — already-onboarded users must not save logo/profile.
       const status = await getUserAIenginePageContext();
-      if (status?.data?.onBoarded === true) {
+      if (status?.data?.onBoarded === true && !redoOnboarding) {
         showErrorToast('You already completed onboarding.');
         router.replace('/home');
         return;
       }
 
       if (formData.logo instanceof File || typeof formData.logo === 'string') {
-        const uploadRes = await uploadLogo(formData.logo, {
-          context: 'onboarding',
-        });
+        const isGeneratedLogo = aiLogoPicks.some((pick) => pick.url === formData.logo);
+        const uploadRes = isGeneratedLogo
+          ? await saveAiGeneratedLogo(String(formData.logo))
+          : await uploadLogo(formData.logo, redoOnboarding ? undefined : { context: 'onboarding' });
         const uploadedUrl = (uploadRes as { data?: { url?: string } })?.data
           ?.url;
         if (uploadedUrl) dataToSave.logo = uploadedUrl;
@@ -686,11 +707,13 @@ export default function OnboardingMenu() {
         }
       }
 
-      const response = await onBoardUser(dataToSave);
+      const response = redoOnboarding
+        ? await updateProfile(dataToSave)
+        : await onBoardUser(dataToSave);
       if (response.success) {
         applyStoredPhone(dataToSave.businesscontact);
         useTourState.getState().markOnboardingComplete();
-        router.push('/brand-memory');
+        router.push(redoOnboarding ? '/brand-memory?redo=1' : '/brand-memory');
       }
     } catch (error) {
       showErrorToast('Failed to OnBoard. Please Try Again Later.');

@@ -134,11 +134,22 @@ export default function BrandMemoryPage() {
       const raw = (res as { data?: { memoryLayer?: unknown } }).data
         ?.memoryLayer;
       const ml = parseMemory(raw);
-      if (ml?.status === 'complete' || ml?.status === 'skipped') {
+      const redo = new URLSearchParams(window.location.search).get('redo') === '1';
+      if (!redo && (ml?.status === 'complete' || ml?.status === 'skipped')) {
         useTourState.getState().queuePlatformTour();
         router.replace('/home');
         return;
       }
+      const restoredDraft: Record<string, DraftRow> = {};
+      for (const answer of ml?.answers ?? []) {
+        restoredDraft[answer.questionId] = answer.skipped
+          ? { skipped: true }
+          : Array.isArray(answer.value)
+            ? { skipped: false, multi: answer.value }
+            : { skipped: false, text: String(answer.value ?? '') };
+      }
+      setDraft(restoredDraft);
+      setBrandPhotosMeta(ml?.brandPhotos ?? []);
       if (!ml?.questions?.length) {
         const gen = await generateMemoryLayerQuestions();
         if (!isEnvelopeOk(gen as { success?: boolean })) {
@@ -156,7 +167,7 @@ export default function BrandMemoryPage() {
         setBrandPhotosMeta(ml.brandPhotos ?? []);
       }
     } catch (e) {
-      showErrorToast('Something went wrong. Please Try Again Later.');
+      showCaughtErrorToast(e, 'Failed to load brand questions. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -806,11 +817,13 @@ export default function BrandMemoryPage() {
     return <PageLoadingState className="min-h-[60vh] mx-auto" />;
   }
 
-  if (!questions.length) {
+  if (!questions.length && phase === 'qa') {
     return (
       <div className="min-h-[60vh] flex mx-auto w-full items-center justify-center">
         <div className={panelClass}>
           <p className="text-center text-tertiary">No questions available.</p>
+          <button type="button" onClick={() => void load()} className="mt-4 rounded-full border border-default px-4 py-2">Retry questions</button>
+          <button type="button" onClick={() => setPhase('photos')} className="mt-4 rounded-full border border-default px-4 py-2">Continue to photos</button>
           <button
             type="button"
             className="mt-4 w-full py-2 rounded-full bg-linear-to-r from-[#00D1FF] to-[#6C5CE7] text-white"

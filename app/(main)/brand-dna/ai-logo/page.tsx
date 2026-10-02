@@ -52,8 +52,10 @@ export default function AILogoPage() {
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [freeRemaining, setFreeRemaining] = useState(0);
 
-  const canUseFeature = billing?.activePlan !== 'non-subscribed';
+  const subscribed = Boolean(billing?.activePlan && billing.activePlan !== 'non-subscribed');
+  const canUseFeature = subscribed || freeRemaining > 0;
   const generationLimitReached = picks.length >= MAX_AI_LOGO_PICKS;
 
   useEffect(() => {
@@ -108,6 +110,8 @@ export default function AILogoPage() {
       const nextPicks = response?.data?.picks || [];
       const nextUrls = response?.data?.urls || [];
       const nextStory = response?.data?.designStory;
+      if (typeof response?.data?.freeRemaining === 'number') setFreeRemaining(response.data.freeRemaining);
+      setSelectedIndex(null);
       if (!nextPicks.length) throw new Error('No logo pick was generated.');
       // Keep the white-canvas data URL in `picks` for display. Refetching
       // storage URLs right away caused a white→dark flash when the gallery
@@ -168,6 +172,7 @@ export default function AILogoPage() {
   async function handleGetAiGeneratedLogos() {
     const response = await getAiGeneratedLogos();
     const logos = response?.data?.logos || [];
+    setFreeRemaining(response?.data?.freeRemaining ?? Math.max(0, 2 - (response?.data?.onboardingAiLogoGenerations ?? 0)));
     const sorted = [...logos].sort(
       (a, b) => getCreatedAtMs(b.createdAt) - getCreatedAtMs(a.createdAt)
     );
@@ -178,8 +183,11 @@ export default function AILogoPage() {
   }
 
   useEffect(() => {
-    void handleGetAiGeneratedLogos();
-  }, []);
+    if (authLoading || !user?.uid) return;
+    void handleGetAiGeneratedLogos().catch((error) => {
+      showErrorToast(error instanceof Error ? error.message : 'Failed to load saved logos.');
+    });
+  }, [authLoading, user?.uid]);
 
   if (authLoading || billingLoading || initializing) {
     return <PageLoadingState message="Loading AI logo workspace..." />;
@@ -189,23 +197,6 @@ export default function AILogoPage() {
     return (
       <div className="mx-auto max-w-lg text-center py-20">
         <p className="text-default">Please sign in to continue.</p>
-      </div>
-    );
-  }
-
-  if (!canUseFeature) {
-    return (
-      <div className="mx-auto max-w-xl py-16 text-center">
-        <h1 className="text-page-title text-default">AI Generated Logo</h1>
-        <p className="mt-3 text-secondary">
-          This feature is available for subscribed plans only.
-        </p>
-        <Link
-          href="/settings/billings"
-          className="mt-6 inline-flex rounded-full btn-brand-fill px-5 py-2.5 font-semibold"
-        >
-          Upgrade plan
-        </Link>
       </div>
     );
   }
@@ -235,7 +226,7 @@ export default function AILogoPage() {
             {billing?.credits ?? 0}
           </span>
           <span className="mt-1 text-xs font-medium text-success">
-            1 credit deducted per logo generation
+            {freeRemaining > 0 ? `${freeRemaining} free generations remaining` : '1 credit deducted per logo generation'}
           </span>
         </div>
       </header>
@@ -269,6 +260,7 @@ export default function AILogoPage() {
               onClick={() => void runGeneration()}
               disabled={
                 generating ||
+                !canUseFeature ||
                 generationLimitReached ||
                 !basics.businessName ||
                 !basics.industry
@@ -292,9 +284,10 @@ export default function AILogoPage() {
               )}
             </button>
             <p className="text-center text-xs font-medium text-secondary">
-              {picks.length}/{MAX_AI_LOGO_PICKS} logo options generated. 1
-              credit is deducted per generation.
+              {picks.length}/{MAX_AI_LOGO_PICKS} logo options generated.{' '}
+              {freeRemaining > 0 ? `${freeRemaining} free generations remaining.` : 'Additional generations require a subscription and 1 credit.'}
             </p>
+            {!canUseFeature && <Link href="/settings/billings" className="block text-center text-sm text-preview">Subscribe for more generations</Link>}
             <button
               type="button"
               onClick={() => void handleUseSelectedLogo()}

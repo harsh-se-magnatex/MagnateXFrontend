@@ -671,6 +671,7 @@ export const generateAiLogoPicks = async (
       designStory?: string;
       generatedAt: string;
       remaining?: number;
+      freeRemaining?: number;
     }>
   >('/api/v1/user/ai-logo/generate', {
     requirements,
@@ -693,6 +694,7 @@ export const getAiGeneratedLogos = async () => {
       logos: { url: string; createdAt: string; designStory?: string }[];
       totalGeneratedLogos?: number;
       onboardingAiLogoGenerations?: number;
+      freeRemaining?: number;
     }>
   >('/api/v1/user/ai-logo/generated');
 };
