@@ -94,6 +94,7 @@ function formatActivePlanLabel(activePlan: string | null | undefined): string {
 
 const workspaceNavIcons: Record<WorkspaceNavHref, typeof Brain> = {
   [WORKSPACE_NAV_HREFS.quickCreate]: Brain,
+  [WORKSPACE_NAV_HREFS.marketingScenes]: ImagePlus,
   [WORKSPACE_NAV_HREFS.productAdvert]: ImagePlus,
   [WORKSPACE_NAV_HREFS.videoGeneration]: Video,
   [WORKSPACE_NAV_HREFS.festivePost]: CalendarSync,

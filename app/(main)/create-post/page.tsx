@@ -83,6 +83,7 @@ import {
   type ScheduledItem,
 } from '@/src/stores/generatedState';
 import { consumeAssistantPrefill } from '@/lib/assistant-prefill-store';
+import { MarketingSceneControls } from '@/components/marketing-scene-controls';
 import { useTourDemo } from '@/src/stores/tourState';
 import {
   setPostSchedulerPrefill,
@@ -230,6 +231,7 @@ export default function AIContentPage() {
     ? fmtTimestamp(planExpiresAt)
     : '—';
   const hasPrompt = prompt.trim().length > 0;
+  const [imageModel, setImageModel] = useState('default');
 
   const hasSelectablePlatforms = useMemo(
     () => isTourDemo || !!firstEnabledPlatform(selectedAccounts),
@@ -659,6 +661,7 @@ export default function AIContentPage() {
         prompt: prompt.trim(),
         platforms: genPlatforms,
         image: selectedImage,
+        imageModel,
       });
 
       if (!response.accepted) {
@@ -1046,6 +1049,8 @@ export default function AIContentPage() {
                 ) : null}
               </>
             ) : null}
+
+            {createMode === 'image' && <MarketingSceneControls showScenes={false} model={imageModel} onModelChange={setImageModel} disabled={isGenerating} hasImage={hasImage} />}
 
             <div id="tour-qc-prompt">
               <label

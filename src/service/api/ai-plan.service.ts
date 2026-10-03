@@ -2,6 +2,7 @@ import axiosClient from '@/lib/axios';
 
 export type AIPlanPlatform = 'facebook' | 'instagram' | 'linkedin';
 export type AIPlanGeneratedKind =
+  | 'marketing-visual'
   | 'campaign'
   | 'ai-engine'
   | 'quick-create'
@@ -11,6 +12,7 @@ export type AIPlanGeneratedKind =
   | 'festive'
   | 'other';
 export type AIPlanCell = {
+  marketingTopic?: string;
   executionEntitlement?: 'example' | 'trial_activity' | 'paid';
   id: string;
   date: string;
@@ -71,6 +73,7 @@ export type AIPlanUpcomingItem = {
     | 'festival'
     | 'ai-engine'
     | 'quick-create'
+    | 'marketing-visual'
     | 'campaign'
     | 'video-generation'
     | 'carousel'
@@ -185,6 +188,7 @@ export function generatedStatus(value: string): AIPlanGeneratedItem['status'] {
 function upcomingKind(value: string): AIPlanUpcomingItem['kind'] {
   if (value === 'video') return 'video-generation';
   if (
+    value === 'marketing-visual' ||
     value === 'campaign' ||
     value === 'ai-engine' ||
     value === 'quick-create' ||
@@ -198,7 +202,7 @@ function upcomingKind(value: string): AIPlanUpcomingItem['kind'] {
 function displayedCellKind(cell: AIPlanCell): AIPlanUpcomingItem['kind'] {
   const kind = upcomingKind(cell.kind);
   if (
-    (kind === 'quick-create' || kind === 'video-generation') &&
+    (kind === 'quick-create' || kind === 'video-generation' || kind === 'marketing-visual') &&
     cell.runtimeFallback?.trim().toLowerCase().startsWith('ai-engine')
   ) {
     return 'ai-engine';
@@ -213,6 +217,7 @@ function generatedKind(item: RawAIPlanContent, cell: AIPlanCell): AIPlanGenerate
     .trim()
     .toLowerCase()
     .replace(/_/g, '-');
+  if (cell.kind === 'marketing-visual' && generatedOrigin(item, cell) === 'auto' && raw === 'ai-engine') return displayedCellKind(cell) as AIPlanGeneratedKind;
   if (item.source === 'ai_plan') return displayedCellKind(cell) as AIPlanGeneratedKind;
   if (raw.includes('campaign')) return 'campaign';
   if (raw === 'ai-engine' || raw === 'bulk-create' || raw === 'batch-generation') return 'ai-engine';
@@ -349,7 +354,7 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
                     cell.kind === 'campaign'
                       ? cell.campaign?.title ||
                         `Campaigns · Day ${cell.campaign?.dayNumber ?? ''}`.trim()
-                      : displayedCellKind(cell),
+                      : displayedCellKind(cell) === 'marketing-visual' ? `Marketing Visuals · ${(cell.marketingTopic ?? '').replace(/-/g, ' ')}` : displayedCellKind(cell),
                   note: cell.status === 'missed' ? 'Trial activity missed: setup was completed after its scheduled slot.' : cell.reason,
                   status: cell.executionEntitlement === 'example' && cell.kind !== 'empty' ? 'Locked example' : cell.status,
                   cellId: cell.id,
@@ -418,6 +423,7 @@ function kindLabelFromCellKind(kind: string): string {
   if (kind === 'quick-create') return 'Create Post generated';
   if (kind === 'ai-engine') return 'AI Creator generated';
   if (kind === 'carousel') return 'Carousel generated';
+  if (kind === 'marketing-visual') return 'Marketing Visual generated';
   if (kind === 'campaign') return 'Campaign generated';
   return 'Generated';
 }
@@ -452,7 +458,7 @@ export type AIPlanForceRunResult = {
   platform: AIPlanPlatform;
   calendarKind: string;
   enqueuedCount: number;
-  outcomes: Array<{ kind: string; reason?: string; strategy?: 'quick-create' | 'ai-engine' }>;
+  outcomes: Array<{ kind: string; reason?: string; strategy?: 'quick-create' | 'ai-engine' | 'marketing-visual' }>;
 };
 export async function forceRunAIPlanApi(args: {
   date: string;

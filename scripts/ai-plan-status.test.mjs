@@ -122,3 +122,21 @@ test('Create Post without a brief appears as AI Creator while queued and after c
   assert.equal(completed.days[0].byPlatform.facebook.upcoming.length, 0);
   assert.equal(locks.isForceRunTargetComplete(completed.days, target), true);
 });
+
+test('marketing visuals retain their topic and do not relabel manual posts', async () => {
+  const cell = { id: 'marketing-cell', date: '2026-10-10', platform: 'facebook', kind: 'marketing-visual', marketingTopic: 'magazine-spread', status: 'planned' };
+  const raw = { accessPhase: 'paid', aiPlan: { status: 'calendar_ready', selectedPlatforms: ['facebook'] }, plan: { platformLimit: 1 }, connectionState: {}, cycle: { id: 'paid-1' }, cells: [cell], content: [] };
+  const api = loadTypescript('../src/service/api/ai-plan.service.ts', { '@/lib/axios': { get: async () => ({ data: { data: raw } }) } });
+  let response = await api.getAIPlanApi();
+  assert.equal(response.days[0].byPlatform.facebook.upcoming[0].kind, 'marketing-visual');
+  assert.match(response.days[0].byPlatform.facebook.upcoming[0].label, /magazine spread/);
+  cell.status = 'done';
+  raw.content = [{ id: 'auto', platform: 'facebook', calendarDate: cell.date, GeneratedBy: 'ai-engine', generationTrigger: 'daily-cron', lifecycle: 'scheduled' }, { id: 'manual', platform: 'facebook', calendarDate: cell.date, GeneratedBy: 'ai-engine', lifecycle: 'scheduled' }];
+  response = await api.getAIPlanApi();
+  const generated = response.days[0].byPlatform.facebook.generated;
+  assert.equal(generated.find(item => item.contentId === 'auto').kind, 'marketing-visual');
+  assert.equal(generated.find(item => item.contentId === 'manual').kind, 'ai-engine');
+  cell.runtimeFallback = 'ai-engine';
+  response = await api.getAIPlanApi();
+  assert.equal(response.days[0].byPlatform.facebook.generated.find(item => item.contentId === 'auto').kind, 'ai-engine');
+});

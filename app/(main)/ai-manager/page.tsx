@@ -47,6 +47,8 @@ const PLATFORM_SHORT: Record<AIPlanPlatform, string> = {
 
 function kindLabel(kind: AIPlanGeneratedKind | string): string {
   switch (kind) {
+    case 'marketing-visual':
+      return 'Marketing Visuals';
     case 'campaign':
       return workspacePageTitle(WORKSPACE_NAV_HREFS.createCampaign);
     case 'ai-engine':
@@ -115,6 +117,8 @@ function isTerminalGeneratedStatus(
 
 function cellToneClass(kind: string): string {
   switch (kind) {
+    case 'marketing-visual':
+      return 'border-fuchsia-300 bg-fuchsia-50 dark:border-fuchsia-800 dark:bg-fuchsia-950/30';
     case 'campaign':
       return 'bg-success text-success';
     case 'festival':
@@ -181,6 +185,7 @@ type GlobalForceRunProgress = {
 /** Kinds that Force Run can enqueue (including campaign). */
 function canForceRunKind(kind: string): boolean {
   return (
+    kind === 'marketing-visual' ||
     kind === 'campaign' ||
     kind === 'ai-engine' ||
     kind === 'quick-create' ||
@@ -192,7 +197,7 @@ function canForceRunKind(kind: string): boolean {
 }
 
 function isCreatePostKind(kind: string): boolean {
-  return kind === 'quick-create' || kind === 'ai-engine';
+  return kind === 'marketing-visual' || kind === 'quick-create' || kind === 'ai-engine';
 }
 
 function createPostBrief(cell?: AIPlanCell): string | undefined {
@@ -216,7 +221,7 @@ function hasGeneratedCounterpart(
   const matchingKinds =
     upcomingKind === 'festival'
       ? ['festive']
-      : upcomingKind === 'quick-create' || upcomingKind === 'video-generation'
+      : upcomingKind === 'marketing-visual' || upcomingKind === 'quick-create' || upcomingKind === 'video-generation'
         ? [upcomingKind, 'ai-engine']
         : [upcomingKind];
 
@@ -308,7 +313,9 @@ function entriesForSlot(args: {
       return {
         kind: item.kind,
         label:
-          item.kind === 'campaign' && suppliedLabel
+          item.kind === 'marketing-visual' && suppliedLabel
+            ? suppliedLabel
+            : item.kind === 'campaign' && suppliedLabel
             ? suppliedLabel.toLowerCase().includes('campaign')
               ? suppliedLabel
               : `Campaign · ${suppliedLabel}`
@@ -765,7 +772,7 @@ function AIPlanSheet({
 }
 
 const LEGEND: Array<{ kind: string; label: string }> = [
-  { kind: 'campaign', label: kindLabel('campaign') },
+  { kind: 'marketing-visual', label: kindLabel('marketing-visual') },
   { kind: 'ai-engine', label: kindLabel('ai-engine') },
   { kind: 'quick-create', label: kindLabel('quick-create') },
   { kind: 'video-generation', label: kindLabel('video-generation') },
@@ -976,7 +983,7 @@ export default function AIPlanPage() {
           (outcome) =>
             outcome.kind === 'enqueued-ai-engine' &&
             outcome.strategy === 'ai-engine' &&
-            (kind === 'quick-create' || kind === 'video-generation')
+            (kind === 'marketing-visual' || kind === 'quick-create' || kind === 'video-generation')
         );
         toast.success(
           kind === 'video-generation'

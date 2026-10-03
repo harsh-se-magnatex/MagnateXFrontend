@@ -1,0 +1,518 @@
+{
+  "global": [
+    {
+      "id": "light-state",
+      "label": "Light state",
+      "values": [
+        "dawn",
+        "midday hard",
+        "golden hour",
+        "blue hour / dusk",
+        "night"
+      ],
+      "default": "golden hour"
+    },
+    {
+      "id": "atmosphere",
+      "label": "Atmosphere",
+      "values": [
+        "clear",
+        "overcast flat",
+        "rain-wet",
+        "haze / smog",
+        "post-rain puddles",
+        "dust-golden"
+      ],
+      "default": "clear"
+    },
+    {
+      "id": "colour-grade",
+      "label": "Colour grade",
+      "values": [
+        "neutral commercial",
+        "warm film",
+        "cool cinematic",
+        "high-contrast editorial",
+        "faded pastel",
+        "high-chroma pop"
+      ],
+      "default": "neutral commercial"
+    },
+    {
+      "id": "camera",
+      "label": "Camera",
+      "values": [
+        "eye-level straight",
+        "low hero angle",
+        "three-quarter skew",
+        "long-lens compressed",
+        "tight crop on surface"
+      ],
+      "default": "eye-level straight"
+    },
+    {
+      "id": "region-flavour",
+      "label": "Region flavour",
+      "values": [
+        "Indian metro",
+        "European old town",
+        "modern East Asian",
+        "American street",
+        "Gulf luxury",
+        "neutral/anonymous"
+      ],
+      "default": "Indian metro"
+    },
+    {
+      "id": "setting-density",
+      "label": "Setting density",
+      "values": [
+        "empty / minimal",
+        "light activity",
+        "busy urban",
+        "premium district",
+        "raw industrial"
+      ],
+      "default": "empty / minimal"
+    }
+  ],
+  "topics": [
+    {
+      "id": "billboard",
+      "label": "Billboard",
+      "axes": [
+        {
+          "id": "board-format",
+          "label": "Board format",
+          "values": [
+            "16:9 horizontal",
+            "3:1 bulletin",
+            "portrait vertical poster",
+            "building mesh wrap",
+            "LED digital",
+            "rooftop unipole",
+            "hoarding cluster"
+          ],
+          "default": "portrait vertical poster"
+        },
+        {
+          "id": "finish",
+          "label": "Finish",
+          "values": [
+            "painted matte",
+            "pasted paper with visible seams",
+            "backlit vinyl",
+            "LED emissive",
+            "mesh over scaffolding",
+            "sun-weathered"
+          ],
+          "default": "painted matte"
+        },
+        {
+          "id": "mounting",
+          "label": "Mounting",
+          "values": [
+            "highway unipole",
+            "rooftop",
+            "building side",
+            "construction hoarding",
+            "plaza freestanding",
+            "over a flyover"
+          ],
+          "default": "highway unipole"
+        },
+        {
+          "id": "occluder",
+          "label": "Occluder",
+          "values": [
+            "lamppost",
+            "traffic signal",
+            "power lines",
+            "tree canopy",
+            "passing bus roof",
+            "scaffolding pole"
+          ],
+          "default": "lamppost"
+        },
+        {
+          "id": "viewing-distance",
+          "label": "Viewing distance",
+          "values": [
+            "across the road",
+            "mid-block",
+            "long-lens compressed",
+            "vehicle POV",
+            "pedestrian looking up"
+          ],
+          "default": "across the road"
+        },
+        {
+          "id": "neighbouring-signage",
+          "label": "Neighbouring signage",
+          "values": [
+            "isolated",
+            "one neighbour board",
+            "cluster of three",
+            "dense Times-Square wall",
+            "blank wall only"
+          ],
+          "default": "isolated"
+        }
+      ]
+    },
+    {
+      "id": "transit-lightbox",
+      "label": "Transit lightbox",
+      "axes": [
+        {
+          "id": "location",
+          "label": "Location",
+          "values": [
+            "bus shelter",
+            "metro platform",
+            "metro corridor",
+            "airport walkway",
+            "mall atrium",
+            "pedestrian underpass"
+          ],
+          "default": "bus shelter"
+        },
+        {
+          "id": "panel-size",
+          "label": "Panel size",
+          "values": [
+            "6-sheet portrait",
+            "tall narrow",
+            "double-wide landscape",
+            "curved corridor panel",
+            "freestanding totem"
+          ],
+          "default": "6-sheet portrait"
+        },
+        {
+          "id": "reflection-content",
+          "label": "Reflection content",
+          "values": [
+            "street scene",
+            "passing silhouette",
+            "opposite platform",
+            "train motion blur",
+            "rain beads",
+            "near-empty void"
+          ],
+          "default": "street scene"
+        },
+        {
+          "id": "backlight-temp",
+          "label": "Backlight temp",
+          "values": [
+            "cool white",
+            "neutral",
+            "warm",
+            "slightly green fluorescent",
+            "uneven with hotspot"
+          ],
+          "default": "slightly green fluorescent"
+        },
+        {
+          "id": "foot-traffic",
+          "label": "Foot traffic",
+          "values": [
+            "empty",
+            "one distant figure",
+            "silhouette crossing frame",
+            "blurred crowd",
+            "seated waiting figure"
+          ],
+          "default": "empty"
+        },
+        {
+          "id": "glass-state",
+          "label": "Glass state",
+          "values": [
+            "dry",
+            "rain on glass",
+            "condensation",
+            "dusty",
+            "post-rain streaks"
+          ],
+          "default": "dry"
+        }
+      ]
+    },
+    {
+      "id": "magazine-spread",
+      "label": "Magazine spread",
+      "axes": [
+        {
+          "id": "under-surface",
+          "label": "Under-surface",
+          "values": [
+            "white marble",
+            "dark walnut",
+            "linen",
+            "concrete",
+            "rattan / cane",
+            "smoked glass"
+          ],
+          "default": "white marble"
+        },
+        {
+          "id": "prop-set",
+          "label": "Prop set",
+          "values": [
+            "none",
+            "coffee cup",
+            "reading glasses",
+            "ring dish with jewellery",
+            "dried flowers",
+            "fabric swatch",
+            "pen and notebook"
+          ],
+          "default": "ring dish with jewellery"
+        },
+        {
+          "id": "page-state",
+          "label": "Page state",
+          "values": [
+            "flat open",
+            "strong gutter curve",
+            "edge lifting",
+            "corner weighted",
+            "mid-turn"
+          ],
+          "default": "flat open"
+        },
+        {
+          "id": "light-direction",
+          "label": "Light direction",
+          "values": [
+            "window left",
+            "window right",
+            "overhead soft",
+            "raking low side",
+            "diffused overcast"
+          ],
+          "default": "window left"
+        },
+        {
+          "id": "stock-finish",
+          "label": "Stock finish",
+          "values": [
+            "high-gloss coated",
+            "satin",
+            "matte uncoated",
+            "textured art paper",
+            "newsprint"
+          ],
+          "default": "high-gloss coated"
+        },
+        {
+          "id": "scene-camera",
+          "label": "Camera",
+          "values": [
+            "flat overhead",
+            "20° tilt",
+            "45° angle",
+            "close crop on half page",
+            "wide with surroundings"
+          ],
+          "default": "flat overhead"
+        }
+      ]
+    },
+    {
+      "id": "storefront-window",
+      "label": "Storefront window",
+      "axes": [
+        {
+          "id": "shopfront-style",
+          "label": "Shopfront style",
+          "values": [
+            "modern minimal glass",
+            "traditional wood-framed",
+            "mall unit",
+            "heritage arched",
+            "industrial black steel",
+            "Indian high-street"
+          ],
+          "default": "Indian high-street"
+        },
+        {
+          "id": "display-depth",
+          "label": "Display depth",
+          "values": [
+            "shallow boxed",
+            "deep into interior",
+            "mirrored back",
+            "curtained backdrop",
+            "open plan"
+          ],
+          "default": "shallow boxed"
+        },
+        {
+          "id": "vinyl-treatment",
+          "label": "Vinyl treatment",
+          "values": [
+            "frosted etch",
+            "gold leaf lettering",
+            "white cut vinyl",
+            "backlit channel letters",
+            "hand-painted signwriting",
+            "neon"
+          ],
+          "default": "gold leaf lettering"
+        },
+        {
+          "id": "interior-lighting",
+          "label": "Interior lighting",
+          "values": [
+            "warm spots",
+            "bright even",
+            "single dramatic spot",
+            "colour-washed",
+            "daylight-balanced"
+          ],
+          "default": "warm spots"
+        },
+        {
+          "id": "street-reflection",
+          "label": "Street reflection",
+          "values": [
+            "empty street",
+            "parked car",
+            "opposite shopfront",
+            "passing figure",
+            "tree canopy",
+            "blank overcast sky"
+          ],
+          "default": "empty street"
+        },
+        {
+          "id": "time-state",
+          "label": "Time / state",
+          "values": [
+            "open daytime",
+            "open evening lit",
+            "dusk with interiors glowing",
+            "early morning quiet",
+            "rain"
+          ],
+          "default": "open daytime"
+        }
+      ]
+    },
+    {
+      "id": "scale-stunt",
+      "label": "Scale stunt",
+      "axes": [
+        {
+          "id": "installation-mode",
+          "label": "Installation mode",
+          "values": [
+            "suspended between buildings",
+            "plaza monument",
+            "emerging from façade",
+            "levitating",
+            "oversized on a truck bed",
+            "inflatable"
+          ],
+          "default": "suspended between buildings"
+        },
+        {
+          "id": "environment",
+          "label": "Environment",
+          "values": [
+            "modern plaza",
+            "historic square",
+            "open landscape",
+            "studio void",
+            "rooftop skyline",
+            "desert minimal"
+          ],
+          "default": "modern plaza"
+        },
+        {
+          "id": "scale-reference",
+          "label": "Scale reference",
+          "values": [
+            "distant figures",
+            "vehicles",
+            "trees",
+            "building floor lines",
+            "birds",
+            "none (abstract)"
+          ],
+          "default": "distant figures"
+        },
+        {
+          "id": "support",
+          "label": "Support",
+          "values": [
+            "visible rigging",
+            "seamless and impossible",
+            "scaffold",
+            "cables",
+            "pedestal"
+          ],
+          "default": "visible rigging"
+        },
+        {
+          "id": "backdrop",
+          "label": "Backdrop",
+          "values": [
+            "clear blue",
+            "dramatic cloud",
+            "sunset gradient",
+            "flat overcast",
+            "night with uplighting",
+            "gradient void"
+          ],
+          "default": "clear blue"
+        },
+        {
+          "id": "product-finish",
+          "label": "Product finish",
+          "values": [
+            "true material",
+            "exaggerated gloss",
+            "matte sculptural",
+            "translucent glowing",
+            "metallic"
+          ],
+          "default": "true material"
+        }
+      ]
+    }
+  ],
+  "models": [
+    {
+      "id": "default",
+      "label": "Current model (configured default)"
+    },
+    {
+      "id": "gpt-image-2",
+      "label": "GPT Image 2",
+      "provider": "openai",
+      "model": "gpt-image-2-2026-04-21"
+    },
+    {
+      "id": "gpt-image-2.5-sunburst",
+      "label": "GPT Image 2.5 Sunburst",
+      "provider": "openai",
+      "model": "gpt-image-2.5-sunburst"
+    },
+    {
+      "id": "gpt-image-2.5-flare",
+      "label": "GPT Image 2.5 Flare",
+      "provider": "openai",
+      "model": "gpt-image-2.5-flare"
+    },
+    {
+      "id": "gemini-3.1-flash-image",
+      "label": "Gemini 3.1 Flash Image (Nano Banana 2)",
+      "provider": "gemini",
+      "model": "gemini-3.1-flash-image"
+    }
+  ]
+}

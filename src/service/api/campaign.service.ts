@@ -6,7 +6,7 @@ import axiosClient from '@/lib/axios';
 export const MAX_CAMPAIGN_DAYS = 5;
 /** Default AI campaign idea length (manual + auto-mode). */
 export const DEFAULT_CAMPAIGN_PLAN_DAYS = 5;
-/** Default suggestion-set size when the page first loads. */
+/** Automatic campaign seed set size. Manual photo/imagery modes request 3/1. */
 export const DEFAULT_CAMPAIGN_SET_SIZE = 5;
 /** Credit cost per (day × platform) — mirrors backend
  *  `CAMPAIGN_CREDIT_PER_DAY`. Update both in lockstep. */
@@ -36,6 +36,8 @@ export type CampaignSuggestion = {
 
 export type CampaignSuggestionSet = {
   suggestions: CampaignSuggestion[];
+  sourceMode?: 'photos' | 'imagery' | null;
+  photoPaths?: string[];
   /** Server-clamped max days for THIS user (capped by plan window + 5-day
    *  campaign plan default). When null, the saved set predates this field —
    *  treat as the default 5-day plan length. */

@@ -33,10 +33,14 @@ export async function generateAiContentStudio(params: {
   prompt: string;
   platforms: string[];
   image?: File | null;
+  imageModel?: string;
+  marketingScene?: { topic: string; values: Record<string, string> };
 }): Promise<StudioGenerateResult> {
   const form = new FormData();
   form.append('platforms', JSON.stringify(params.platforms));
   form.append('prompt', params.prompt);
+  if (params.imageModel) form.append('imageModel', params.imageModel);
+  if (params.marketingScene) form.append('marketingScene', JSON.stringify(params.marketingScene));
   if (params.image) {
     form.append('image', await prepareGenerationImage(params.image));
   }

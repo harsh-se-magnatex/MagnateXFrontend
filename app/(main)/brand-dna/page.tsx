@@ -11,6 +11,8 @@ import {
 } from '@/src/service/api/userService';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useBusiness } from '@/features/business/BusinessProvider';
+import { businessLabels } from '@/features/business/types';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import {
@@ -148,6 +150,7 @@ function uniqueHashtagList(items: string[]): string[] {
 }
 
 export default function BusinessProfilePage() {
+  const { businessType } = useBusiness();
   const { user, loading } = useAuth();
   const { billing } = useUserPlanCredits();
   const router = useRouter();
@@ -950,6 +953,12 @@ export default function BusinessProfilePage() {
                       <span className="mb-1.5 block text-sm font-semibold text-default">
                         What you sell
                       </span>
+                      {businessType ? (
+                        <div className="rounded-xl border border-default bg-subtle p-3">
+                          <p className="text-sm font-semibold text-default">{businessLabels[businessType]}</p>
+                          <p className="mt-1 text-xs text-secondary">Selected permanently for your account.</p>
+                        </div>
+                      ) : <>
                       <div
                         role="radiogroup"
                         aria-label="What you sell"
@@ -989,6 +998,7 @@ export default function BusinessProfilePage() {
                             : 'Detected automatically the first time you generate a video.'
                           : 'Videos will always be directed for this kind of business.'}
                       </p>
+                      </>}
                     </div>
                     <div>
                       <label

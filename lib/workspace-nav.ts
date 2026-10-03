@@ -2,6 +2,7 @@
 
 export const WORKSPACE_NAV_HREFS = {
   quickCreate: '/create-post',
+  marketingScenes: '/marketing-scenes',
   productAdvert: '/product-posts',
   videoGeneration: '/videos',
   festivePost: '/occasion-posts',
@@ -63,6 +64,11 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     href: WORKSPACE_NAV_HREFS.quickCreate,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.quickCreate),
+  },
+  {
+    name: 'Marketing Scenes',
+    href: WORKSPACE_NAV_HREFS.marketingScenes,
+    match: (pathname) => !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.marketingScenes),
   },
   {
     name: 'Product Posts',

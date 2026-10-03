@@ -12,6 +12,7 @@ import {
   ImageIcon,
   Inbox,
   Loader2,
+  Upload,
   RefreshCcw,
   Sparkles,
   Trash2,
@@ -67,7 +68,6 @@ import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import {
   CAMPAIGN_CREDIT_PER_DAY,
   DEFAULT_CAMPAIGN_PLAN_DAYS,
-  DEFAULT_CAMPAIGN_SET_SIZE,
   MAX_CAMPAIGN_DAYS,
   createCampaignApi,
   deleteCampaignDraftApi,
@@ -82,7 +82,11 @@ import {
   type CampaignDraft,
   type CampaignSuggestion,
 } from '@/src/service/api/campaign.service';
-import { getMemoryLayer } from '@/src/service/api/userService';
+import {
+  getMemoryLayer,
+  uploadMemoryLayerBrandPhotos,
+} from '@/src/service/api/userService';
+import { normalizeMemoryLayerUploadImage } from '@/lib/normalize-memory-layer-image';
 import {
   waitForCampaignDraftRegen,
   waitForParentJobDocs,
@@ -370,34 +374,100 @@ export default function CreateCampaignPage() {
   const goal = useCampaignState((s) => s.goal);
   const setGoal = useCampaignState((s) => s.setGoal);
 
-  // Photo-first is the default: planning the campaign from real photos is what
-  // stops a day's copy describing a product the picture does not show.
-  const [useBrandPhotos, setUseBrandPhotos] = useState(true);
-  const [hasBrandPhotos, setHasBrandPhotos] = useState(false);
+  // Ask for a mode before the user starts a new campaign.
+  const [useBrandPhotos, setUseBrandPhotos] = useState<boolean | null>(null);
+  const [suggestionUsesPhotos, setSuggestionUsesPhotos] = useState<boolean | null>(null);
+  const [selectedPhotos, setSelectedPhotos] = useState<
+    { path: string; url: string }[]
+  >([]);
+  const [brandPhotoCount, setBrandPhotoCount] = useState(0);
+  const [availablePhotos, setAvailablePhotos] = useState<{ path: string; url: string }[]>([]);
+  const [savedPhotoPaths, setSavedPhotoPaths] = useState<string[]>([]);
+  const [isLoadingPhotoLibrary, setIsLoadingPhotoLibrary] = useState(true);
+  const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
+  const uploadInFlightRef = useRef(false);
+  const knownPhotoPaths = useRef(new Set<string>());
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
         const res = await getMemoryLayer();
         const layer = res?.data?.memoryLayer as
-          | { brandPhotos?: unknown[] }
+          | { brandPhotos?: { path: string; url: string }[] }
           | undefined;
-        const count = Array.isArray(layer?.brandPhotos)
-          ? layer!.brandPhotos!.length
-          : 0;
+        const count = layer?.brandPhotos?.length ?? 0;
         if (cancelled) return;
-        setHasBrandPhotos(count > 0);
-        // Nothing to build from — start on the generate route rather than
-        // showing an error the user has not caused yet.
-        if (count === 0) setUseBrandPhotos(false);
+        setBrandPhotoCount(count);
+        setAvailablePhotos(layer?.brandPhotos ?? []);
+        knownPhotoPaths.current = new Set(
+          layer?.brandPhotos?.map((photo) => photo.path) ?? []
+        );
       } catch {
-        if (!cancelled) setHasBrandPhotos(false);
+        if (!cancelled) setBrandPhotoCount(0);
+      } finally {
+        if (!cancelled) setIsLoadingPhotoLibrary(false);
       }
     })();
     return () => {
       cancelled = true;
     };
   }, []);
+  useEffect(() => {
+    if (savedPhotoPaths.length === 0 || availablePhotos.length === 0) return;
+    setSelectedPhotos((current) => current.length > 0 ? current :
+      savedPhotoPaths.map((path) => availablePhotos.find((photo) => photo.path === path))
+        .filter((photo): photo is { path: string; url: string } => !!photo)
+        .slice(0, 5)
+    );
+  }, [availablePhotos, savedPhotoPaths]);
+  const handleUploadPhotos = useCallback(async (files: FileList | null) => {
+    if (!files?.length || uploadInFlightRef.current || isLoadingPhotoLibrary) return;
+    const incoming = Array.from(files);
+    const room = 5 - selectedPhotos.length;
+    if (incoming.length > room) {
+      showErrorToast(`Choose at most ${room} more photo${room === 1 ? '' : 's'}.`);
+      return;
+    }
+    if (brandPhotoCount + incoming.length > 30) {
+      showErrorToast('Brand Memory can hold up to 30 photos. Remove older photos in Business Data first.');
+      return;
+    }
+    if (incoming.some((file) =>
+      !file.type.startsWith('image/') &&
+      !(file.type === '' && /\.(jpe?g|png|webp|gif|heic|heif|avif|svg)$/i.test(file.name))
+    )) {
+      showErrorToast('Please choose image files only.');
+      return;
+    }
+    uploadInFlightRef.current = true;
+    setIsUploadingPhotos(true);
+    try {
+      const normalized = await Promise.all(incoming.map(normalizeMemoryLayerUploadImage));
+      const before = knownPhotoPaths.current;
+      const response = await uploadMemoryLayerBrandPhotos(normalized);
+      const layer = response?.data?.memoryLayer as
+        | { brandPhotos?: { path: string; url: string }[] }
+        | undefined;
+      const saved = layer?.brandPhotos ?? [];
+      knownPhotoPaths.current = new Set(saved.map((photo) => photo.path));
+      const added = saved.filter((photo) =>
+        photo.path && !before.has(photo.path)
+      );
+      setBrandPhotoCount(saved.length);
+      setAvailablePhotos(saved);
+      setSelectedPhotos((current) => [...current, ...added].slice(0, 5));
+      if (response?.data?.failed?.length) {
+        showErrorToast(response.data.failed[0].reason);
+      } else if (added.length === 0) {
+        showErrorToast('No photos were uploaded. Please try again.');
+      }
+    } catch {
+      showErrorToast('Could not upload photos. Please try again.');
+    } finally {
+      uploadInFlightRef.current = false;
+      setIsUploadingPhotos(false);
+    }
+  }, [brandPhotoCount, isLoadingPhotoLibrary, selectedPhotos]);
   const suggestions = useCampaignState((s) => s.suggestions);
   const maxDaysFromServer = useCampaignState((s) => s.maxDays);
   const autoSeeded = useCampaignState((s) => s.autoSeeded);
@@ -519,6 +589,9 @@ export default function CreateCampaignPage() {
   useEffect(() => {
     if (didInitialFetchRef.current) return;
     if (suggestions.length > 0) {
+      setSuggestionUsesPhotos(suggestions.some((suggestion) =>
+        suggestion.days.some((day) => !!day.photoPath)
+      ));
       didInitialFetchRef.current = true;
       return;
     }
@@ -532,6 +605,13 @@ export default function CreateCampaignPage() {
           pickedSuggestionId: set.pickedSuggestionId ?? null,
           pickedReason: set.pickedReason ?? null,
         });
+        setSuggestionUsesPhotos(
+          set.sourceMode === 'photos' ||
+          (set.sourceMode == null && set.suggestions.some((suggestion) =>
+            suggestion.days.some((day) => !!day.photoPath)
+          ))
+        );
+        setSavedPhotoPaths(set.photoPaths ?? []);
         if (typeof set.goal === 'string' && set.goal.trim()) {
           setGoal(set.goal);
         }
@@ -542,27 +622,37 @@ export default function CreateCampaignPage() {
         setIsLoadingSuggestions(false);
       }
     })();
-  }, [loadSuggestionSet, setGoal, setIsLoadingSuggestions, suggestions.length]);
+  }, [loadSuggestionSet, setGoal, setIsLoadingSuggestions, suggestions]);
 
   // -------------------- create draft batch --------------------
   const handleGenerateSet = useCallback(
     async (size?: number) => {
-      if (isLoadingSuggestions) return;
+      if (isLoadingSuggestions || isUploadingPhotos || useBrandPhotos == null) return;
+      if (useBrandPhotos && selectedPhotos.length === 0) {
+        showErrorToast('Upload at least one photo to learn from.');
+        return;
+      }
+      if (!useBrandPhotos && !goal.trim()) {
+        showErrorToast('Enter a campaign idea to generate imagery.');
+        return;
+      }
       try {
         setIsLoadingSuggestions(true);
         const set = await suggestCampaignSetApi({
           goal,
-          count: size ?? DEFAULT_CAMPAIGN_SET_SIZE,
-          // Photo-first when the user has photos and wants them used: the
-          // planner writes each day about a real photo, so the picture and
-          // the copy cannot end up describing different products.
-          useBrandPhotos: useBrandPhotos && hasBrandPhotos,
+          count: size ?? (useBrandPhotos ? 3 : 1),
+          useBrandPhotos,
+          photoPaths: useBrandPhotos
+            ? selectedPhotos.map((photo) => photo.path)
+            : undefined,
         });
         loadSuggestionSet(set.suggestions, set.maxDays, {
           autoSeeded: false,
           pickedSuggestionId: null,
           pickedReason: null,
         });
+        setSuggestionUsesPhotos(useBrandPhotos);
+        setSavedPhotoPaths(useBrandPhotos ? selectedPhotos.map((photo) => photo.path) : []);
         toast.success(
           `Generated ${set.suggestions.length} campaign idea${set.suggestions.length === 1 ? '' : 's'}.`
         );
@@ -576,8 +666,9 @@ export default function CreateCampaignPage() {
     },
     [
       goal,
-      hasBrandPhotos,
       useBrandPhotos,
+      selectedPhotos,
+      isUploadingPhotos,
       isLoadingSuggestions,
       loadSuggestionSet,
       setIsLoadingSuggestions,
@@ -840,7 +931,7 @@ export default function CreateCampaignPage() {
       ? maxDaysFromServer
       : DEFAULT_CAMPAIGN_PLAN_DAYS;
   const activeSuggestion =
-    selectedSuggestionId != null
+    selectedSuggestionId != null && suggestionUsesPhotos === useBrandPhotos
       ? (suggestions.find((s) => s.id === selectedSuggestionId) ?? null)
       : null;
 
@@ -873,9 +964,9 @@ export default function CreateCampaignPage() {
         </div>
       </header>
 
-      {!activeSuggestion ? (
+      {!activeSuggestion || useBrandPhotos === null ? (
         <SuggestionGallery
-          suggestions={suggestions}
+          suggestions={suggestionUsesPhotos === useBrandPhotos ? suggestions : []}
           isLoading={isLoadingSuggestions}
           regeneratingId={regeneratingSuggestionId}
           goal={goal}
@@ -889,7 +980,13 @@ export default function CreateCampaignPage() {
           pickedReason={pickedReason}
           useBrandPhotos={useBrandPhotos}
           onUseBrandPhotosChange={setUseBrandPhotos}
-          hasBrandPhotos={hasBrandPhotos}
+          selectedPhotos={selectedPhotos}
+          isUploadingPhotos={isUploadingPhotos}
+          isLoadingPhotoLibrary={isLoadingPhotoLibrary}
+          onUploadPhotos={handleUploadPhotos}
+          onRemovePhoto={(path) =>
+            setSelectedPhotos((photos) => photos.filter((photo) => photo.path !== path))
+          }
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -994,9 +1091,13 @@ type SuggestionGalleryProps = {
   pickedSuggestionId?: string | null;
   pickedReason?: string | null;
   /** Plan the campaign from the brand's real photos vs generate the imagery. */
-  useBrandPhotos: boolean;
+  useBrandPhotos: boolean | null;
   onUseBrandPhotosChange: (value: boolean) => void;
-  hasBrandPhotos: boolean;
+  selectedPhotos: { path: string; url: string }[];
+  isUploadingPhotos: boolean;
+  isLoadingPhotoLibrary: boolean;
+  onUploadPhotos: (files: FileList | null) => void;
+  onRemovePhoto: (path: string) => void;
 };
 
 function SuggestionGallery(props: SuggestionGalleryProps) {
@@ -1015,7 +1116,11 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
     pickedReason = null,
     useBrandPhotos,
     onUseBrandPhotosChange,
-    hasBrandPhotos,
+    selectedPhotos,
+    isUploadingPhotos,
+    isLoadingPhotoLibrary,
+    onUploadPhotos,
+    onRemovePhoto,
   } = props;
 
   const showSkeleton = isLoading && suggestions.length === 0;
@@ -1032,12 +1137,14 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
           </div>
           <div className="flex-1">
             <h2 className="text-subsection text-default">
-              1. Pick a campaign idea
+              {useBrandPhotos === null ? '1. Choose how to create' : '2. Pick a campaign idea'}
             </h2>
             <p className="text-xs text-secondary">
               {autoSeeded && pickedSuggestionId
                 ? 'Your AI Manager plan built this campaign automatically. It is shown here for reference and cannot be edited.'
-                : `Optional: tell the AI what the campaign should focus on, then hit Generate. Each idea is a ${effectiveMaxDays}-day plan you can fully edit after picking.`}
+                : useBrandPhotos === null
+                  ? 'Choose whether to build from your photos or generate new imagery.'
+                  : `${useBrandPhotos ? 'Add an optional goal' : 'Enter a campaign idea'}, then generate ${useBrandPhotos ? '3 ideas' : '1 idea'}. Each idea is a ${effectiveMaxDays}-day plan you can edit after picking.`}
             </p>
           </div>
         </div>
@@ -1051,13 +1158,13 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
               [
                 {
                   value: true,
-                  label: 'My brand photos',
-                  hint: 'Each day is written about one of your real photos, so the picture and the copy always match.',
+                  label: 'Learn from photos',
+                  hint: 'Upload 1–5 photos. AI will make 3 ideas and choose which of your photos fits each day.',
                 },
                 {
                   value: false,
-                  label: 'Generate the imagery',
-                  hint: 'Ideas from your brand profile, with all visuals created by AI. Best if you have no product photos.',
+                  label: 'Generate imagery',
+                  hint: 'AI will make 1 idea from your business data and generate the visuals.',
                 },
               ] as const
             ).map((option) => {
@@ -1086,33 +1193,69 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
               );
             })}
           </div>
-          {useBrandPhotos && !hasBrandPhotos ? (
-            <p className="mt-2 text-xs text-destructive">
-              You have no photos in Brand Memory yet. Add some there first, or
-              switch to &ldquo;Generate the imagery&rdquo;.
-            </p>
-          ) : null}
+          {useBrandPhotos === true && (
+            <div className="mt-5 space-y-3">
+              <p className="text-xs font-semibold text-default">
+                Upload 1–5 photos ({selectedPhotos.length}/5)
+              </p>
+              <p className="text-xs text-secondary">
+                AI may reuse one photo or choose a few across the campaign. Every day will use a selected photo. Uploaded photos are saved to Business Data.
+              </p>
+              <label className={cn(
+                'inline-flex cursor-pointer items-center gap-2 rounded-full border border-default bg-element px-4 py-2 text-xs font-semibold text-default hover:bg-hover',
+                (isUploadingPhotos || isLoadingPhotoLibrary || selectedPhotos.length >= 5) && 'pointer-events-none opacity-50'
+              )}>
+                {isUploadingPhotos ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {isUploadingPhotos ? 'Uploading…' : 'Choose photos'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="sr-only"
+                  disabled={isUploadingPhotos || isLoadingPhotoLibrary || selectedPhotos.length >= 5}
+                  onChange={(event) => {
+                    onUploadPhotos(event.target.files);
+                    event.target.value = '';
+                  }}
+                />
+              </label>
+              {selectedPhotos.length > 0 && (
+                <div className="flex flex-wrap gap-3">
+                  {selectedPhotos.map((photo, index) => (
+                    <div key={photo.path} className="relative h-20 w-20 overflow-hidden rounded-xl border border-default bg-element">
+                      {/* Signed Brand Memory URLs come from the existing upload API. */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photo.url} alt={`Selected campaign photo ${index + 1}`} className="h-full w-full object-cover" />
+                      <button type="button" onClick={() => onRemovePhoto(photo.path)} aria-label={`Remove photo ${index + 1} from campaign`} className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-xs text-white">×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
+        {useBrandPhotos !== null && (
         <div className="p-6 flex flex-col gap-4 sm:flex-row sm:items-end">
           <label className="flex-1 block">
             <span className="text-xs font-semibold uppercase tracking-wider text-secondary">
-              Campaign goal
+              {useBrandPhotos ? 'Campaign goal' : 'Campaign idea'}
               <span className="ml-1 text-secondary/70 normal-case font-normal tracking-normal">
-                (optional)
+                {useBrandPhotos ? '(optional)' : '(required)'}
               </span>
             </span>
             <Input
               value={goal}
               onChange={(e) => onGoalChange(e.target.value)}
-              placeholder="e.g. winter sale, product launch, brand awareness…"
+              placeholder={useBrandPhotos ? 'e.g. product launch, brand awareness…' : 'e.g. A five-day launch for our new collection'}
+              required={!useBrandPhotos}
               className="mt-1"
             />
           </label>
           <button
             type="button"
             onClick={() => onGenerateSet()}
-            disabled={isLoading}
+            disabled={isLoading || isUploadingPhotos || (useBrandPhotos && selectedPhotos.length === 0) || (!useBrandPhotos && !goal.trim())}
             aria-busy={isLoading}
             className="inline-flex items-center justify-center gap-2 rounded-full btn-brand-fill px-4 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:bg-element disabled:text-secondary disabled:shadow-none"
           >
@@ -1131,8 +1274,11 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
             )}
           </button>
         </div>
+        )}
       </section>
 
+      {useBrandPhotos !== null && (
+      <>
       {autoSeeded && pickedReason ? (
         <div className="rounded-2xl border border-default bg-default px-4 py-3 text-sm">
           <p className="text-[11px] font-bold uppercase tracking-wider text-default">
@@ -1144,7 +1290,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
 
       {showSkeleton && (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: DEFAULT_CAMPAIGN_SET_SIZE }).map((_, idx) => (
+          {Array.from({ length: useBrandPhotos ? 3 : 1 }).map((_, idx) => (
             <Skeleton
               key={`gallery-skel-${idx}`}
               className="h-64 w-full rounded-3xl"
@@ -1161,7 +1307,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
           </h3>
           <p className="mt-1 text-sm text-secondary max-w-md mx-auto">
             Click <span className="font-semibold">Generate campaign ideas</span>{' '}
-            above to get {DEFAULT_CAMPAIGN_SET_SIZE} distinct multi-day concepts
+            above to get {useBrandPhotos ? '3 distinct' : '1'} multi-day {useBrandPhotos ? 'concepts' : 'concept'}
             tailored to your brand.
           </p>
         </section>
@@ -1193,6 +1339,8 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
             ))}
           </AnimatePresence>
         </div>
+      )}
+      </>
       )}
     </div>
   );

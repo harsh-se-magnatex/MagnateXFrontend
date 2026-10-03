@@ -24,6 +24,14 @@ type PageDocumentationContent = {
 };
 
 const DOCUMENTATION: Record<string, PageDocumentationContent> = {
+  '/marketing-scenes': {
+    title: 'Marketing Scenes',
+    description: 'Turn your uploaded product or artwork into a realistic marketing scene.',
+    sections: [
+      { title: 'Choose your scene', items: ['Upload a product photo or finished artwork.', 'Choose Billboard, Transit lightbox, Magazine spread, Storefront window, or Scale stunt, then adjust the scene options.', 'Choose your AI image model and optionally add creative direction or exact visible wording.'] },
+      { title: 'Generate your images', items: ['Select connected platforms. Generation costs 2 credits per platform.', 'Download the results or open the Media Library to schedule them.'] },
+    ],
+  },
   '/create-post': {
     title: 'Create Post',
     description: 'Create social content from your own idea, an image, or both.',
@@ -116,9 +124,9 @@ const DOCUMENTATION: Record<string, PageDocumentationContent> = {
       {
         title: 'Generate campaign ideas',
         items: [
-          'Use My Brand Photo to generate ideas based on your uploaded brand photo, or use Generate Imagery to base ideas on your Brand DNA.',
-          'Add an optional campaign goal to guide the ideas toward a specific outcome.',
-          'SocioGenie generates five ideas. Choose the one that best fits your campaign.',
+          'Choose Learn from photos to upload 1–5 photos. SocioGenie creates three ideas and selects a photo for every campaign day. It may reuse photos or leave some unused.',
+          'Choose Generate imagery to create one idea and AI visuals from your business data. Entering a campaign idea is required in this mode.',
+          'Pick an idea to review and edit its day-by-day plan.',
         ],
       },
       {
