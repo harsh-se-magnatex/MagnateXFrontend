@@ -24,8 +24,6 @@ export function defaultMarketingScene(
 export function MarketingSceneControls({
   scene,
   onSceneChange,
-  model = 'default',
-  onModelChange,
   disabled,
   hasImage,
   showScenes = true,
@@ -33,8 +31,6 @@ export function MarketingSceneControls({
 }: {
   scene?: MarketingSceneSelection;
   onSceneChange?: (scene: MarketingSceneSelection | undefined) => void;
-  model?: string;
-  onModelChange?: (model: string) => void;
   disabled: boolean;
   hasImage: boolean;
   showScenes?: boolean;
@@ -70,23 +66,6 @@ export function MarketingSceneControls({
   );
   return (
     <div className="space-y-4 rounded-xl border border-default p-4">
-      {onModelChange && (
-        <label className="block text-sm text-default">
-          <span className="mb-1.5 block font-semibold">AI image model</span>
-          <select
-            className={workspaceInputClass}
-            value={model}
-            disabled={disabled}
-            onChange={(event) => onModelChange(event.target.value)}
-          >
-            {catalog.models.map((entry) => (
-              <option key={entry.id} value={entry.id}>
-                {entry.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
       {showScenes && (
         <label className="block text-sm text-default">
           <span className="mb-1.5 block font-semibold">Marketing scene</span>

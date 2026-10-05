@@ -28,7 +28,7 @@ const DOCUMENTATION: Record<string, PageDocumentationContent> = {
     title: 'Marketing Scenes',
     description: 'Turn your uploaded product or artwork into a realistic marketing scene.',
     sections: [
-      { title: 'Choose your scene', items: ['Upload a product photo or finished artwork.', 'Choose Billboard, Transit lightbox, Magazine spread, Storefront window, or Scale stunt, then adjust the scene options.', 'Choose your AI image model and optionally add creative direction or exact visible wording.'] },
+      { title: 'Choose your scene', items: ['Upload a product photo or finished artwork.', 'Choose Billboard, Transit lightbox, Magazine spread, Storefront window, or Scale stunt, then adjust the scene options.', 'Optionally add creative direction or exact visible wording.'] },
       { title: 'Generate your images', items: ['Select connected platforms. Generation costs 2 credits per platform.', 'Download the results or open the Media Library to schedule them.'] },
     ],
   },
