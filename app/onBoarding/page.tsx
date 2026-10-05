@@ -722,11 +722,23 @@ export default function OnboardingMenu() {
     }
   };
 
-  const skipEntirely = () => {
-    // Do not generate hashtags/slogans without business DNA — Template DNA
-    // will create them the first time the user fills business data.
-    useTourState.getState().queuePlatformTour();
-    router.push('/home');
+  const skipEntirely = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      // Home requires a persisted onboarding state. An empty profile completes
+      // setup without generating brand copy or saving partially entered fields.
+      if (!redoOnboarding) {
+        const response = await onBoardUser({});
+        if (!response.success) throw new Error('Failed to skip onboarding');
+      }
+      useTourState.getState().queuePlatformTour();
+      router.replace('/home');
+    } catch {
+      showErrorToast('Failed to skip onboarding. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const skipCurrentStep = () => {
@@ -1475,7 +1487,8 @@ export default function OnboardingMenu() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={skipEntirely}
+              onClick={() => void skipEntirely()}
+              disabled={loading}
               className="text-secondary hover:text-default"
             >
               <X className="size-4" />
