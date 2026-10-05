@@ -12,6 +12,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
+import { useBusiness } from '@/features/business/BusinessProvider';
 import { toast } from 'sonner';
 import { showCaughtErrorToast, showErrorToast } from '@/lib/show-error-toast';
 import { cn } from '@/lib/utils';
@@ -137,6 +138,7 @@ function isImageFile(f: File): boolean {
 
 export default function TemplateDnaMemoryLayerPage() {
   const { user, loading: authLoading } = useAuth();
+  const { businessType } = useBusiness();
   const router = useRouter();
   const fileInputId = useId();
   const pdfInputId = useId();
@@ -1487,7 +1489,7 @@ export default function TemplateDnaMemoryLayerPage() {
                             </span>
                           ) : null}
                         </div>
-                        {p.hasNoProduct || p.hasMultipleProducts ? (
+                        {businessType === 'physical_product' && (p.hasNoProduct || p.hasMultipleProducts) ? (
                           <p className="text-xs text-warning">
                             {p.hasNoProduct
                               ? 'No product detected in this image.'

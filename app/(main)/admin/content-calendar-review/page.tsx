@@ -78,6 +78,8 @@ const PLATFORM_ICON: Record<
 
 function kindLabel(kind: string): string {
   switch (kind) {
+    case 'marketing-visual':
+      return 'Marketing Visuals';
     case 'campaign':
       return 'Campaigns';
     case 'ai-engine':
@@ -126,6 +128,8 @@ function statusLabel(status: AdminContentPlanGeneratedItem['status']): string {
 
 function cellToneClass(kind: string): string {
   switch (kind) {
+    case 'marketing-visual':
+      return 'border border-fuchsia-300 bg-fuchsia-100 text-fuchsia-950 dark:border-fuchsia-700 dark:bg-fuchsia-900/60 dark:text-fuchsia-100';
     case 'campaign':
       return 'bg-success text-success';
     case 'festival':
@@ -159,6 +163,7 @@ function formatDay(date: string): string {
 
 function canForceRunKind(kind: string): boolean {
   return (
+    kind === 'marketing-visual' ||
     kind === 'campaign' ||
     kind === 'ai-engine' ||
     kind === 'quick-create' ||

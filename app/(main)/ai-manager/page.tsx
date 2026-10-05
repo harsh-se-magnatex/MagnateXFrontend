@@ -76,6 +76,11 @@ function kindLabel(kind: AIPlanGeneratedKind | string): string {
   }
 }
 
+function marketingVisualLabel(topic?: string): string {
+  const name = topic?.trim().replace(/-/g, ' ');
+  return name ? `Marketing Visuals · ${name}` : 'Marketing Visuals';
+}
+
 function statusLabel(status: AIPlanGeneratedItem['status']): string {
   switch (status) {
     case 'draft':
@@ -118,7 +123,7 @@ function isTerminalGeneratedStatus(
 function cellToneClass(kind: string): string {
   switch (kind) {
     case 'marketing-visual':
-      return 'border-fuchsia-300 bg-fuchsia-50 dark:border-fuchsia-800 dark:bg-fuchsia-950/30';
+      return 'border border-fuchsia-300 bg-fuchsia-100 text-fuchsia-950 dark:border-fuchsia-700 dark:bg-fuchsia-900/60 dark:text-fuchsia-100';
     case 'campaign':
       return 'bg-success text-success';
     case 'festival':
@@ -281,7 +286,9 @@ function entriesForSlot(args: {
     const hideDetail = isTerminal || item.status === 'failed';
     return {
       kind: item.kind,
-      label: kindLabel(item.kind),
+      label: item.kind === 'marketing-visual'
+        ? marketingVisualLabel(item.cell?.marketingTopic)
+        : kindLabel(item.kind),
       videoType: videoTypeLabel(item.kind, item.cell),
       status: statusLabel(item.status),
       hideStatus: item.kind === 'video-generation' && item.status === 'failed',
@@ -772,7 +779,6 @@ function AIPlanSheet({
 }
 
 const LEGEND: Array<{ kind: string; label: string }> = [
-  { kind: 'marketing-visual', label: kindLabel('marketing-visual') },
   { kind: 'ai-engine', label: kindLabel('ai-engine') },
   { kind: 'quick-create', label: kindLabel('quick-create') },
   { kind: 'video-generation', label: kindLabel('video-generation') },
@@ -790,6 +796,20 @@ export default function AIPlanPage() {
     [timeZone]
   );
   const [days, setDays] = useState<AIPlanDay[]>([]);
+  const marketingLegendTopics = useMemo(() => {
+    const topics = new Set<string>();
+    for (const day of days) {
+      for (const slot of Object.values(day.byPlatform)) {
+        if (!slot) continue;
+        for (const item of [...slot.generated, ...slot.upcoming]) {
+          if (item.kind !== 'marketing-visual') continue;
+          const topic = item.cell?.marketingTopic?.trim();
+          if (topic) topics.add(topic);
+        }
+      }
+    }
+    return [...topics];
+  }, [days]);
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -1410,6 +1430,17 @@ export default function AIPlanPage() {
             <span className="text-[10px] font-semibold uppercase tracking-wider text-secondary">
               Legend
             </span>
+            {(marketingLegendTopics.length ? marketingLegendTopics : ['']).map((topic) => (
+              <span
+                key={`marketing-${topic}`}
+                className={cn(
+                  'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold',
+                  cellToneClass('marketing-visual')
+                )}
+              >
+                {marketingVisualLabel(topic)}
+              </span>
+            ))}
             {LEGEND.map((item) => (
               <span
                 key={item.kind}

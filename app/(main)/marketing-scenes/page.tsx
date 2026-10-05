@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, Sparkles } from 'lucide-react';
+import { CreditCard, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
@@ -156,7 +156,20 @@ export default function MarketingScenesPage() {
             and campaign copy.
           </p>
         </div>
-        <PageDocumentation />
+        <div className="flex flex-wrap items-center gap-3">
+          <PageDocumentation />
+          <div className="glass-card flex items-center gap-3 rounded-2xl px-4 py-3">
+            <div className="rounded-lg bg-primary-purple/10 p-2 text-preview">
+              <CreditCard className="h-5 w-5" aria-hidden />
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-secondary">
+                Credits: <span className="text-sm text-default">{billing?.credits ?? 0}</span>
+              </p>
+              <p className="text-xs text-secondary">Cost: 2 per platform</p>
+            </div>
+          </div>
+        </div>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-5">
