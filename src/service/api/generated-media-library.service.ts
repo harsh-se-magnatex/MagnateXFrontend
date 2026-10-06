@@ -1,5 +1,6 @@
 import { FirestoreTimestamp } from '@/app/(main)/_components/types';
 import { apiDelete, apiGet } from '@/lib/api-client';
+import axiosClient from '@/lib/axios';
 import type { ApiEnvelope } from '@/lib/api-types';
 import type { GenerationResearch } from '@/lib/generation-research';
 
@@ -12,6 +13,7 @@ export type GeneratedMediaSource =
   | 'aiEnginePosts'
   | 'campaignDrafts'
   | 'carouselGeneratedPosts'
+  | 'marketing-visuals'
   | 'all';
 
 /** Firestore subcollection name for each source (matches backend `MediaLibraryItem.collection`). */
@@ -105,4 +107,9 @@ export async function deleteGeneratedMediaLibraryItemApi(
     `/api/v1/user/generated-media-library/${encodeURIComponent(contentId)}`
   );
   return res.data;
+}
+
+export async function getGeneratedMediaLibraryImageApi(contentId: string): Promise<Blob> {
+  const response = await axiosClient.get<Blob>(`/api/v1/user/generated-media-library/${encodeURIComponent(contentId)}/image`, { responseType: 'blob' });
+  return response.data;
 }

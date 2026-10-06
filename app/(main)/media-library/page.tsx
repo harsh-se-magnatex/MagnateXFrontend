@@ -118,6 +118,11 @@ const SOURCE_OPTIONS: {
     label: 'AI Creator',
     description: 'Posts from AI Creator',
   },
+  {
+    value: 'marketing-visuals',
+    label: 'Marketing Visuals',
+    description: 'Manual and automatic marketing scenes',
+  },
 ];
 
 /**
@@ -871,6 +876,9 @@ export default function MediaLibraryPage() {
     }
     if (source === 'aiEnginePosts') {
       return 'AI Creator posts with images are listed here.';
+    }
+    if (source === 'marketing-visuals') {
+      return 'Marketing visuals appear here after generation.';
     }
     return 'Product Posts generations with images are listed here.';
   }, [source]);

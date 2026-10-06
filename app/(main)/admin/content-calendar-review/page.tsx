@@ -15,7 +15,7 @@ import {
 import { performActionOnScheduledPost } from '@/src/service/api/social.servce';
 import { useUser } from '../../_components/useUser';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { showErrorToast } from '@/lib/show-error-toast';
 import { toast } from 'sonner';
@@ -54,6 +54,10 @@ import { resolveSchedulableMediaPreview } from '@/lib/post-media-preview';
 import { PostMediaPreview } from '@/components/shared/PostMediaPreview';
 import { CarouselSwipePreview } from '@/components/shared/CarouselSwipePreview';
 import { DownloadVideoButton } from '@/components/download-video-button';
+
+const subscribeToMount = () => () => {};
+const mountedInBrowser = () => true;
+const notMountedOnServer = () => false;
 
 const PLATFORM_LABEL: Record<ContentCalendarReviewPlatform, string> = {
   instagram: 'Instagram',
@@ -615,8 +619,7 @@ export default function AdminContentCalendarReviewPage() {
           Content Calendar Review
         </h1>
         <p className="text-sm text-secondary">
-          Browse every auto-mode user&apos;s content plan, including generated
-          images and full post status.
+          Browse Auto and Studio calendars, including generated media and post status.
         </p>
       </header>
 
@@ -750,7 +753,7 @@ export default function AdminContentCalendarReviewPage() {
                     </p>
                   ) : (
                     <p className="rounded-md border border-default bg-element px-3 py-2 text-sm text-secondary">
-                      Force Run is available on Auto (AI) plans only.
+                      Studio calendar is read only. Admin actions are unavailable.
                     </p>
                   )}
                   <div className="overflow-x-auto rounded-xl border border-default">
@@ -825,6 +828,7 @@ export default function AdminContentCalendarReviewPage() {
       {preview ? (
         <PreviewModal
           target={preview}
+          readOnly={String(detail?.mode ?? '').trim().toLowerCase() !== 'auto'}
           regenerateEnabled={
             String(detail?.mode ?? '')
               .trim()
@@ -1172,12 +1176,14 @@ function GeneratedCard({
 
 function PreviewModal({
   target,
+  readOnly,
   regenerateEnabled,
   isRegenerating,
   onClose,
   onRegenerate,
 }: {
   target: PreviewTarget;
+  readOnly: boolean;
   regenerateEnabled: boolean;
   isRegenerating: boolean;
   onClose: () => void;
@@ -1223,12 +1229,12 @@ function PreviewModal({
   });
   const isVideo =
     !isCarousel && mediaPreview.isVideo && Boolean(mediaPreview.videoUrl);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    subscribeToMount,
+    mountedInBrowser,
+    notMountedOnServer
+  );
   const [showRegenerationOptions, setShowRegenerationOptions] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const releaseBodyScroll = lockBodyScroll();
@@ -1341,13 +1347,15 @@ function PreviewModal({
                     muted={false}
                     videoClassName="w-full max-h-[28rem] rounded-xl bg-black"
                   />
-                  <DownloadVideoButton
-                    url={mediaPreview.videoUrl}
-                    getFilename={() =>
-                      `admin-calendar-${item.scheduledPostId ?? 'post'}.mp4`
-                    }
-                    className="mt-3 inline-flex items-center justify-center rounded-lg border border-white/20 bg-default px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-default disabled:text-quaternary"
-                  />
+                  {!readOnly && (
+                    <DownloadVideoButton
+                      url={mediaPreview.videoUrl}
+                      getFilename={() =>
+                        `admin-calendar-${item.scheduledPostId ?? 'post'}.mp4`
+                      }
+                      className="mt-3 inline-flex items-center justify-center rounded-lg border border-white/20 bg-default px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-default disabled:text-quaternary"
+                    />
+                  )}
                 </div>
               ) : item.imageUrl ? (
                 <div className="relative h-full w-full">

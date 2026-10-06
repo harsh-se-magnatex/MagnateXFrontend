@@ -32,6 +32,8 @@ import {
 } from '@/lib/workspace-ui';
 import { WORKSPACE_NAV_HREFS } from '@/lib/workspace-nav';
 import { showErrorToast } from '@/lib/show-error-toast';
+import { MediaLibraryImagePicker } from '@/components/media-library-image-picker';
+import { getGeneratedMediaLibraryImageApi } from '@/src/service/api/generated-media-library.service';
 
 export default function MarketingScenesPage() {
   const { user, loading } = useAuth();
@@ -213,6 +215,16 @@ export default function MarketingScenesPage() {
               it within the scene. Existing artwork is preserved.
             </span>
           </label>
+          <MediaLibraryImagePicker disabled={generating} onChoose={async (item) => {
+            if (!item.imageUrl) return;
+            try {
+              const blob = await getGeneratedMediaLibraryImageApi(item.id);
+              setImage(new File([blob], `media-${item.id}.png`, { type: blob.type || 'image/png' }));
+              setError(undefined);
+            } catch {
+              setError('Could not load this Media Library image. Try another image.');
+            }
+          }} />
           {preview && (
             <img
               src={preview}

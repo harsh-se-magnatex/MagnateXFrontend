@@ -316,7 +316,7 @@ export default function AutomationPreferencePage() {
 
           const prefs = response.data.preferences;
           const selected = response.data.selected ?? {};
-          const socialStatus = response.data.socialStatus ?? {};
+          const socialStatus = response.data.socialSummary ?? response.data.socialStatus ?? {};
           setPlatformOptimal((prev) => {
             const next = { ...prev };
             for (const p of ALL_PLATFORMS) {
@@ -360,7 +360,7 @@ export default function AutomationPreferencePage() {
       const data = snap.data() as Record<string, unknown>;
       const prefs = (data.preferences ?? {}) as Record<string, unknown>;
       const selected = (data.selected ?? {}) as Record<string, boolean>;
-      const socialStatus = (data.socialStatus ?? {}) as Record<
+      const socialStatus = (data.socialSummary ?? data.socialStatus ?? {}) as Record<
         string,
         { connected?: boolean; status?: string } | undefined
       >;

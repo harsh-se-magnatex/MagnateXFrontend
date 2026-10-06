@@ -122,11 +122,6 @@ const settingsNavItems = [
     icon: Share2,
   },
   { name: 'Payment History', href: '/settings/transactions', icon: Receipt },
-  {
-    name: 'Support & Legal',
-    href: '/settings/support-legal',
-    icon: HelpCircle,
-  },
 ] as const;
 
 export function AppSidebar({
@@ -154,11 +149,7 @@ export function AppSidebar({
     return items;
   })();
   const settingsChildItems = isAccountFrozen
-    ? settingsNavItems.filter(
-        (child) =>
-          child.href === '/settings/billings' ||
-          child.href === '/settings/support-legal'
-      )
+    ? settingsNavItems.filter((child) => child.href === '/settings/billings')
     : settingsNavItems;
   const { isMobile, setOpenMobile } = useSidebar();
   const { user, accountName, loading: authLoading } = useAuth();

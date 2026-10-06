@@ -365,6 +365,7 @@ export type UserPreferencesResponse = {
       { connected?: boolean; status?: string; selectedPageId?: string | null }
     >
   >;
+  socialSummary?: UserPreferencesResponse['socialStatus'];
 };
 
 export const getUserPreferences = async () => {

@@ -70,6 +70,9 @@ import {
   DEFAULT_CAMPAIGN_PLAN_DAYS,
   MAX_CAMPAIGN_DAYS,
   createCampaignApi,
+  listCampaignPhotosApi,
+  uploadCampaignPhotosApi,
+  importCampaignPhotoApi,
   deleteCampaignDraftApi,
   getCampaignSuggestionsApi,
   listCampaignDraftsApi,
@@ -84,8 +87,9 @@ import {
 } from '@/src/service/api/campaign.service';
 import {
   getMemoryLayer,
-  uploadMemoryLayerBrandPhotos,
 } from '@/src/service/api/userService';
+import { MediaLibraryImagePicker } from '@/components/media-library-image-picker';
+import type { GeneratedMediaLibraryItem } from '@/src/service/api/generated-media-library.service';
 import { normalizeMemoryLayerUploadImage } from '@/lib/normalize-memory-layer-image';
 import {
   waitForCampaignDraftRegen,
@@ -380,30 +384,27 @@ export default function CreateCampaignPage() {
   const [selectedPhotos, setSelectedPhotos] = useState<
     { path: string; url: string }[]
   >([]);
-  const [brandPhotoCount, setBrandPhotoCount] = useState(0);
   const [availablePhotos, setAvailablePhotos] = useState<{ path: string; url: string }[]>([]);
   const [savedPhotoPaths, setSavedPhotoPaths] = useState<string[]>([]);
   const [isLoadingPhotoLibrary, setIsLoadingPhotoLibrary] = useState(true);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const uploadInFlightRef = useRef(false);
-  const knownPhotoPaths = useRef(new Set<string>());
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       try {
-        const res = await getMemoryLayer();
+        const [memoryResult, campaignResult] = await Promise.allSettled([
+          getMemoryLayer(), listCampaignPhotosApi(),
+        ]);
+        const res = memoryResult.status === 'fulfilled' ? memoryResult.value : null;
         const layer = res?.data?.memoryLayer as
           | { brandPhotos?: { path: string; url: string }[] }
           | undefined;
-        const count = layer?.brandPhotos?.length ?? 0;
+        const campaignPhotos = campaignResult.status === 'fulfilled' ? campaignResult.value : [];
         if (cancelled) return;
-        setBrandPhotoCount(count);
-        setAvailablePhotos(layer?.brandPhotos ?? []);
-        knownPhotoPaths.current = new Set(
-          layer?.brandPhotos?.map((photo) => photo.path) ?? []
-        );
+        setAvailablePhotos([...(layer?.brandPhotos ?? []), ...campaignPhotos]);
       } catch {
-        if (!cancelled) setBrandPhotoCount(0);
+        if (!cancelled) setAvailablePhotos([]);
       } finally {
         if (!cancelled) setIsLoadingPhotoLibrary(false);
       }
@@ -428,10 +429,6 @@ export default function CreateCampaignPage() {
       showErrorToast(`Choose at most ${room} more photo${room === 1 ? '' : 's'}.`);
       return;
     }
-    if (brandPhotoCount + incoming.length > 30) {
-      showErrorToast('Brand Memory can hold up to 30 photos. Remove older photos in Business Data first.');
-      return;
-    }
     if (incoming.some((file) =>
       !file.type.startsWith('image/') &&
       !(file.type === '' && /\.(jpe?g|png|webp|gif|heic|heif|avif|svg)$/i.test(file.name))
@@ -443,22 +440,10 @@ export default function CreateCampaignPage() {
     setIsUploadingPhotos(true);
     try {
       const normalized = await Promise.all(incoming.map(normalizeMemoryLayerUploadImage));
-      const before = knownPhotoPaths.current;
-      const response = await uploadMemoryLayerBrandPhotos(normalized);
-      const layer = response?.data?.memoryLayer as
-        | { brandPhotos?: { path: string; url: string }[] }
-        | undefined;
-      const saved = layer?.brandPhotos ?? [];
-      knownPhotoPaths.current = new Set(saved.map((photo) => photo.path));
-      const added = saved.filter((photo) =>
-        photo.path && !before.has(photo.path)
-      );
-      setBrandPhotoCount(saved.length);
-      setAvailablePhotos(saved);
+      const added = await uploadCampaignPhotosApi(normalized);
+      setAvailablePhotos((current) => [...current, ...added]);
       setSelectedPhotos((current) => [...current, ...added].slice(0, 5));
-      if (response?.data?.failed?.length) {
-        showErrorToast(response.data.failed[0].reason);
-      } else if (added.length === 0) {
+      if (added.length === 0) {
         showErrorToast('No photos were uploaded. Please try again.');
       }
     } catch {
@@ -467,7 +452,21 @@ export default function CreateCampaignPage() {
       uploadInFlightRef.current = false;
       setIsUploadingPhotos(false);
     }
-  }, [brandPhotoCount, isLoadingPhotoLibrary, selectedPhotos]);
+  }, [isLoadingPhotoLibrary, selectedPhotos]);
+  const handleImportMedia = useCallback(async (items: GeneratedMediaLibraryItem[]) => {
+    const room = 5 - selectedPhotos.length;
+    if (items.length === 0 || items.length > room) return;
+    const results = await Promise.allSettled(items.map((item) => importCampaignPhotoApi(item.id)));
+    const added = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
+    if (added.length > 0) {
+      setAvailablePhotos((current) => [...current, ...added]);
+      setSelectedPhotos((current) => [...current, ...added].slice(0, 5));
+    }
+    if (added.length !== items.length) {
+      showErrorToast(`Could not add ${items.length - added.length} Media Library image${items.length - added.length === 1 ? '' : 's'}.`);
+      if (added.length === 0) throw new Error('No Media Library images were added');
+    }
+  }, [selectedPhotos.length]);
   const suggestions = useCampaignState((s) => s.suggestions);
   const maxDaysFromServer = useCampaignState((s) => s.maxDays);
   const autoSeeded = useCampaignState((s) => s.autoSeeded);
@@ -501,6 +500,10 @@ export default function CreateCampaignPage() {
   const setDateAnchor = useCampaignState((s) => s.setDateAnchor);
   const clearAllDates = useCampaignState((s) => s.clearAllDates);
   const removeDay = useCampaignState((s) => s.removeDay);
+  const photosChangedSinceIdeas = suggestionUsesPhotos === true && suggestions.length > 0 &&
+    !isLoadingPhotoLibrary &&
+    selectedPhotos.map((photo) => photo.path).sort().join('\n') !==
+      savedPhotoPaths.slice().sort().join('\n');
 
   // -------------------- plan window / dates --------------------
   const planExpiresAt = useMemo(
@@ -575,6 +578,7 @@ export default function CreateCampaignPage() {
 
   const canSubmit =
     !isSubmitting &&
+    !photosChangedSinceIdeas &&
     !planCreditsLoading &&
     days.length > 0 &&
     datedDays.length === days.length &&
@@ -588,13 +592,6 @@ export default function CreateCampaignPage() {
   const didInitialFetchRef = useRef(false);
   useEffect(() => {
     if (didInitialFetchRef.current) return;
-    if (suggestions.length > 0) {
-      setSuggestionUsesPhotos(suggestions.some((suggestion) =>
-        suggestion.days.some((day) => !!day.photoPath)
-      ));
-      didInitialFetchRef.current = true;
-      return;
-    }
     didInitialFetchRef.current = true;
     (async () => {
       try {
@@ -812,6 +809,10 @@ export default function CreateCampaignPage() {
 
   // -------------------- create draft batch --------------------
   const handleCreate = useCallback(async () => {
+    if (photosChangedSinceIdeas) {
+      showErrorToast('Generate new ideas for these photos, or remove the new photos to use the existing campaign.');
+      return;
+    }
     if (datedDays.length !== days.length || days.length === 0) {
       showErrorToast('Pick a date for every day before creating the campaign.');
       return;
@@ -850,6 +851,7 @@ export default function CreateCampaignPage() {
         })),
         platforms: genPlatforms,
         suggestionId: selectedSuggestionId ?? undefined,
+        campaignPhotoPaths: selectedPhotos.map((photo) => photo.path),
       });
       if (
         response.accepted ||
@@ -868,7 +870,13 @@ export default function CreateCampaignPage() {
             expectedCount: expected,
           });
           void refreshDraftsRef.current?.();
-          if (wait.outcome === 'generated') toast.success('Generated');
+          if (wait.outcome === 'generated') {
+            toast.success('Generated');
+            if (selectedSuggestionId) {
+              loadSuggestionSet([], null);
+              setSavedPhotoPaths([]);
+            }
+          }
           else
             showErrorToast('Campaign creation failed. Please try again later.');
         }
@@ -877,6 +885,10 @@ export default function CreateCampaignPage() {
       }
       if (response.successCount > 0 && response.failedCount === 0) {
         toast.success('Generated');
+        if (selectedSuggestionId) {
+          loadSuggestionSet([], null);
+          setSavedPhotoPaths([]);
+        }
       } else if (response.successCount > 0) {
         showErrorToast('Campaign creation failed. Please try again later.');
       } else if (response.failedCount > 0) {
@@ -899,6 +911,9 @@ export default function CreateCampaignPage() {
     insufficientCredits,
     platformSelection,
     selectedSuggestionId,
+    selectedPhotos,
+    photosChangedSinceIdeas,
+    loadSuggestionSet,
     setIsSubmitting,
     theme,
     totalCost,
@@ -931,7 +946,7 @@ export default function CreateCampaignPage() {
       ? maxDaysFromServer
       : DEFAULT_CAMPAIGN_PLAN_DAYS;
   const activeSuggestion =
-    selectedSuggestionId != null && suggestionUsesPhotos === useBrandPhotos
+    selectedSuggestionId != null && suggestionUsesPhotos === useBrandPhotos && !photosChangedSinceIdeas
       ? (suggestions.find((s) => s.id === selectedSuggestionId) ?? null)
       : null;
 
@@ -974,6 +989,7 @@ export default function CreateCampaignPage() {
           onGenerateSet={() => handleGenerateSet()}
           onRegenerate={handleRegenerateOne}
           onSelect={selectSuggestion}
+          ideasNeedRefresh={photosChangedSinceIdeas}
           effectiveMaxDays={effectiveMaxDays}
           autoSeeded={autoSeeded}
           pickedSuggestionId={pickedSuggestionId}
@@ -984,6 +1000,7 @@ export default function CreateCampaignPage() {
           isUploadingPhotos={isUploadingPhotos}
           isLoadingPhotoLibrary={isLoadingPhotoLibrary}
           onUploadPhotos={handleUploadPhotos}
+          onImportMedia={handleImportMedia}
           onRemovePhoto={(path) =>
             setSelectedPhotos((photos) => photos.filter((photo) => photo.path !== path))
           }
@@ -1086,6 +1103,7 @@ type SuggestionGalleryProps = {
   onGenerateSet: () => void;
   onRegenerate: (suggestionId: string) => void;
   onSelect: (suggestionId: string) => void;
+  ideasNeedRefresh: boolean;
   effectiveMaxDays: number;
   autoSeeded?: boolean;
   pickedSuggestionId?: string | null;
@@ -1097,6 +1115,7 @@ type SuggestionGalleryProps = {
   isUploadingPhotos: boolean;
   isLoadingPhotoLibrary: boolean;
   onUploadPhotos: (files: FileList | null) => void;
+  onImportMedia: (items: GeneratedMediaLibraryItem[]) => Promise<void>;
   onRemovePhoto: (path: string) => void;
 };
 
@@ -1110,6 +1129,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
     onGenerateSet,
     onRegenerate,
     onSelect,
+    ideasNeedRefresh,
     effectiveMaxDays,
     autoSeeded = false,
     pickedSuggestionId = null,
@@ -1120,6 +1140,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
     isUploadingPhotos,
     isLoadingPhotoLibrary,
     onUploadPhotos,
+    onImportMedia,
     onRemovePhoto,
   } = props;
 
@@ -1199,7 +1220,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
                 Upload 1–5 photos ({selectedPhotos.length}/5)
               </p>
               <p className="text-xs text-secondary">
-                AI may reuse one photo or choose a few across the campaign. Every day will use a selected photo. Uploaded photos are saved to Business Data.
+                AI may reuse one photo or choose a few across the campaign. Every day will use a selected photo. Uploaded photos are kept in Campaigns, separate from Brand Memory.
               </p>
               <label className={cn(
                 'inline-flex cursor-pointer items-center gap-2 rounded-full border border-default bg-element px-4 py-2 text-xs font-semibold text-default hover:bg-hover',
@@ -1219,6 +1240,11 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
                   }}
                 />
               </label>
+              <MediaLibraryImagePicker
+                disabled={isUploadingPhotos || isLoadingPhotoLibrary || selectedPhotos.length >= 5}
+                maxSelection={5 - selectedPhotos.length}
+                onChooseMany={onImportMedia}
+              />
               {selectedPhotos.length > 0 && (
                 <div className="flex flex-wrap gap-3">
                   {selectedPhotos.map((photo, index) => (
@@ -1279,6 +1305,11 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
 
       {useBrandPhotos !== null && (
       <>
+      {ideasNeedRefresh && (
+        <p role="alert" className="rounded-xl border border-warning bg-warning px-4 py-3 text-sm text-warning">
+          Your selected photos changed after these ideas were generated. Generate new ideas to use the new photos, or remove them to use the existing campaign.
+        </p>
+      )}
       {autoSeeded && pickedReason ? (
         <div className="rounded-2xl border border-default bg-default px-4 py-3 text-sm">
           <p className="text-[11px] font-bold uppercase tracking-wider text-default">
@@ -1334,6 +1365,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
                   }
                   onRegenerate={() => onRegenerate(suggestion.id)}
                   onSelect={() => onSelect(suggestion.id)}
+                  disabled={ideasNeedRefresh}
                 />
               </motion.div>
             ))}
@@ -1353,6 +1385,7 @@ type SuggestionCardProps = {
   isAiPicked?: boolean;
   onRegenerate: () => void;
   onSelect: () => void;
+  disabled?: boolean;
 };
 
 function SuggestionCard(props: SuggestionCardProps) {
@@ -1363,6 +1396,7 @@ function SuggestionCard(props: SuggestionCardProps) {
     isAiPicked = false,
     onRegenerate,
     onSelect,
+    disabled = false,
   } = props;
   return (
     <div
@@ -1392,7 +1426,7 @@ function SuggestionCard(props: SuggestionCardProps) {
         <button
           type="button"
           onClick={onRegenerate}
-          disabled={anyRegenerating}
+          disabled={anyRegenerating || disabled}
           aria-label="Regenerate this campaign"
           title="Regenerate this campaign"
           className="shrink-0 inline-flex h-8 w-8 items-center justify-center rounded-full border border-default bg-default text-secondary transition hover:border-strong hover:bg-element hover:text-preview disabled:cursor-not-allowed disabled:text-quaternary"
@@ -1438,7 +1472,7 @@ function SuggestionCard(props: SuggestionCardProps) {
         <button
           type="button"
           onClick={onSelect}
-          disabled={anyRegenerating}
+          disabled={anyRegenerating || disabled}
           className="inline-flex items-center gap-1.5 rounded-full bg-primary-purple px-3 py-1.5 text-xs font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:text-quaternary"
         >
           Use this campaign

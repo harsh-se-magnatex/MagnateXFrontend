@@ -105,6 +105,25 @@ export async function getCampaignSuggestionsApi(): Promise<CampaignSuggestionSet
   return response.data.data;
 }
 
+export type CampaignPhoto = { path: string; url: string; kind?: string; label?: string; description?: string };
+
+export async function listCampaignPhotosApi(): Promise<CampaignPhoto[]> {
+  const response = await axiosClient.get<{ data: { photos: CampaignPhoto[] } }>('/api/v1/campaign/photos');
+  return response.data.data.photos;
+}
+
+export async function uploadCampaignPhotosApi(files: File[]): Promise<CampaignPhoto[]> {
+  const body = new FormData();
+  files.forEach((file) => body.append('photos', file));
+  const response = await axiosClient.post<{ data: { photos: CampaignPhoto[] } }>('/api/v1/campaign/photos/upload', body);
+  return response.data.data.photos;
+}
+
+export async function importCampaignPhotoApi(mediaId: string): Promise<CampaignPhoto> {
+  const response = await axiosClient.post<{ data: { photo: CampaignPhoto } }>('/api/v1/campaign/photos/import', { mediaId });
+  return response.data.data.photo;
+}
+
 /**
  * Regenerate ONE card in the saved suggestion set. Returns the replacement
  * suggestion (same `id` as the one it replaced, fresh `generatedAt`).
@@ -155,6 +174,7 @@ export type CreateCampaignParams = {
   /** Optional reference to the saved suggestion that seeded this campaign —
    *  helps server-side analytics tie drafts back to a card. */
   suggestionId?: string;
+  campaignPhotoPaths?: string[];
 };
 
 /** Response from `POST /api/v1/campaign/create` (queued to Cloud Tasks). */
@@ -187,6 +207,7 @@ export async function createCampaignApi(
     windowEnd: params.windowEnd,
     platforms: params.platforms,
     suggestionId: params.suggestionId,
+    campaignPhotoPaths: params.campaignPhotoPaths,
   });
   return response.data.data;
 }
