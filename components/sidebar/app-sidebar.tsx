@@ -23,6 +23,7 @@ import {
   Sparkles,
   Video,
   LayoutGrid,
+  Lock,
   User,
   CalendarDays,
   Workflow,
@@ -59,8 +60,12 @@ import { useTourState } from '@/src/stores/tourState';
 import { getPageTourRequest } from '@/components/tour/tour-steps';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserPlanCredits } from '@/app/(main)/_components/UserPlanCreditsProvider';
-import { UpgradeGate } from '@/components/shared/UpgradeGate';
 import { PRICING_PLANS_BY_ID, type PlanId } from '@/lib/landing-pricing';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 /** Turn a route into a stable id slug for tour anchoring.
  *  `/instant-generation` → `tour-nav-instant-generation`*  `/settings/billings`→ `tour-nav-settings-billings` */
@@ -204,6 +209,9 @@ export function AppSidebar({
             <SidebarMenu>
               {workspaceItems.map((item) => {
                 const isActive = item.match(pathname);
+                const isAiManagerLocked =
+                  item.href === WORKSPACE_NAV_HREFS.contentPlan &&
+                  billing?.mode === 'manual';
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton
@@ -211,15 +219,30 @@ export function AppSidebar({
                       isActive={isActive}
                       className="hover:bg-transparent active:bg-transparent data-open:hover:bg-transparent data-active:bg-transparent"
                     >
-                      <UpgradeGate
-                        gated={
-                          item.href === WORKSPACE_NAV_HREFS.contentPlan &&
-                          billing?.mode === 'manual'
-                        }
-                        tooltip="Upgrade your plan to unlock AI Manager."
-                        side="right"
-                        className="w-full"
-                      >
+                      {isAiManagerLocked ? (
+                        <div className="flex h-9 w-full items-center gap-2 rounded-full px-3 text-sm font-medium text-secondary">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label="AI Manager locked"
+                                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-secondary hover:bg-element hover:text-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-strong"
+                              >
+                                <Lock className="h-3.5 w-3.5" aria-hidden />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="right">
+                              Upgrade to AI Manager plan to unlock.
+                            </TooltipContent>
+                          </Tooltip>
+                          <span
+                            aria-disabled="true"
+                            className="cursor-not-allowed"
+                          >
+                            {item.name}
+                          </span>
+                        </div>
+                      ) : (
                         <Link
                           id={tourNavId(item.href)}
                           href={item.href}
@@ -229,9 +252,11 @@ export function AppSidebar({
                               : 'text-secondary hover:bg-element hover:text-default'
                           }`}
                         >
-                          <item.icon
-                            className={`h-4 w-4 shrink-0 ${isActive ? 'text-[var(--brand-violet-text)]' : 'icon-secondary'}`}
-                          />
+                          {item.icon && (
+                            <item.icon
+                              className={`h-4 w-4 shrink-0 ${isActive ? 'text-[var(--brand-violet-text)]' : 'icon-secondary'}`}
+                            />
+                          )}
                           <span
                             className={
                               isActive ? 'text-default' : 'text-secondary'
@@ -240,7 +265,7 @@ export function AppSidebar({
                             {item.name}
                           </span>
                         </Link>
-                      </UpgradeGate>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
