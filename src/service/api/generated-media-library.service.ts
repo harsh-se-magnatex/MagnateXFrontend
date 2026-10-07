@@ -41,6 +41,7 @@ export type GeneratedMediaCarouselSlide = {
 export type GeneratedMediaLibraryItem = {
   id: string;
   collection: MediaSource;
+  marketingVisual?: boolean;
   caption: string;
   imageUrl: string | null;
   imageFilePath?: string | null;

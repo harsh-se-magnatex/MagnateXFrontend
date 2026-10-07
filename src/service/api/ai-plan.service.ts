@@ -144,6 +144,7 @@ type RawAIPlanContent = {
   GeneratedBy?: string;
   generatedBy?: string;
   generated_by?: string;
+  marketingVisual?: boolean;
   autoSeeded?: boolean;
   generationTrigger?: string;
   mediaType?: string;
@@ -211,6 +212,7 @@ function displayedCellKind(cell: AIPlanCell): AIPlanUpcomingItem['kind'] {
 }
 
 function generatedKind(item: RawAIPlanContent, cell: AIPlanCell): AIPlanGeneratedKind {
+  if (item.marketingVisual === true) return 'marketing-visual';
   const raw = String(
     item.GeneratedBy ?? item.generatedBy ?? item.generated_by ?? item.source ?? ''
   )

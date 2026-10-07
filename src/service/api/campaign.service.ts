@@ -105,6 +105,17 @@ export async function getCampaignSuggestionsApi(): Promise<CampaignSuggestionSet
   return response.data.data;
 }
 
+export async function clearCampaignSuggestionsForPhotoApi(params: {
+  suggestionId: string;
+}): Promise<void> {
+  const response = await axiosClient.delete<{ data: { cleared: boolean } }>(
+    `/api/v1/campaign/suggestions/${encodeURIComponent(params.suggestionId)}`
+  );
+  if (response.data.data?.cleared !== true) {
+    throw new Error('Campaign ideas were not cleared');
+  }
+}
+
 export type CampaignPhoto = { path: string; url: string; kind?: string; label?: string; description?: string };
 
 export async function listCampaignPhotosApi(): Promise<CampaignPhoto[]> {
