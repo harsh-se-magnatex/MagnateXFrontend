@@ -41,28 +41,21 @@ const appUrl =
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
-  title: 'SocioGenie — AI Social Media Management for Small Business',
+  title: 'SocioGenie — AI Social Media Management for Growing Businesses',
   description:
-    'SocioGenie plans, writes, designs and publishes your Instagram, Facebook and LinkedIn posts. Automated from $49.99/month, or six AI tools you run yourself from $14.99.',
-  keywords: [
-    'social media management',
-    'AI social media',
-    'post scheduler',
-    'social media automation',
-    'content calendar',
-    'SocioGenie',
-  ],
+    'SocioGenie plans, writes, designs and publishes your Instagram, Facebook and LinkedIn posts. Automated from $49.99/month, or seven AI tools you run yourself from $14.99.',
   authors: [{ name: 'SocioGenie' }],
   alternates: {
     canonical: 'https://www.sociogenie.ai/',
   },
+  // No `images`: each route's `opengraph-image.tsx` supplies the share card,
+  // and a static image here would override the generated ones.
   openGraph: {
-    title: 'Sociogenie – AI Social Media Management for Small Businesses',
+    title: 'SocioGenie — AI Social Media Management for Growing Businesses',
     description:
-      'AI-generated content, human-reviewed before publishing, posted automatically across Instagram, Facebook & LinkedIn.',
+      'SocioGenie plans, writes, designs and publishes your Instagram, Facebook and LinkedIn posts. From $14.99/month.',
     siteName: 'SocioGenie',
     url: 'https://www.sociogenie.ai/',
-    images: ['/logo.png'],
     type: 'website',
   },
 
@@ -72,8 +65,9 @@ export const metadata: Metadata = {
 
   twitter: {
     card: 'summary_large_image',
-    title: 'SocioGenie — AI Social Media Management',
-    description: 'Schedule, automate, and grow your social presence with AI.',
+    title: 'SocioGenie — AI Social Media Management for Growing Businesses',
+    description:
+      'SocioGenie plans, writes, designs and publishes your Instagram, Facebook and LinkedIn posts. From $14.99/month.',
   },
   robots: {
     index: true,
@@ -97,8 +91,9 @@ const ORGANIZATION_JSON_LD = {
       url: 'https://www.sociogenie.ai/',
       logo: 'https://www.sociogenie.ai/logo.png',
       foundingDate: '2026',
+      areaServed: 'Worldwide',
       description:
-        'AI social media management software for small businesses. Plans, writes, designs and publishes posts to Instagram, Facebook and LinkedIn via official platform APIs.',
+        'AI social media management software for growing businesses worldwide. Plans, writes, designs and publishes posts to Instagram, Facebook and LinkedIn via official platform APIs.',
       address: {
         '@type': 'PostalAddress',
         addressLocality: 'Ahmedabad',

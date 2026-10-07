@@ -17,7 +17,6 @@ export const metadata: Metadata = {
       'Enter your website and email, pick a platform, and get one free sample social post crafted from your brand — no signup required.',
     siteName: 'SocioGenie',
     url: 'https://www.sociogenie.ai/try-it',
-    images: ['/logo.png'],
     type: 'website',
   },
 };

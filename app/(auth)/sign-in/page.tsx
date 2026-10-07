@@ -1,25 +1,20 @@
 import type { Metadata } from 'next';
+import { AuthShowcase } from '@/components/auth/AuthShowcase';
 import { SigninForm } from '../_components/sign-inForm';
 
 export const metadata: Metadata = {
   title: 'Login · SocioGenie',
   description:
-    'Log in to SocioGenie to manage AI-generated, human-reviewed social posts.',
+    'Log in to SocioGenie to manage your AI social media.',
 };
 
 export default function SigninPage() {
   return (
     <div className="flex min-h-svh flex-col lg:flex-row">
-      <aside className="relative hidden flex-1 flex-col justify-center overflow-hidden border-default lg:flex lg:max-w-[42%] xl:max-w-[45%] lg:border-r">
-        <div className="absolute inset-0 bg-hover" />
-        <div className="absolute top-1/4 left-1/4 h-[320px] w-[320px] rounded-full bg-primary-blue/10 blur-[90px]" />
-        <div className="absolute bottom-1/3 right-0 h-[280px] w-[280px] rounded-full bg-primary-purple/10 blur-[80px]" />
-        <div className="relative z-10 flex flex-col items-center justify-center gap-6 px-10 py-16 text-center">
-          <img src="/logo.png" alt="SocioGenie" className="h-56 w-auto" />
-          <p className="max-w-sm text-sm leading-relaxed text-secondary">
-            AI-generated posts tailored to your brand—reviewed by humans before
-            anything goes live.
-          </p>
+      <aside className="relative hidden flex-1 border-default bg-hover lg:block lg:max-w-[46%] lg:border-r">
+        {/* Scrolls on its own and stays put while the form scrolls. */}
+        <div className="[scrollbar-width:thin] lg:sticky lg:top-22 lg:max-h-[calc(100svh-5.5rem)] lg:overflow-y-auto">
+          <AuthShowcase />
         </div>
       </aside>
 

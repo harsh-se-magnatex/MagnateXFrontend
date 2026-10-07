@@ -1,5 +1,5 @@
 export const HOMEPAGE_ANSWER =
-  'SocioGenie is AI social media management software for small businesses. It plans your month, writes and designs each post, and publishes to Instagram, Facebook and LinkedIn through the official platform APIs. Studio starts at $14.99 a month; AI Manager, which runs the calendar for you, starts at $49.99.';
+  'SocioGenie is AI social media software for growing businesses worldwide. It plans, designs and publishes your Instagram, Facebook and LinkedIn posts through the official APIs. Studio from $14.99 a month; AI Manager, which runs your calendar, from $49.99.';
 
 export const SOFTWARE_APPLICATION_JSON_LD = {
   '@context': 'https://schema.org',
@@ -11,11 +11,13 @@ export const SOFTWARE_APPLICATION_JSON_LD = {
   operatingSystem: 'Web',
   url: 'https://www.sociogenie.ai/',
   description: HOMEPAGE_ANSWER,
+  areaServed: 'Worldwide',
   featureList: [
     'AI Manager — automated monthly content calendar on Prime, Elite and Legacy',
     'Human review before publishing on Prime, Elite and Legacy',
     'Publishing via official Instagram, Facebook and LinkedIn APIs',
-    'Six AI creation tools on every plan, including Studio',
+    'Seven AI creation tools on every plan, including Studio',
+    'Marketing visuals that place your product on billboards, transit lightboxes, magazine spreads and storefront windows',
     'Campaigns, carousels, product posts, occasion posts and generated video',
     'Analytics graded across seven areas with recommended next posts',
   ],

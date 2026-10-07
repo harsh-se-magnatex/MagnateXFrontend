@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import React from 'react';
 import { BusinessProvider } from '@/features/business/BusinessProvider';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -14,6 +15,11 @@ import { UserProvider } from './_components/useUser';
 import { AssistantWidget } from '@/components/chat/AssistantWidget';
 import { TourLauncher } from '@/components/tour/TourLauncher';
 import { ClearPendingOnNavigation } from './_components/ClearPendingOnNavigation';
+
+/** Signed-in app surface: nothing here should appear in search results. */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function MainLayout({
   children,

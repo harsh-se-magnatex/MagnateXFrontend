@@ -20,7 +20,7 @@ const stagger = {
 };
 
 const TAGLINE =
-  'Sociogenie is an AI-powered social media management system for small businesses — combining automated content generation with human review and publishing across Instagram, Facebook, and LinkedIn.';
+  'SocioGenie is AI social media software for growing businesses. It creates and publishes your Instagram, Facebook and LinkedIn posts.';
 
 const PRODUCT_LINKS = [
   { label: 'How It Works', href: '/product#how-it-works' },

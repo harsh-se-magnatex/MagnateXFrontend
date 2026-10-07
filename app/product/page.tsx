@@ -15,7 +15,6 @@ export const metadata: Metadata = {
     'See how SocioGenie researches, writes, designs and publishes to Instagram, Facebook and LinkedIn — 14 tools, an automated monthly calendar, and human review on every AI Manager plan.',
     siteName: 'SocioGenie',
     url: 'https://www.sociogenie.ai/product',
-    images: ['/logo.png'],
     type: 'website',
   },
 };

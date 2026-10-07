@@ -17,25 +17,25 @@ const SETUP_STEPS = [
     icon: Sparkles,
     title: 'Tell us who you are',
     description:
-      'Pull your Business DNA from your website or a catalog PDF, or fill it in by hand. Pick a look and brand colors to match.',
+      'Import your brand from your website or a PDF. Pick a look and colors.',
   },
   {
     icon: ListChecks,
     title: 'Answer what your industry asks',
     description:
-      'A questionnaire built for your business, not a generic form — with one-tap suggested answers.',
+      'A short questionnaire for your industry, with one-tap answers.',
   },
   {
     icon: ImagePlus,
     title: 'Show us what you sell',
     description:
-      'Upload product photos, then preview 3 sample posts per platform before you commit.',
+      'Upload product photos and preview 3 sample posts per platform.',
   },
   {
     icon: CalendarClock,
     title: 'Connect & configure',
     description:
-      'Link Instagram, Facebook and LinkedIn, then set captions, review mode, and posting-time strategy.',
+      'Link your accounts, then set captions, review mode and posting times.',
   },
 ] as const;
 
@@ -44,7 +44,7 @@ const PIPELINE_STEPS = [
     icon: Bot,
     title: 'Generated from your brand',
     description:
-      'Built from your Business DNA, questionnaire answers and visual style — never a template.',
+      'Built from your brand and style — never a template.',
   },
   {
     icon: Eye,
@@ -56,13 +56,13 @@ const PIPELINE_STEPS = [
     icon: Clock,
     title: 'Scheduled at your best time',
     description:
-      'Your platform’s proven top hour once you have enough data, your preferred time until then.',
+      'Your best hour, learned from your own data.',
   },
   {
     icon: Send,
     title: 'Published & tracked',
     description:
-      'Live on Instagram, Facebook or LinkedIn, feeding straight into your Analytics.',
+      'Live on your platforms, feeding your Analytics.',
   },
 ] as const;
 

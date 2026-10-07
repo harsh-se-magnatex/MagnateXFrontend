@@ -8,12 +8,12 @@ export const metadata: Metadata = {
     canonical: 'https://www.sociogenie.ai/pricing',
   },
   openGraph: {
-  title: 'SocioGenie Pricing — Plans from $14.99/month',
-    description: 'Pricing for our plans and credit packs.',
+    title: 'SocioGenie Pricing — Plans from $14.99/month',
+    description:
+      'Studio is $14.99/month with 100 credits. AI Manager runs your social calendar from $49.99 for one platform to $84.99 for three. No contracts.',
     siteName: 'SocioGenie',
     url: 'https://www.sociogenie.ai/pricing',
     type: 'website',
-    images: ['/logo.png'],
   },
   twitter: {
     card: 'summary_large_image',

@@ -174,3 +174,232 @@
   background: var(--bg-subtle);
   border-color: var(--border-soft);
 }
+
+/* ── Motion: rotating words ─────────────────────────────────── */
+
+/*
+ * The slot clips vertically so letters roll in from below and out the top.
+ * The padding/negative-margin pair gives descenders and the spring's
+ * overshoot room without changing the line box.
+ */
+.rotating-words {
+  position: relative;
+  display: inline-flex;
+  vertical-align: bottom;
+  white-space: nowrap;
+  overflow: clip;
+  padding-block: 0.14em;
+  margin-block: -0.14em;
+}
+
+.rotating-words__word {
+  display: inline-flex;
+  white-space: pre;
+}
+
+.rotating-words__char {
+  display: inline-block;
+  white-space: pre;
+  will-change: transform;
+}
+
+/* ── Motion: marquee ────────────────────────────────────────── */
+
+.marquee {
+  --marquee-gap: 0.75rem;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 8%,
+    #000 92%,
+    transparent
+  );
+}
+
+.marquee__track {
+  display: flex;
+  width: max-content;
+  gap: var(--marquee-gap);
+  animation: marquee-slide var(--marquee-duration, 40s) linear infinite;
+}
+
+.marquee--reverse .marquee__track {
+  animation-direction: reverse;
+}
+
+.marquee:hover .marquee__track {
+  animation-play-state: paused;
+}
+
+.marquee__group {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--marquee-gap);
+}
+
+@keyframes marquee-slide {
+  to {
+    transform: translateX(calc(-50% - var(--marquee-gap) / 2));
+  }
+}
+
+.marquee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 40px;
+  padding-inline: 1rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-element);
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Motion: entrance ───────────────────────────────────────── */
+
+/* Transform + opacity only, spring curve, staggered by --rise-delay. */
+.landing-rise {
+  animation: landing-rise 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+@keyframes landing-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* For the H1 and the answer paragraph: they are the LCP candidates, and an
+   element that starts at opacity 0 delays LCP until it fades in. These move
+   but are fully painted from the first frame. */
+.landing-rise--no-fade {
+  animation-name: landing-rise-no-fade;
+}
+
+@keyframes landing-rise-no-fade {
+  from {
+    transform: translateY(18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee {
+    mask-image: none;
+  }
+  .marquee__track {
+    animation: none;
+    width: auto;
+  }
+  .marquee__group {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .marquee__group[aria-hidden] {
+    display: none;
+  }
+  .landing-rise {
+    animation: none;
+  }
+}
+
+/* ── Motion: statement marquee ──────────────────────────────── */
+
+/* Display-size lines in a marquee. Declared after `.marquee`, so the wider
+   gap wins at equal specificity. */
+.statement-marquee {
+  --marquee-gap: 2.5rem;
+}
+
+.statement-marquee__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2.5rem;
+  white-space: nowrap;
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  color: var(--text-default);
+}
+
+/* In the hero the bands sit under a 64px H1, so they step down a size. */
+.statement-marquee--hero .statement-marquee__item {
+  font-size: clamp(22px, 3vw, 34px);
+}
+
+.statement-marquee__mark {
+  width: 0.55em;
+  height: 0.55em;
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statement-marquee__item {
+    white-space: normal;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* ── AI Manager loop ────────────────────────────────────────── */
+
+/* A highlight walks the five steps in order, one every 1.6s, so the cycle
+   reads as a sequence. Each step is lit for the first slice of an 8s loop,
+   offset by its own delay. */
+.loop-step {
+  transition:
+    border-color 150ms var(--ease-expo),
+    background-color 150ms var(--ease-expo);
+  animation: loop-step-lit 8s linear infinite;
+  animation-delay: var(--step-delay, 0s);
+}
+
+@keyframes loop-step-lit {
+  0%,
+  18% {
+    border-color: color-mix(in srgb, var(--step-accent) 55%, transparent);
+    background-color: color-mix(in srgb, var(--step-accent) 8%, var(--bg-element));
+  }
+  22%,
+  100% {
+    border-color: var(--border-default);
+    background-color: var(--bg-element);
+  }
+}
+
+/* Dashes flow from the last step back to the first. */
+.loop-return__path {
+  stroke: color-mix(in srgb, var(--brand-violet) 60%, transparent);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+  animation: loop-return-flow 1.2s linear infinite;
+}
+
+@keyframes loop-return-flow {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+.loop-spin {
+  animation: loop-spin 6s linear infinite;
+}
+
+@keyframes loop-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loop-step,
+  .loop-return__path,
+  .loop-spin {
+    animation: none;
+  }
+}

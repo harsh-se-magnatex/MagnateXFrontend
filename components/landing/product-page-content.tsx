@@ -23,6 +23,7 @@ import {
   PartyPopper,
   Video,
   Target,
+  Megaphone,
   GalleryHorizontal,
   CalendarClock,
   LayoutGrid,
@@ -45,79 +46,77 @@ const PRODUCT_FEATURES = [
     title: 'Create Post',
     icon: Zap,
     description:
-      "Give it text, get every platform. Add a photo and SocioGenie edits it into your brand's look before writing native Instagram, Facebook and LinkedIn versions.",
+      'Give it text or a photo; get a native post for every platform.',
+  },
+  {
+    title: 'Marketing Scenes',
+    icon: Megaphone,
+    description:
+      'Your product on a billboard, lightbox, magazine or shop window.',
   },
   {
     title: 'Product Posts',
     icon: ImageIcon,
-    description:
-      'Two modes: a photoshoot-ready product shot, or a social ad with copy built into the creative. You choose.',
+    description: 'A clean product shot, or a social ad with copy built in.',
   },
   {
     title: 'Videos',
     icon: Video,
-    description:
-      '20-second videos from a text prompt, with your logo set as the opening or closing frame.',
+    description: '20-second videos from a prompt, with your logo built in.',
   },
   {
     title: 'Occasion Posts',
     icon: PartyPopper,
     description:
-      'A year-round calendar of festivals and holidays — pick the ones relevant to your brand and get a timely greeting generated and published automatically.',
+      'Pick the festivals that matter; greetings are made and posted.',
   },
   {
     title: 'Campaigns',
     icon: Target,
     description:
-      'Pick a concept and get five days of connected content across your platforms, generated and scheduled end to end.',
+      'One concept, five days of connected posts, scheduled for you.',
   },
   {
     title: 'Carousel Posts',
     icon: GalleryHorizontal,
-    description:
-      'Write the story yourself, or leave it blank and let the AI build the slide sequence from your brand profile.',
+    description: 'Write the story, or let AI build the slides from your brand.',
   },
   {
     title: 'Schedule a Post',
     icon: CalendarClock,
-    description:
-      'Choose the exact date and time for any piece of content you have created.',
+    description: 'Pick the exact date and time for anything you made.',
   },
   {
     title: 'AI Manager',
     icon: LayoutGrid,
     description:
-      "Your whole month at a glance: every day, every platform, what's planned and what has already published. AI Manager plans your month, writes and designs each post, clears it through review, and publishes at your best hour. Prime, Elite and Legacy only.",
+      'Plans, creates, reviews and publishes your month. Prime, Elite and Legacy.',
   },
   {
     title: 'Upcoming Posts',
     icon: ListChecks,
-    description:
-      'A running list of everything queued to publish, so you always know what is coming.',
+    description: 'Everything queued to publish, in one list.',
   },
   {
     title: 'Media Library',
     icon: FolderOpen,
-    description:
-      'Every generated post, ad, video and carousel, kept in one place and ready to reuse.',
+    description: 'Every post, ad, video and carousel, ready to reuse.',
   },
   {
     title: 'Connected Accounts',
     icon: Share2,
-    description:
-      'Connect Instagram, Facebook and LinkedIn once — SocioGenie handles publishing and analytics from there.',
+    description: 'Connect Instagram, Facebook and LinkedIn once.',
   },
   {
     title: 'Analytics',
     icon: BarChart3,
     description:
-      'Graded performance across seven areas, your best and worst posts, and two ready-to-run ideas for what is next.',
+      'Graded performance, best and worst posts, and what to post next.',
   },
   {
     title: 'Chat Assistant',
     icon: MessageCircle,
-    description:
-      'A guide built into the app that knows your brand and helps you decide what to run next.',
+    description: 'An in-app guide that knows your brand.',
   },
 ] as const;
 
@@ -125,53 +124,49 @@ const LANDING_FAQ_ITEMS = [
   {
     question: 'How is SocioGenie different from other scheduling tools?',
     answer:
-      "They schedule content you've already written. SocioGenie creates the content and publishes it for you. It handles the creation and strategy layer, not just the scheduling step.",
+      'Schedulers post what you wrote. SocioGenie also decides what to post and creates it.',
   },
   {
     question: "Who reviews my content before it's published?",
     answer:
-      'On Prime, Elite and Legacy you choose: Manual Review, where you clear every post yourself, or Auto Approve, where our in-house team clears it. On Studio you create each post and see it before it publishes.',
+      'On AI Manager plans, you (Manual Review) or our in-house team (Auto Approve). On Studio, you create and see every post.',
   },
   {
     question: "What's the difference between Studio and AI Manager?",
     answer:
-      'Studio gives you every creative tool, run on your own schedule — you decide what to make and when to post it. AI Manager plans, generates and schedules a full month for you on Prime, Elite and Legacy.',
+      'Studio: you decide what to make and when. AI Manager: it plans and runs your month.',
   },
   {
     question: 'Is the content specific to my business, or is it generic?',
     answer:
-      "It's built from your brand profile — your industry, tone of voice, and business context. What gets generated for your account is specific to your setup, not pulled from a shared template bank.",
+      'Specific. It is built from your brand profile — industry, voice and context — not a template bank.',
   },
   {
     question: 'What platforms does SocioGenie support?',
-    answer:
-      'Instagram, Facebook, and LinkedIn. Additional platforms are on the roadmap.',
+    answer: 'Instagram, Facebook and LinkedIn.',
   },
   {
     question: 'How long does setup take?',
-    answer:
-      'Most users complete setup in under 10 minutes. Your first content batch is reviewed and ready within 24 hours.',
+    answer: 'Under 10 minutes. Your first content is ready within 24 hours.',
   },
   {
     question: 'Can I see what my content will look like before I commit?',
-    answer:
-      'Yes — right after setup, generate 3 sample posts per platform (Instagram, Facebook, LinkedIn) so you can see your brand’s look before going further.',
+    answer: 'Yes. After setup you get 3 sample posts per platform.',
   },
   {
     question: 'What happens to unused credits?',
     answer:
-      'Credits are valid for 30 days. Personalized AI runs independently — it continues regardless of your credit balance.',
+      'Plan credits reset each cycle; credit packs last 30 days. AI Manager runs regardless of your balance.',
   },
   {
     question: 'Can I pause or cancel my subscription?',
-    answer:
-      'Yes. No long-term contracts. Cancel at any time from your account settings.',
+    answer: 'Yes. No contracts — cancel any time in settings.',
   },
   {
     question:
       'Is SocioGenie suitable for a business with no social media presence yet?',
     answer:
-      "Yes — SocioGenie handles the strategy, so you don't need to know what to post or when. It's well-suited to businesses that want to build a consistent presence without hiring someone to manage it.",
+      'Yes. It decides what to post and when, so you can start from zero.',
   },
 ] as const;
 
@@ -267,7 +262,9 @@ export function ProductPageContent() {
     <div className="min-h-screen flex flex-col font-(--font-sora) selection:bg-primary-blue/20 overflow-hidden relative">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(LANDING_FAQ_JSON_LD) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(LANDING_FAQ_JSON_LD),
+        }}
       />
       <AppGradientBackground variant="vivid" />
       <NavBar />
@@ -294,28 +291,12 @@ export function ProductPageContent() {
             </motion.h1>
             <motion.p
               variants={fadeIn}
-              className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-secondary sm:text-lg"
+              className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-secondary sm:text-base"
             >
-              SocioGenie&apos;s AI Manager builds and runs a monthly social media calendar without being asked. It researches angles for your industry, generates each post two days before it runs, routes it through human review, and publishes at the account&apos;s best hour on Instagram, Facebook or LinkedIn.
-            </motion.p>
-            <motion.p
-              variants={fadeIn}
-              className="mx-auto mt-7 max-w-2xl text-lg font-light leading-relaxed text-secondary sm:text-xl"
-            >
-              From a brand setup under 10 minutes to a fully scheduled month — see
-              exactly how SocioGenie researches, creates, reviews and publishes
-              for Instagram, Facebook and LinkedIn.
-            </motion.p>
-            <motion.p
-              variants={fadeIn}
-              className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-tertiary"
-            >
-              SocioGenie is AI social media management software for small
-              businesses: it researches your industry, generates on-brand
-              posts and publishes them to Instagram, Facebook and LinkedIn — automated by AI Manager from{' '}
-              <InlinePrice usd={49.99} />
-              /month, where our in-house team reviews before publishing, or on demand with Studio from{' '}
+              AI social media software for growing businesses. Studio from{' '}
               <InlinePrice usd={14.99} />
+              /month; AI Manager, which runs your calendar, from{' '}
+              <InlinePrice usd={49.99} />
               /month.
             </motion.p>
             <motion.div
@@ -366,9 +347,8 @@ export function ProductPageContent() {
               >
                 Set up once. Your content runs from there.
               </h2>
-              <p className="mt-4 max-w-3xl font-(--font-dm-sans) text-base leading-relaxed text-secondary">
-                Four steps to set up your brand, then four steps every post goes
-                through after that.
+              <p className="mt-4 max-w-3xl font-(--font-dm-sans) text-sm leading-relaxed text-secondary">
+                Set up your brand once. Every post follows the same four steps.
               </p>
             </motion.div>
             <motion.div variants={fadeIn} className="mt-10">
@@ -441,9 +421,8 @@ export function ProductPageContent() {
               <h2 id="plans-heading" className="text-display-3 text-default">
                 Run it yourself, or hand over the month
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-base leading-relaxed text-secondary">
-                Every feature above is available on both. The difference is who
-                decides what gets made and when.
+              <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-sm leading-relaxed text-secondary">
+                Same features. The difference is who decides what gets made.
               </p>
             </motion.div>
             <motion.div variants={fadeIn} className="mt-10">
@@ -475,10 +454,8 @@ export function ProductPageContent() {
               >
                 How will your social media look?
               </h2>
-              <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-base leading-relaxed text-secondary">
-                Switch between Instagram, Facebook, and LinkedIn, browse the
-                profile grid, and open any post to see how SocioGenie-generated
-                content could appear once published.
+              <p className="mx-auto mt-4 max-w-2xl font-(--font-dm-sans) text-sm leading-relaxed text-secondary">
+                Browse example profiles and posts on each platform.
               </p>
             </motion.div>
             <motion.div variants={fadeIn} className="mt-10">
@@ -504,8 +481,7 @@ export function ProductPageContent() {
                 Simple, transparent pricing
               </h2>
               <p className="mt-4 font-(--font-dm-sans) text-secondary">
-                Start with a plan that fits your team. No contracts — cancel
-                anytime.
+                No contracts. Cancel any time.
               </p>
             </motion.div>
             <motion.div variants={fadeIn} className="mt-10">

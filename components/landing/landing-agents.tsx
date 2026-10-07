@@ -46,7 +46,7 @@ const AGENTS: Agent[] = [
     tag: 'Researcher',
     title: 'Always watching your market',
     description:
-      'Continuously monitors your industry, competitors, trending conversations and market opportunities — so your content is never a step behind.',
+      'Tracks your industry, competitors and trends.',
     icon: Radar,
     accent: 'var(--brand-cyan)',
   },
@@ -56,7 +56,7 @@ const AGENTS: Agent[] = [
     tag: 'Strategist',
     title: 'A plan before a single word',
     description:
-      'Decides what to make next — a campaign, a carousel, a timely event post — and builds toward long-term growth, not random posting.',
+      'Picks what to post next — a marketing visual, a carousel, a festival post.',
     icon: Target,
     accent: 'var(--brand-sky)',
   },
@@ -66,7 +66,7 @@ const AGENTS: Agent[] = [
     tag: 'Copywriter',
     title: 'Writes in your brand voice',
     description:
-      'Captions, hooks, carousels and campaign copy — written in your brand voice, at the length and tone you set, never generic AI.',
+      'Captions and hooks in your voice, at your length.',
     icon: PenLine,
     accent: 'var(--brand-indigo)',
   },
@@ -76,7 +76,7 @@ const AGENTS: Agent[] = [
     tag: 'Creative Director',
     title: 'Visuals that match your brand',
     description:
-      'Builds every visual in your chosen style and brand colors — Product Posts, Carousel Posts, 8-second Videos, Occasion Posts — designed to stop the scroll.',
+      'Posts, carousels, videos and marketing visuals in your colors.',
     icon: Sparkles,
     accent: 'var(--brand-violet)',
   },
@@ -86,7 +86,7 @@ const AGENTS: Agent[] = [
     tag: 'Human Reviewer',
     title: 'Quality, checked by a human',
     description:
-      'On Prime, Elite and Legacy: choose Manual Review and clear every post yourself, or Auto Approve and let our in-house team clear it for you. On Studio you create each post and see it before it publishes.',
+      'AI Manager posts are cleared by you, or by our in-house team.',
     icon: ShieldCheck,
     accent: 'var(--brand-orchid)',
   },
@@ -96,7 +96,7 @@ const AGENTS: Agent[] = [
     tag: 'Publisher',
     title: 'Published at the perfect time',
     description:
-      "Publishes at your platform's proven best hour — learned from your own analytics once you've posted enough, your preferred time until then.",
+      'Posts at your best hour, learned from your own analytics.',
     icon: Clock,
     accent: 'var(--brand-pink)',
   },
@@ -106,7 +106,7 @@ const AGENTS: Agent[] = [
     tag: 'Growth Analyst',
     title: 'Learns from every post',
     description:
-      "Grades your last three weeks across seven areas, flags your best and worst posts, and hands you two ready-to-run ideas for what's next.",
+      'Grades your last three weeks and suggests what to post next.',
     icon: BarChart3,
     accent: 'var(--brand-coral)',
   },
@@ -176,7 +176,7 @@ const ALTERNATIVES: Alternative[] = [
 
 /**
  * The named-enemy section. Sits right after the hero, before the roles grid
- * — a skeptical small-business owner already has an opinion about these
+ * — a skeptical business owner already has an opinion about these
  * three options, so agreeing with them first earns the rest of the page a
  * hearing.
  */
@@ -222,7 +222,7 @@ export function LandingChallenge() {
 }
 
 const AI_PLAN_STATS: { qty: string; label: string }[] = [
-  { qty: '5', label: 'Campaigns' },
+  { qty: '5', label: 'Marketing visuals' },
   { qty: '7', label: 'Automated posts' },
   { qty: '3', label: 'Quick-create posts' },
   { qty: '2', label: 'Videos' },
@@ -304,9 +304,8 @@ export function LandingAgents() {
             Seven roles,{' '}
             <span className="text-gradient-brand">one subscription.</span>
           </h2>
-          <p className="mt-5 text-base leading-relaxed text-secondary">
-            Every step a social team runs — research, strategy, copy, design,
-            review, publishing and analysis — handled end to end.
+          <p className="mt-5 text-sm leading-relaxed text-secondary">
+            Every step a social team runs, from research to analytics.
           </p>
         </div>
 
@@ -338,10 +337,8 @@ export function LandingClose() {
             We&apos;ll handle{' '}
             <span className="text-gradient-brand-warm">your growth.</span>
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-secondary">
-            SocioGenie creates, reviews, schedules and publishes — so you can
-            focus on customers while your social media runs through AI Manager
-            AI, or exactly the way you run it with Studio.
+          <p className="mx-auto mt-5 max-w-md text-sm leading-relaxed text-secondary">
+            Run your business. Let SocioGenie run your social media.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
             <GuestAuthLink href="/sign-up" className="btn-brand group">

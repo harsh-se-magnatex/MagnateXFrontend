@@ -14,7 +14,6 @@ export const metadata: Metadata = {
     'Every post here was generated, scheduled and published automatically — five brands, three platforms, seven visual styles. No person wrote or designed any of it.',
     siteName: 'SocioGenie',
     url: 'https://www.sociogenie.ai/how-it-looks',
-    images: ['/logo.png'],
     type: 'website',
   },
 };

@@ -42,31 +42,31 @@ const BILLING_FAQ_ITEMS = [
   {
     question: 'Do I need to enter payment details?',
     answer:
-      'Yes. A valid payment method is required when you subscribe to a paid plan.',
+      'Yes, when you subscribe to a paid plan.',
   },
   {
     question: 'Can I buy extra credits?',
     answer:
-      'Yes. Top-up credit packs are available from Billing while you have an active subscription.',
+      'Yes. Credit packs are in Billing while your plan is active.',
   },
   {
     question: 'What happens to unused credits?',
     answer:
-      "Plan credits reset to your plan's monthly allowance at the start of each billing cycle — unused plan credits don't roll over. Credit packs you buy separately stay valid for 30 days from purchase.",
+      "Plan credits reset each cycle and don't roll over. Credit packs last 30 days.",
   },
   {
     question: "Does AI Manager's automated posting use my credits?",
     answer:
-      "No. Your AI Manager calendar runs on your subscription and never touches your credit balance. Credits are only spent when you manually trigger something — Create Post, Product Posts, Campaigns, Occasion Posts, Carousel Posts, or Videos — outside the automated calendar.",
+      'No. Credits are only spent on posts you create yourself.',
   },
   {
     question: 'In what order are my credits spent?',
     answer:
-      "Plan credits are spent first. Once those run out, any top-up pack credits you've purchased are used next.",
+      'Plan credits first, then credit packs.',
   },
   {
     question: 'Can I cancel or pause my subscription?',
-    answer: 'Yes. No long-term contracts — cancel anytime from your account settings.',
+    answer: 'Yes. No contracts — cancel any time in settings.',
   },
 ] as const;
 
@@ -74,6 +74,7 @@ const CREDIT_ACTIONS = [
   { label: 'Product Posts', credits: '4 credits (6 for a full social ad)' },
   { label: 'Campaign post', credits: '3 credits / day' },
   { label: 'Create Post', credits: '2 credits' },
+  { label: 'Marketing Scenes', credits: '2 credits' },
   { label: 'Occasion Posts', credits: '2 credits' },
   { label: 'Carousel Posts', credits: '3 credits / slide' },
   { label: 'Videos', credits: '100 credits' },
@@ -86,7 +87,7 @@ const PRICING_JSON_LD = {
   '@type': 'Product',
   name: 'SocioGenie Plans',
   description:
-    'Subscription plans for SocioGenie. Every plan includes the six AI creation tools and publishes to Instagram, Facebook and LinkedIn. The difference is who decides what gets made and when: on Studio you do, and on Prime, Elite and Legacy AI Manager plans and runs the month for you.',
+    'Subscription plans for SocioGenie. Every plan includes the seven AI creation tools and publishes to Instagram, Facebook and LinkedIn. The difference is who decides what gets made and when: on Studio you do, and on Prime, Elite and Legacy AI Manager plans and runs the month for you.',
   url: 'https://www.sociogenie.ai/pricing',
   brand: { '@id': 'https://www.sociogenie.ai/#organization' },
   // Always USD, never the localised display figure: schema states the price
@@ -354,13 +355,13 @@ export default function PricingPage() {
               variants={fadeIn}
               className="mx-auto mb-6 max-w-2xl text-center text-sm text-secondary sm:text-base font-(--font-dm-sans) text-pretty"
             >
-              Every feature is on every plan. The difference is who decides what gets made and when — you, or the AI. No contracts · Cancel anytime.
+              Every feature on every plan. You decide what gets made, or the AI does. No contracts.
             </motion.p>
             <motion.p
               variants={fadeIn}
               className="mx-auto mb-6 max-w-2xl text-center text-sm text-tertiary font-(--font-dm-sans) text-pretty"
             >
-              SocioGenie pricing starts at <InlinePrice usd={14.99} /> a month for Studio, which includes 100 credits and six AI creation tools. AI Manager tiers, where the AI runs your calendar, are <InlinePrice usd={49.99} /> for one platform, <InlinePrice usd={69.99} /> for two and <InlinePrice usd={84.99} /> for three. Credit packs start at <InlinePrice usd={6.99} />.
+              Studio: <InlinePrice usd={14.99} />/month, 100 credits, seven AI tools. AI Manager: <InlinePrice usd={49.99} /> for one platform, <InlinePrice usd={69.99} /> for two, <InlinePrice usd={84.99} /> for three. Credit packs from <InlinePrice usd={6.99} />.
             </motion.p>
 
             <motion.div
@@ -553,11 +554,8 @@ export default function PricingPage() {
               variants={fadeIn}
               className="text-secondary font-(--font-dm-sans) mb-6 leading-relaxed"
             >
-              Credits pay for content you generate on demand — product posts,
-              quick creates, campaigns, occasion posts, carousels, and videos.
-              If you&apos;re on Prime, Elite or Legacy, your automated monthly calendar (19
-              pieces of content per cycle, plus seasonal posts) runs on your
-              subscription and never touches this balance.
+              Credits pay for posts you create yourself. AI Manager&apos;s
+              monthly calendar (19 pieces plus seasonal posts) never uses them.
             </motion.p>
             <motion.p
               variants={fadeIn}
@@ -587,7 +585,7 @@ export default function PricingPage() {
               variants={fadeIn}
               className="text-secondary font-(--font-dm-sans) mb-4 leading-relaxed max-w-xl"
             >
-              Credit packs are one-time top-ups, not subscriptions. They don&apos;t renew and they expire 30 days after purchase.
+              One-time top-ups. They don&apos;t renew and expire after 30 days.
             </motion.p>
             <motion.h4
               variants={fadeIn}
@@ -638,8 +636,7 @@ export default function PricingPage() {
               variants={fadeIn}
               className="text-secondary font-(--font-dm-sans) text-sm sm:text-base leading-relaxed max-w-2xl"
             >
-              Sign up, then subscribe to Elite from Billing — our most popular
-              plan for teams scaling content with AI or Studio mode.
+              Our most popular plan: AI Manager on two platforms.
             </motion.p>
           </motion.div>
         </section>

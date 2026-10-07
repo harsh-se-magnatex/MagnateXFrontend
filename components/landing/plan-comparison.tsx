@@ -3,22 +3,26 @@
 import { cn } from '@/lib/utils';
 
 const STUDIO_LINES = [
-  'Create Post, Product Posts, Videos, Occasion Posts, Campaigns, Carousel Posts — all available, run whenever you choose',
+  'All seven creation tools, whenever you choose',
   'You decide what to make and when',
-  'Pick your own date and time for every post',
-  'Full Media Library, Connected Accounts & Analytics',
+  'You pick the date and time',
+  'Media Library, Connected Accounts & Analytics',
 ] as const;
 
 const AI_QUOTA: { qty: string; label: string }[] = [
-  { qty: '5', label: 'Campaigns (5 days each)' },
-  { qty: '7', label: 'AI posts — research → content type → angle → generate' },
+  {
+    qty: '5',
+    label:
+      'Marketing visuals — billboard, lightbox, magazine, shop window',
+  },
+  { qty: '7', label: 'Researched AI posts' },
   { qty: '2', label: 'Carousels (5 slides each)' },
   { qty: '2', label: 'Repeat your best post' },
   { qty: '1', label: 'Try something new' },
   { qty: '2', label: 'Videos (20s)' },
   {
     qty: '—',
-    label: "Occasion posts for that week's festivals and awareness days",
+    label: 'Occasion posts for the festivals you pick',
   },
 ];
 
@@ -47,7 +51,7 @@ export function PlanComparison() {
           ))}
         </ul>
         <p className="mt-5 border-t border-default pt-4 font-(--font-dm-sans) text-xs text-secondary">
-          Best for teams who want the tools without handing over the calendar.
+          For teams who want the tools, not the hand-off.
         </p>
       </article>
 
