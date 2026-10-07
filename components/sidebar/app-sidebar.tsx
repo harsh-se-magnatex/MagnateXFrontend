@@ -220,7 +220,14 @@ export function AppSidebar({
                       className="hover:bg-transparent active:bg-transparent data-open:hover:bg-transparent data-active:bg-transparent"
                     >
                       {isAiManagerLocked ? (
-                        <div className="flex h-9 w-full items-center gap-2 rounded-full px-3 text-sm font-medium text-secondary">
+                        <div className="flex h-9 w-full items-center gap-3 rounded-full px-3 text-sm font-medium text-secondary">
+                          <item.icon className="h-4 w-4 shrink-0 icon-secondary" />
+                          <span
+                            aria-disabled="true"
+                            className="min-w-0 flex-1 cursor-not-allowed"
+                          >
+                            {item.name}
+                          </span>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <button
@@ -235,12 +242,6 @@ export function AppSidebar({
                               Upgrade to AI Manager plan to unlock.
                             </TooltipContent>
                           </Tooltip>
-                          <span
-                            aria-disabled="true"
-                            className="cursor-not-allowed"
-                          >
-                            {item.name}
-                          </span>
                         </div>
                       ) : (
                         <Link
