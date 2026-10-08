@@ -24,6 +24,8 @@ import {
   type PostSchedulerPrefillPost,
 } from '@/lib/post-scheduler-prefill-store';
 import { DownloadPngButton } from '@/components/download-png-button';
+import { BrandMemoryImagePicker } from '@/components/brand-memory-image-picker';
+import { resolveFrameFile } from '@/src/service/api/video-generation.service';
 import { SharePostButton } from '@/components/share-post-button';
 import {
   ImagePreviewButton,
@@ -522,6 +524,17 @@ export default function ProductAdvertPage() {
               isTourDemo ? undefined : setFile(e.target.files?.[0] || null)
             }
             className="w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:font-semibold file:bg-primary-purple file:text-white hover:file:opacity-90 transition text-secondary"
+          />
+          <BrandMemoryImagePicker
+            disabled={isTourDemo || isGenerating}
+            onChoose={async (photo) => {
+              const image = await resolveFrameFile(
+                { previewUrl: photo.url, file: null, isLogoFromDb: false },
+                'brand-memory-product'
+              );
+              setFile(image);
+              setError('');
+            }}
           />
         </div>
 

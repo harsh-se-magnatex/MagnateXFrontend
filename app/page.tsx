@@ -8,6 +8,7 @@ import {
   AiManagerLoop,
   LandingAgencyCost,
   LandingAiManager,
+  LandingGuides,
   LandingMarketingVisuals,
   LandingMarquees,
   LandingOfficialApis,
@@ -187,6 +188,7 @@ export default function Home() {
         <LandingMarketingVisuals />
         <LandingOfficialApis />
         <LandingAgents />
+        <LandingGuides />
         <LandingClose />
       </main>
     </div>

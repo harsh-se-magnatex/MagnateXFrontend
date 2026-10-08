@@ -19,7 +19,13 @@ const nextConfig: NextConfig = {
     root: process.cwd(),
   },
   async redirects() {
-    return legacyRedirects();
+    return [
+      // The free post generator was retired; its traffic and ranking go to
+      // the homepage. Permanent, so search engines transfer the URL's signals.
+      { source: '/try-it', destination: '/', permanent: true },
+      { source: '/try-it/:path*', destination: '/', permanent: true },
+      ...legacyRedirects(),
+    ];
   },
 };
 

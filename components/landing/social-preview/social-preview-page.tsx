@@ -7,8 +7,7 @@ import NavBar from '@/app/(main)/_components/NavBar';
 import { GuestAuthLink } from '@/components/auth/GuestAuthLink';
 import { AppGradientBackground } from '@/components/shared/AppGradientBackground';
 import { Footer } from '@/components/shared/Footer';
-import { SocialPreviewEmbed } from '@/components/landing/social-preview/social-preview-embed';
-import { getShowcaseStats } from '@/components/landing/social-preview/showcase-data';
+import { JewelryShowcase } from '@/components/landing/jewelry-showcase';
 import { SevenVisualsEmbed } from '@/components/landing/seven-visuals/seven-visuals-embed';
 
 const fadeIn = {
@@ -52,13 +51,13 @@ export function SocialPreviewPage() {
               <span className="text-gradient-brand">social media</span> look?
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-secondary sm:text-base">
-              Every post here was made and published by SocioGenie — no
-              person wrote or designed it. Pick a brand and browse a month.
+              Every visual here was made by SocioGenie — no person wrote or
+              designed it. Here is what that looks like for a jewelry brand.
             </p>
           </motion.div>
 
           <motion.div variants={fadeIn} className="mt-12">
-            <SocialPreviewEmbed />
+            <JewelryShowcase />
           </motion.div>
 
           <motion.section
@@ -77,9 +76,11 @@ export function SocialPreviewPage() {
                 See your brand in{' '}
                 <span className="text-gradient-brand-warm">seven styles.</span>
               </h2>
-              <p className="mx-auto mt-5 max-w-xl text-sm leading-relaxed text-secondary">
-                One brand, seven visual directions. Open any to read its
-                caption.
+              <p className="mx-auto mt-5 max-w-xl text-lg font-medium leading-relaxed text-default">
+                Choose your page style — pick how you want your feed to look.
+              </p>
+              <p className="mx-auto mt-1 max-w-xl text-sm text-secondary">
+                You can change it any time.
               </p>
             </div>
             <div className="mt-10">

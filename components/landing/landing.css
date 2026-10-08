@@ -228,7 +228,7 @@
   animation-direction: reverse;
 }
 
-.marquee:hover .marquee__track {
+.marquee:not(.marquee--no-pause):hover .marquee__track {
   animation-play-state: paused;
 }
 

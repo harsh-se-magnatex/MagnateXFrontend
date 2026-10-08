@@ -779,7 +779,6 @@ function AIPlanSheet({
 }
 
 const LEGEND: Array<{ kind: string; label: string }> = [
-  { kind: 'marketing-visual', label: 'Marketing Visuals' },
   { kind: 'ai-engine', label: kindLabel('ai-engine') },
   { kind: 'quick-create', label: kindLabel('quick-create') },
   { kind: 'video-generation', label: kindLabel('video-generation') },
@@ -797,6 +796,20 @@ export default function AIPlanPage() {
     [timeZone]
   );
   const [days, setDays] = useState<AIPlanDay[]>([]);
+  const marketingLegendTopics = useMemo(() => {
+    const topics = new Set<string>();
+    for (const day of days) {
+      for (const slot of Object.values(day.byPlatform)) {
+        if (!slot) continue;
+        for (const item of [...slot.generated, ...slot.upcoming]) {
+          if (item.kind !== 'marketing-visual') continue;
+          const topic = item.cell?.marketingTopic?.trim();
+          if (topic) topics.add(topic);
+        }
+      }
+    }
+    return [...topics];
+  }, [days]);
   const [range, setRange] = useState<{ from: string; to: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -1417,6 +1430,17 @@ export default function AIPlanPage() {
             <span className="text-[10px] font-semibold uppercase tracking-wider text-secondary">
               Legend
             </span>
+            {(marketingLegendTopics.length ? marketingLegendTopics : ['']).map((topic) => (
+              <span
+                key={`marketing-${topic}`}
+                className={cn(
+                  'inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold',
+                  cellToneClass('marketing-visual')
+                )}
+              >
+                {marketingVisualLabel(topic)}
+              </span>
+            ))}
             {LEGEND.map((item) => (
               <span
                 key={item.kind}

@@ -11,8 +11,13 @@
 - [Homepage](https://www.sociogenie.ai/): what SocioGenie is and how it works
 - [Product](https://www.sociogenie.ai/product): full feature list, how-it-works, FAQ
 - [Pricing](https://www.sociogenie.ai/pricing): plans, credits, credit packs, billing FAQ
-- [Try it](https://www.sociogenie.ai/try-it): generate one free sample post from your website, no signup
 - [How it looks](https://www.sociogenie.ai/how-it-looks): example posts across Instagram, Facebook and LinkedIn
+- [About](https://www.sociogenie.ai/about): who builds SocioGenie
+
+## Guides
+- [AI Social Media Marketing: The Complete Guide](https://www.sociogenie.ai/ai-social-media-marketing): what it is, what it can and can't do, costs, safeguards
+- [Social Media Marketing for Growing Businesses](https://www.sociogenie.ai/social-media-marketing): platforms, what to post, frequency, budget, a 30-day plan
+- [All guides](https://www.sociogenie.ai/guides): AI vs agency, posting frequency, content calendars, jewelry and boutique guides, festival calendar, costs
 
 ## Facts
 - Subscription plans (USD, monthly): **Studio $14.99** (seven AI creation tools, 100 credits, you decide what gets made) · **Prime AI $49.99** (AI Manager on 1 platform, 50 credits) · **Elite AI $69.99** (2 platforms, 100 credits) · **Legacy AI $84.99** (3 platforms, 150 credits).

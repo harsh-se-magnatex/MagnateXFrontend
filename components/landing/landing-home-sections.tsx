@@ -23,6 +23,8 @@ import {
   Wand2,
   type LucideIcon,
 } from 'lucide-react';
+import Link from 'next/link';
+import { pillarGuides } from '@/lib/guides';
 import { HOMEPAGE_ANSWER } from '@/lib/seo';
 import { GLOBAL, type LandingRegion } from './landing-region';
 import { Marquee } from './motion/marquee';
@@ -371,6 +373,7 @@ export function LandingMarquees({
       <div className="mt-8 flex flex-col gap-3">
         <Marquee
           label="Industries SocioGenie posts for"
+          minItems={24}
           duration={45}
           items={region.industries.map((name) => (
             <span key={name} className="marquee-chip">
@@ -381,6 +384,7 @@ export function LandingMarquees({
         />
         <Marquee
           label="Festivals and occasions SocioGenie plans posts for"
+          minItems={24}
           reverse
           duration={55}
           items={region.occasions.map((name) => (
@@ -812,6 +816,59 @@ export function LandingOfficialApis() {
           LinkedIn of LinkedIn Corporation. SocioGenie (MAGNATEX LLP) is not
           affiliated with or endorsed by either.
         </p>
+      </div>
+    </section>
+  );
+}
+
+/* ── Guides ───────────────────────────────────────────────────── */
+
+/**
+ * The two pillar guides. The homepage renders no footer, so this is its
+ * crawl path into the content hub — and the head-term pages get a link from
+ * the strongest page on the site.
+ */
+export function LandingGuides() {
+  return (
+    <section className="expo-section-compact" id="guides">
+      <div className="expo-container">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-eyebrow text-[var(--brand-violet-text)]">
+              Learn
+            </p>
+            <h2 className="mt-3 text-display-3 text-default">
+              Free guides for growing businesses
+            </h2>
+          </div>
+          <Link
+            href="/guides"
+            className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--brand-violet-text)] hover:underline"
+          >
+            All guides
+            <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {pillarGuides().map((guide) => (
+            <Link
+              key={guide.slug}
+              href={guide.path}
+              className="group flex flex-col rounded-2xl border border-default bg-default p-6 transition-expo hover:border-[var(--border-strong)]"
+            >
+              <span className="text-subsection text-default">
+                {guide.title}
+              </span>
+              <span className="mt-2 line-clamp-2 text-sm text-secondary">
+                {guide.description}
+              </span>
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[var(--brand-violet-text)]">
+                Read the guide · {guide.readingMinutes} min
+                <ArrowRight className="size-3.5 transition-expo-transform group-hover:translate-x-0.5" />
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );

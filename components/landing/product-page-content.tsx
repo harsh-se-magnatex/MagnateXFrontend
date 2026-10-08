@@ -304,11 +304,11 @@ export function ProductPageContent() {
               className="mt-8 flex flex-wrap justify-center gap-3"
             >
               <Link
-                href="/try-it"
+                href="/how-it-looks"
                 className="group relative inline-flex items-center overflow-hidden rounded-full bg-gradient-primary px-8 py-4 text-base font-bold text-white transition-expo ease-[cubic-bezier(0.4,0,0.2,1)]"
               >
                 <span className="relative z-10 flex items-center">
-                  See a post for your brand
+                  See real examples
                   <Rocket className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                 </span>
                 <span

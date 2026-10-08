@@ -32,8 +32,8 @@ import {
 } from '@/lib/workspace-ui';
 import { WORKSPACE_NAV_HREFS } from '@/lib/workspace-nav';
 import { showErrorToast } from '@/lib/show-error-toast';
-import { MediaLibraryImagePicker } from '@/components/media-library-image-picker';
-import { getGeneratedMediaLibraryImageApi } from '@/src/service/api/generated-media-library.service';
+import { BrandMemoryImagePicker } from '@/components/brand-memory-image-picker';
+import { resolveFrameFile } from '@/src/service/api/video-generation.service';
 
 export default function MarketingScenesPage() {
   const { user, loading } = useAuth();
@@ -215,14 +215,14 @@ export default function MarketingScenesPage() {
               it within the scene. Existing artwork is preserved.
             </span>
           </label>
-          <MediaLibraryImagePicker disabled={generating} onChoose={async (item) => {
-            if (!item.imageUrl) return;
+          <BrandMemoryImagePicker disabled={generating} onChoose={async (item) => {
+            if (!item.url) return;
             try {
-              const blob = await getGeneratedMediaLibraryImageApi(item.id);
-              setImage(new File([blob], `media-${item.id}.png`, { type: blob.type || 'image/png' }));
+              const file = await resolveFrameFile({ previewUrl: item.url, file: null, isLogoFromDb: false }, 'brand-memory');
+              setImage(file);
               setError(undefined);
             } catch {
-              setError('Could not load this Media Library image. Try another image.');
+              setError('Could not load this Brand Memory photo. Try another photo.');
             }
           }} />
           {preview && (

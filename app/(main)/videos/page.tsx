@@ -24,7 +24,7 @@ import { NonSubscribedFeatureBlock } from '@/components/shared/NonSubscribedFeat
 import { PageDocumentation } from '@/components/documentation/PageDocumentation';
 import { isPlanInactive } from '@/lib/plan-access';
 import { cn } from '@/lib/utils';
-import { MediaLibraryImagePickerDialog } from '@/components/shared/MediaLibraryImagePickerDialog';
+import { BrandMemoryImagePickerDialog } from '@/components/shared/BrandMemoryImagePickerDialog';
 import { type VideoFramePreviewMode } from '@/lib/video-frame-preview';
 import { DownloadVideoButton } from '@/components/download-video-button';
 import { toast } from 'sonner';
@@ -77,11 +77,11 @@ function frameUsesLogoCardPreview(frame: FrameSlot): boolean {
 function frameSlotSubtitle(frame: FrameSlot): string {
   if (frameUsesLogoCardPreview(frame)) {
     if (frame.isLogoFromDb) return 'Brand logo (from profile)';
-    if (frame.kind === 'gallery') return 'Logo (from Media Library)';
+    if (frame.kind === 'gallery') return 'Logo (from Brand Memory)';
     if (frame.kind === 'upload') return 'Logo (upload)';
     return 'Brand logo';
   }
-  if (frame.kind === 'gallery') return 'From Media Library';
+  if (frame.kind === 'gallery') return 'From Brand Memory';
   if (frame.kind === 'upload') return 'Reference image (upload)';
   return 'Scene image';
 }
@@ -193,7 +193,7 @@ function FrameCard({
               className="flex w-full items-center justify-center gap-2 rounded-full border border-default bg-default py-2.5 text-xs font-semibold text-preview transition hover:bg-element disabled:text-quaternary"
             >
               <Images className="h-4 w-4" aria-hidden />
-              Choose from Media Library
+              Choose from Brand Memory
             </button>
           ) : null}
         </div>
@@ -233,7 +233,7 @@ function FrameCard({
               onClick={onPickFromGallery}
               className="text-xs font-medium text-preview hover:underline disabled:text-quaternary"
             >
-              Choose from library
+              Choose from Brand Memory
             </button>
           ) : null}
         </div>
@@ -721,7 +721,7 @@ export default function VideoGenerationPage() {
               {referenceImages.length < maxReferenceImages ? (
                 <FrameCard
                   title={`Add reference ${referenceImages.length + 1}`}
-                  subtitle="Upload or choose from Media Library"
+                  subtitle="Upload or choose from Brand Memory"
                   frame={EMPTY_FRAME}
                   previewAspectClass={framePreviewAspect}
                   isPortraitPreview={isPortraitPreview}
@@ -835,14 +835,14 @@ export default function VideoGenerationPage() {
         </div>
       </div>
 
-      <MediaLibraryImagePickerDialog
+      <BrandMemoryImagePickerDialog
         open={galleryPickerOpen}
         onOpenChange={(open) => {
           setGalleryPickerOpen(open);
         }}
-        title="Choose a reference image"
-        onSelect={(url) => {
-          setGalleryReference(url, galleryTargetIndex);
+        title="Choose from Brand Memory"
+        onSelect={(photo) => {
+          setGalleryReference(photo.url, galleryTargetIndex);
           setGalleryPickerOpen(false);
           setGalleryTargetIndex(null);
         }}

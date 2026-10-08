@@ -72,7 +72,6 @@ import {
   createCampaignApi,
   listCampaignPhotosApi,
   uploadCampaignPhotosApi,
-  importCampaignPhotoApi,
   deleteCampaignDraftApi,
   getCampaignSuggestionsApi,
   clearCampaignSuggestionsForPhotoApi,
@@ -89,8 +88,8 @@ import {
 import {
   getMemoryLayer,
 } from '@/src/service/api/userService';
-import { MediaLibraryImagePicker } from '@/components/media-library-image-picker';
-import type { GeneratedMediaLibraryItem } from '@/src/service/api/generated-media-library.service';
+import { BrandMemoryImagePicker } from '@/components/brand-memory-image-picker';
+import type { BrandMemoryPhoto } from '@/components/shared/BrandMemoryImagePickerDialog';
 import { normalizeMemoryLayerUploadImage } from '@/lib/normalize-memory-layer-image';
 import {
   waitForCampaignDraftRegen,
@@ -455,21 +454,13 @@ export default function CreateCampaignPage() {
       setIsUploadingPhotos(false);
     }
   }, [isClearingPhotoIdeas, isLoadingPhotoLibrary, selectedPhotos]);
-  const handleImportMedia = useCallback(async (items: GeneratedMediaLibraryItem[]) => {
-    if (isClearingPhotoIdeas) return;
-    const room = 5 - selectedPhotos.length;
-    if (items.length === 0 || items.length > room) return;
-    const results = await Promise.allSettled(items.map((item) => importCampaignPhotoApi(item.id)));
-    const added = results.flatMap((result) => result.status === 'fulfilled' ? [result.value] : []);
-    if (added.length > 0) {
-      setAvailablePhotos((current) => [...current, ...added]);
-      setSelectedPhotos((current) => [...current, ...added].slice(0, 5));
-    }
-    if (added.length !== items.length) {
-      showErrorToast(`Could not add ${items.length - added.length} Media Library image${items.length - added.length === 1 ? '' : 's'}.`);
-      if (added.length === 0) throw new Error('No Media Library images were added');
-    }
-  }, [isClearingPhotoIdeas, selectedPhotos.length]);
+  const handleChooseBrandPhotos = useCallback(async (photos: BrandMemoryPhoto[]) => {
+    if (isClearingPhotoIdeas || isUploadingPhotos || isLoadingPhotoLibrary) return;
+    const added = photos.filter((photo) => !selectedPhotos.some((selected) => selected.path === photo.path));
+    if (!added.length || added.length > 5 - selectedPhotos.length) return;
+    setAvailablePhotos((current) => [...current.filter((photo) => !added.some((item) => item.path === photo.path)), ...added]);
+    setSelectedPhotos((current) => [...current, ...added].slice(0, 5));
+  }, [isClearingPhotoIdeas, isUploadingPhotos, isLoadingPhotoLibrary, selectedPhotos]);
   const suggestions = useCampaignState((s) => s.suggestions);
   const maxDaysFromServer = useCampaignState((s) => s.maxDays);
   const autoSeeded = useCampaignState((s) => s.autoSeeded);
@@ -1033,7 +1024,7 @@ export default function CreateCampaignPage() {
           isUploadingPhotos={isUploadingPhotos}
           isLoadingPhotoLibrary={isLoadingPhotoLibrary}
           onUploadPhotos={handleUploadPhotos}
-          onImportMedia={handleImportMedia}
+          onChooseBrandPhotos={handleChooseBrandPhotos}
           onRemovePhoto={handleRemovePhoto}
         />
       ) : (
@@ -1147,7 +1138,7 @@ type SuggestionGalleryProps = {
   isUploadingPhotos: boolean;
   isLoadingPhotoLibrary: boolean;
   onUploadPhotos: (files: FileList | null) => void;
-  onImportMedia: (items: GeneratedMediaLibraryItem[]) => Promise<void>;
+  onChooseBrandPhotos: (items: BrandMemoryPhoto[]) => Promise<void>;
   onRemovePhoto: (path: string) => void;
 };
 
@@ -1173,7 +1164,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
     isUploadingPhotos,
     isLoadingPhotoLibrary,
     onUploadPhotos,
-    onImportMedia,
+    onChooseBrandPhotos,
     onRemovePhoto,
   } = props;
 
@@ -1213,7 +1204,7 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
                 {
                   value: true,
                   label: 'Learn from photos',
-                  hint: 'Upload 1–5 photos. AI will make 3 ideas and choose which of your photos fits each day.',
+                  hint: 'Upload or choose 1–5 Brand Memory photos. AI will make 3 ideas and choose which of your photos fits each day.',
                 },
                 {
                   value: false,
@@ -1250,10 +1241,10 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
           {useBrandPhotos === true && (
             <div className="mt-5 space-y-3">
               <p className="text-xs font-semibold text-default">
-                Upload 1–5 photos ({selectedPhotos.length}/5)
+                Upload or choose 1–5 photos ({selectedPhotos.length}/5)
               </p>
               <p className="text-xs text-secondary">
-                AI may reuse one photo or choose a few across the campaign. Every day will use a selected photo. Uploaded photos are kept in Campaigns, separate from Brand Memory.
+                AI may reuse one photo or choose a few across the campaign. Every day will use a selected photo. Choose saved photos from Brand Memory or upload photos for this campaign.
               </p>
               <label className={cn(
                 'inline-flex cursor-pointer items-center gap-2 rounded-full border border-default bg-element px-4 py-2 text-xs font-semibold text-default hover:bg-hover',
@@ -1273,16 +1264,17 @@ function SuggestionGallery(props: SuggestionGalleryProps) {
                   }}
                 />
               </label>
-              <MediaLibraryImagePicker
+              <BrandMemoryImagePicker
                 disabled={isUploadingPhotos || isClearingPhotoIdeas || isLoadingPhotoLibrary || selectedPhotos.length >= 5}
                 maxSelection={5 - selectedPhotos.length}
-                onChooseMany={onImportMedia}
+                onChooseMany={onChooseBrandPhotos}
+                excludedPaths={selectedPhotos.map((photo) => photo.path)}
               />
               {selectedPhotos.length > 0 && (
                 <div className="flex flex-wrap gap-3">
                   {selectedPhotos.map((photo, index) => (
                     <div key={photo.path} className="relative h-20 w-20 overflow-hidden rounded-xl border border-default bg-element">
-                      {/* Signed Brand Memory URLs come from the existing upload API. */}
+                      {/* Selected photos use signed URLs from Brand Memory or Campaigns. */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={photo.url} alt={`Selected campaign photo ${index + 1}`} className="h-full w-full object-cover" />
                       <button type="button" disabled={isLoading || isUploadingPhotos || isClearingPhotoIdeas} onClick={() => onRemovePhoto(photo.path)} aria-label={`Remove photo ${index + 1} from campaign`} className="absolute right-1 top-1 rounded-full bg-black/70 px-1.5 py-0.5 text-xs text-white disabled:opacity-50">×</button>

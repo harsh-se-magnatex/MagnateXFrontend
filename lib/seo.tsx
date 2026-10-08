@@ -40,3 +40,64 @@ export function JsonLd({ data }: { data: unknown }) {
     />
   );
 }
+
+const SITE = 'https://www.sociogenie.ai';
+
+/** Article schema for a guide. The publisher is the site Organization. */
+export function articleJsonLd(article: {
+  title: string;
+  description: string;
+  path: string;
+  updated: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.description,
+    mainEntityOfPage: `${SITE}${article.path}`,
+    url: `${SITE}${article.path}`,
+    image: `${SITE}${article.path}/opengraph-image`,
+    datePublished: article.updated,
+    dateModified: article.updated,
+    inLanguage: 'en',
+    author: {
+      '@type': 'Organization',
+      name: 'SocioGenie',
+      url: `${SITE}/about`,
+    },
+    publisher: { '@id': `${SITE}/#organization` },
+  };
+}
+
+export function faqJsonLd(items: { question: string; answer: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        // Answers are written in light markdown; schema wants plain text.
+        text: item.answer
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+          .replace(/[*`]/g, ''),
+      },
+    })),
+  };
+}
+
+/** `trail` is ordered from the home page down: [{ name, path }, …]. */
+export function breadcrumbJsonLd(trail: { name: string; path: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map((crumb, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: crumb.name,
+      item: `${SITE}${crumb.path}`,
+    })),
+  };
+}

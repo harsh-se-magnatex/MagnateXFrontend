@@ -1,0 +1,145 @@
+/*
+ * Long-form reading styles for guides. Marketing-surface tokens only, so it
+ * follows the site theme; the measure is held near 70 characters and body
+ * copy sits at 17px with generous leading — these pages are meant to be
+ * read start to finish, not skimmed like a landing section.
+ */
+
+.guide-prose {
+  color: var(--text-secondary);
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+.guide-prose > * + * {
+  margin-top: 1.25rem;
+}
+
+.guide-prose h2 {
+  margin-top: 3rem;
+  scroll-margin-top: 6.5rem;
+  color: var(--text-default);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.guide-prose h3 {
+  margin-top: 2rem;
+  color: var(--text-default);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.guide-prose strong {
+  color: var(--text-default);
+  font-weight: 600;
+}
+
+.guide-prose a {
+  color: var(--brand-violet-text);
+  text-decoration: underline;
+  text-decoration-color: color-mix(
+    in srgb,
+    var(--brand-violet-text) 40%,
+    transparent
+  );
+  text-underline-offset: 3px;
+  transition: text-decoration-color 150ms var(--ease-expo);
+}
+
+.guide-prose a:hover {
+  text-decoration-color: var(--brand-violet-text);
+}
+
+.guide-prose ul,
+.guide-prose ol {
+  padding-left: 1.25rem;
+}
+
+.guide-prose ul {
+  list-style: disc;
+}
+
+.guide-prose ol {
+  list-style: decimal;
+}
+
+.guide-prose li + li {
+  margin-top: 0.5rem;
+}
+
+.guide-prose li::marker {
+  color: var(--text-tertiary);
+}
+
+.guide-prose code {
+  border-radius: 6px;
+  background: var(--bg-element);
+  padding: 0.1em 0.35em;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.guide-prose > figure img {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--border-default);
+}
+
+.guide-prose > figure figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}
+
+.guide-table-wrap {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--border-default);
+}
+
+.guide-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.guide-prose th {
+  background: var(--bg-element);
+  color: var(--text-default);
+  font-weight: 600;
+  text-align: left;
+}
+
+.guide-prose th,
+.guide-prose td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: top;
+}
+
+.guide-prose tr:last-child td {
+  border-bottom: 0;
+}
+
+/* The FAQ uses native <details>, so it works with no JavaScript. */
+.guide-faq summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.guide-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.guide-faq summary .guide-faq-icon {
+  transition: transform 300ms var(--ease-expo);
+}
+
+.guide-faq details[open] summary .guide-faq-icon {
+  transform: rotate(45deg);
+}

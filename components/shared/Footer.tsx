@@ -26,12 +26,18 @@ const PRODUCT_LINKS = [
   { label: 'How It Works', href: '/product#how-it-works' },
   { label: 'Features', href: '/product#features' },
   { label: 'How It Looks', href: '/how-it-looks' },
-  { label: 'Try It Free', href: '/try-it' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'FAQ', href: '/product#faq' },
 ] as const;
 
+const LEARN_LINKS = [
+  { label: 'AI Social Media Marketing', href: '/ai-social-media-marketing' },
+  { label: 'Social Media Marketing', href: '/social-media-marketing' },
+  { label: 'All Guides', href: '/guides' },
+] as const;
+
 const COMPANY_LINKS = [
+  { label: 'About', href: '/about' },
   { label: 'Experience', href: '/' },
   { label: 'Contact', href: '/settings/support-legal' },
 ] as const;
@@ -62,6 +68,7 @@ const DATA_DELETION_LINKS = [
 
 const LINK_COLUMNS = [
   { heading: 'Product', links: PRODUCT_LINKS },
+  { heading: 'Learn', links: LEARN_LINKS },
   { heading: 'Company', links: COMPANY_LINKS },
   { heading: 'Legal', links: LEGAL_LINKS },
 ] as const;
@@ -79,7 +86,7 @@ export function Footer() {
         variants={stagger}
         className="relative z-10 mx-auto max-w-7xl px-6 pt-16 pb-8"
       >
-        <div className="grid gap-10 md:grid-cols-5 mb-12">
+        <div className="grid gap-10 md:grid-cols-6 mb-12">
           <motion.div variants={fadeUp} className="md:col-span-2">
             <Link href="/" className="flex items-center gap-2.5 mb-4 group">
               <img
