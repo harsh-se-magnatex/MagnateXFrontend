@@ -1,6 +1,6 @@
 # Sub-processors
 
-Effective date: 10 August 2026 · Last updated: 10 August 2026
+Effective date: 10 August 2026 · Last updated: 8 October 2026
 
 This page lists the third-party service providers ("sub-processors") that **MAGNATEX LLP** engages to deliver SocioGenie. Each is engaged under a data-processing agreement with confidentiality, security, and data-protection obligations consistent with Article 28 of the GDPR, the UK GDPR, the DPDP Act 2023 (India), and the CCPA/CPRA where applicable.
 
@@ -44,7 +44,9 @@ Both are triggered only when you submit a website URL. Neither is used for ongoi
 | Sub-processor | Purpose | Data processed | Location | Safeguards |
 | --- | --- | --- | --- | --- |
 | Google LLC — Google Analytics 4 | Aggregated product and website analytics | Pseudonymous device and session identifiers, page views, truncated IP address | United States (processed in the EU for EU visitors) | Google Ads Data Processing Terms + EU SCCs + EU–US DPF; **loaded only after cookie consent** |
-| Vercel Inc. | Basic aggregate web traffic measurement (page views, visitor counts) | Cookieless aggregate traffic data; no persistent cross-site identifier | United States | Vercel DPA + EU SCCs |
+| Vercel Inc. — Web Analytics / Speed Insights | Aggregate traffic and site performance measurement | Page views, visitor counts, browser/device information, performance metrics; cookieless | United States | Vercel DPA + EU SCCs; **loaded only after analytics consent** |
+
+**Microsoft Clarity — optional analytics provider.** Microsoft Corporation receives website interaction data, page information, device/browser details, and pseudonymous identifiers to provide behavioural metrics, heatmaps, and session replay. It loads only after analytics consent; advertising storage is granted only when marketing is also allowed. Microsoft may process data outside your country, including in the United States. Microsoft's processing is described in the [Microsoft Privacy Statement](https://privacy.microsoft.com/privacystatement), [Clarity privacy information](https://clarity.microsoft.com/privacy), and [Clarity Terms of Use](https://clarity.microsoft.com/terms). This disclosure does not represent that Clarity processes all data solely as our sub-processor under the customer DPA. See our [Cookie Policy](https://www.sociogenie.ai/legal/cookie) for consent controls.
 
 ## Publishing platforms
 

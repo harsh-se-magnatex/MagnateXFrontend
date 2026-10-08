@@ -63,6 +63,8 @@ import {
   PAST_SCHEDULE_TIME_MESSAGE,
 } from '@/lib/schedule-time-validation';
 import { DownloadPngButton } from '@/components/download-png-button';
+import { BrandMemoryImagePicker } from '@/components/brand-memory-image-picker';
+import { resolveFrameFile } from '@/src/service/api/video-generation.service';
 import { SharePostButton } from '@/components/share-post-button';
 import {
   ImagePreviewButton,
@@ -177,6 +179,7 @@ export default function AIContentPage() {
   // Local-only state: non-serializable (File), preview URLs, transient UI.
   const [createMode, setCreateMode] = useState<CreateMode>('image');
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [brandPhotoReference, setBrandPhotoReference] = useState<{ file: File; description?: string } | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
@@ -659,6 +662,7 @@ export default function AIContentPage() {
         prompt: prompt.trim(),
         platforms: genPlatforms,
         image: selectedImage,
+        imageDescription: brandPhotoReference?.file === selectedImage ? brandPhotoReference?.description : undefined,
       });
 
       if (!response.accepted) {
@@ -1146,6 +1150,22 @@ export default function AIContentPage() {
                       </div>
                     </label>
                   )}
+                </div>
+                <div className="mt-3">
+                  <BrandMemoryImagePicker
+                    disabled={isTourDemo || isGenerating}
+                    onChoose={async (photo) => {
+                      const file = await resolveFrameFile(
+                        { previewUrl: photo.url, file: null, isLogoFromDb: false },
+                        'brand-memory-reference'
+                      );
+                      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+                        throw new Error('Please choose a JPEG, PNG, GIF, or WebP photo.');
+                      }
+                      handleFile(file);
+                      setBrandPhotoReference({ file, description: photo.description });
+                    }}
+                  />
                 </div>
                 {imageError && (
                   <p className="mt-2 text-sm text-destructive">{imageError}</p>

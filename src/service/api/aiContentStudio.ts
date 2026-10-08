@@ -1,4 +1,5 @@
 import axiosClient from '@/lib/axios';
+import { withBrandMemoryPhotoDescriptions } from '@/lib/brand-memory-generation-context';
 import { apiPost } from '@/lib/api-client';
 import {
   prepareGenerationImage,
@@ -33,12 +34,13 @@ export async function generateAiContentStudio(params: {
   prompt: string;
   platforms: string[];
   image?: File | null;
+  imageDescription?: string;
   imageModel?: string;
   marketingScene?: { topic: string; values: Record<string, string> };
 }): Promise<StudioGenerateResult> {
   const form = new FormData();
   form.append('platforms', JSON.stringify(params.platforms));
-  form.append('prompt', params.prompt);
+  form.append('prompt', withBrandMemoryPhotoDescriptions(params.prompt, [params.image ? params.imageDescription : undefined]));
   if (params.imageModel) form.append('imageModel', params.imageModel);
   if (params.marketingScene) form.append('marketingScene', JSON.stringify(params.marketingScene));
   if (params.image) {

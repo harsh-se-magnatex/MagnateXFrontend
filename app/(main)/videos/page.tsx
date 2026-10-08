@@ -41,6 +41,7 @@ type PipelinePhase = 'idle' | 'preparing' | 'generating' | 'ready' | 'failed';
 type FrameKind = 'logo' | 'upload' | 'gallery';
 
 type FrameSlot = {
+  description?: string;
   previewUrl: string | null;
   file: File | null;
   kind: FrameKind | null;
@@ -305,13 +306,14 @@ export default function VideoGenerationPage() {
   }, []);
 
   const setGalleryReference = useCallback(
-    (imageUrl: string, targetIndex: number | null) => {
+    (imageUrl: string, targetIndex: number | null, description?: string) => {
       const url = imageUrl.trim();
       if (!url) return;
       const next: FrameSlot = {
         previewUrl: url,
         file: null,
         kind: 'gallery',
+        description,
         isLogoFromDb: false,
         previewMode: 'hero-photo',
       };
@@ -425,6 +427,7 @@ export default function VideoGenerationPage() {
       const referenceImageFiles = await Promise.all(
         referenceImages.map(async (reference, index) => ({
           file: await resolveFrameFile(reference, `reference image ${index + 1}`),
+          description: reference.description,
           source: reference.kind === 'gallery' ? 'gallery' as const : 'upload' as const,
         }))
       );
@@ -842,7 +845,7 @@ export default function VideoGenerationPage() {
         }}
         title="Choose from Brand Memory"
         onSelect={(photo) => {
-          setGalleryReference(photo.url, galleryTargetIndex);
+          setGalleryReference(photo.url, galleryTargetIndex, photo.description);
           setGalleryPickerOpen(false);
           setGalleryTargetIndex(null);
         }}

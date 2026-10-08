@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { CookieSettingsButton } from '@/components/CookieSettingsButton';
 import type { LegalDocumentId } from '@/content/legal/documents';
 import {
   LegalMarkdownContent,
@@ -30,6 +31,7 @@ export function LegalMarkdownPage({
       maxWidth={maxWidth}
     >
       <LegalMarkdownContent body={body} />
+      {document === 'cookie' && <CookieSettingsButton />}
     </LegalPage>
   );
 }

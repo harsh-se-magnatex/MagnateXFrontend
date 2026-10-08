@@ -1,4 +1,5 @@
 import axiosClient from '@/lib/axios';
+import { withBrandMemoryPhotoDescriptions } from '@/lib/brand-memory-generation-context';
 import {
   prepareGenerationImage,
   prepareGenerationImages,
@@ -8,6 +9,7 @@ export type ProductGenerationMode = 'advert_asset' | 'social_full';
 
 export type ProductAdvertPayload = {
   image: File;
+  imageDescription?: string;
   uid: string;
   prompt?: string;
   background?: string;
@@ -64,6 +66,7 @@ function appendPlatforms(form: FormData, platforms?: string[]) {
 
 export const generateProductAdvertApi = async ({
   image,
+  imageDescription,
   uid,
   prompt,
   background,
@@ -75,7 +78,8 @@ export const generateProductAdvertApi = async ({
   const form = new FormData();
   form.append('image', await prepareGenerationImage(image));
   form.append('uid', uid);
-  if (prompt?.trim()) form.append('prompt', prompt.trim());
+  const generationPrompt = withBrandMemoryPhotoDescriptions(prompt, [imageDescription]);
+  if (generationPrompt) form.append('prompt', generationPrompt);
   if (background?.trim()) form.append('background', background.trim());
   appendPlatforms(form, platforms);
   if (generationMode) form.append('generationMode', generationMode);
@@ -99,7 +103,7 @@ export const getProductAdvertPromptPreview = async (parentJobId: string): Promis
 
 export const generateProductAdvertVideoApi = async (args: {
   referencePrompt?: string;
-  referenceImages?: Array<{ file: File; source: 'upload' | 'gallery' }>;
+  referenceImages?: Array<{ file: File; source: 'upload' | 'gallery'; description?: string }>;
   logoFramePosition?: 'first' | 'last';
   videoStyle?: 'normal' | 'ugc';
 }): Promise<ProductAdvertVideoGenerateResponse> => {
@@ -108,8 +112,9 @@ export const generateProductAdvertVideoApi = async (args: {
   if (args.logoFramePosition) {
     form.append('logoFramePosition', args.logoFramePosition);
   }
-  if (args.referencePrompt?.trim()) {
-    form.append('referencePrompt', args.referencePrompt.trim());
+  const generationPrompt = withBrandMemoryPhotoDescriptions(args.referencePrompt, (args.referenceImages ?? []).map((image) => image.description));
+  if (generationPrompt) {
+    form.append('referencePrompt', generationPrompt);
   }
   const referenceInputs = args.referenceImages ?? [];
   const references = await prepareGenerationImages(referenceInputs.map((item) => item.file), {

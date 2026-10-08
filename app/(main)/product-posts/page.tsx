@@ -160,6 +160,7 @@ function firstEnabledPlatform(
 export default function ProductAdvertPage() {
   // Non-serializable (File) and truly transient flags stay local.
   const [file, setFile] = useState<File | null>(null);
+  const [brandPhotoReference, setBrandPhotoReference] = useState<{ file: File; description?: string } | null>(null);
   const [error, setError] = useState<string>('');
   const [captionCopied, setCaptionCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -325,6 +326,7 @@ export default function ProductAdvertPage() {
         background === 'Other (custom)' ? customBackground.trim() : background;
       const response = await generateProductAdvertApi({
         image: file,
+        imageDescription: brandPhotoReference?.file === file ? brandPhotoReference?.description : undefined,
         uid: user.uid,
         prompt,
         background:
@@ -533,6 +535,7 @@ export default function ProductAdvertPage() {
                 'brand-memory-product'
               );
               setFile(image);
+              setBrandPhotoReference({ file: image, description: photo.description });
               setError('');
             }}
           />

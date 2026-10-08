@@ -19,7 +19,7 @@ export async function fetchVideoGeneratorProfile(): Promise<{
 /** Starts standalone video generation. */
 export async function startVideoGeneration(args: {
   referencePrompt?: string;
-  referenceImages?: Array<{ file: File; source: 'upload' | 'gallery' }>;
+  referenceImages?: Array<{ file: File; source: 'upload' | 'gallery'; description?: string }>;
   logoFramePosition?: 'first' | 'last';
   videoStyle?: 'normal' | 'ugc';
 }): Promise<ProductAdvertVideoGenerateResponse> {

@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import {
   type CookieConsent,
+  hasGlobalPrivacyControl,
   persistConsent,
   readStoredConsent,
 } from '@/lib/cookie-consent';
@@ -44,6 +45,18 @@ export function CookieBanner() {
     }
     setAnalytics(existing.analytics);
     setMarketing(existing.marketing);
+  }, []);
+
+  React.useEffect(() => {
+    const openSettings = () => {
+      const existing = readStoredConsent();
+      setAnalytics(existing?.analytics ?? false);
+      setMarketing(existing?.marketing ?? false);
+      setStep('customize');
+      setVisible(true);
+    };
+    window.addEventListener('openCookieSettings', openSettings);
+    return () => window.removeEventListener('openCookieSettings', openSettings);
   }, []);
 
   // Freeze the page behind the gate. The landing page scrolls on <html>,
@@ -141,7 +154,8 @@ export function CookieBanner() {
               </span>{' '}
               to sign you in and keep your session secure — the app can&apos;t
               run without them. Analytics and marketing cookies are optional
-              and entirely your choice. Read our{' '}
+              and entirely your choice. Analytics includes Microsoft Clarity
+              heatmaps and session replay to help us improve the site. Read our{' '}
               <Link
                 href="/legal/cookie"
                 className="font-medium text-link underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-strong rounded-sm"
@@ -208,6 +222,12 @@ export function CookieBanner() {
               </p>
 
               <ul className="mt-6 space-y-5">
+                {hasGlobalPrivacyControl() && (
+                  <li className="text-sm text-secondary">
+                    Your browser&apos;s Global Privacy Control signal keeps analytics
+                    and marketing disabled.
+                  </li>
+                )}
                 <li className="rounded-xl border border-default bg-element p-4 dark:bg-element">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -236,12 +256,15 @@ export function CookieBanner() {
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-default">Analytics</p>
                       <p className="mt-1 text-sm text-secondary">
-                        Enables tracking of site performance.
+                        Allows Microsoft Clarity heatmaps and session replay,
+                        Google Analytics, and Vercel traffic and performance
+                        measurement. Loads only when you allow analytics.
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       <Switch
                         checked={analytics}
+                        disabled={hasGlobalPrivacyControl()}
                         onCheckedChange={setAnalytics}
                         aria-label="Analytics cookies"
                       />
@@ -263,6 +286,7 @@ export function CookieBanner() {
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       <Switch
                         checked={marketing}
+                        disabled={hasGlobalPrivacyControl()}
                         onCheckedChange={setMarketing}
                         aria-label="Marketing cookies"
                       />

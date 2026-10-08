@@ -1,6 +1,6 @@
 # Cookie Policy
 
-Effective date: 10 August 2026 · Last updated: 15 September 2026
+Effective date: 10 August 2026 · Last updated: 8 October 2026
 
 This Cookie Policy explains how **MAGNATEX LLP** uses cookies and similar technologies on [www.sociogenie.ai](https://www.sociogenie.ai) and in the SocioGenie application. It should be read alongside our [Privacy Policy](https://www.sociogenie.ai/legal/privacy).
 
@@ -32,7 +32,7 @@ These make the Services work. They cannot be switched off, and no consent is req
 | --- | --- | --- |
 | Authentication, keeping you signed in, session integrity | Firebase Authentication (Google LLC) | First-party, session and persistent |
 | Security, abuse prevention, and rate limiting | SocioGenie / Google Cloud | First-party |
-| Recording your cookie-consent choice | SocioGenie | First-party, persistent |
+| Recording your cookie-consent choice (`sg-cookie-consent`) | SocioGenie | First-party local storage, persistent |
 | Load balancing and request routing | Google Cloud Platform | First-party, session |
 | Checkout and payment session | Dodo Payments Inc., on their own domain | Third-party |
 
@@ -57,10 +57,12 @@ These help us understand how the product is used so we can improve it.
 | --- | --- | --- | --- |
 | Google Analytics 4 | Google LLC | Aggregated product and website analytics — pages and features viewed, session duration, approximate location derived from a truncated IP address | Yes |
 | Vercel Web Analytics | Vercel Inc. | Basic aggregate traffic measurement — page views and visitor counts | No — cookieless, no cross-site identifier |
+| Vercel Speed Insights | Vercel Inc. | Site performance measurement | No — cookieless |
+| Microsoft Clarity | Microsoft Corporation | Behavioural metrics, heatmaps, and session replay of page views, clicks, scrolling, and navigation to identify usability problems and improve the Services | Yes — first-party `_clck` and `_clsk`; Microsoft also documents third-party identifiers below |
 
-**Google Analytics 4 loads only after you give consent.** If you decline or ignore the banner, GA4 is not loaded and its cookies are not set. IP anonymisation is enabled and Google Consent Mode is used to signal your choice.
+**All optional analytics loads only after you allow analytics.** If you decline, ignore the banner, or select essential-only, Google Analytics 4, Microsoft Clarity, Vercel Web Analytics, and Vercel Speed Insights are not loaded. Vercel's tools are cookieless, but we still include them in your analytics choice.
 
-**Vercel Web Analytics does not set cookies** and does not create a persistent identifier for you, so it does not require consent under cookie rules. It still processes limited technical data, which we rely on legitimate interest to do under the GDPR. You can object to that at any time by emailing <founder@magnatex.co>.
+**Microsoft Clarity** sends interaction data, page information, device/browser details, and pseudonymous identifiers to Microsoft. `_clck` remembers a Clarity user identifier and preferences; `_clsk` connects page views into a session recording. Microsoft's [cookie documentation](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-cookies) also lists third-party `CLID`, `ANONCHK`, `MR`, `MUID`, and `SM` identifiers, whose availability depends on consent and browser restrictions. We send separate analytics and advertising storage choices using Clarity's Consent API. Advertising storage is granted only when you allow both analytics and marketing; marketing alone does not load Clarity. We do not load Clarity in cookieless mode when analytics is declined. For Microsoft's own data practices, see the [Microsoft Privacy Statement](https://privacy.microsoft.com/privacystatement) and [Clarity privacy information](https://clarity.microsoft.com/privacy).
 
 ### 3.4 Marketing — consent required
 
@@ -80,7 +82,7 @@ This lets us measure the performance of our own advertising and build retargetin
 
 On your first visit we show a cookie banner. You can accept or decline analytics and marketing cookies independently. Declining does not restrict your access to the Services — everything works either way.
 
-Your choice is stored so we do not ask again. To change it, clear the SocioGenie cookies in your browser and reload the site, or email <founder@magnatex.co> and we will action it.
+Your choice is stored in your browser's local storage under `sg-cookie-consent`. You can change or withdraw it at any time using **Cookie settings** in the website footer or the button on this page. Choose essential-only or turn off the optional categories and save. Withdrawing analytics removes Clarity's first-party cookies and reloads the page to unload the running tracker; your saved choice prevents it from loading again. Withdrawal does not undo prior processing. You may also clear this site's local storage/site data and reload to choose again; clearing cookies alone may leave the consent record in place. We ask again when the consent notice changes materially, including this Clarity disclosure. Accepting the Terms or continuing to browse does not grant optional cookie consent.
 
 ### 4.2 Browser controls
 
@@ -97,7 +99,7 @@ Google provides a browser add-on that opts you out of Google Analytics across al
 
 ### 4.4 Global Privacy Control
 
-We honour the Global Privacy Control (GPC) signal where your browser sends it. A GPC signal is treated as a decline of analytics cookies.
+We honour the Global Privacy Control (GPC) signal where your browser sends it. A GPC signal disables both analytics and marketing, including Microsoft Clarity and the Meta Pixel.
 
 ### 4.5 Do Not Track
 
@@ -123,7 +125,7 @@ Data collected by our analytics and marketing providers, including Meta Platform
 
 ## 7. Retention
 
-Session cookies expire when you close your browser. Persistent cookies expire on a schedule set by whoever placed them — typically up to 24 months for Google Analytics identifiers, up to 90 days for Meta Pixel identifiers, and up to 12 months for your consent record. You can delete any of them at any time through your browser.
+Session cookies expire when you close your browser. Persistent cookies expire on a schedule set by whoever placed them — typically up to 24 months for Google Analytics identifiers and up to 90 days for Meta Pixel identifiers. Clarity's `_clck` and `_clsk` store a user identifier/preferences and session grouping respectively; Microsoft maintains the current cookie details in its [cookie documentation](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-cookies). Our local-storage consent record has no automatic expiry and remains until you change it, clear site data, or a notice version change requires a fresh choice. You can delete stored cookies and site data through your browser at any time.
 
 ---
 

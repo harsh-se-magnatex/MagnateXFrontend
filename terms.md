@@ -1,6 +1,6 @@
 # Terms of Service
 
-Effective date: 10 August 2026 · Last updated: 10 August 2026
+Effective date: 10 August 2026 · Last updated: 8 October 2026
 
 These Terms of Service ("**Terms**") are a legally binding agreement between you ("**you**", "**your**", the "**User**") and **MAGNATEX LLP**, an Indian Limited Liability Partnership (LLPIN: ACU-5689) with its registered office at 111, Fortune Business Hub, Sola, Nr. Satyamev Elysium, Ahmedabad, Gujarat 380060, India ("**MagnateX**", "**SocioGenie**", "**we**", "**our**", "**us**").
 
@@ -213,6 +213,8 @@ We may refuse to generate content, remove content from our systems, throttle usa
 ## 14. Data Protection
 
 Our processing of personal data is governed by our [Privacy Policy](https://www.sociogenie.ai/legal/privacy).
+
+Optional website analytics includes **Microsoft Clarity** heatmaps and session replay. It loads only after you allow analytics through our cookie controls, as described in our [Cookie Policy](https://www.sociogenie.ai/legal/cookie) and Privacy Policy. Accepting these Terms does not grant consent to optional analytics or marketing. You can change or withdraw that consent through **Cookie settings** in the website footer or on the Cookie Policy page.
 
 Where we process personal data on your behalf — for example, personal data contained in assets, catalogues, or audience material you upload — you act as controller (or data fiduciary) and we act as processor. In that capacity our [Data Processing Agreement](https://www.sociogenie.ai/legal/dpa) applies and forms part of these Terms. You represent that you have a valid legal basis for sharing that data with us and for the processing you instruct.
 

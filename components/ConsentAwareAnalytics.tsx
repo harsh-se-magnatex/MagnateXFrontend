@@ -28,10 +28,23 @@ export function ConsentAwareAnalytics() {
     const onConsentUpdated = (event: Event) => {
       const detail = (event as CustomEvent<CookieConsent>).detail;
       setEnabled(detail.analytics === true);
-      // Unmounting <Script> doesn't unload Clarity once it has run, so tell
-      // it directly to stop tracking and clear its cookies.
-      if (detail.analytics !== true) {
-        window.clarity?.('consent', false);
+      window.clarity?.('consentv2', {
+        analytics_Storage: detail.analytics ? 'granted' : 'denied',
+        ad_Storage: detail.marketing && detail.analytics ? 'granted' : 'denied',
+      });
+      // Denied storage can still allow cookieless Clarity tracking. Reload
+      // after withdrawal to unload the running tracker; the saved choice
+      // prevents it from loading again.
+      if (detail.analytics !== true && window.clarity) {
+        // Clear first-party identifiers on both the host and parent domains.
+        const parts = window.location.hostname.split('.');
+        for (const name of ['_clck', '_clsk']) {
+          document.cookie = `${name}=; Max-Age=0; path=/`;
+          for (let i = 0; i < parts.length - 1; i++) {
+            document.cookie = `${name}=; Max-Age=0; path=/; domain=${parts.slice(i).join('.')}`;
+          }
+        }
+        window.location.reload();
       }
     };
 
@@ -54,7 +67,11 @@ export function ConsentAwareAnalytics() {
       <SpeedInsights beforeSend={beforeSend} />
       <Script id="microsoft-clarity" strategy="afterInteractive">
         {`(function(c,l,a,r,i,t,y){
+          var consent;
+          try { consent=JSON.parse(localStorage.getItem('sg-cookie-consent')); } catch(e) { return; }
+          if (!consent || consent.version !== 2 || consent.analytics !== true || navigator.globalPrivacyControl === true) return;
           c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          c[a]('consentv2', { analytics_Storage: 'granted', ad_Storage: consent.marketing === true ? 'granted' : 'denied' });
           t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
           y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
         })(window, document, "clarity", "script", "${CLARITY_PROJECT_ID}");`}

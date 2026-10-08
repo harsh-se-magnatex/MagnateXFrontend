@@ -41,6 +41,7 @@ export default function MarketingScenesPage() {
   const [scene, setScene] = useState(defaultMarketingScene);
   const [prompt, setPrompt] = useState('');
   const [image, setImage] = useState<File | null>(null);
+  const [brandPhotoReference, setBrandPhotoReference] = useState<{ file: File; description?: string } | null>(null);
   const [preview, setPreview] = useState<string>();
   const [platforms, setPlatforms] = useState<SocialPlatform[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -90,6 +91,7 @@ export default function MarketingScenesPage() {
       const response = await generateAiContentStudio({
         prompt: prompt.trim(),
         image,
+        imageDescription: brandPhotoReference?.file === image ? brandPhotoReference?.description : undefined,
         platforms: selectedPlatforms,
         imageModel: 'gpt-image-2',
         marketingScene: scene,
@@ -220,6 +222,7 @@ export default function MarketingScenesPage() {
             try {
               const file = await resolveFrameFile({ previewUrl: item.url, file: null, isLogoFromDb: false }, 'brand-memory');
               setImage(file);
+              setBrandPhotoReference({ file, description: item.description });
               setError(undefined);
             } catch {
               setError('Could not load this Brand Memory photo. Try another photo.');

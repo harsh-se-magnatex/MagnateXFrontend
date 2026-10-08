@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import { HashLink } from '@/components/shared/HashLink';
+import { CookieSettingsButton } from '@/components/CookieSettingsButton';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -172,6 +173,7 @@ export function Footer() {
             <p>
               © {new Date().getFullYear()} MAGNATEX LLP. All rights reserved.
             </p>
+            <CookieSettingsButton />
           </div>
           <div className="text-[11px] text-secondary/80 leading-relaxed">
             <p>

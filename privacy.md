@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Effective date: 10 August 2026 · Last updated: 15 September 2026
+Effective date: 10 August 2026 · Last updated: 8 October 2026
 
 This Privacy Policy explains how **MAGNATEX LLP** ("MagnateX", "SocioGenie", "we", "our", "us") collects, uses, shares, stores, and protects personal data when you visit [www.sociogenie.ai](https://www.sociogenie.ai), create an account, or use the SocioGenie platform (the "Services").
 
@@ -51,6 +51,8 @@ This Policy applies when you visit our website, create or maintain an Account, s
 
 **Usage data** — features accessed, generation events, credits consumed, approval actions, posts scheduled and published, session activity.
 
+**Optional behavioural analytics** — when you allow analytics, Microsoft Clarity collects page views, clicks, scrolling, navigation, device and browser details, and pseudonymous identifiers to produce heatmaps and session replays. See §12 for purposes, sharing, and consent controls.
+
 **Cookies and similar technologies** — see our [Cookie Policy](https://www.sociogenie.ai/legal/cookie).
 
 ### 3.3 Information from third parties
@@ -75,7 +77,7 @@ This Policy applies when you visit our website, create or maintain an Account, s
 | Send transactional emails (account, billing, security, credit alerts) | Contract; legitimate interest |
 | Provide support and respond to enquiries | Contract; legitimate interest |
 | Monitor performance, fix bugs, improve the product | Legitimate interest |
-| Product analytics | Consent (where cookies are used); legitimate interest |
+| Optional website analytics, including Microsoft Clarity heatmaps and session replay, Google Analytics, and Vercel analytics | Consent |
 | Marketing and product updates | Consent, or legitimate interest where permitted |
 | Comply with tax, accounting, and legal obligations | Legal obligation |
 | Investigate abuse and enforce our terms | Legitimate interest; legal obligation |
@@ -118,6 +120,7 @@ We disclose personal data to:
 
 - **Sub-processors** who operate parts of the platform for us — hosting, AI generation, payments, analytics, brand extraction, and email delivery. The full current list, with locations and safeguards, is at [Sub-processors](https://www.sociogenie.ai/legal/sub-processors).
 - **Meta Platforms, Inc.**, for advertising measurement and retargeting via the Meta Pixel, only where you have consented to marketing cookies.
+- **Microsoft Corporation**, through Microsoft Clarity, for behavioural analytics only after you allow analytics. Microsoft receives website interaction and technical data as described in §12; its processing is also governed by the [Microsoft Privacy Statement](https://privacy.microsoft.com/privacystatement).
 - **Social-media platforms you connect** — we transmit the content you have authorised us to publish to Meta Platforms (Instagram, Facebook) and LinkedIn Corporation.
 - **Professional advisors** — lawyers, accountants, auditors, and insurers, under confidentiality.
 - **Authorities** — where required by law, court order, or valid government or regulatory request, or to protect our rights, our users, or the public.
@@ -188,6 +191,12 @@ In the event of a personal-data breach likely to result in risk to your rights, 
 ## 12. Cookies and Analytics
 
 We use a limited set of cookies and similar technologies for authentication and security, preference storage, product analytics, and marketing (the Meta Pixel). Analytics and marketing cookies are set only where you have given consent. Full detail, including each cookie and how to change your choices, is in our [Cookie Policy](https://www.sociogenie.ai/legal/cookie).
+
+**Microsoft Clarity.** We use Clarity to understand how visitors navigate and interact with SocioGenie through behavioural metrics, heatmaps, and session replay, so we can identify usability problems and improve the Services. Clarity uses cookies and similar technologies and sends interaction data, page information, device and browser details, and pseudonymous identifiers to Microsoft. Microsoft explains its collection and use of data in the [Microsoft Privacy Statement](https://privacy.microsoft.com/privacystatement) and [Clarity privacy information](https://clarity.microsoft.com/privacy).
+
+**Your choice controls collection.** Clarity, Google Analytics, Vercel Web Analytics, and Vercel Speed Insights load only after you allow analytics. Clarity does not load if you ignore the banner, choose essential-only, or decline analytics; we do not enable its cookieless tracking as an alternative to consent. We grant Clarity advertising storage only when both analytics and marketing are allowed. Marketing consent alone does not load Clarity. Accepting our Terms or continuing to use the site does not grant optional cookie consent.
+
+You can change or withdraw consent using **Cookie settings** in the website footer or on the Cookie Policy page. Withdrawing analytics consent removes Clarity's first-party cookies and reloads the page to unload the tracker. It does not undo processing that occurred before withdrawal. Our consent record is stored in your browser's local storage; clearing cookies alone may not clear it. Global Privacy Control disables both optional categories.
 
 ---
 
