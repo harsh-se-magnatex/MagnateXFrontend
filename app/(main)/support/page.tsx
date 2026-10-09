@@ -25,7 +25,7 @@ const faqs = [
   {
     question: 'What is the credit system?',
     answer:
-      'Credits unlock on-demand actions: product posts (4 credits), standard posts (2), occasion posts (2), campaign posts (3 credits per day), and regenerated posts (1). Your plan includes a monthly credit allowance; add-on packs are valid for 30 days. Personalized AI does not use this balance.',
+      'Credits unlock on-demand actions: product posts (4 credits), standard posts (2) (2), campaign posts (3 credits per day), and regenerated posts (1). Your plan includes a monthly credit allowance; add-on packs are valid for 30 days. Personalized AI does not use this balance.',
   },
   {
     question: 'How do I update my profile information?',

@@ -135,6 +135,7 @@ type RawAIPlanContent = {
   id: string;
   platform: AIPlanPlatform;
   lifecycle: string;
+  approval?: { actor?: string | null } | null;
   caption?: string;
   message?: string;
   eventName?: string;
@@ -170,17 +171,25 @@ export type AIPlanResponse = {
   nextCycle: RawAIPlan['aiPlan']['nextCycle'];
 };
 
-export function generatedStatus(value: string): AIPlanGeneratedItem['status'] {
+export function generatedStatus(
+  value: string,
+  approval?: RawAIPlanContent['approval']
+): AIPlanGeneratedItem['status'] {
   const lifecycle = String(value ?? '').trim().toLowerCase();
   if (lifecycle === 'review_pending') return 'pending-approval';
+  if (lifecycle === 'rejected') {
+    const actor = String(approval?.actor ?? '').trim().toLowerCase();
+    if (actor === 'admin') return 'rejected-by-admin';
+    if (actor === 'user') return 'rejected-by-user';
+    return 'rejected';
+  }
   if (
     lifecycle === 'scheduled' ||
     lifecycle === 'publishing' ||
     lifecycle === 'published' ||
     lifecycle === 'draft' ||
     lifecycle === 'failed' ||
-    lifecycle === 'removed' ||
-    lifecycle === 'rejected'
+    lifecycle === 'removed'
   )
     return lifecycle;
   return 'queued';
@@ -273,6 +282,11 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
         (item) => item.date === date && item.platform === platform
       );
       if (!cell) continue;
+      // Upcoming marketing visuals retain the planned topic even when a
+      // previous generation attempt recorded an AI Creator fallback.
+      const plannedKind = cell.kind === 'marketing-visual'
+        ? 'marketing-visual'
+        : displayedCellKind(cell);
       const generated = raw.content
         .filter(
           (item) =>
@@ -287,7 +301,7 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
         .map<AIPlanGeneratedItem>((item) => ({
           kind: generatedKind(item, cell),
           origin: generatedOrigin(item, cell),
-          status: generatedStatus(item.lifecycle),
+          status: generatedStatus(item.lifecycle, item.approval),
           title: item.eventName,
           captionPreview: item.caption ?? item.message,
           scheduledPostId: item.id,
@@ -351,12 +365,12 @@ function normalize(raw: RawAIPlan): AIPlanResponse {
             ? []
             : [
                 {
-                  kind: displayedCellKind(cell),
+                  kind: plannedKind,
                   label:
                     cell.kind === 'campaign'
                       ? cell.campaign?.title ||
                         `Campaigns · Day ${cell.campaign?.dayNumber ?? ''}`.trim()
-                      : displayedCellKind(cell) === 'marketing-visual' ? `Marketing Visuals · ${(cell.marketingTopic ?? '').replace(/-/g, ' ')}` : displayedCellKind(cell),
+                      : plannedKind === 'marketing-visual' ? `Marketing Visuals · ${(cell.marketingTopic ?? '').replace(/-/g, ' ')}` : plannedKind,
                   note: cell.status === 'missed' ? 'Trial activity missed: setup was completed after its scheduled slot.' : cell.reason,
                   status: cell.executionEntitlement === 'example' && cell.kind !== 'empty' ? 'Locked example' : cell.status,
                   cellId: cell.id,

@@ -56,7 +56,7 @@ const AGENTS: Agent[] = [
     tag: 'Strategist',
     title: 'A plan before a single word',
     description:
-      'Picks what to post next — a marketing visual, a carousel, a festival post.',
+      'Picks what to post next — a marketing visual, a carousel, a product post.',
     icon: Target,
     accent: 'var(--brand-sky)',
   },
@@ -274,8 +274,7 @@ export function LandingAutomation() {
         </div>
 
         <p className="mt-6 max-w-2xl text-sm leading-relaxed text-tertiary">
-          19 pieces of content every cycle, plus a varying number of seasonal
-          posts for the festivals and occasions you pick — all of it running
+          19 pieces of content every cycle, running
           on your subscription. Automation never touches your credit balance.
         </p>
 

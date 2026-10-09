@@ -36,7 +36,7 @@ export type LandingRegion = {
   sceneSetting: string;
 };
 
-const STUDIO_NOTE = 'Seven AI tools. You create and schedule.';
+const STUDIO_NOTE = 'Six AI tools. You create and schedule.';
 const AI_MANAGER_NOTE = 'Plans, creates and publishes your month.';
 
 export const GLOBAL: LandingRegion = {

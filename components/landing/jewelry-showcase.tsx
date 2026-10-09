@@ -81,14 +81,10 @@ const PRODUCT_POSTS: Tile[] = [
 
 const CAMPAIGN_POSTS = series('campaign', 59, 'Jewelry campaign post');
 
-const AI_MANAGER_AND_OCCASION: Tile[] = [
+const AI_MANAGER_POSTS: Tile[] = [
   ...series('ai-manager', 3, 'Jewelry post planned by AI Manager').map((t) => ({
     ...t,
     label: 'AI Manager',
-  })),
-  ...series('occasion', 3, 'Jewelry occasion post').map((t) => ({
-    ...t,
-    label: 'Occasion post',
   })),
 ];
 
@@ -210,8 +206,8 @@ export function JewelryShowcase() {
         <Band title="Campaigns" tiles={campaignA} />
         <Band title="Campaigns" tiles={campaignB} reverse />
         <Band
-          title="AI Manager & occasion posts"
-          tiles={AI_MANAGER_AND_OCCASION}
+          title="AI Manager"
+          tiles={AI_MANAGER_POSTS}
         />
       </div>
 

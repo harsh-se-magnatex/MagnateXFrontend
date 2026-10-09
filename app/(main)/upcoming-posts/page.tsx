@@ -105,6 +105,7 @@ export type ScheduledPost = {
   regenratedCount?: number;
   /** When true, user may regenerate via AI Manager (matches stored post). */
   generatedByAiEngine?: boolean;
+  marketingVisual?: boolean;
   generationProof?: unknown;
   lifecycle: string;
   approval?: { status?: string; stage?: string; actor?: string };
@@ -269,9 +270,10 @@ function DetailModal({
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showPostActions = isUpcomingPost(post) && actionsAllowed;
   const status = getDisplayStatus(post);
-  const generatedBy = generatedByLabel(post.GeneratedBy);
+  const generatedBy = generatedByLabel(post.GeneratedBy, post.marketingVisual);
   const research = parseGenerationResearchFromProof(post.generationProof);
-  const showResearch = hasViewableResearch(research);
+  const showResearch =
+    generatedBy !== 'Marketing Visuals' && hasViewableResearch(research);
   const mediaPreview = resolveSchedulableMediaPreview(post);
   const hasMedia = hasSchedulableMediaPreview(mediaPreview);
   const carouselSlides = Array.isArray(post.carouselSlides)
@@ -558,7 +560,7 @@ function DetailModal({
         </div>
       </div>
       <GenerationResearchDialog
-        open={researchOpen}
+        open={showResearch && researchOpen}
         onClose={() => setResearchOpen(false)}
         research={research}
       />
@@ -621,7 +623,7 @@ function ScheduledPostCard({
   const regenChargesCredits = willScheduledPostRegenChargeCredits(post);
   const showPostActions = isUpcomingPost(post) && actionsAllowed;
   const status = getDisplayStatus(post);
-  const generatedBy = generatedByLabel(post.GeneratedBy);
+  const generatedBy = generatedByLabel(post.GeneratedBy, post.marketingVisual);
   const mediaPreview = resolveSchedulableMediaPreview(post);
   const hasMedia = hasSchedulableMediaPreview(mediaPreview);
   const slideCount =

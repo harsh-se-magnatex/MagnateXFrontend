@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 
 const STUDIO_LINES = [
-  'All seven creation tools, whenever you choose',
+  'All six creation tools, whenever you choose',
   'You decide what to make and when',
   'You pick the date and time',
   'Media Library, Connected Accounts & Analytics',
@@ -20,10 +20,6 @@ const AI_QUOTA: { qty: string; label: string }[] = [
   { qty: '2', label: 'Repeat your best post' },
   { qty: '1', label: 'Try something new' },
   { qty: '2', label: 'Videos (20s)' },
-  {
-    qty: '—',
-    label: 'Occasion posts for the festivals you pick',
-  },
 ];
 
 /**

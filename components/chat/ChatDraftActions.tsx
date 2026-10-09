@@ -49,14 +49,6 @@ function summariseDraft(result: AssistantToolResult): DraftSummary | null {
         ctaDeepLink: link || WORKSPACE_NAV_HREFS.productAdvert,
         promptText: prompt,
       };
-    case 'festival_info':
-      // No prefill — Occasion Posts doesn't accept user prompts.
-      // We just deep-link to the page so the user can pick an event there.
-      return {
-        prefillKind: null,
-        label: 'Open Occasion Posts',
-        ctaDeepLink: link || WORKSPACE_NAV_HREFS.festivePost,
-      };
     default:
       return null;
   }

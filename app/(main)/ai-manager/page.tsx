@@ -65,7 +65,7 @@ function kindLabel(kind: AIPlanGeneratedKind | string): string {
       return workspacePageTitle(WORKSPACE_NAV_HREFS.carouselCreate);
     case 'festive':
     case 'festival':
-      return workspacePageTitle(WORKSPACE_NAV_HREFS.festivePost);
+      return 'Archived content';
     case 'empty':
       return '—';
     default:
@@ -102,8 +102,9 @@ function statusLabel(status: AIPlanGeneratedItem['status']): string {
     case 'rejected-by-admin':
       return 'Rejected by admin';
     case 'rejected-by-user':
-    case 'rejected':
       return 'Rejected by user';
+    case 'rejected':
+      return 'Rejected';
     default:
       return status;
   }
@@ -195,9 +196,7 @@ function canForceRunKind(kind: string): boolean {
     kind === 'ai-engine' ||
     kind === 'quick-create' ||
     kind === 'video-generation' ||
-    kind === 'carousel' ||
-    kind === 'festival' ||
-    kind === 'festive'
+    kind === 'carousel'
   );
 }
 
@@ -1386,8 +1385,7 @@ export default function AIPlanPage() {
             Generate your AI Manager calendar
           </h2>
           <p className="mt-2 max-w-md text-sm text-secondary">
-            We’ll allocate Create Post, Videos, Carousel Posts, Occasion Posts,
-            and Campaigns across your current plan.
+            We’ll allocate Create Post, Videos, Carousel Posts, and Campaigns across your current plan.
           </p>
           <button
             type="button"
@@ -1456,8 +1454,8 @@ export default function AIPlanPage() {
           {forceRunAllowed ? (
             <p className="rounded-md border border-default bg-element px-3 py-2 text-sm text-secondary">
               Tip: hover over a cell for details. Force Run appears on planned
-              Campaigns, Create Post, Videos, Carousel Posts, or Occasion Posts
-              Studio cells — it hides after Force Run, when content is already
+              Campaigns, Create Post, Videos, or Carousel Posts
+              cells — it hides after Force Run, when content is already
               generating/generated, or when the post was removed or rejected by
               the user.
             </p>

@@ -98,11 +98,6 @@ const SOURCE_OPTIONS: {
     description: 'Videos from Videos',
   },
   {
-    value: 'eventPosts',
-    label: 'Occasion Posts',
-    description: 'Posts from Occasion Posts',
-  },
-  {
     value: 'campaignDrafts',
     label: 'Campaigns',
     description: 'Drafts from Campaigns',
@@ -866,7 +861,7 @@ export default function MediaLibraryPage() {
       return 'Videos from Videos appear here after generation.';
     }
     if (source === 'eventPosts') {
-      return 'Occasion posts with images are listed here.';
+      return 'Previously generated images are listed here.';
     }
     if (source === 'campaignDrafts') {
       return 'Campaign drafts appear here after generation.';
@@ -981,11 +976,6 @@ export default function MediaLibraryPage() {
             <Button asChild variant="outline" size="sm">
               <Link href={WORKSPACE_NAV_HREFS.carouselCreate}>
                 {workspacePageTitle(WORKSPACE_NAV_HREFS.carouselCreate)}
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href={WORKSPACE_NAV_HREFS.festivePost}>
-                {workspacePageTitle(WORKSPACE_NAV_HREFS.festivePost)}
               </Link>
             </Button>
           </div>

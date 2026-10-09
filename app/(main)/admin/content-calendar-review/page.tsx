@@ -100,7 +100,7 @@ function kindLabel(kind: string): string {
       return 'Carousel Posts';
     case 'festive':
     case 'festival':
-      return 'Occasion Posts';
+      return 'Archived content';
     case 'empty':
       return '—';
     default:
@@ -172,9 +172,7 @@ function canForceRunKind(kind: string): boolean {
     kind === 'ai-engine' ||
     kind === 'quick-create' ||
     kind === 'video-generation' ||
-    kind === 'carousel' ||
-    kind === 'festival' ||
-    kind === 'festive'
+    kind === 'carousel'
   );
 }
 
@@ -746,7 +744,7 @@ export default function AdminContentCalendarReviewPage() {
                     .toLowerCase() === 'auto' ? (
                     <p className="rounded-md border border-default bg-element px-3 py-2 text-sm text-secondary">
                       Force Run appears on planned Campaigns, Create Post, AI
-                      Manager, Videos, Carousel Posts, or Occasion Posts cells for today
+                      Manager, Videos, or Carousel Posts cells for today
                       and future dates — it hides after Force Run, when content
                       is already generating/generated, or when the post was
                       removed or rejected by the user.

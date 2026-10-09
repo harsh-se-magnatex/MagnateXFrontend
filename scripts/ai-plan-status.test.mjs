@@ -14,6 +14,7 @@ function loadTypescript(relativePath, imports = {}) {
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022,
       esModuleInterop: true,
+      jsx: ts.JsxEmit.ReactJSX,
     },
   });
   const exports = {};
@@ -33,6 +34,19 @@ const target = {
   kind: 'quick-create',
 };
 const locks = loadTypescript('../lib/content-plan-force-run.ts');
+
+test('Upcoming Posts labels marketing visuals separately from the AI Creator pipeline', () => {
+  const { generatedByLabel } = loadTypescript('../lib/scheduled-post-status.tsx', {
+    'react/jsx-runtime': {}, 'lucide-react': {}, './utils': {},
+  });
+  assert.equal(generatedByLabel('ai-engine', true), 'Marketing Visuals');
+  assert.equal(generatedByLabel(undefined, true), 'Marketing Visuals');
+  assert.equal(generatedByLabel('marketing-visual'), 'Marketing Visuals');
+  assert.equal(generatedByLabel('ai-engine', false), 'AI Creator');
+  assert.equal(generatedByLabel('ai-engine'), 'AI Creator');
+  const page = readFileSync(new URL('../app/(main)/upcoming-posts/page.tsx', import.meta.url), 'utf8');
+  assert.equal(page.match(/generatedByLabel\(post.GeneratedBy, post.marketingVisual\)/g)?.length, 2);
+});
 
 test('trial preview exposes locked examples and the missed included activity', async () => {
   const raw = {
@@ -96,6 +110,35 @@ for (const [lifecycle, expectedStatus, completed] of [
   });
 }
 
+for (const [actor, expectedStatus] of [
+  ['admin', 'rejected-by-admin'],
+  ['user', 'rejected-by-user'],
+  [' ADMIN ', 'rejected-by-admin'],
+  [undefined, 'rejected'],
+]) {
+  test(`rejected calendar content preserves reviewer ${actor ?? 'unknown'}`, async () => {
+    const raw = {
+      aiPlan: { status: 'calendar_ready', selectedPlatforms: ['facebook'], lockedAt: {} },
+      plan: { platformLimit: 1 }, connectionState: {},
+      cells: [{ id: 'cell-1', ...target, status: 'done' }],
+      content: [{
+        id: 'post-1', platform: 'facebook', lifecycle: 'rejected',
+        approval: actor ? { actor } : undefined,
+        source: 'ai_plan', aiPlan: { cellId: 'cell-1' },
+      }],
+    };
+    const api = loadTypescript('../src/service/api/ai-plan.service.ts', {
+      '@/lib/axios': { get: async () => ({ data: { data: raw } }) },
+    });
+    const response = await api.getAIPlanApi();
+    const slot = response.days[0].byPlatform.facebook;
+    assert.equal(slot.generated.length, 1);
+    assert.equal(slot.generated[0].status, expectedStatus);
+    assert.equal(slot.upcoming.length, 0);
+    assert.equal(locks.isForceRunTargetComplete(response.days, target), true);
+  });
+}
+
 test('Create Post without a brief appears as AI Creator while queued and after completion', async () => {
   const api = loadTypescript('../src/service/api/ai-plan.service.ts', {
     '@/lib/axios': { get: async () => ({ data: { data: {
@@ -121,6 +164,28 @@ test('Create Post without a brief appears as AI Creator while queued and after c
   assert.equal(completed.days[0].byPlatform.facebook.generated[0].kind, 'ai-engine');
   assert.equal(completed.days[0].byPlatform.facebook.upcoming.length, 0);
   assert.equal(locks.isForceRunTargetComplete(completed.days, target), true);
+});
+
+test('upcoming marketing visuals retain their badge and topic after an AI Creator fallback', async () => {
+  for (const status of ['planned', 'enqueued', 'failed']) {
+    const cell = {
+      id: 'marketing-cell', ...target, kind: 'marketing-visual',
+      marketingTopic: 'magazine-spread', status, runtimeFallback: 'ai-engine',
+    };
+    const raw = {
+      aiPlan: { status: 'calendar_ready', selectedPlatforms: ['facebook'] },
+      plan: { platformLimit: 1 }, connectionState: {}, cells: [cell], content: [],
+    };
+    const api = loadTypescript('../src/service/api/ai-plan.service.ts', {
+      '@/lib/axios': { get: async () => ({ data: { data: raw } }) },
+    });
+    const response = await api.getAIPlanApi();
+    const slot = response.days[0].byPlatform.facebook;
+    assert.equal(slot.generated.length, 0);
+    assert.equal(slot.upcoming[0].kind, 'marketing-visual');
+    assert.equal(slot.upcoming[0].label, 'Marketing Visuals · magazine spread');
+    assert.equal(slot.upcoming[0].status, status);
+  }
 });
 
 test('marketing visuals retain their topic and do not relabel manual posts', async () => {

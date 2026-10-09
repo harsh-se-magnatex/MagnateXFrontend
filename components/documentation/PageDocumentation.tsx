@@ -96,27 +96,6 @@ const DOCUMENTATION: Record<string, PageDocumentationContent> = {
       },
     ],
   },
-  '/occasion-posts': {
-    title: 'Occasional Posts',
-    description: 'Create timely content for upcoming occasions and festivals.',
-    sections: [
-      {
-        title: 'Choose an occasion',
-        items: [
-          'Browse upcoming occasions and festivals, then select an event to generate content for it.',
-          'Occasions outside your plan range remain locked and cannot be selected.',
-        ],
-      },
-      {
-        title: 'Generate and schedule',
-        items: [
-          'Select one or more platforms. SocioGenie creates content tailored to each platform.',
-          'Choose your preferred date and time. The generated posts are scheduled automatically.',
-          'All generated posts are available in the Media Library after generation.',
-        ],
-      },
-    ],
-  },
   '/campaigns': {
     title: 'Campaigns',
     description: 'Plan and generate a multi-day campaign from a campaign idea.',
@@ -223,7 +202,7 @@ const DOCUMENTATION: Record<string, PageDocumentationContent> = {
         title: 'Browse generated content',
         items: [
           'Use the library to review generated posts, videos, carousels, and campaign content.',
-          'Filter by the feature that generated the content: Create Post, Product Posts, Videos, Occasional Posts, Campaigns, Carousel, or AI Creator.',
+          'Filter by the feature that generated the content: Create Post, Product Posts, Videos, Campaigns, Carousel, or AI Creator.',
           'Posts that are not scheduled can be scheduled later from the library.',
         ],
       },

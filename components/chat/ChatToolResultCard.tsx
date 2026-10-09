@@ -217,8 +217,7 @@ export function ChatToolResultCard({
           })}
         </ul>
         <p className="mt-1.5 text-[11px] text-secondary">
-          Pick the event on the Occasion Posts page — the engine writes the
-          caption and image for you from your brand context.
+          Use Create Post to make content for a date that matters to your business.
         </p>
         <DismissButton onDismiss={onDismiss} />
       </div>

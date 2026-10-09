@@ -382,21 +382,6 @@ export function LandingMarquees({
             </span>
           ))}
         />
-        <Marquee
-          label="Festivals and occasions SocioGenie plans posts for"
-          minItems={24}
-          reverse
-          duration={55}
-          items={region.occasions.map((name) => (
-            <span key={name} className="marquee-chip">
-              <Sparkles
-                className="size-3.5 text-[var(--brand-amber-text)]"
-                aria-hidden
-              />
-              {name}
-            </span>
-          ))}
-        />
       </div>
     </section>
   );

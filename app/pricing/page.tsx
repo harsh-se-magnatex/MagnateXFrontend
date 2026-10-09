@@ -75,7 +75,6 @@ const CREDIT_ACTIONS = [
   { label: 'Campaign post', credits: '3 credits / day' },
   { label: 'Create Post', credits: '2 credits' },
   { label: 'Marketing Scenes', credits: '2 credits' },
-  { label: 'Occasion Posts', credits: '2 credits' },
   { label: 'Carousel Posts', credits: '3 credits / slide' },
   { label: 'Videos', credits: '100 credits' },
   { label: 'Regeneration', credits: '1 credit (First regen free)' },
@@ -87,7 +86,7 @@ const PRICING_JSON_LD = {
   '@type': 'Product',
   name: 'SocioGenie Plans',
   description:
-    'Subscription plans for SocioGenie. Every plan includes the seven AI creation tools and publishes to Instagram, Facebook and LinkedIn. The difference is who decides what gets made and when: on Studio you do, and on Prime, Elite and Legacy AI Manager plans and runs the month for you.',
+    'Subscription plans for SocioGenie. Every plan includes the six AI creation tools and publishes to Instagram, Facebook and LinkedIn. The difference is who decides what gets made and when: on Studio you do, and on Prime, Elite and Legacy AI Manager plans and runs the month for you.',
   url: 'https://www.sociogenie.ai/pricing',
   brand: { '@id': 'https://www.sociogenie.ai/#organization' },
   // Always USD, never the localised display figure: schema states the price
@@ -361,7 +360,7 @@ export default function PricingPage() {
               variants={fadeIn}
               className="mx-auto mb-6 max-w-2xl text-center text-sm text-tertiary font-(--font-dm-sans) text-pretty"
             >
-              Studio: <InlinePrice usd={14.99} />/month, 100 credits, seven AI tools. AI Manager: <InlinePrice usd={49.99} /> for one platform, <InlinePrice usd={69.99} /> for two, <InlinePrice usd={84.99} /> for three. Credit packs from <InlinePrice usd={6.99} />.
+              Studio: <InlinePrice usd={14.99} />/month, 100 credits, six AI tools. AI Manager: <InlinePrice usd={49.99} /> for one platform, <InlinePrice usd={69.99} /> for two, <InlinePrice usd={84.99} /> for three. Credit packs from <InlinePrice usd={6.99} />.
             </motion.p>
 
             <motion.div

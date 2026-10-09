@@ -31,7 +31,6 @@ This page is written for two audiences: the businesses that use SocioGenie, and 
 | Video Generator | Generates short videos (approximately 8 seconds), optionally using your logo as the first or last frame. |
 | Carousel Posts | Generates multi-slide carousels, either from your reference text or autonomously from your brand profile. |
 | Campaigns | Generates multi-day themed campaign sequences. |
-| Event Studio | Generates greeting and observance posts tied to calendar events. |
 | Analytics & scheduling | Derives a recommended posting time from your synced post performance. |
 | Chat Assistant | Answers questions about the product and your social-media strategy. |
 
@@ -151,7 +150,7 @@ The following are prohibited under our [Acceptable Use Policy](https://www.socio
 - generating content that impersonates another brand, or that could be mistaken for another brand's official communication;
 - generating political, electoral, or public-health content;
 - generating content that fabricates a product, feature, price, certification, award, endorsement, review, or testimonial that does not exist;
-- generating content depicting national flags, state emblems, currency, or official insignia in a commercial or promotional context where local law restricts it (several jurisdictions, including India, restrict commercial use of the national flag and state emblems — Event Studio output for national observances must be checked against local rules before publishing);
+- generating content depicting national flags, state emblems, currency, or official insignia in a commercial or promotional context where local law restricts it (several jurisdictions, including India, restrict commercial use of the national flag and state emblems — content for national observances must be checked against local rules before publishing);
 - attempting to extract, replicate, or reverse-engineer our prompts, orchestration, or model configuration, or using SocioGenie output to train a competing model.
 
 ---

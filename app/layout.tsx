@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: 'SocioGenie — AI Social Media Management for Growing Businesses',
   description:
-    'SocioGenie plans, writes, designs and publishes your Instagram, Facebook and LinkedIn posts. Automated from $49.99/month, or seven AI tools you run yourself from $14.99.',
+    'SocioGenie plans, writes, designs and publishes your Instagram, Facebook and LinkedIn posts. Automated from $49.99/month, or six AI tools you run yourself from $14.99.',
   authors: [{ name: 'SocioGenie' }],
   alternates: {
     canonical: 'https://www.sociogenie.ai/',

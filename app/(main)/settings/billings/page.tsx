@@ -1402,7 +1402,6 @@ export default function BillingsPage() {
             <li>· Product Posts: 4 credits</li>
             <li>· Campaign post: 3 credits per post</li>
             <li>· Create Post: 2 credits</li>
-            <li>· Occasion Posts: 2 credits</li>
             <li>· Carousel: 3 credits per slide</li>
             <li>· Video Generation: 100 credits</li>
             <li>· Regeneration: 1 credit (First regen free)</li>
@@ -2002,8 +2001,7 @@ export default function BillingsPage() {
             <DialogTitle>Top up your credits</DialogTitle>
             <DialogDescription className="text-left text-secondary space-y-3">
               <p>
-                Credits are used for Product Posts, Create Post, Occasion Posts,
-                Campaigns, and regenerations. Valid for 30 days from purchase.
+                Credits are used for Product Posts, Create Post, Campaigns, and regenerations. Valid for 30 days from purchase.
               </p>
               {topUpRequiresPlan ? (
                 <p className="text-xs font-medium text-warning bg-warning border border-warning rounded-lg px-3 py-2">

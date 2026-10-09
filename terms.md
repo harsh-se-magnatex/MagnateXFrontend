@@ -34,7 +34,7 @@ The Services currently include:
 
 **Automatic content system** — the AI Engine, and (on AI Plans) the Content Calendar, which plans a month of content and generates each post approximately two days before its scheduled date.
 
-**Manual creation tools** — Content Studio, Product Ads, Video Generator, Event Studio, Campaigns, Carousel Posts.
+**Manual creation tools** — Content Studio, Product Ads, Video Generator, Campaigns, Carousel Posts.
 
 **Publishing and management** — Post Scheduler, Scheduled Posts, Media Library, Connected Accounts, Analytics, and the AI Chat Assistant.
 
@@ -230,9 +230,9 @@ Generated video is short-form, machine-produced, and may contain visual artefact
 
 ---
 
-## 16. Event Studio and Calendar Observances
+## 16. Calendar Observances
 
-Event Studio generates content tied to national, religious, and cultural observances. Observance data may be incomplete or wrong for your market, and an observance appropriate in one country may be inappropriate or unlawful to commercialise in another.
+You may create content tied to national, religious, and cultural observances using the general creation tools. Observance data may be incomplete or wrong for your market, and an observance appropriate in one country may be inappropriate or unlawful to commercialise in another.
 
 Several jurisdictions restrict the commercial or promotional use of national flags, state emblems, currency, and official insignia — in India, under the Emblems and Names (Prevention of Improper Use) Act, 1950 and the Flag Code of India, among others. **You are responsible for confirming that observance content is appropriate and lawful in every market where it will be seen before it publishes.** If you use Auto Approve, review your scheduled observance posts in advance.
 

@@ -5,7 +5,6 @@ export const WORKSPACE_NAV_HREFS = {
   marketingScenes: '/marketing-scenes',
   productAdvert: '/product-posts',
   videoGeneration: '/videos',
-  festivePost: '/occasion-posts',
   createCampaign: '/campaigns',
   carouselCreate: '/carousel-posts',
   schedulePost: '/schedule-post',
@@ -18,13 +17,15 @@ export const WORKSPACE_NAV_HREFS = {
 
 /** Old app paths → current workspace routes (bookmarks, emails, stored `spendedOn`). */
 export const WORKSPACE_LEGACY_PATH_REDIRECTS: Record<string, string> = {
+  '/occasion-posts': WORKSPACE_NAV_HREFS.quickCreate,
+  '/event-posts': WORKSPACE_NAV_HREFS.quickCreate,
+  '/festive-post': WORKSPACE_NAV_HREFS.quickCreate,
+  '/event-studio': WORKSPACE_NAV_HREFS.quickCreate,
   '/instant-generation': WORKSPACE_NAV_HREFS.quickCreate,
   '/content-studio': WORKSPACE_NAV_HREFS.quickCreate,
   '/product-advert': WORKSPACE_NAV_HREFS.productAdvert,
   '/product-ads': WORKSPACE_NAV_HREFS.productAdvert,
   '/video-generator': WORKSPACE_NAV_HREFS.videoGeneration,
-  '/festive-post': WORKSPACE_NAV_HREFS.festivePost,
-  '/event-studio': WORKSPACE_NAV_HREFS.festivePost,
   '/create-campaign': WORKSPACE_NAV_HREFS.createCampaign,
   '/create/carousel-generation': WORKSPACE_NAV_HREFS.carouselCreate,
   '/carousel-generation': WORKSPACE_NAV_HREFS.carouselCreate,
@@ -81,12 +82,6 @@ export const WORKSPACE_NAV: WorkspaceNavItem[] = [
     href: WORKSPACE_NAV_HREFS.videoGeneration,
     match: (pathname) =>
       !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.videoGeneration),
-  },
-  {
-    name: 'Occasion Posts',
-    href: WORKSPACE_NAV_HREFS.festivePost,
-    match: (pathname) =>
-      !!pathname && pathname.startsWith(WORKSPACE_NAV_HREFS.festivePost),
   },
   {
     name: 'Campaigns',

@@ -200,11 +200,17 @@ export function isUpcomingScheduledPost(
 }
 
 /** Friendly label for the backend `GeneratedBy` pipeline tag. */
-export function generatedByLabel(value: string | undefined): string | null {
+export function generatedByLabel(
+  value: string | undefined,
+  marketingVisual?: boolean
+): string | null {
+  if (marketingVisual === true) return 'Marketing Visuals';
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   if (!trimmed) return null;
   switch (trimmed.toLowerCase()) {
+    case 'marketing-visual':
+      return 'Marketing Visuals';
     case 'ai-engine':
       return 'AI Creator';
     case 'batch-generation':
@@ -213,7 +219,7 @@ export function generatedByLabel(value: string | undefined): string | null {
     case 'festive-post':
     case 'festive':
     case 'festival':
-      return 'Occasion Posts';
+      return 'Archived content';
     case 'product-advert':
       return 'Product Posts';
     case 'video-generation':

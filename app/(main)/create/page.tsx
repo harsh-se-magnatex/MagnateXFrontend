@@ -2,7 +2,6 @@ import Link from 'next/link';
 import {
   Brain,
   ImagePlus,
-  CalendarSync,
   Sparkles,
   ArrowRight,
   Layers,
@@ -39,13 +38,6 @@ const createFlows = [
     href: WORKSPACE_NAV_HREFS.carouselCreate,
     icon: Layers,
     gradient: 'from-[var(--blue-9)] to-[var(--blue-9)]',
-  },
-  {
-    title: workspacePageTitle(WORKSPACE_NAV_HREFS.festivePost),
-    description: 'Timed campaigns and holiday-ready content.',
-    href: WORKSPACE_NAV_HREFS.festivePost,
-    icon: CalendarSync,
-    gradient: 'from-[var(--green-9)] to-[var(--green-9)]',
   },
   {
     title: 'AI tools',

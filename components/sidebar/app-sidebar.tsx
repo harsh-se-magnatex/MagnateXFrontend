@@ -7,7 +7,6 @@ import {
   Brain,
   CalendarCheck2,
   CalendarRange,
-  CalendarSync,
   ChevronsUpDown,
   ClipboardClock,
   CloudLightning,
@@ -102,7 +101,6 @@ const workspaceNavIcons: Record<WorkspaceNavHref, typeof Brain> = {
   [WORKSPACE_NAV_HREFS.marketingScenes]: ImagePlus,
   [WORKSPACE_NAV_HREFS.productAdvert]: ImagePlus,
   [WORKSPACE_NAV_HREFS.videoGeneration]: Video,
-  [WORKSPACE_NAV_HREFS.festivePost]: CalendarSync,
   [WORKSPACE_NAV_HREFS.createCampaign]: Sparkles,
   [WORKSPACE_NAV_HREFS.carouselCreate]: LayoutGrid,
   [WORKSPACE_NAV_HREFS.schedulePost]: CalendarCheck2,
@@ -146,12 +144,7 @@ export function AppSidebar({
         (item) => item.href === WORKSPACE_NAV_HREFS.linkedProfiles
       );
     }
-    const items = workspaceNav.filter(
-      (item) =>
-        billing?.mode !== 'auto' ||
-        item.href !== WORKSPACE_NAV_HREFS.festivePost
-    );
-    return items;
+    return workspaceNav;
   })();
   const settingsChildItems = isAccountFrozen
     ? settingsNavItems.filter((child) => child.href === '/settings/billings')

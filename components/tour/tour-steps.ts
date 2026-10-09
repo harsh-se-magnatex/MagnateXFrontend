@@ -153,16 +153,6 @@ const PLATFORM_STEPS: TourStep[] = [
       'Generates the ad image AND a complete caption, headline, CTA, and hashtags — ready to publish. Costs more credits but saves you the writing.',
     paid: true,
   },
-  // 8e. Occasion Posts (1 step)
-  {
-    element: '#tour-fp-events',
-    path: WORKSPACE_NAV_HREFS.festivePost,
-    side: 'right',
-    title: 'Auto-celebrate festivals',
-    description:
-      'Pick from pre-loaded festivals or add your own. Each selected event becomes a generated post, scheduled for that day.',
-    paid: true,
-  },
   // 8f. Schedule a Post (1 step)
   {
     element: '#tour-ps-form',

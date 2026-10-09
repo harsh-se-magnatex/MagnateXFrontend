@@ -20,7 +20,6 @@ import {
   Sparkles,
   Zap,
   ImageIcon,
-  PartyPopper,
   Video,
   Target,
   Megaphone,
@@ -63,12 +62,6 @@ const PRODUCT_FEATURES = [
     title: 'Videos',
     icon: Video,
     description: '20-second videos from a prompt, with your logo built in.',
-  },
-  {
-    title: 'Occasion Posts',
-    icon: PartyPopper,
-    description:
-      'Pick the festivals that matter; greetings are made and posted.',
   },
   {
     title: 'Campaigns',

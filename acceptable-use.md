@@ -61,7 +61,7 @@ SocioGenie is a marketing tool. It is not built, reviewed, or configured for pol
 
 - uses national flags, state emblems, coats of arms, official seals, currency, military insignia, or government identifiers in a commercial or promotional context where local law restricts it. In India this includes the Emblems and Names (Prevention of Improper Use) Act, 1950 and the Flag Code of India; comparable restrictions exist in many other countries.
 
-Event Studio will generate observance content on request. **Whether that content is lawful and appropriate in your market is your responsibility to check before it publishes.**
+**Whether that content is lawful and appropriate in your market is your responsibility to check before it publishes.**
 
 ---
 
