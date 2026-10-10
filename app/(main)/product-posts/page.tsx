@@ -1,4 +1,5 @@
 'use client';
+import { templateDnaErrorMessage } from '@/src/service/api/template-dna.service';
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -361,9 +362,7 @@ export default function ProductAdvertPage() {
       }
       setIsGenerating(false);
     } catch (e: unknown) {
-      showErrorToast(
-        'Product Posts generation failed. Please try again later.'
-      );
+      showErrorToast(templateDnaErrorMessage(e, 'Product Posts generation failed. Please try again later.'));
       console.log(e);
       setIsGenerating(false);
     }

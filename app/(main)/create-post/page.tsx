@@ -64,6 +64,7 @@ import {
 } from '@/lib/schedule-time-validation';
 import { DownloadPngButton } from '@/components/download-png-button';
 import { BrandMemoryImagePicker } from '@/components/brand-memory-image-picker';
+import { templateDnaErrorMessage } from '@/src/service/api/template-dna.service';
 import { resolveFrameFile } from '@/src/service/api/video-generation.service';
 import { SharePostButton } from '@/components/share-post-button';
 import {
@@ -697,8 +698,9 @@ export default function AIContentPage() {
       }
       setIsGenerating(false);
     } catch (e: unknown) {
-      showErrorToast('Content generation failed. Please try again later.');
-      setGenerateError('Failed');
+      const message = templateDnaErrorMessage(e, 'Content generation failed. Please try again later.');
+      showErrorToast(message);
+      setGenerateError(message);
       setIsGenerating(false);
     }
   };

@@ -1,4 +1,5 @@
 'use client';
+import { templateDnaErrorMessage } from '@/src/service/api/template-dna.service';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -266,7 +267,7 @@ export default function CarouselGenerationPage() {
       }
       setIsGenerating(false);
     } catch (err) {
-      showErrorToast('Carousel generation failed. Please try again later.');
+      showErrorToast(templateDnaErrorMessage(err, 'Carousel generation failed. Please try again later.'));
       setIsGenerating(false);
     }
   }, [

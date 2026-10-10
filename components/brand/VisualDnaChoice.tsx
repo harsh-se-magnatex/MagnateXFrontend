@@ -5,7 +5,7 @@ import { Check, Loader2, Palette, RefreshCw, Sparkles, Upload } from 'lucide-rea
 import { PAGE_LOOK_PRESETS } from '@/lib/page-look-styles';
 import { SEVEN_VISUAL_STYLES } from '@/components/landing/seven-visuals/seven-visuals-data';
 import { cn } from '@/lib/utils';
-import { TemplateDnaReferenceSetup } from '@/components/brand/TemplateDnaReferenceSetup';
+import { TemplateDnaLibrary } from '@/components/brand/TemplateDnaLibrary';
 import { DnaStylePreview } from '@/components/brand/DnaStylePreview';
 import { BrandColorsFields, isValidBrandColor, type BrandColors } from '@/components/brand/BrandColorsFields';
 import { showErrorToast } from '@/lib/show-error-toast';
@@ -207,7 +207,7 @@ export function VisualDnaChoice({ business, onGenerated, onLearnFromPosts, compa
         <span className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary-purple/30 px-4 py-3 text-sm font-semibold text-primary-purple">{switching === 'learn' && <Loader2 className="size-4 animate-spin"/>}{selectedPath === 'learn' ? 'Selected' : 'Switch to existing posts'}</span>
       </button>
     </div>
-    {compact && selectedPath === 'learn' && <TemplateDnaReferenceSetup />}
+    {compact && selectedPath === 'learn' && <TemplateDnaLibrary />}
     {showPresets && <section className="rounded-3xl border border-default bg-card p-5"><div className="mb-4 flex items-center gap-2"><Palette className="size-5 text-primary-purple"/><div><h3 className="font-semibold text-default">Choose a visual direction</h3><p className="text-xs text-secondary">AI will personalize this direction using your business data.</p></div></div><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{PAGE_LOOK_PRESETS.map(preset => { const previewId = preset.id === 'minimalistic' ? 'minimalist' : preset.id; const preview = SEVEN_VISUAL_STYLES.find(style => style.id === previewId)?.visuals[0]?.image; return <button key={preset.id} type="button" disabled={!!busy} onClick={() => void create(preset.id)} className="overflow-hidden rounded-2xl border border-default bg-element text-left transition-colors hover:border-primary-purple disabled:opacity-50">{preview && <span className="block aspect-[16/9] w-full bg-cover bg-center" style={{ backgroundImage: `url(${preview})` }} aria-hidden/>}<span className="block p-4"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold text-default">{preset.label}</span>{busy === preset.id && <Loader2 className="size-4 animate-spin text-primary-purple"/>}</span><span className="mt-1 block text-xs leading-5 text-secondary">{preset.description}</span></span></button>; })}</div></section>}
   </div>;
 }

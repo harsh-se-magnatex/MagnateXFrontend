@@ -1,4 +1,9 @@
 import axiosClient from '@/lib/axios';
+import { isAxiosError } from 'axios';
+export function templateDnaErrorMessage(error: unknown, fallback: string): string {
+  if (isAxiosError<{ message?: string }>(error) && error.response?.data?.message) return error.response.data.message;
+  return error instanceof Error && !isAxiosError(error) ? error.message : fallback;
+}
 
 export type TemplateDnaPlatform = 'brand';
 export type DesignFinding = { value: any; confidence: 'high' | 'medium' | 'low'; state: 'observed' | 'not_observed' | 'inconsistent' | 'uncertain'; evidenceImageIds: string[]; observedRange: { min: number; max: number } | null };
@@ -50,3 +55,20 @@ export async function extractTemplateDna(platform: TemplateDnaPlatform) {
 }
 export async function updateTemplateDna(platform: TemplateDnaPlatform, profile: Partial<TemplateDnaProfile>) { const response = await axiosClient.patch<ApiEnvelope<TemplateDnaProfile>>(`/api/v1/template-dna/${platform}`, { profile }); return response.data.data; }
 export async function removeTemplateDnaReference(platform: TemplateDnaPlatform, assetId: string) { const response = await axiosClient.delete<ApiEnvelope<TemplateDnaProfile>>(`/api/v1/template-dna/${platform}/references/${assetId}`); return response.data.data; }
+
+export type TemplateDnaLibraryEntry = TemplateDnaProfile & {
+  recordVersion: 1; dnaId: string; sourceReferenceId: string; libraryGenerationId: string; displayName: string;
+  selectionMetadata: { layoutFamily: string; suitableObjectives: string[]; contentRoles: string[]; requiredAssets: string[]; aspectRatioSupport: Array<{ ratio: string; mode: 'observed' | 'adaptable' }> } | null;
+};
+export type TemplateDnaLibrary = {
+  available: boolean;
+  manifest: { activeGenerationId: string | null; activeDnaIds: string[]; pendingGenerationId: string | null; enabled: boolean };
+  pendingBatch: { expectedCount: number; readyCount: number; failedCount: number; status: 'extracting' | 'ready' | 'failed' } | null;
+  entries: TemplateDnaLibraryEntry[];
+};
+export async function getDnaLibrary() { return (await axiosClient.get<ApiEnvelope<TemplateDnaLibrary>>('/api/v1/template-dna/library')).data.data; }
+export async function createDnaLibraryBatch(files: File[] = []) { const form = new FormData(); files.forEach(file => form.append('references', file)); return (await axiosClient.post<ApiEnvelope<TemplateDnaLibrary>>('/api/v1/template-dna/library/batches', form, { timeout: 120000 })).data.data; }
+export async function retryDnaLibraryEntry(dnaId: string) { return (await axiosClient.post<ApiEnvelope<TemplateDnaLibrary>>(`/api/v1/template-dna/library/entries/${dnaId}/retry`)).data.data; }
+export async function editDnaLibraryEntry(entry: TemplateDnaLibraryEntry, change: { displayName?: string; enabled?: boolean }) { return (await axiosClient.patch<ApiEnvelope<TemplateDnaLibrary>>(`/api/v1/template-dna/library/entries/${entry.dnaId}`, { revision: entry.revision, ...change })).data.data; }
+export async function updateDnaLibrary(change: { enabled?: boolean }) { return (await axiosClient.patch<ApiEnvelope<TemplateDnaLibrary>>('/api/v1/template-dna/library', change)).data.data; }
+export async function getDnaLibraryPreview(dnaId: string) { return (await axiosClient.get<Blob>(`/api/v1/template-dna/library/entries/${dnaId}/preview`, { responseType: 'blob' })).data; }
