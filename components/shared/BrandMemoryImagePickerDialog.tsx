@@ -150,7 +150,12 @@ export function BrandMemoryImagePickerDialog({
               <ImageOff className="h-10 w-10 opacity-60" />
               <p>No photos in Brand Memory yet.</p>
               <Button asChild variant="secondary" size="sm">
-                <Link href="/brand-memory">Open Brand Memory</Link>
+                <Link
+                  href="/brand-dna/business-data"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Open Brand Memory
+                </Link>
               </Button>
             </div>
           ) : (
