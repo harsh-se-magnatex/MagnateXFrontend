@@ -24,9 +24,6 @@ export type AdvertResult = {
   imageUrl: string;
   imageFilePath?: string;
   logoPosition?: string;
-  selectedLogoVariantIndex?: number;
-  logoVariantSource?: string;
-  logoVariantCount?: number;
   marketingTagline?: string;
   productAdvertDocId?: string | null;
   videoCaption?: string | null;

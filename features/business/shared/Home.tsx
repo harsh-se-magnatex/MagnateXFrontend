@@ -62,7 +62,7 @@ import {
   isUpcomingScheduledPost,
   type ScheduledPostStatusInput,
 } from '@/lib/scheduled-post-status';
-import { weeklyDeltaFromTrend } from '@/app/(main)/_components/AnalyticsComponent/utils/utils_functions';
+import { averageGrowthOverviewPct } from '@/lib/home-growth';
 import { WORKSPACE_NAV_HREFS, workspacePageTitle } from '@/lib/workspace-nav';
 
 const SOCIAL_INTEGRATION_PATH = WORKSPACE_NAV_HREFS.linkedProfiles;
@@ -225,65 +225,6 @@ function isPlatformConnected(
   return acc.expiresAt._seconds * 1000 > Date.now();
 }
 
-function countConnectedPlatforms(accounts: SocialAccountRow[]): number {
-  return (['facebook', 'instagram', 'linkedin'] as const).filter((id) =>
-    isPlatformConnected(accounts, id)
-  ).length;
-}
-
-function analyticsTrendSeries(
-  analytics: Record<string, unknown> | null | undefined,
-  trendKey: string
-): { date: string; value: number }[] {
-  const trend = analytics?.[trendKey];
-  if (!Array.isArray(trend)) return [];
-  return [...trend]
-    .filter((point) => point && typeof point === 'object' && 'date' in point)
-    .map((point) => ({
-      date: String((point as { date: string }).date),
-      value: Number((point as { value: number }).value) || 0,
-    }))
-    .sort((a, b) => a.date.localeCompare(b.date));
-}
-
-function platformGrowthPct(
-  analytics: Record<string, unknown> | null | undefined,
-  primaryKey: string,
-  fallbackKey?: string
-): number | null {
-  const primary = weeklyDeltaFromTrend(
-    analyticsTrendSeries(analytics, primaryKey)
-  );
-  if (primary) return primary.pct;
-  if (fallbackKey) {
-    return (
-      weeklyDeltaFromTrend(analyticsTrendSeries(analytics, fallbackKey))?.pct ??
-      null
-    );
-  }
-  return null;
-}
-
-function averageGrowthOverviewPct(
-  fbAnalytics: Record<string, unknown> | null,
-  igAnalytics: Record<string, unknown> | null,
-  liAnalytics: Record<string, unknown> | null
-): number | null {
-  const deltas = [
-    platformGrowthPct(fbAnalytics, 'reachTrend', 'engagementsTrend'),
-    platformGrowthPct(igAnalytics, 'reachTrend', 'interactionsTrend'),
-    platformGrowthPct(liAnalytics, 'pageViewsTrend', 'engagementsTrend'),
-  ].filter(
-    (value): value is number => value !== null && Number.isFinite(value)
-  );
-
-  if (deltas.length === 0) return null;
-  return (
-    Math.round((deltas.reduce((sum, n) => sum + n, 0) / deltas.length) * 10) /
-    10
-  );
-}
-
 function formatGrowthValue(pct: number | null): ReactNode {
   if (pct === null || !Number.isFinite(pct)) return '—';
   const sign = pct > 0 ? '+' : '';
@@ -409,11 +350,13 @@ export default function SharedHome({ businessLabel }: { businessLabel: string })
       setUpcomingRangePosts([]);
     }
 
+    let connectedPlatforms: PlatformId[] = [];
     if (socialOutcome.status === 'fulfilled') {
       const socialRows = socialOutcome.value?.data?.data;
-      setConnectedPlatformCount(
-        countConnectedPlatforms(Array.isArray(socialRows) ? socialRows : [])
+      connectedPlatforms = (['facebook', 'instagram', 'linkedin'] as const).filter(
+        (id) => isPlatformConnected(Array.isArray(socialRows) ? socialRows : [], id)
       );
+      setConnectedPlatformCount(connectedPlatforms.length);
     } else {
       console.error('[home] getSocialAccountsApi failed', socialOutcome.reason);
       setConnectedPlatformCount(0);
@@ -443,7 +386,7 @@ export default function SharedHome({ businessLabel }: { businessLabel: string })
     }
 
     setGrowthOverviewPct(
-      averageGrowthOverviewPct(fbAnalytics, igAnalytics, liAnalytics)
+      averageGrowthOverviewPct(fbAnalytics, igAnalytics, liAnalytics, connectedPlatforms)
     );
 
     setLoading(false);

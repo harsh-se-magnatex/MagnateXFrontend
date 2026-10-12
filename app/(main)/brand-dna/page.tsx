@@ -4,7 +4,6 @@ import { PageLoadingState } from '@/components/shared/PageLoadingState';
 import {
   getProfile,
   deleteLogo,
-  setLogoVariantsForImagesPreference,
   suggestOnboardingBrandCopy,
   updateProfile,
   uploadLogo,
@@ -32,7 +31,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FieldSeparator } from '@/components/ui/field';
-import { Switch } from '@/components/ui/switch';
 import { scrapeUrl, extractCatalogPdf } from '@/src/service/api/scrape';
 import { useUserPlanCredits } from '../_components/UserPlanCreditsProvider';
 import { toast } from 'sonner';
@@ -67,8 +65,6 @@ type BusinessProfileForm = {
   /** Persisted AI suggestions; shown in UI only when hashtags / slogan empty. */
   recommendedHashtags: string[];
   recommendedSlogans: string[];
-  /** Explicit true = use variants in AI images and keep saved variants; omitted/false = off. */
-  useLogoVariantsForImages?: boolean;
   /** Steers video creative. 'auto' lets the pipeline classify the business. */
   businessSegmentOverride: 'auto' | 'product' | 'service';
 };
@@ -171,14 +167,11 @@ export default function BusinessProfilePage() {
     logo: '',
     recommendedHashtags: [],
     recommendedSlogans: [],
-    useLogoVariantsForImages: false,
     businessSegmentOverride: 'auto',
   });
   const [detectedSegment, setDetectedSegment] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [variantsPreferenceLoading, setVariantsPreferenceLoading] =
-    useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [websiteLogoSuggestions, setWebsiteLogoSuggestions] = useState<string[]>([]);
   const [selectedWebsiteLogo, setSelectedWebsiteLogo] = useState<string | null>(null);
@@ -375,7 +368,6 @@ export default function BusinessProfilePage() {
             brandSlogan,
             recommendedHashtags,
             recommendedSlogans,
-            useLogoVariantsForImages: p.useLogoVariantsForImages === true,
             businessSegmentOverride:
               p.businessSegmentOverride === 'product' ||
               p.businessSegmentOverride === 'service'
@@ -424,12 +416,7 @@ export default function BusinessProfilePage() {
       setFormData((prev) => ({
         ...prev,
         logo: '',
-        useLogoVariantsForImages: false,
       }));
-      try {
-        sessionStorage.removeItem('template_dna_logo_for_variants');
-        sessionStorage.removeItem('template_dna_force_fresh_variants');
-      } catch {}
       toast.success('Logo removed');
     } catch {
       showErrorToast('Could not remove the logo. Please try again later.');
@@ -446,16 +433,16 @@ export default function BusinessProfilePage() {
     }
     try {
       setSaving(true);
-      let finalLogoForVariants = formData.logo;
+      let finalLogo = formData.logo;
       let colorTemplatesGenerationStarted = false;
       if (selectedImage) {
         const uploaded = await uploadLogo(selectedImage);
-        finalLogoForVariants = String(
-          uploaded?.data?.url || finalLogoForVariants || ''
+        finalLogo = String(
+          uploaded?.data?.url || finalLogo || ''
         );
         colorTemplatesGenerationStarted =
           uploaded?.data?.colorTemplatesGenerationStarted === true;
-        setFormData((prev) => ({ ...prev, logo: finalLogoForVariants }));
+        setFormData((prev) => ({ ...prev, logo: finalLogo }));
         setSelectedImage(null);
       } else if (
         typeof formData.logo === 'string' &&
@@ -463,12 +450,12 @@ export default function BusinessProfilePage() {
         !isAppStoredLogoUrl(formData.logo)
       ) {
         const response = await uploadLogo(formData.logo);
-        finalLogoForVariants = String(
-          response?.data?.url || finalLogoForVariants || ''
+        finalLogo = String(
+          response?.data?.url || finalLogo || ''
         );
         colorTemplatesGenerationStarted =
           response?.data?.colorTemplatesGenerationStarted === true;
-        setFormData((prev: any) => ({ ...prev, logo: finalLogoForVariants }));
+        setFormData((prev: any) => ({ ...prev, logo: finalLogo }));
       }
 
       let recommendedHashtags = formData.recommendedHashtags;
@@ -496,7 +483,7 @@ export default function BusinessProfilePage() {
       await updateProfile({
         ...formData,
         businesscontact: normalizedBusinessContact,
-        logo: finalLogoForVariants,
+        logo: finalLogo,
         recommendedHashtags,
         recommendedSlogans,
         website:
@@ -509,15 +496,6 @@ export default function BusinessProfilePage() {
         parseHashtagTokens(formData.hashtags).length > 0
       );
       setCommittedSloganSaved(!!String(formData.brandSlogan ?? '').trim());
-      if (finalLogoForVariants) {
-        try {
-          sessionStorage.setItem(
-            'template_dna_logo_for_variants',
-            finalLogoForVariants
-          );
-          sessionStorage.setItem('template_dna_force_fresh_variants', '1');
-        } catch {}
-      }
       setWebsiteUrl('');
       toast.success('Profile updated successfully');
     } catch (error: any) {
@@ -657,49 +635,6 @@ export default function BusinessProfilePage() {
       return;
     }
     setCatalogFile(file);
-  };
-
-  const handleGenerateVariants = () => {
-    if (!formData.logo) return;
-    try {
-      sessionStorage.setItem('template_dna_logo_for_variants', formData.logo);
-      sessionStorage.setItem('template_dna_force_fresh_variants', '1');
-    } catch {}
-    router.push('/brand-dna/variants');
-  };
-
-  const handleVariantsForImagesToggle = async (checked: boolean) => {
-    try {
-      setVariantsPreferenceLoading(true);
-      const res = await setLogoVariantsForImagesPreference(checked);
-      setFormData((prev) => ({
-        ...prev,
-        useLogoVariantsForImages: checked,
-      }));
-      if (checked && formData.logo) {
-        try {
-          sessionStorage.setItem(
-            'template_dna_logo_for_variants',
-            formData.logo
-          );
-          sessionStorage.setItem('template_dna_force_fresh_variants', '1');
-        } catch {}
-      }
-      const started = res?.data?.backgroundGenerationStarted === true;
-      toast.success(
-        checked
-          ? started
-            ? 'Logo variants are on. We are generating them in the background—open the Variants page in a moment to see them.'
-            : 'Logo variants are on. Add a logo to your profile so we can generate variants automatically.'
-          : 'Logo variants are off. AI images will use only your main logo.'
-      );
-    } catch (error: unknown) {
-      showErrorToast(
-        'Could not update variant preference. Please Try Again Later.'
-      );
-    } finally {
-      setVariantsPreferenceLoading(false);
-    }
   };
 
   if (loading) return <PageLoadingState />;
@@ -1207,14 +1142,6 @@ export default function BusinessProfilePage() {
                           </label>
                           <button
                             type="button"
-                            onClick={handleGenerateVariants}
-                            disabled={!formData.logo}
-                            className="inline-flex items-center justify-center rounded-full border border-primary-purple/25 bg-primary-purple/10 px-4 py-2 text-sm font-semibold text-preview transition-expo hover:bg-element disabled:cursor-not-allowed disabled:text-quaternary"
-                          >
-                            Variants
-                          </button>
-                          <button
-                            type="button"
                             onClick={() => router.push('/brand-dna/ai-logo')}
                             className="inline-flex items-center justify-center gap-1.5 rounded-full border border-success bg-success px-4 py-2 text-sm font-semibold text-success transition-expo hover:bg-success"
                           >
@@ -1277,28 +1204,6 @@ export default function BusinessProfilePage() {
                             </div>
                           </div>
                         ) : null}
-                        <div className="flex flex-col gap-2 rounded-xl border border-default bg-element px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0 space-y-0.5">
-                            <p className="text-sm font-semibold text-default">
-                              Use logo variants in AI-generated images
-                            </p>
-                            <p className="text-xs text-secondary leading-relaxed">
-                              Off by default. Turning on generates logo variants
-                              on the server and uses them in AI images. Turning
-                              off uses only your main logo; saved variants are
-                              kept.
-                            </p>
-                          </div>
-                          <Switch
-                            checked={formData.useLogoVariantsForImages === true}
-                            disabled={variantsPreferenceLoading}
-                            onCheckedChange={(v) =>
-                              void handleVariantsForImagesToggle(Boolean(v))
-                            }
-                            className="shrink-0 sm:ml-4"
-                            aria-label="Use logo variants in AI-generated images"
-                          />
-                        </div>
                       </div>
                     </div>
                   </div>

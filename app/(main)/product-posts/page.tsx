@@ -119,18 +119,6 @@ function mapProductAdvertDocsToResults(
           typeof output.logoPosition === 'string'
             ? output.logoPosition
             : undefined,
-        selectedLogoVariantIndex:
-          typeof output.selectedLogoVariantIndex === 'number'
-            ? output.selectedLogoVariantIndex
-            : undefined,
-        logoVariantSource:
-          typeof output.logoVariantSource === 'string'
-            ? output.logoVariantSource
-            : undefined,
-        logoVariantCount:
-          typeof output.logoVariantCount === 'number'
-            ? output.logoVariantCount
-            : undefined,
         marketingTagline:
           typeof output.marketingTagline === 'string'
             ? output.marketingTagline
@@ -761,19 +749,6 @@ export default function ProductAdvertPage() {
                       </span>
                     </button>
                   </div>
-                  {Number(item.logoVariantCount ?? 0) > 1 && (
-                    <p className="text-xs text-secondary mt-2">
-                      Logo chosen for contrast on this scene: variant{' '}
-                      {Number(item.selectedLogoVariantIndex ?? 0) + 1} of{' '}
-                      {item.logoVariantCount}
-                      {item.logoVariantSource === 'saved'
-                        ? ' (your saved variants)'
-                        : item.logoVariantSource === 'generated'
-                          ? ' (auto-generated from your brand logo)'
-                          : ''}
-                      .
-                    </p>
-                  )}
 
                   {buildAdvertCaption(item) && (
                     <div className="mt-4 p-4 bg-element rounded-xl border border-default">
